@@ -26,13 +26,16 @@ class GrandMA2PluginPackageTests(unittest.TestCase):
         lua = (PLUGIN_DIR / "ZEN_AGENT.lua").read_text(encoding="utf-8")
         self.assertIn("local function main(argument)", lua)
         self.assertIn("return main", lua)
+        self.assertIn('gma.feedback("ZEN_DEBUG|ARG|" .. tostring(debug_argument))', lua)
+        self.assertIn('if debug_argument == nil or tostring(debug_argument) == "" then debug_argument = "nil" end', lua)
         self.assertIn('gma.echo("ZEN_STATE|"', lua)
         self.assertIn('gma.echo("ZEN_STATE_ERROR|"', lua)
         self.assertNotIn("main(display_handle, argument)", lua)
         readme = (PLUGIN_DIR / "README.txt").read_text(encoding="utf-8")
         self.assertIn("ZEN_AGENT.xml", readme)
         self.assertIn("ZEN_AGENT.lua", readme)
-        self.assertIn("Plugin \"ZEN_AGENT\" \"group_membership 1\"", readme)
+        self.assertIn('Plugin 3 "group_membership 1"', readme)
+        self.assertIn('ZEN_DEBUG|ARG|group_membership 1', readme)
 
 
 if __name__ == "__main__":

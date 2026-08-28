@@ -29,7 +29,12 @@ RUN / CHECK
 -----------
 Run the imported Plugin Pool object normally, or use:
 
-  Plugin "ZEN_AGENT" "group_membership 1"
+  Plugin 3 "group_membership 1"
+
+Use the actual imported Plugin Pool slot in place of `3`. During argument
+verification, the Command Line Feedback must first show:
+
+  ZEN_DEBUG|ARG|group_membership 1
 
 The adapter emits a System Monitor line beginning with:
 
@@ -37,7 +42,7 @@ The adapter emits a System Monitor line beginning with:
 
 For a layout request, use:
 
-  Plugin "ZEN_AGENT" "layouts 1"
+  Plugin 3 "layouts 1"
 
 The ZEN MA2 Agent sends these read-only requests automatically. The plugin does
 not Store, Update, Delete, Clone, Patch, Clear, or select fixtures.

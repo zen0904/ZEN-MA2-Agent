@@ -67,6 +67,12 @@ end
 -- grandMA2 passes the quoted command-line argument to this returned function.
 -- Example: Plugin "ZEN_AGENT" "group_membership 1"
 local function main(argument)
+    -- grandMA2 3.9 passes text following `Plugin <slot> "..."` to this
+    -- returned function.  Keep this small audit marker while validating the
+    -- console-side invocation; it contains no MA2 state or credentials.
+    local debug_argument = argument
+    if debug_argument == nil or tostring(debug_argument) == "" then debug_argument = "nil" end
+    gma.feedback("ZEN_DEBUG|ARG|" .. tostring(debug_argument))
     local request, argument_no = tostring(argument or ""):match("^([a-z_]+)%s*(%d*)%s*$")
     if request == "group_membership" and tonumber(argument_no) then group_membership(tonumber(argument_no))
     elseif request == "layouts" and tonumber(argument_no) then layout(tonumber(argument_no))
