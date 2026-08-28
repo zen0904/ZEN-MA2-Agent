@@ -18,6 +18,9 @@ QWidget{background:#0b0f14;color:#e8edf2;font:13px 'Segoe UI';}QFrame#top{backgr
 """
 
 
+CHAT_BOTTOM_THRESHOLD = 36
+
+
 class ZenDesktop(QMainWindow):
     def __init__(self, core: AgentCore, server: MobileServer):
         super().__init__()
@@ -125,7 +128,7 @@ class ZenDesktop(QMainWindow):
             return
         try:
             manifest = self.core.skills.get(skill_id).summary()
-            self.skills_view.setPlainText("\n".join(f"{key}: {value}" for key, value in manifest.items()))
+            self._update_text(self.skills_view, "\n".join(f"{key}: {value}" for key, value in manifest.items()))
         except Exception:
             pass
 
@@ -134,9 +137,46 @@ class ZenDesktop(QMainWindow):
         if not url: return
         self.phone_url.setText(url); image = qrcode.make(url); buffer = io.BytesIO(); image.save(buffer, format="PNG"); pix = QPixmap(); pix.loadFromData(buffer.getvalue()); self.qr.setPixmap(pix.scaled(190, 190, Qt.KeepAspectRatio, Qt.SmoothTransformation))
 
+    @staticmethod
+    def _update_text(view: QTextEdit, text: str, *, follow_bottom: bool = False) -> bool:
+        """Update a document without stealing a user's scroll position.
+
+        QTextEdit.setPlainText() replaces the QTextDocument and normally resets its
+        vertical scrollbar.  Refreshes run frequently for connection status, so a
+        no-op update must stay a no-op.  Chat is the sole view allowed to follow
+        new content, and only when the operator was already reading its bottom.
+        """
+        if view.toPlainText() == text:
+            return False
+        scrollbar = view.verticalScrollBar()
+        previous_value = scrollbar.value()
+        was_near_bottom = scrollbar.maximum() - previous_value < CHAT_BOTTOM_THRESHOLD
+        view.setPlainText(text)
+        if follow_bottom and was_near_bottom:
+            scrollbar.setValue(scrollbar.maximum())
+        else:
+            scrollbar.setValue(min(previous_value, scrollbar.maximum()))
+        return True
+
+    def _refresh_skills(self, skills: list[dict]) -> None:
+        """Keep the existing picker and details document when registry data is unchanged."""
+        entries = [(item["name"], item["source"], item["safety"], item["enabled"], item["id"]) for item in skills]
+        if entries == getattr(self, "_skill_entries", None):
+            return
+        self._skill_entries = entries
+        old_skill = self.skill_picker.currentData()
+        self.skill_picker.blockSignals(True)
+        self.skill_picker.clear()
+        for name, source, safety, enabled, skill_id in entries:
+            self.skill_picker.addItem(f"{name} — {source} — {safety} — {'Enabled' if enabled else 'Disabled'}", skill_id)
+        self.skill_picker.blockSignals(False)
+        if skills:
+            self.skill_picker.setCurrentIndex(next((index for index, item in enumerate(skills) if item["id"] == old_skill), 0))
+            self.inspect_skill()
+
     def refresh(self) -> None:
         self.core.tick(); snap = self.core.snapshot(); c = snap["connection"]; color = {"READY":"#44c98a", "AUTHENTICATING":"#e3ad54", "AUTH_FAILED":"#e16868"}.get(c["state"], "#93a1af"); self.status.setStyleSheet(f"color:{color};font-weight:600;"); self.status.setText(f"● MA2 {c['state']} | {c['user'] or c['host']} | {c['host']}:{c['port']}   Internet ● {snap['internet']}   Phone ● {snap['phone_connected']} Connected")
-        self.chat.setPlainText("\n\n".join(f"{m['role'].upper()}\n{m['text']}" for m in snap["chat"]))
+        self._update_text(self.chat, "\n\n".join(f"{m['role'].upper()}\n{m['text']}" for m in snap["chat"]), follow_bottom=True)
         pending = next((item for item in snap["actions"] if item["status"] == "PENDING_APPROVAL"), None); self.execute.setEnabled(bool(pending and c["ready"])); self.cancel.setEnabled(bool(pending)); self.plan_text.setText("No action plan pending." if not pending else f"ACTION PLAN\nTarget: {pending['intent']['parameters']}\nCommand: {pending['command']}\nSafety: {pending['safety']}\n{pending['preview_note']}")
         state_lines = []
         for name, value in snap["state_browser"].items():
@@ -144,10 +184,8 @@ class ZenDesktop(QMainWindow):
                 state_lines.append(f"{name.title()} — {value['count']} items\n" + "\n".join(str(item) for item in value["values"]))
             else:
                 state_lines.append(f"{name.title()} — {value['status']}")
-        self.state_list.setPlainText("\n\n".join(state_lines))
-        skills = snap["skills"]; old_skill = self.skill_picker.currentData(); self.skill_picker.blockSignals(True); self.skill_picker.clear(); [self.skill_picker.addItem(f"{item['name']} — {item['source']} — {item['safety']} — {'Enabled' if item['enabled'] else 'Disabled'}", item['id']) for item in skills]; self.skill_picker.blockSignals(False)
-        if skills:
-            self.skill_picker.setCurrentIndex(next((index for index, item in enumerate(skills) if item["id"] == old_skill), 0)); self.inspect_skill()
+        self._update_text(self.state_list, "\n\n".join(state_lines))
+        self._refresh_skills(snap["skills"])
         urls = self.core.phone_urls(self.server.port); old = self.addresses.currentData(); self.addresses.blockSignals(True); self.addresses.clear(); [self.addresses.addItem(url, url) for url in urls]; self.addresses.blockSignals(False); self.pairing.setText(f"Pairing code: {self.core.pairing.code}");
         if urls and old not in urls: self.addresses.setCurrentIndex(0); self.refresh_qr()
 
