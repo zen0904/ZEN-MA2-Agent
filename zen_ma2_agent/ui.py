@@ -94,9 +94,18 @@ class AgentUI:
             self.runtime.connect(self.host.get(), self.port.get(), self.username.get(), self.password.get())
             self.status.set(self.runtime.status_text())
             self._refresh_controls()
+            if self.runtime.state is ConnectionState.AUTHENTICATING:
+                self.root.after(50, self._poll_authentication)
         except Exception as exc:
             self.status.set(self.runtime.status_text())
             messagebox.showerror("Connection failed", str(exc))
+
+    def _poll_authentication(self) -> None:
+        state = self.runtime.poll_connection()
+        self.status.set(self.runtime.status_text())
+        self._refresh_controls()
+        if state is ConnectionState.AUTHENTICATING:
+            self.root.after(50, self._poll_authentication)
 
     def disconnect(self) -> None:
         self.runtime.disconnect()

@@ -33,8 +33,9 @@ class FakeRuntimeClient:
 
 
 class FakeSocket:
-    def __init__(self):
+    def __init__(self, login_responses=None):
         self.sent = []
+        self.login_responses = list(login_responses or [])
         self.responses = []
         self.closed = False
 
@@ -44,7 +45,7 @@ class FakeSocket:
     def sendall(self, value):
         self.sent.append(value)
         if value.startswith(b"Login"):
-            self.responses.append(b"\x1b[32mLogged in as User 'administrator'\x1b[0m\r\n")
+            self.responses.extend(self.login_responses)
 
     def recv(self, _size):
         if self.responses:
@@ -69,6 +70,13 @@ class ConnectionSettingsTests(unittest.TestCase):
 
     def runtime(self):
         return AgentRuntime(self.root, client_factory=FakeRuntimeClient)
+
+    def poll_until_settled(self, client, limit=0.2):
+        import time
+        end = time.monotonic() + limit
+        while time.monotonic() < end and client.state is ConnectionState.AUTHENTICATING:
+            time.sleep(0.01)
+            client.poll_authentication()
 
     def test_custom_host_port_username_and_blank_password(self):
         runtime = self.runtime()
@@ -110,17 +118,60 @@ class ConnectionSettingsTests(unittest.TestCase):
         with self.assertRaises(ConnectionError):
             runtime.execute_current()
 
-    def test_login_format_ansi_crlf_and_client_state_machine(self):
-        fake_socket = FakeSocket()
-        client = MA2TelnetClient("localhost", 30000, read_timeout_seconds=0.03, socket_factory=lambda *_args, **_kwargs: fake_socket)
-        response = client.connect("MM", "secret")
+    def test_requested_mm_guest_is_not_ready_then_mm_is_ready(self):
+        fake_socket = FakeSocket([b"Login MM secret\r\nLogged in as User 'guest'\r\n"])
+        client = MA2TelnetClient("localhost", 30000, auth_timeout_seconds=1, socket_factory=lambda *_args, **_kwargs: fake_socket)
+        client.connect("MM", "")
+        self.poll_until_settled(client, 0.05)
+        self.assertEqual(client.state, ConnectionState.AUTHENTICATING)
+        self.assertEqual(client.current_session_user, "guest")
+        with self.assertRaises(Exception):
+            client.execute("Go Sequence 5")
+        fake_socket.responses.append(b"Logged in as User 'MM'\r\n")
+        self.poll_until_settled(client)
+        self.assertEqual(client.state, ConnectionState.READY)
+        self.assertEqual(client.authenticated_user, "MM")
+        self.assertEqual(fake_socket.sent[0], b"Login MM\r\n")
+        self.assertIn("TX: Login MM", client.audit_entries)
+        self.assertIn("RX: Logged in as User 'guest'", client.audit_entries)
+        self.assertIn("RX: Logged in as User 'MM'", client.audit_entries)
+        self.assertNotIn("secret", "\n".join(client.audit_entries))
+        self.assertIn("RX: Login MM [REDACTED]", client.audit_entries)
+        client.close()
+
+    def test_requested_guest_can_be_ready_and_administrator_cannot_use_guest(self):
+        guest_socket = FakeSocket([b"Logged in as User 'guest'\r\n"])
+        guest = MA2TelnetClient("localhost", 30000, socket_factory=lambda *_args, **_kwargs: guest_socket)
+        guest.connect("guest", "")
+        self.poll_until_settled(guest)
+        self.assertEqual(guest.state, ConnectionState.READY)
+        admin_socket = FakeSocket([b"Logged in as User 'guest'\r\n"])
+        admin = MA2TelnetClient("localhost", 30000, auth_timeout_seconds=1, socket_factory=lambda *_args, **_kwargs: admin_socket)
+        admin.connect("administrator", "")
+        self.poll_until_settled(admin, 0.05)
+        self.assertEqual(admin.state, ConnectionState.AUTHENTICATING)
+        self.assertNotEqual(admin.state, ConnectionState.READY)
+        guest.close(); admin.close()
+
+    def test_auth_timeout_crlf_ansi_and_reconnect_uses_new_username(self):
+        fake_socket = FakeSocket([b"\x1b[32mLogged in as User 'guest'\x1b[0m\r\n"])
+        sockets = [fake_socket, FakeSocket([b"Logged in as User 'administrator'\r\n"])]
+        client = MA2TelnetClient("localhost", 30000, auth_timeout_seconds=0.01, socket_factory=lambda *_args, **_kwargs: sockets.pop(0))
+        client.connect("MM", "secret")
+        self.poll_until_settled(client)
         self.assertEqual(login_command("MM", ""), "Login MM")
         self.assertEqual(login_command("MM", "secret"), "Login MM secret")
         self.assertEqual(fake_socket.sent[0], b"Login MM secret\r\n")
         self.assertEqual(strip_ansi("\x1b[31mready\x1b[0m"), "ready")
-        self.assertIn("Logged in as User 'administrator'", response)
+        self.assertEqual(client.state, ConnectionState.AUTH_FAILED)
+        self.assertEqual(client.current_session_user, "guest")
+        client.close()
+        client.connect("administrator", "")
+        self.poll_until_settled(client)
         self.assertEqual(client.state, ConnectionState.READY)
         self.assertEqual(client.authenticated_user, "administrator")
+        self.assertEqual(client.requested_username, "administrator")
+        self.assertEqual(client.socket.sent[0], b"Login administrator\r\n")
         client.close()
         self.assertEqual(client.state, ConnectionState.DISCONNECTED)
         self.assertTrue(fake_socket.closed)

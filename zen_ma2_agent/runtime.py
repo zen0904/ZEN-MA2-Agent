@@ -21,6 +21,7 @@ class AgentRuntime:
         self.client: MA2TelnetClient | None = None
         self.current_plan: CommandPlan | None = None
         self.reconnect_required = False
+        self._audit_cursor = 0
 
     @property
     def state(self) -> ConnectionState:
@@ -56,8 +57,18 @@ class AgentRuntime:
             self.client = None
             raise
         self.reconnect_required = False
-        self.log("connect", {"host": ma2["host"], "port": ma2["port"], "username": self.client.authenticated_user, "response": response})
+        self._audit_cursor = 0
+        self._flush_audit()
+        self.log("connect", {"host": ma2["host"], "port": ma2["port"], "requested_username": ma2["username"], "state": self.state.value})
         return response
+
+    def poll_connection(self) -> ConnectionState:
+        if self.client and self.state is ConnectionState.AUTHENTICATING:
+            self.client.poll_authentication()
+            self._flush_audit()
+            if self.state is ConnectionState.AUTH_FAILED:
+                self.log("auth_failed", {"requested_username": self.client.requested_username, "current_user": self.client.current_session_user})
+        return self.state
 
     def disconnect(self) -> None:
         if self.client:
@@ -65,6 +76,7 @@ class AgentRuntime:
         self.client = None
         self.current_plan = None
         self.reconnect_required = False
+        self._audit_cursor = 0
         self.log("disconnect", {})
 
     def execute_current(self) -> str:
@@ -79,10 +91,23 @@ class AgentRuntime:
     def status_text(self) -> str:
         if self.reconnect_required:
             return "Settings changed — reconnect required"
+        if self.state is ConnectionState.AUTHENTICATING and self.client:
+            current = f"\nCurrent session: {self.client.current_session_user}" if self.client.current_session_user else ""
+            return f"MA2: AUTHENTICATING{current}\nTarget user: {self.client.requested_username}"
+        if self.state is ConnectionState.AUTH_FAILED and self.client:
+            return f"MA2: AUTH FAILED\nRequested user: {self.client.requested_username}\nCurrent user: {self.client.current_session_user or 'unknown'}"
         if self.state is ConnectionState.READY and self.client:
             ma2 = self.preferences["ma2"]
             return f"MA2: READY — {self.client.authenticated_user}\nHost: {ma2['host']}:{ma2['port']}\nUser: {self.client.authenticated_user}"
         return f"MA2: {self.state.value}"
+
+    def _flush_audit(self) -> None:
+        if not self.client:
+            return
+        entries = getattr(self.client, "audit_entries", [])
+        for entry in entries[self._audit_cursor:]:
+            self.log("telnet_audit", {"message": entry})
+        self._audit_cursor = len(entries)
 
     def log(self, event: str, data: dict) -> None:
         _, logs = ensure_runtime_dirs(self.root)
