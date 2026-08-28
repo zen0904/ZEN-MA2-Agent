@@ -3,38 +3,86 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Callable
 
-from .config import load_preferences
+from .config import load_preferences, save_preferences, validate_ma2_settings
 from .models import CommandPlan
 from .parser import parse
 from .portable import app_root, ensure_runtime_dirs
 from .safety import build_plan
-from .telnet_client import MA2TelnetClient
+from .telnet_client import ConnectionState, MA2TelnetClient
 
 
 class AgentRuntime:
-    def __init__(self, root: Path | None = None):
+    def __init__(self, root: Path | None = None, client_factory: Callable[..., MA2TelnetClient] = MA2TelnetClient):
         self.root = root or app_root()
         self.preferences = load_preferences(self.root)
-        self.client = MA2TelnetClient(self.preferences["host"], int(self.preferences["port"]), float(self.preferences["read_timeout_seconds"]))
+        self.client_factory = client_factory
+        self.client: MA2TelnetClient | None = None
         self.current_plan: CommandPlan | None = None
+        self.reconnect_required = False
+
+    @property
+    def state(self) -> ConnectionState:
+        return self.client.state if self.client else ConnectionState.DISCONNECTED
+
+    @property
+    def ready(self) -> bool:
+        return self.state is ConnectionState.READY and not self.reconnect_required
+
+    def update_connection_settings(self, host: str, port: object, username: str) -> dict:
+        ma2 = validate_ma2_settings(host, port, username)
+        previous = self.preferences["ma2"]
+        if self.state is not ConnectionState.DISCONNECTED and ma2 != previous:
+            self.reconnect_required = True
+        self.preferences = {**self.preferences, "ma2": ma2}
+        save_preferences(self.preferences, self.root)
+        return ma2
 
     def preview(self, text: str) -> CommandPlan:
         self.current_plan = build_plan(parse(text), self.preferences)
         self.log("preview", self.current_plan.as_dict())
         return self.current_plan
 
-    def connect(self) -> str:
-        banner = self.client.connect(str(self.preferences.get("login_command") or ""))
-        self.log("connect", {"host": self.client.host, "port": self.client.port, "banner": banner})
-        return banner
+    def connect(self, host: str, port: object, username: str, password: str = "") -> str:
+        if self.state is not ConnectionState.DISCONNECTED:
+            raise ConnectionError("Already connected. Disconnect before connecting again.")
+        ma2 = self.update_connection_settings(host, port, username)
+        ma2 = validate_ma2_settings(**ma2, require_username=True)
+        self.client = self.client_factory(ma2["host"], ma2["port"], float(self.preferences["read_timeout_seconds"]))
+        try:
+            response = self.client.connect(ma2["username"], password)
+        except Exception:
+            self.client = None
+            raise
+        self.reconnect_required = False
+        self.log("connect", {"host": ma2["host"], "port": ma2["port"], "username": self.client.authenticated_user, "response": response})
+        return response
+
+    def disconnect(self) -> None:
+        if self.client:
+            self.client.close()
+        self.client = None
+        self.current_plan = None
+        self.reconnect_required = False
+        self.log("disconnect", {})
 
     def execute_current(self) -> str:
+        if not self.ready or not self.client:
+            raise ConnectionError("Connect and reach MA2 READY before executing.")
         if not self.current_plan or not self.current_plan.executable or not self.current_plan.command:
             raise ValueError("No executable approved preview is available.")
         response = self.client.execute(self.current_plan.command)
         self.log("execute", {"plan": self.current_plan.as_dict(), "response": response})
         return response
+
+    def status_text(self) -> str:
+        if self.reconnect_required:
+            return "Settings changed — reconnect required"
+        if self.state is ConnectionState.READY and self.client:
+            ma2 = self.preferences["ma2"]
+            return f"MA2: READY — {self.client.authenticated_user}\nHost: {ma2['host']}:{ma2['port']}\nUser: {self.client.authenticated_user}"
+        return f"MA2: {self.state.value}"
 
     def log(self, event: str, data: dict) -> None:
         _, logs = ensure_runtime_dirs(self.root)

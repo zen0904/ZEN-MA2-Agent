@@ -1,7 +1,9 @@
 {
-  "host": "127.0.0.1",
-  "port": 30000,
-  "login_command": "",
+  "ma2": {
+    "host": "127.0.0.1",
+    "port": 30000,
+    "username": ""
+  },
   "read_timeout_seconds": 0.35,
   "blackout_command_template": null
 }

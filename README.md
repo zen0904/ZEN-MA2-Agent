@@ -12,9 +12,26 @@ py -3 main.py
 ```
 
 No grandMA2 instance is required to open the UI. Use **Connect** after starting
-grandMA2 onPC Telnet (default `127.0.0.1:30000`). Connection settings live in
-`data/user_preferences.json`, which is created beside the app so the folder can
-travel on a USB drive.
+grandMA2 onPC Telnet. Connection settings live in `config/settings.json`, which
+is created beside the app so the folder can travel on a USB drive. Host, port,
+and username are editable in the UI; password is masked and never stored.
+
+`config/settings.json` contains only durable, non-secret connection settings:
+
+```json
+{
+  "ma2": {
+    "host": "127.0.0.1",
+    "port": 30000,
+    "username": ""
+  }
+}
+```
+
+Connection moves through `DISCONNECTED → TCP_CONNECTED → NEGOTIATING →
+AUTHENTICATING → READY`. An empty username is blocked with `USERNAME REQUIRED`.
+Changing Host, Port, or User while connected never changes the active socket;
+the UI instead shows `Settings changed — reconnect required`.
 
 ## Included MVP flow
 
