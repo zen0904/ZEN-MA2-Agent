@@ -116,6 +116,10 @@ class SkillRegistry:
         except KeyError as exc:
             raise SkillError(f"Unknown skill: {skill_id}") from exc
 
+    def capability_for_intent(self, intent_kind: str) -> SkillManifest | None:
+        """Find known capability even when it is a disabled placeholder."""
+        return next((item for item in sorted(self._manifests.values(), key=lambda value: value.id) if intent_kind in item.intents), None)
+
     def set_enabled(self, skill_id: str, enabled: bool) -> SkillManifest:
         manifest = self.get(skill_id)
         path = self.root / "skills" / manifest.source / skill_id / "manifest.json"

@@ -1,0 +1,10 @@
+{
+  "id": "group.clone",
+  "name": "Group Clone",
+  "version": "0.0",
+  "description": "Workflow placeholder for inspecting source/destination Groups, planning clone, previewing, and verifying.",
+  "intents": ["group_clone"],
+  "required_state": ["groups"],
+  "safety": "MODIFY",
+  "enabled": false
+}

@@ -57,7 +57,7 @@ def create_app(core: AgentCore, root: Path | None = None) -> FastAPI:
     @app.post("/api/chat")
     def chat(payload: dict[str, Any], authorization: str | None = Header(default=None)) -> dict[str, Any]:
         require(authorization)
-        return core.submit_request(str(payload.get("text", "")), source="mobile")
+        return core.handle_request(str(payload.get("text", "")), source="mobile")
 
     @app.post("/api/actions/{action_id}/approve")
     def approve(action_id: str, payload: dict[str, Any], authorization: str | None = Header(default=None)) -> dict[str, Any]:

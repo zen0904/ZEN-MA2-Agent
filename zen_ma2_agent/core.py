@@ -10,7 +10,7 @@ from .config import save_preferences
 from .extensions import ExtensionManager
 from .network import internet_online, lan_ipv4_addresses
 from .pairing import PairingManager
-from .parser import ParseError, parse
+from .router import IntentRouter, ResponseType
 from .runtime import AgentRuntime
 from .skill_system import SkillError, SkillRegistry
 from .state.providers import FixtureProvider, GroupProvider
@@ -43,6 +43,7 @@ class AgentCore:
         self.state = StateStore()
         self.skills = SkillRegistry(self.runtime.root)
         self.skills.discover()
+        self.router = IntentRouter()
         self.extensions = ExtensionManager(self.runtime.root)
         self.progress = "Idle"
         self._last_state = ""
@@ -127,26 +128,35 @@ class AgentCore:
         self.events.emit("skills", self.snapshot())
         return proposal.summary()
 
-    def submit_request(self, text: str, source: str = "desktop") -> dict[str, Any]:
+    def handle_request(self, text: str, source: str = "desktop") -> dict[str, Any]:
+        """Shared Desktop/Mobile natural-language routing entrypoint."""
         self.chat.append({"role": "user", "source": source, "text": text})
         self.progress = "Understanding request"
         self.events.emit("progress", {"stage": self.progress})
+        route = self.router.route(text, self.skills)
+        if route.response_type is ResponseType.NEEDS_CLARIFICATION:
+            return self._respond(ResponseType.NEEDS_CLARIFICATION, "I understand this needs an MA2 workflow, but need a target or action. For example: ‘選 Group HYBRID’, ‘有哪些 Group’, or ‘複製 Group 1 到 2’.")
+        if route.response_type is ResponseType.NOT_IMPLEMENTED:
+            assert route.intent and route.capability
+            message = (f"Request: {route.normalized_text}\nIntent: {route.intent.kind}\n"
+                       f"Matched capability: {route.capability.name}\nStatus: NOT IMPLEMENTED\n"
+                       f"Safety: {route.capability.safety}\n"
+                       f"Proposed next step: Enable, install, or implement the {route.capability.name} workflow.")
+            return self._respond(ResponseType.NOT_IMPLEMENTED, message, intent=route.intent, capability=route.capability.id)
+        if route.response_type is ResponseType.ANSWER:
+            assert route.intent
+            try:
+                result = self.refresh_state(route.intent.kind.removeprefix("state_"))
+            except ConnectionError as exc:
+                return self._respond(ResponseType.ERROR, str(exc), intent=route.intent)
+            items = "\n".join(f"{item['number']}: {item['name']}" for item in result["values"]) or "No entries returned."
+            return self._respond(ResponseType.ANSWER, f"{result['resource'].title()} ({result['count']})\n{items}", intent=route.intent, state=result)
         try:
-            intent = parse(text)
-            if intent.kind in {"state_groups", "state_fixtures"}:
-                result = self.refresh_state(intent.kind.removeprefix("state_"))
-                response = f"Read {result['count']} {result['resource']} from MA2 state."
-                self.chat.append({"role": "assistant", "kind": "state", "text": response})
-                self.events.emit("chat", self.snapshot())
-                return {"message": response, "action": None, "state": result}
-            workflow = self.skills.plan_intent(intent, self.state, self.runtime.preferences)
+            assert route.intent
+            workflow = self.skills.plan_intent(route.intent, self.state, self.runtime.preferences)
             self.runtime.log("workflow_preview", workflow.as_dict())
-        except (ParseError, SkillError, ConnectionError) as exc:
-            response = str(exc) or "No safe deterministic skill can handle this request yet."
-            self.chat.append({"role": "assistant", "kind": "explanation", "text": response})
-            self.progress = "Idle"
-            self.events.emit("chat", self.snapshot())
-            return {"message": response, "action": None}
+        except (SkillError, ConnectionError) as exc:
+            return self._respond(ResponseType.ERROR, str(exc) or "Unable to prepare a safe workflow.", intent=route.intent)
         action_id = uuid.uuid4().hex[:12]
         if self._active_action_id:
             previous = self.actions.get(self._active_action_id)
@@ -156,10 +166,20 @@ class AgentCore:
         self.actions[action_id] = record
         self._active_action_id = action_id
         response = "Workflow plan ready for review." if workflow.executable else workflow.preview_note
-        self.chat.append({"role": "assistant", "kind": "plan", "text": response, "action_id": action_id})
+        self.chat.append({"role": "assistant", "kind": ResponseType.ACTION_PLAN.value, "text": response, "action_id": action_id})
         self.progress = "Waiting for approval"
         self.events.emit("plan", self.snapshot())
-        return {"message": response, "action": {"id": action_id, "status": record.status, **record.plan}}
+        return {"type": ResponseType.ACTION_PLAN.value, "message": response, "action": {"id": action_id, "status": record.status, **record.plan}}
+
+    def submit_request(self, text: str, source: str = "desktop") -> dict[str, Any]:
+        """Backward-compatible alias; all callers should use handle_request."""
+        return self.handle_request(text, source)
+
+    def _respond(self, response_type: ResponseType, message: str, **extra: Any) -> dict[str, Any]:
+        self.chat.append({"role": "assistant", "kind": response_type.value, "text": message})
+        self.progress = "Idle"
+        self.events.emit("chat", self.snapshot())
+        return {"type": response_type.value, "message": message, "action": None, **extra}
 
     def cancel_action(self, action_id: str) -> bool:
         action = self.actions.get(action_id)

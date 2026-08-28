@@ -76,7 +76,7 @@ class ZenDesktop(QMainWindow):
 
     def submit(self) -> None:
         text = self.request.text().strip()
-        if text: self.core.submit_request(text); self.request.clear(); self.refresh()
+        if text: self.core.handle_request(text, source="desktop"); self.request.clear(); self.refresh()
 
     def execute_action(self) -> None:
         action = next((item for item in self.core.actions.values() if item.status == "PENDING_APPROVAL"), None)
