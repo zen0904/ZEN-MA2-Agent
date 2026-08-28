@@ -22,20 +22,25 @@ class GrandMA2PluginPackageTests(unittest.TestCase):
         self.assertTrue(lua_path.is_file())
         self.assertEqual(lua_path.name, plugin.attrib["luafile"])
 
-    def test_ma2_lua_entrypoint_preserves_zen_state_bridge_protocol(self):
+    def test_ma2_lua_entrypoint_is_a_minimal_mailbox_smoke_test(self):
         lua = (PLUGIN_DIR / "ZEN_AGENT.lua").read_text(encoding="utf-8")
-        self.assertIn("local function main(argument)", lua)
+        portable_lua = (ROOT / "lua" / "ZEN_AGENT.lua").read_text(encoding="utf-8")
+        self.assertEqual(lua, portable_lua)
+        self.assertIn("local function main()", lua)
         self.assertIn("return main", lua)
-        self.assertIn('gma.feedback("ZEN_DEBUG|ARG|" .. tostring(debug_argument))', lua)
-        self.assertIn('if debug_argument == nil or tostring(debug_argument) == "" then debug_argument = "nil" end', lua)
-        self.assertIn('gma.echo("ZEN_STATE|"', lua)
-        self.assertIn('gma.echo("ZEN_STATE_ERROR|"', lua)
+        self.assertIn('gma.echo("ZEN_SMOKE_ECHO")', lua)
+        self.assertIn('gma.feedback("ZEN_SMOKE_FEEDBACK")', lua)
+        self.assertIn('gma.user.getvar("ZEN_AGENT_REQUEST")', lua)
+        self.assertIn('gma.feedback("ZEN_REQUEST|" .. tostring(request))', lua)
+        self.assertIn('gma.user.setvar("ZEN_AGENT_REQUEST", "")', lua)
         self.assertNotIn("main(display_handle, argument)", lua)
         readme = (PLUGIN_DIR / "README.txt").read_text(encoding="utf-8")
         self.assertIn("ZEN_AGENT.xml", readme)
         self.assertIn("ZEN_AGENT.lua", readme)
-        self.assertIn('Plugin 3 "group_membership 1"', readme)
-        self.assertIn('ZEN_DEBUG|ARG|group_membership 1', readme)
+        self.assertIn('SetUserVar $ZEN_AGENT_REQUEST="group_membership 1"', readme)
+        self.assertIn("Plugin 3", readme)
+        self.assertIn("ZEN_SMOKE_FEEDBACK", readme)
+        self.assertIn("import `ZEN_AGENT.xml` again", readme)
 
 
 if __name__ == "__main__":

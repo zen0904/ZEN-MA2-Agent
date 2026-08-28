@@ -25,24 +25,25 @@ IMPORT
 6. Press Reload in the Plugin editor and confirm, if the console asks to reload
    the plugin engine.
 
-RUN / CHECK
------------
-Run the imported Plugin Pool object normally, or use:
+TEMPORARY MAILBOX SMOKE TEST
+----------------------------
+After changing the Lua file, import `ZEN_AGENT.xml` again into the intended
+Plugin Pool slot, then Save and Reload the Plugin. grandMA2 stores the imported
+Plugin object in the show; replacing a USB file alone does not update an
+already-imported object.
 
-  Plugin 3 "group_membership 1"
+Set the one-shot request variable, then run the imported Plugin Pool object
+using its actual slot. For example:
 
-Use the actual imported Plugin Pool slot in place of `3`. During argument
-verification, the Command Line Feedback must first show:
+  SetUserVar $ZEN_AGENT_REQUEST="group_membership 1"
+  Plugin 3
 
-  ZEN_DEBUG|ARG|group_membership 1
+Use the actual imported Plugin Pool slot in place of `3`. The temporary mailbox
+smoke entrypoint must emit:
 
-The adapter emits a System Monitor line beginning with:
+  ZEN_SMOKE_FEEDBACK
+  ZEN_REQUEST|group_membership 1
 
-  ZEN_STATE|group_membership|
-
-For a layout request, use:
-
-  Plugin 3 "layouts 1"
-
-The ZEN MA2 Agent sends these read-only requests automatically. The plugin does
-not Store, Update, Delete, Clone, Patch, Clear, or select fixtures.
+The plugin clears `ZEN_AGENT_REQUEST` after reading it so a stale request cannot
+run a second time. This temporary smoke version performs no state query and
+sends no show-control command.
