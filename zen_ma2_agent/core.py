@@ -13,7 +13,7 @@ from .pairing import PairingManager
 from .router import IntentRouter, ResponseType
 from .runtime import AgentRuntime
 from .skill_system import SkillError, SkillRegistry
-from .state.providers import FixtureProvider, GroupProvider
+from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvider, FixtureProvider, GroupProvider, LayoutInventoryProvider, SequenceProvider, ZenStateAdapter
 from .state.store import StateStore
 from .telnet_client import ConnectionState
 from .workflow import WorkflowPlan
@@ -89,6 +89,8 @@ class AgentCore:
 
     def disconnect(self) -> None:
         self.runtime.disconnect()
+        for resource in self.state.RESOURCES:
+            self.state.mark_stale(resource)
         self.events.emit("connection", self.snapshot())
 
     def set_internet_access(self, mode: str) -> None:
@@ -99,18 +101,87 @@ class AgentCore:
         save_preferences(self.runtime.preferences, self.runtime.root)
         self.events.emit("internet", self.snapshot())
 
-    def refresh_state(self, resource: str) -> dict[str, Any]:
-        providers = {"groups": (GroupProvider(), self.state.put_groups), "fixtures": (FixtureProvider(), self.state.put_fixtures)}
-        try:
-            provider, store = providers[resource]
-        except KeyError as exc:
-            raise ValueError(f"State resource is not implemented: {resource}") from exc
+    def refresh_state(self, resource: str, *, group_no: int | None = None, layout_no: int | None = None, sequence: int | None = None) -> dict[str, Any]:
+        """Refresh a named read-only state resource through an allow-listed provider."""
         self.progress = f"Reading MA2 {resource.title()}"
-        output = self.runtime.read_state(provider.command)
-        snapshot = store(provider.parse(output))
+        try:
+            if resource == "groups":
+                provider = GroupProvider()
+                snapshot = self.state.put_groups(provider.parse(self.runtime.read_state(provider.command)))
+            elif resource == "fixtures":
+                provider = FixtureProvider()
+                snapshot = self.state.put_fixtures(provider.parse(self.runtime.read_state(provider.command)))
+            elif resource == "sequences":
+                provider = SequenceProvider()
+                snapshot = self.state.put("sequences", provider.parse(self.runtime.read_state(provider.command)), source="ma2_telnet_list")
+            elif resource == "cues":
+                if not isinstance(sequence, int) or sequence < 1:
+                    raise ValueError("Cue inventory requires a positive sequence number.")
+                provider = CueProvider()
+                cues = provider.parse(self.runtime.read_state(provider.command(sequence)), sequence)
+                existing = self.state.get("cues")
+                retained = [item for item in (existing.values if existing else []) if item.get("sequence") != sequence]
+                snapshot = self.state.put("cues", [*retained, *cues], source="ma2_telnet_list")
+            elif resource == "layouts" and layout_no is None:
+                provider = LayoutInventoryProvider()
+                snapshot = self.state.put("layouts", provider.parse(self.runtime.read_state(provider.command)), source="ma2_telnet_list")
+            elif resource in {"group_membership", "layouts", "selection", "programmer"}:
+                adapter = ZenStateAdapter()
+                request, parser = self._adapter_state_request(resource, group_no=group_no, layout_no=layout_no)
+                output = self.runtime.read_state(adapter.command(self.runtime.preferences["state_adapter"]["command_template"], request))
+                value = parser(adapter, output)
+                if resource == "group_membership":
+                    snapshot = self.state.upsert(resource, "group_no", value, source=adapter.source)
+                elif resource == "layouts":
+                    snapshot = self.state.upsert(resource, "layout", value, source=adapter.source)
+                else:
+                    snapshot = self.state.put(resource, [value], source=adapter.source)
+            else:
+                raise ValueError(f"State resource is not implemented: {resource}")
+        except AdapterUnsupported as exc:
+            snapshot = self.state.record_error(resource, str(exc), source=ZenStateAdapter.source)
+            self.progress = "Idle"
+            self.events.emit("state", self.snapshot())
+            return {"resource": resource, "count": len(snapshot.values), "values": snapshot.values, "status": "UNSUPPORTED", "error": snapshot.error}
+        except AdapterResponseError as exc:
+            snapshot = self.state.record_error(resource, str(exc), source=ZenStateAdapter.source)
+            self.progress = "Idle"
+            self.events.emit("state", self.snapshot())
+            return {"resource": resource, "count": len(snapshot.values), "values": snapshot.values, "status": "ERROR", "error": snapshot.error}
         self.progress = "Idle"
         self.events.emit("state", self.snapshot())
-        return {"resource": resource, "count": len(snapshot.values), "values": snapshot.values}
+        return {"resource": resource, "count": len(snapshot.values), "values": snapshot.values, "status": "available"}
+
+    @staticmethod
+    def _adapter_state_request(resource: str, *, group_no: int | None, layout_no: int | None) -> tuple[str, Any]:
+        if resource == "group_membership":
+            if not isinstance(group_no, int) or group_no < 1:
+                raise ValueError("Group membership requires a positive group number.")
+            return f"group_membership {group_no}", lambda adapter, output: adapter.group_membership(output, group_no)
+        if resource == "layouts":
+            if not isinstance(layout_no, int) or layout_no < 1:
+                raise ValueError("Layout state requires a positive layout number.")
+            return f"layouts {layout_no}", lambda adapter, output: adapter.layout(output, layout_no)
+        if resource == "selection":
+            return "selection", lambda adapter, output: adapter.selection(output)
+        if resource == "programmer":
+            return "programmer", lambda adapter, output: adapter.programmer(output)
+        raise ValueError(f"No adapter request for state resource: {resource}")
+
+    def request_group_membership(self, group_no: int) -> dict[str, Any]:
+        result = self.refresh_state("group_membership", group_no=group_no)
+        result["group"] = next((item for item in result["values"] if item.get("group_no") == group_no), None)
+        return result
+
+    def get_selection(self) -> dict[str, Any]:
+        result = self.refresh_state("selection")
+        result["selection"] = result["values"][0] if result["values"] else None
+        return result
+
+    def get_programmer_summary(self) -> dict[str, Any]:
+        result = self.refresh_state("programmer")
+        result["programmer"] = result["values"][0] if result["values"] else None
+        return result
 
     def set_skill_enabled(self, skill_id: str, enabled: bool) -> dict[str, Any]:
         manifest = self.skills.set_enabled(skill_id, enabled)
@@ -145,12 +216,7 @@ class AgentCore:
             return self._respond(ResponseType.NOT_IMPLEMENTED, message, intent=route.intent, capability=route.capability.id)
         if route.response_type is ResponseType.ANSWER:
             assert route.intent
-            try:
-                result = self.refresh_state(route.intent.kind.removeprefix("state_"))
-            except ConnectionError as exc:
-                return self._respond(ResponseType.ERROR, str(exc), intent=route.intent)
-            items = "\n".join(f"{item['number']}: {item['name']}" for item in result["values"]) or "No entries returned."
-            return self._respond(ResponseType.ANSWER, f"{result['resource'].title()} ({result['count']})\n{items}", intent=route.intent, state=result)
+            return self._answer_state(route.intent)
         try:
             assert route.intent
             workflow = self.skills.plan_intent(route.intent, self.state, self.runtime.preferences)
@@ -180,6 +246,64 @@ class AgentCore:
         self.progress = "Idle"
         self.events.emit("chat", self.snapshot())
         return {"type": response_type.value, "message": message, "action": None, **extra}
+
+    def _answer_state(self, intent: Any) -> dict[str, Any]:
+        try:
+            kind, parameters = intent.kind, intent.parameters
+            if kind == "state_group_membership_name":
+                groups = self.state.get("groups")
+                if not groups or groups.stale or groups.error:
+                    self.refresh_state("groups")
+                    groups = self.state.get("groups")
+                wanted = parameters["group_name"].casefold()
+                group = next((item for item in (groups.values if groups else []) if item["name"].casefold() == wanted), None)
+                if not group:
+                    return self._respond(ResponseType.NEEDS_CLARIFICATION, f"No Group named {parameters['group_name']} is available in the current Group inventory.", intent=intent)
+                result = self.request_group_membership(group["number"])
+            elif kind == "state_group_membership":
+                result = self.request_group_membership(parameters["group_no"])
+            elif kind == "state_layout":
+                result = self.refresh_state("layouts", layout_no=parameters["layout_no"])
+            elif kind == "state_selection":
+                result = self.get_selection()
+            elif kind == "state_programmer":
+                result = self.get_programmer_summary()
+            elif kind == "state_cues":
+                result = self.refresh_state("cues", sequence=parameters["sequence"])
+            else:
+                result = self.refresh_state(kind.removeprefix("state_"))
+        except (ConnectionError, PermissionError, ValueError) as exc:
+            return self._respond(ResponseType.ERROR, str(exc), intent=intent)
+        if result["status"] != "available":
+            return self._respond(ResponseType.ANSWER, result.get("error") or f"{result['resource']} is unavailable.", intent=intent, state=result)
+        return self._respond(ResponseType.ANSWER, self._format_state_answer(intent, result), intent=intent, state=result)
+
+    @staticmethod
+    def _format_state_answer(intent: Any, result: dict[str, Any]) -> str:
+        values = result["values"]
+        kind = intent.kind
+        if kind in {"state_groups", "state_fixtures", "state_sequences"}:
+            return f"{result['resource'].title()} ({result['count']})\n" + ("\n".join(f"{item['number']}: {item['name']}" for item in values) or "No entries returned.")
+        if kind == "state_layouts":
+            return f"Layouts ({result['count']})\n" + ("\n".join(f"{item['layout']}: {item.get('name', '')}" for item in values) or "No entries returned.")
+        if kind in {"state_group_membership", "state_group_membership_name"}:
+            group_no = intent.parameters.get("group_no")
+            group = next((item for item in values if group_no is None or item.get("group_no") == group_no), values[-1] if values else None)
+            return f"Group {group['group_no']} {group['name']}\nFixtures ({len(group['fixtures'])}): " + ", ".join(str(item) for item in group["fixtures"])
+        if kind == "state_layout":
+            layout = next(item for item in values if item["layout"] == intent.parameters["layout_no"])
+            rows = [f"{item['type']} {item[item['type']]}: x={item['x']}, y={item['y']}" for item in layout["items"]]
+            return f"Layout {layout['layout']} {layout.get('name', '')}\n" + ("\n".join(rows) or "Empty layout.")
+        if kind == "state_selection":
+            selection = values[0]
+            return "Selected Fixtures: " + (", ".join(str(item) for item in selection["fixtures"]) or "none")
+        if kind == "state_programmer":
+            programmer = values[0]
+            return "Programmer: " + ("active values present" if programmer["has_active_values"] else "empty")
+        if kind == "state_cues":
+            sequence_cues = [item for item in values if item.get("sequence") == intent.parameters["sequence"]]
+            return f"Sequence {intent.parameters['sequence']} Cues ({len(sequence_cues)})\n" + ("\n".join(f"{item['number']}: {item['name']}" for item in sequence_cues) or "No cues returned.")
+        return f"{result['resource'].title()} ({result['count']})"
 
     def cancel_action(self, action_id: str) -> bool:
         action = self.actions.get(action_id)

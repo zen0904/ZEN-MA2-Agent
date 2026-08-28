@@ -50,7 +50,7 @@ class IntentRouter:
             intent = parse(normalized)
         except ParseError:
             return RequestRoute(ResponseType.NEEDS_CLARIFICATION, normalized)
-        if intent.kind in {"state_groups", "state_fixtures"}:
+        if intent.kind.startswith("state_"):
             return RequestRoute(ResponseType.ANSWER, normalized, intent)
         return self._capability_route(normalized, intent, registry)
 

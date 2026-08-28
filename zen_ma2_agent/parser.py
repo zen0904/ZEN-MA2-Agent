@@ -19,6 +19,26 @@ def parse(text: str) -> Intent:
         raise ParseError("Enter a command request.")
 
     state_source = source.rstrip("?？").strip()
+    match = re.fullmatch(r"(?:群組|group)\s*(\d+)\s*(?:裡|里|中)\s*(?:有)?\s*(?:哪些)?\s*(?:燈|燈具|fixture|fixtures)", state_source, flags=re.I)
+    if match:
+        return Intent("state_group_membership", {"group_no": int(match.group(1))}, source)
+    match = re.fullmatch(r"(?:layout|佈局|布局)\s*(\d+)\s*(?:裡|里|中)\s*(?:有)?\s*(?:哪些)?\s*(?:燈|燈具|fixture|fixtures)", state_source, flags=re.I)
+    if match:
+        return Intent("state_layout", {"layout_no": int(match.group(1))}, source)
+    match = re.fullmatch(r"(.+?)\s*(?:裡|里|中)\s*(?:有)?\s*(?:哪些)?\s*(?:燈|燈具|fixture|fixtures)", state_source, flags=re.I)
+    if match:
+        return Intent("state_group_membership_name", {"group_name": match.group(1).strip().strip("'\"")}, source)
+    if re.fullmatch(r"(?:我\s*)?(?:現在\s*)?(?:選了|選取了|selected)\s*(?:哪些)?\s*(?:燈具|fixture|fixtures)", state_source, flags=re.I):
+        return Intent("state_selection", {}, source)
+    if re.fullmatch(r"(?:現在\s*)?(?:programmer|programmer\s*有東西嗎|編程器|程式器)(?:\s*(?:有東西嗎|summary))?", state_source, flags=re.I):
+        return Intent("state_programmer", {}, source)
+    match = re.fullmatch(r"(?:序列|sequence)\s*(\d+)\s*(?:有)?\s*(?:哪些)?\s*(?:cue|cues|提示)", state_source, flags=re.I)
+    if match:
+        return Intent("state_cues", {"sequence": int(match.group(1))}, source)
+    if re.fullmatch(r"(?:現在\s*(?:show\s*)?[裡里]?\s*有\s*哪些|(?:show\s*)?有哪些|列出|list|show)\s*(?:layout|layouts?|佈局|布局)", state_source, flags=re.I):
+        return Intent("state_layouts", {}, source)
+    if re.fullmatch(r"(?:現在\s*(?:show\s*)?[裡里]?\s*有\s*哪些|(?:show\s*)?有哪些|列出|list|show)\s*(?:序列|sequences?)", state_source, flags=re.I):
+        return Intent("state_sequences", {}, source)
     if re.fullmatch(r"(?:現在\s*(?:show\s*)?[裡里]?\s*有\s*哪些|(?:show\s*)?有哪些|列出|list|show)\s*(?:群組|groups?)", state_source, flags=re.I):
         return Intent("state_groups", {}, source)
     if re.fullmatch(r"(?:現在\s*(?:show\s*)?[裡里]?\s*有\s*哪些|(?:show\s*)?有哪些|列出|list|show)\s*(?:燈具|fixtures?)", state_source, flags=re.I):

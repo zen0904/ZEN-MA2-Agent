@@ -48,8 +48,10 @@ the UI instead shows `Settings changed — reconnect required`.
 7. Paired local-LAN mobile PWA at port `8765` by default. The QR contains only
    the selected LAN address and a pairing nonce; it never exposes a permanent
    secret. A six-digit pairing code is still required.
-8. General MA2 State cache: Groups and Fixture inventory can be read through
-   core-owned generic `List Group` / `List Fixture` providers when MA2 is READY.
+8. General MA2 State cache: Groups, Fixtures, Layout Pool, Sequences and Cue
+   metadata use core-owned read-only providers. Group membership and Layout XY
+   use the bundled Echo-only Lua adapter; unsupported accessors are reported
+   explicitly and never emulated through a selection/programmer mutation.
 9. Workflow-first Skill registry: each Skill may describe state dependencies,
    subtasks, multi-step commands, approval gates, verification, and recovery
    metadata. User-installed code is never auto-imported.
@@ -90,7 +92,12 @@ moving the folder to another USB drive letter is supported.
 ## Skills and Show State
 
 Use **MA2 State** to refresh Groups or Fixture inventory, or ask in Chat:
-`現在 Show 裡有哪些 Group？` / `List Fixtures`.
+`現在 Show 裡有哪些 Group？` / `List Fixtures` / `有哪些 Sequence？`.
+
+The general State layer also supports Group membership, Layout XY, selection,
+programmer summary, and Cue metadata. It records each cached resource's source,
+timestamp, stale flag, and error state. See [MA2 State adapter](docs/MA2_STATE.md)
+for the safe adapter install step and current compatibility boundary.
 
 The initial executable builtins are Group Select, Set Dimmer, Fixture Select,
 and Go Sequence. Geometry Clone, Auto Position, Effect Builder, Timecode
@@ -106,6 +113,10 @@ Supported examples:
 - `Beam 亮 30%` → `Group "BEAM"; At 30`
 - `Go Sequence 5` → `Go Sequence 5`
 - `選 Fixture 1 到 10` → `Fixture 1 Thru 10`
+- `HYBRID 裡有哪些燈？` → refreshes Group inventory, then reads Group 1 membership
+  through the read-only adapter
+- `Layout 1 裡有哪些燈？` → reads fixture/group XY metadata through the adapter
+- `Sequence 5 有哪些 Cue？` → read-only Cue inventory
 - `Blackout` → preview only; it remains unconfigured until the show-specific
   BO command template is deliberately set in preferences.
 

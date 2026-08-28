@@ -14,6 +14,9 @@ DEFAULTS: dict[str, Any] = {
     "blackout_command_template": None,
     "mobile": {"enabled": True, "port": 8765},
     "internet_access": "AUTO",
+    # This only invokes the bundled read-only Lua protocol. Operators may use a
+    # Plugin Pool number after importing ZEN_AGENT.lua, without storing secrets.
+    "state_adapter": {"command_template": 'Plugin "ZEN_AGENT" "{request}"'},
 }
 
 HOST_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.-]*$")
@@ -52,7 +55,9 @@ def load_preferences(root: Path | None = None) -> dict[str, Any]:
         if not isinstance(stored, dict):
             raise ValueError("settings root is not an object")
         ma2 = {**DEFAULTS["ma2"], **(stored.get("ma2") if isinstance(stored.get("ma2"), dict) else {})}
-        return {**DEFAULTS, **stored, "ma2": validate_ma2_settings(ma2["host"], ma2["port"], ma2["username"])}
+        adapter = stored.get("state_adapter") if isinstance(stored.get("state_adapter"), dict) else {}
+        template = str(adapter.get("command_template", DEFAULTS["state_adapter"]["command_template"]))
+        return {**DEFAULTS, **stored, "ma2": validate_ma2_settings(ma2["host"], ma2["port"], ma2["username"]), "state_adapter": {"command_template": template}}
     except (OSError, json.JSONDecodeError):
         defaults = {**DEFAULTS, "ma2": dict(DEFAULTS["ma2"])}
         save_preferences(defaults, root)
@@ -71,6 +76,7 @@ def save_preferences(preferences: dict[str, Any], root: Path | None = None) -> P
         "blackout_command_template": preferences.get("blackout_command_template"),
         "mobile": {"enabled": bool((preferences.get("mobile") or {}).get("enabled", True)), "port": int((preferences.get("mobile") or {}).get("port", 8765))},
         "internet_access": str(preferences.get("internet_access", "AUTO")),
+        "state_adapter": {"command_template": str((preferences.get("state_adapter") or {}).get("command_template", DEFAULTS["state_adapter"]["command_template"]))},
     }
     # Password is intentionally absent from this portable file.
     path.write_text(json.dumps(saved, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

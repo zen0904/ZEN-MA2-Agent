@@ -27,9 +27,25 @@ rollback/recovery metadata. The mobile LAN API may never call the
 Telnet transport directly. Pairing tokens protect HTTP and WebSocket access;
 the mobile PWA uses event push with reconnect rather than polling.
 
-The initial generic state providers are read-only Groups and Fixture inventory.
-They call core-owned `List Group` / `List Fixture` transports and cache parsed
-records for every Skill; they are not tied to a particular show name.
+The General State layer is frontend-independent and read-only. Groups,
+Fixtures, Layout Pool inventory, Sequences and Cue metadata use allow-listed
+`List` commands. Group membership and Layout object XY use only the bundled
+`ZEN_AGENT` Lua Echo protocol. Selection and Programmer are never inferred by
+changing MA2 selection or clearing the programmer: when no verified accessor is
+available they report `UNSUPPORTED`.
+
+```text
+Chat / Desktop / Mobile → AgentCore.refresh_state()
+      → allow-listed List provider OR read-only ZEN_AGENT adapter
+      → parser validates only typed records
+      → StateStore(resource, values, timestamp, source, stale, error)
+```
+
+`StateStore` currently holds `groups`, `fixtures`, `group_membership`,
+`layouts`, `selection`, `programmer`, `sequences`, and `cues`. It is shared by
+Desktop, mobile HTTP/WebSocket, and future Skills; no provider is Clone-specific.
+Disconnect marks cached state stale. A successful refresh replaces that stale
+entry. Provider errors are cached rather than converted into invented state.
 
 The portable runtime resolves `config`, `data`, `logs`, `cache`, `web`, and
 `lua` relative to the app folder. The frontend is PySide6, with a separate PWA

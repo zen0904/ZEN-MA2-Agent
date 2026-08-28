@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
@@ -92,6 +93,8 @@ class AgentRuntime:
         """Core-owned read-only transport entrypoint for generic state providers."""
         if not self.ready or not self.client:
             raise ConnectionError("Connect and reach MA2 READY before reading show state.")
+        if not re.fullmatch(r'(?:List (?:Group|Fixture|Layout|Sequence|Cue)(?: \d+)?|Plugin (?:"ZEN_AGENT"|\d+) "[a-z_]+(?: \d+)?")', command, re.I):
+            raise PermissionError("State transport only accepts allow-listed read-only List commands or ZEN_AGENT adapter reads.")
         response = self.client.execute(command)
         self.log("state_read", {"command": command, "response": response})
         return response

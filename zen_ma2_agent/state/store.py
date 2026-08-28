@@ -12,25 +12,54 @@ class StateStore:
     def __init__(self) -> None:
         self._snapshots: dict[str, StateSnapshot] = {}
 
-    def put_groups(self, values: Iterable[Group]) -> StateSnapshot:
-        snapshot = StateSnapshot.create("groups", list(values))
-        self._snapshots["groups"] = snapshot
+    RESOURCES = ("groups", "fixtures", "group_membership", "layouts", "selection", "programmer", "sequences", "cues")
+
+    def put(self, resource: str, values: Iterable[Any], *, source: str) -> StateSnapshot:
+        if resource not in self.RESOURCES:
+            raise ValueError(f"Unknown state resource: {resource}")
+        snapshot = StateSnapshot.create(resource, list(values), source=source)
+        self._snapshots[resource] = snapshot
         return snapshot
 
+    def put_groups(self, values: Iterable[Group]) -> StateSnapshot:
+        return self.put("groups", values, source="ma2_telnet_list")
+
     def put_fixtures(self, values: Iterable[Fixture]) -> StateSnapshot:
-        snapshot = StateSnapshot.create("fixtures", list(values))
-        self._snapshots["fixtures"] = snapshot
+        return self.put("fixtures", values, source="ma2_telnet_list")
+
+    def upsert(self, resource: str, key: str, value: dict[str, Any], *, source: str) -> StateSnapshot:
+        existing = self.get(resource)
+        values = list(existing.values) if existing else []
+        values = [item for item in values if item.get(key) != value.get(key)]
+        values.append(value)
+        return self.put(resource, values, source=source)
+
+    def record_error(self, resource: str, error: str, *, source: str) -> StateSnapshot:
+        existing = self.get(resource)
+        values = list(existing.values) if existing else []
+        snapshot = StateSnapshot.create(resource, values, source=source)
+        snapshot = StateSnapshot(snapshot.resource, snapshot.values, snapshot.updated_at, snapshot.source, bool(existing), error)
+        self._snapshots[resource] = snapshot
         return snapshot
+
+    def mark_stale(self, resource: str, reason: str = "Connection changed; refresh required.") -> None:
+        snapshot = self.get(resource)
+        if snapshot:
+            self._snapshots[resource] = StateSnapshot(snapshot.resource, snapshot.values, snapshot.updated_at, snapshot.source, True, reason)
 
     def get(self, resource: str) -> StateSnapshot | None:
         return self._snapshots.get(resource)
 
     def has(self, resources: Iterable[str]) -> bool:
-        return all(resource in self._snapshots for resource in resources)
+        return all((snapshot := self.get(resource)) is not None and not snapshot.stale and not snapshot.error for resource in resources)
 
     def summary(self) -> dict[str, Any]:
         result: dict[str, Any] = {}
-        for name in ("groups", "fixtures", "presets", "sequences", "cues", "executors", "effects", "layouts", "timecodes", "programmer", "selection", "patch"):
+        for name in self.RESOURCES:
             snapshot = self.get(name)
-            result[name] = {"status": "available", "count": len(snapshot.values), "updated_at": snapshot.updated_at, "values": snapshot.values} if snapshot else {"status": "Not available yet", "values": []}
+            if not snapshot:
+                result[name] = {"status": "Not available yet", "count": 0, "updated_at": None, "source": None, "stale": False, "error": None, "values": []}
+            else:
+                status = "UNSUPPORTED" if snapshot.error and snapshot.error.startswith("UNSUPPORTED") else "ERROR" if snapshot.error else "available"
+                result[name] = {"status": status, "count": len(snapshot.values), "updated_at": snapshot.updated_at, "source": snapshot.source, "stale": snapshot.stale, "error": snapshot.error, "values": snapshot.values}
         return result
