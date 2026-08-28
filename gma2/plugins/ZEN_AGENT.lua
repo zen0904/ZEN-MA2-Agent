@@ -7,8 +7,8 @@ local function quote(value)
     return '"' .. value .. '"'
 end
 
-local function emit(resource, payload) Echo("ZEN_STATE|" .. resource .. "|" .. payload) end
-local function unsupported(resource, detail) Echo("ZEN_STATE_ERROR|" .. resource .. "|" .. detail) end
+local function emit(resource, payload) gma.echo("ZEN_STATE|" .. resource .. "|" .. payload) end
+local function unsupported(resource, detail) gma.echo("ZEN_STATE_ERROR|" .. resource .. "|" .. detail) end
 local function safely(fn, ...)
     if type(fn) ~= "function" then return nil end
     local ok, value = pcall(fn, ...)
@@ -64,7 +64,9 @@ local function layout(layout_no)
     emit("layouts", "{\"layout\":" .. layout_no .. ",\"name\":" .. quote(name(pool)) .. ",\"items\":[" .. table.concat(items, ",") .. "]}")
 end
 
-local function main(display_handle, argument)
+-- grandMA2 passes the quoted command-line argument to this returned function.
+-- Example: Plugin "ZEN_AGENT" "group_membership 1"
+local function main(argument)
     local request, argument_no = tostring(argument or ""):match("^([a-z_]+)%s*(%d*)%s*$")
     if request == "group_membership" and tonumber(argument_no) then group_membership(tonumber(argument_no))
     elseif request == "layouts" and tonumber(argument_no) then layout(tonumber(argument_no))

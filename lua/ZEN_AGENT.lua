@@ -6,8 +6,8 @@ local function quote(value)
     value = tostring(value or ""):gsub("\\", "\\\\"):gsub('"', '\\"'):gsub("\n", "\\n"):gsub("\r", "\\r")
     return '"' .. value .. '"'
 end
-local function emit(resource, payload) Echo("ZEN_STATE|" .. resource .. "|" .. payload) end
-local function unsupported(resource, detail) Echo("ZEN_STATE_ERROR|" .. resource .. "|" .. detail) end
+local function emit(resource, payload) gma.echo("ZEN_STATE|" .. resource .. "|" .. payload) end
+local function unsupported(resource, detail) gma.echo("ZEN_STATE_ERROR|" .. resource .. "|" .. detail) end
 local function safely(fn, ...) if type(fn) ~= "function" then return nil end local ok, value = pcall(fn, ...); if ok then return value end return nil end
 local function handle(path) return safely(gma.show.getobj.handle, path) end
 local function name(object) return safely(gma.show.getobj.name, object) or safely(gma.show.getobj.label, object) or "" end
@@ -42,7 +42,8 @@ local function layout(layout_no)
     end
     emit("layouts", "{\"layout\":" .. layout_no .. ",\"name\":" .. quote(name(pool)) .. ",\"items\":[" .. table.concat(items, ",") .. "]}")
 end
-local function main(display_handle, argument)
+-- grandMA2 passes the quoted command-line argument to this returned function.
+local function main(argument)
     local request, argument_no = tostring(argument or ""):match("^([a-z_]+)%s*(%d*)%s*$")
     if request == "group_membership" and tonumber(argument_no) then group_membership(tonumber(argument_no))
     elseif request == "layouts" and tonumber(argument_no) then layout(tonumber(argument_no))

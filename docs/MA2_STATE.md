@@ -30,8 +30,11 @@ not parsed optimistically; it becomes `UNSUPPORTED` or `ERROR` in the cache.
 
 ## Lua adapter install
 
-Import [ZEN_AGENT.lua](../gma2/plugins/ZEN_AGENT.lua) into a grandMA2 Plugin
-Pool with the label `ZEN_AGENT`. The default portable setting invokes:
+Copy [ZEN_AGENT.xml](../gma2/plugins/ZEN_AGENT.xml) and its paired
+[ZEN_AGENT.lua](../gma2/plugins/ZEN_AGENT.lua) to `gma2/importexport` on the
+USB drive. In **System → Plugin**, edit an empty Plugin Pool object, press
+**Import**, select `ZEN_AGENT.xml`, then save/reload the plugin. The imported
+object is named `ZEN_AGENT`. The default portable setting invokes:
 
 ```text
 Plugin "ZEN_AGENT" "group_membership 1"
