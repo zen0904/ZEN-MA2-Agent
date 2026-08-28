@@ -1,6 +1,8 @@
-# ZEN MA2 Agent — MVP
+# ZEN MA2 Agent
 
-Portable-first grandMA2 onPC assistant runtime. This MVP deliberately keeps AI
+Portable-first grandMA2 onPC assistant runtime. ZEN runs beside MA2 on the
+Windows console and exposes the same guarded workflow to its PySide6 desktop
+workspace and to a paired phone on the local LAN. This release deliberately keeps AI
 out of the control path: natural language is parsed into a typed intent, then a
 deterministic command is safety-classified, previewed, and only sent after the
 operator presses **Execute**.
@@ -8,7 +10,7 @@ operator presses **Execute**.
 ## Run on Windows
 
 ```powershell
-py -3 main.py
+.\.venv\Scripts\python.exe main.py
 ```
 
 No grandMA2 instance is required to open the UI. Use **Connect** after starting
@@ -38,8 +40,41 @@ the UI instead shows `Settings changed — reconnect required`.
 1. Rule parser: Chinese and English command phrases become `Intent` records.
 2. Deterministic command builder: no LLM-generated command is executed.
 3. Safety validator: `SAFE`, `MODIFY`, and `DANGEROUS` levels.
-4. Preview pane: every command is shown before execution.
-5. Telnet TCP transport, optional login command, result log, and small Tk UI.
+4. Structured action plan: every command is shown before execution.
+5. Shared AgentCore: Desktop and mobile call the same planner, safety engine,
+   preview, approval, and Telnet transport.
+6. PySide6 dark desktop workspace with Chat, MA2 State, Skills, Plugins, Phone,
+   Logs, and Settings pages.
+7. Paired local-LAN mobile PWA at port `8765` by default. The QR contains only
+   the selected LAN address and a pairing nonce; it never exposes a permanent
+   secret. A six-digit pairing code is still required.
+
+## Desktop and Phone
+
+The main window starts the local mobile server automatically (default
+`0.0.0.0:8765`). Open **Phone** in the desktop sidebar, choose the correct LAN
+address if more than one is listed, then scan the QR code and enter the
+displayed six-digit pairing code. The phone never connects to MA2 directly:
+
+```text
+Phone PWA → paired HTTP/WebSocket → AgentCore → Planner/Safety/Preview → MA2 Telnet
+Desktop UI ───────────────────────┘
+```
+
+Connection configuration remains in **Settings → MA2 Connection**. Password is
+masked, session-only, and is not written to JSON or audit logging.
+
+## Portable build
+
+Install dependencies into a project virtual environment, then run:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\build_portable.py
+```
+
+The portable bundle is `dist\ZEN_MA2_Agent\ZEN_MA2_Agent.exe`. Its `web`,
+`lua`, `config`, `logs`, and `cache` resources resolve relative to the EXE, so
+moving the folder to another USB drive letter is supported.
 
 Supported examples:
 
@@ -53,7 +88,7 @@ Supported examples:
 Run automated checks with:
 
 ```powershell
-py -3 -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
 See [architecture](docs/ARCHITECTURE.md) and the future

@@ -5,5 +5,10 @@
     "username": ""
   },
   "read_timeout_seconds": 0.35,
-  "blackout_command_template": null
+  "blackout_command_template": null,
+  "mobile": {
+    "enabled": true,
+    "port": 8765
+  },
+  "internet_access": "AUTO"
 }

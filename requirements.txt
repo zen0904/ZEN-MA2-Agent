@@ -1,0 +1,4 @@
+PySide6>=6.8,<7
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30,<1
+qrcode[pil]>=8,<9

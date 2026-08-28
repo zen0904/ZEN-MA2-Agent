@@ -1,0 +1,115 @@
+from __future__ import annotations
+
+import io
+from pathlib import Path
+
+import qrcode
+from PySide6.QtCore import QTimer, Qt
+from PySide6.QtGui import QPixmap
+from PySide6.QtWidgets import (QApplication, QComboBox, QFormLayout, QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QMainWindow, QMessageBox, QPushButton, QSplitter, QStackedWidget, QTextEdit, QVBoxLayout, QWidget)
+
+from .core import AgentCore
+from .telnet_client import ConnectionState
+from .web_server import MobileServer
+
+
+THEME = """
+QWidget{background:#0b0f14;color:#e8edf2;font:13px 'Segoe UI';}QFrame#top{background:#121922;border-bottom:1px solid #2a3643;}QListWidget{background:#10161e;border:0;color:#b9c4cf;padding:8px;}QListWidget::item{padding:10px 12px;}QListWidget::item:selected{background:#19222d;color:#fff;border-left:3px solid #5fa8ff;}QTextEdit,QLineEdit,QComboBox{background:#121922;border:1px solid #2a3643;padding:8px;color:#e8edf2;}QPushButton{background:#19222d;border:1px solid #2a3643;padding:8px 13px;color:#e8edf2;}QPushButton:hover{border-color:#5fa8ff;}QPushButton#execute{background:#1d5f4a;border-color:#44c98a;}QLabel#muted{color:#93a1af;}QFrame#card{background:#121922;border-left:3px solid #e3ad54;padding:10px;}
+"""
+
+
+class ZenDesktop(QMainWindow):
+    def __init__(self, core: AgentCore, server: MobileServer):
+        super().__init__()
+        self.core, self.server = core, server
+        self.setWindowTitle("ZEN MA2 Agent")
+        self.resize(1180, 760)
+        self.setMinimumSize(960, 620)
+        self._build()
+        self.timer = QTimer(self); self.timer.timeout.connect(self.refresh); self.timer.start(120)
+        self.refresh()
+
+    def _build(self) -> None:
+        root = QWidget(); outer = QVBoxLayout(root); outer.setContentsMargins(0, 0, 0, 0); outer.setSpacing(0)
+        top = QFrame(); top.setObjectName("top"); bar = QHBoxLayout(top); bar.setContentsMargins(18, 12, 18, 12)
+        title = QLabel("ZEN MA2 Agent"); title.setStyleSheet("font-size:18px;font-weight:700;"); bar.addWidget(title); bar.addStretch()
+        self.status = QLabel(); self.status.setStyleSheet("color:#44c98a;font-weight:600;"); bar.addWidget(self.status)
+        outer.addWidget(top)
+        split = QSplitter(); split.setChildrenCollapsible(False)
+        self.nav = QListWidget(); self.nav.addItems(["Chat", "MA2 State", "Skills", "Plugins", "Phone", "Logs", "Settings"]); self.nav.setFixedWidth(175)
+        self.pages = QStackedWidget(); self.pages.addWidget(self._chat_page()); self.pages.addWidget(self._state_page()); self.pages.addWidget(self._skills_page()); self.pages.addWidget(self._plugins_page()); self.pages.addWidget(self._phone_page()); self.pages.addWidget(self._logs_page()); self.pages.addWidget(self._settings_page())
+        self.nav.currentRowChanged.connect(self.pages.setCurrentIndex); self.nav.setCurrentRow(0)
+        split.addWidget(self.nav); split.addWidget(self.pages); split.setStretchFactor(1, 1); outer.addWidget(split); self.setCentralWidget(root)
+
+    def _chat_page(self) -> QWidget:
+        page = QWidget(); layout = QVBoxLayout(page); layout.setContentsMargins(18, 16, 18, 16)
+        self.chat = QTextEdit(readOnly=True); self.chat.setPlaceholderText("Conversation history appears here."); layout.addWidget(self.chat, 1)
+        self.plan = QFrame(); self.plan.setObjectName("card"); plan_layout = QVBoxLayout(self.plan); self.plan_text = QLabel("No action plan pending."); self.plan_text.setWordWrap(True); plan_layout.addWidget(self.plan_text); actions = QHBoxLayout(); self.cancel = QPushButton("Cancel"); self.execute = QPushButton("Execute"); self.execute.setObjectName("execute"); actions.addWidget(self.cancel); actions.addStretch(); actions.addWidget(self.execute); plan_layout.addLayout(actions); layout.addWidget(self.plan)
+        input_bar = QHBoxLayout(); self.request = QLineEdit(); self.request.setPlaceholderText("Ask ZEN about your MA2 show or type a command…"); send = QPushButton("Send"); send.clicked.connect(self.submit); self.request.returnPressed.connect(self.submit); input_bar.addWidget(self.request, 1); input_bar.addWidget(send); layout.addLayout(input_bar)
+        self.cancel.clicked.connect(self.cancel_action); self.execute.clicked.connect(self.execute_action); return page
+
+    def _state_page(self) -> QWidget:
+        page = QWidget(); layout = QVBoxLayout(page); layout.setContentsMargins(22, 20, 22, 20); title = QLabel("MA2 State"); title.setStyleSheet("font-size:18px;font-weight:700;"); layout.addWidget(title); self.state_list = QTextEdit(readOnly=True); layout.addWidget(self.state_list); return page
+
+    def _skills_page(self) -> QWidget:
+        return self._info_page("Skills", "Selection — Built-in — SAFE — Enabled\nSet Dimmer — Built-in — MODIFY — Enabled\nClone / Geometry / Position / Effects — interface reserved")
+
+    def _plugins_page(self) -> QWidget:
+        return self._info_page("Plugins", "Built-in Plugins\nZEN_AGENT.lua — grandMA2 adapter scaffold — Not installed / not verified\n\nGenerated Plugins\nNot available yet")
+
+    def _logs_page(self) -> QWidget:
+        page = self._info_page("Logs", "Audit and debug records are written under portable logs/. Raw Telnet output is not shown in the primary workspace."); return page
+
+    def _info_page(self, title: str, text: str) -> QWidget:
+        page = QWidget(); layout = QVBoxLayout(page); layout.setContentsMargins(22, 20, 22, 20); label = QLabel(title); label.setStyleSheet("font-size:18px;font-weight:700;"); layout.addWidget(label); content = QLabel(text); content.setWordWrap(True); content.setObjectName("muted"); layout.addWidget(content); layout.addStretch(); return page
+
+    def _phone_page(self) -> QWidget:
+        page = QWidget(); layout = QVBoxLayout(page); layout.setContentsMargins(22, 20, 22, 20); title = QLabel("Mobile Control"); title.setStyleSheet("font-size:18px;font-weight:700;"); layout.addWidget(title); self.addresses = QComboBox(); self.addresses.currentIndexChanged.connect(self.refresh_qr); layout.addWidget(self.addresses); self.phone_url = QLabel(); self.phone_url.setTextInteractionFlags(Qt.TextSelectableByMouse); layout.addWidget(self.phone_url); self.pairing = QLabel(); self.pairing.setStyleSheet("font-size:25px;font-weight:700;letter-spacing:5px;"); layout.addWidget(self.pairing); self.qr = QLabel(); self.qr.setAlignment(Qt.AlignLeft); layout.addWidget(self.qr); note = QLabel("Pairing code is required after scanning QR. QR contains only a short-lived pairing nonce, never a permanent control secret."); note.setWordWrap(True); note.setObjectName("muted"); layout.addWidget(note); layout.addStretch(); return page
+
+    def _settings_page(self) -> QWidget:
+        page = QWidget(); layout = QVBoxLayout(page); layout.setContentsMargins(22, 20, 22, 20); title = QLabel("Settings — MA2 Connection"); title.setStyleSheet("font-size:18px;font-weight:700;"); layout.addWidget(title); form = QFormLayout(); ma2 = self.core.runtime.preferences["ma2"]; self.host = QLineEdit(ma2["host"]); self.port = QLineEdit(str(ma2["port"])); self.user = QLineEdit(ma2["username"]); self.password = QLineEdit(); self.password.setEchoMode(QLineEdit.Password); form.addRow("Host", self.host); form.addRow("Port", self.port); form.addRow("Username", self.user); form.addRow("Password", self.password); layout.addLayout(form); buttons = QHBoxLayout(); connect = QPushButton("Connect"); disconnect = QPushButton("Disconnect"); connect.clicked.connect(self.connect); disconnect.clicked.connect(self.disconnect); buttons.addWidget(connect); buttons.addWidget(disconnect); layout.addLayout(buttons); self.internet_mode = QComboBox(); self.internet_mode.addItems(["AUTO", "OFFLINE", "ONLINE"]); self.internet_mode.setCurrentText(self.core.runtime.preferences.get("internet_access", "AUTO")); self.internet_mode.currentTextChanged.connect(self.core.set_internet_access); form.addRow("Internet access", self.internet_mode); note = QLabel("Research engine is not implemented in this release."); note.setObjectName("muted"); layout.addWidget(note); layout.addStretch(); return page
+
+    def submit(self) -> None:
+        text = self.request.text().strip()
+        if text: self.core.submit_request(text); self.request.clear(); self.refresh()
+
+    def execute_action(self) -> None:
+        action = next((item for item in self.core.actions.values() if item.status == "PENDING_APPROVAL"), None)
+        if not action: return
+        try:
+            dangerous = action.plan["safety"] == "DANGEROUS"
+            if dangerous and QMessageBox.question(self, "Confirm dangerous action", "This action is marked DANGEROUS. Execute it?") != QMessageBox.Yes:
+                return
+            self.core.approve_action(action.id, danger_confirmed=dangerous)
+        except Exception as exc: QMessageBox.warning(self, "Cannot execute", str(exc))
+        self.refresh()
+
+    def cancel_action(self) -> None:
+        action = next((item for item in self.core.actions.values() if item.status == "PENDING_APPROVAL"), None)
+        if action: self.core.cancel_action(action.id)
+        self.refresh()
+
+    def connect(self) -> None:
+        try: self.core.connect(self.host.text(), self.port.text(), self.user.text(), self.password.text())
+        except Exception as exc: QMessageBox.warning(self, "Connection", str(exc))
+        self.refresh()
+
+    def disconnect(self) -> None:
+        self.core.disconnect(); self.refresh()
+
+    def refresh_qr(self) -> None:
+        url = self.addresses.currentData()
+        if not url: return
+        self.phone_url.setText(url); image = qrcode.make(url); buffer = io.BytesIO(); image.save(buffer, format="PNG"); pix = QPixmap(); pix.loadFromData(buffer.getvalue()); self.qr.setPixmap(pix.scaled(190, 190, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+
+    def refresh(self) -> None:
+        self.core.tick(); snap = self.core.snapshot(); c = snap["connection"]; color = {"READY":"#44c98a", "AUTHENTICATING":"#e3ad54", "AUTH_FAILED":"#e16868"}.get(c["state"], "#93a1af"); self.status.setStyleSheet(f"color:{color};font-weight:600;"); self.status.setText(f"● MA2 {c['state']} | {c['user'] or c['host']} | {c['host']}:{c['port']}   Internet ● {snap['internet']}   Phone ● {snap['phone_connected']} Connected")
+        self.chat.setPlainText("\n\n".join(f"{m['role'].upper()}\n{m['text']}" for m in snap["chat"]))
+        pending = next((item for item in snap["actions"] if item["status"] == "PENDING_APPROVAL"), None); self.execute.setEnabled(bool(pending and c["ready"])); self.cancel.setEnabled(bool(pending)); self.plan_text.setText("No action plan pending." if not pending else f"ACTION PLAN\nTarget: {pending['intent']['parameters']}\nCommand: {pending['command']}\nSafety: {pending['safety']}\n{pending['preview_note']}")
+        self.state_list.setPlainText("\n".join(f"{name}: {value}" for name, value in snap["state_browser"].items()))
+        urls = self.core.phone_urls(self.server.port); old = self.addresses.currentData(); self.addresses.blockSignals(True); self.addresses.clear(); [self.addresses.addItem(url, url) for url in urls]; self.addresses.blockSignals(False); self.pairing.setText(f"Pairing code: {self.core.pairing.code}");
+        if urls and old not in urls: self.addresses.setCurrentIndex(0); self.refresh_qr()
+
+
+def run_desktop(core: AgentCore, server: MobileServer) -> int:
+    app = QApplication.instance() or QApplication([]); app.setStyleSheet(THEME); window = ZenDesktop(core, server); window.show(); return app.exec()

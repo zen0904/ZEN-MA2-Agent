@@ -12,6 +12,8 @@ DEFAULTS: dict[str, Any] = {
     "ma2": {"host": "127.0.0.1", "port": 30000, "username": ""},
     "read_timeout_seconds": 0.35,
     "blackout_command_template": None,
+    "mobile": {"enabled": True, "port": 8765},
+    "internet_access": "AUTO",
 }
 
 HOST_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.-]*$")
@@ -67,6 +69,8 @@ def save_preferences(preferences: dict[str, Any], root: Path | None = None) -> P
         "ma2": validate_ma2_settings(ma2.get("host", ""), ma2.get("port", ""), ma2.get("username", "")),
         "read_timeout_seconds": float(preferences.get("read_timeout_seconds", DEFAULTS["read_timeout_seconds"])),
         "blackout_command_template": preferences.get("blackout_command_template"),
+        "mobile": {"enabled": bool((preferences.get("mobile") or {}).get("enabled", True)), "port": int((preferences.get("mobile") or {}).get("port", 8765))},
+        "internet_access": str(preferences.get("internet_access", "AUTO")),
     }
     # Password is intentionally absent from this portable file.
     path.write_text(json.dumps(saved, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

@@ -3,3 +3,7 @@ __pycache__/
 .pytest_cache/
 logs/*.jsonl
 config/settings.json
+.venv/
+build/
+dist/
+*.spec

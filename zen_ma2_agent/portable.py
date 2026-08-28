@@ -13,7 +13,8 @@ def app_root() -> Path:
 
 def ensure_runtime_dirs(root: Path | None = None) -> tuple[Path, Path]:
     root = root or app_root()
-    data, logs = root / "data", root / "logs"
+    data, logs, cache = root / "data", root / "logs", root / "cache"
     data.mkdir(exist_ok=True)
     logs.mkdir(exist_ok=True)
+    cache.mkdir(exist_ok=True)
     return data, logs

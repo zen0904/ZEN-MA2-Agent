@@ -1,0 +1,2 @@
+-- ZEN MA2 Agent portable Lua adapter placeholder.
+-- Generated and installable plugin workflows are intentionally future work.

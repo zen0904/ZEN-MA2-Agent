@@ -1,0 +1,13 @@
+let token=localStorage.getItem('zen_ma2_token'),socket;
+const $=id=>document.getElementById(id),nonce=new URLSearchParams(location.search).get('nonce')||'';
+function add(text,kind='assistant'){const n=document.createElement('div');n.className='message '+kind;n.textContent=text;$('messages').append(n)}
+function page(name){document.querySelectorAll('.page').forEach(x=>x.hidden=true);$(name+'-page').hidden=false}
+async function pair(){const r=await fetch('/api/pair',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({code:$('code').value,nonce})});if(!r.ok)return alert('Pairing failed');token=(await r.json()).token;localStorage.setItem('zen_ma2_token',token);boot()}
+async function api(path,body){return fetch(path,{method:body?'POST':'GET',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:body?JSON.stringify(body):undefined})}
+function plan(a){if(!a)return;const p=$('plan');p.hidden=false;p.innerHTML=`<b>ACTION PLAN</b><p>${a.intent.kind}</p><p>${a.command||a.preview_note}</p><p>Safety: ${a.safety}</p><button onclick="approve('${a.id}','${a.safety}')">Execute</button><button onclick="cancel('${a.id}')">Cancel</button>`}
+async function sendChat(e){e.preventDefault();const text=$('request').value.trim();if(!text)return;add(text,'user');$('request').value='';const r=await api('/api/chat',{text});const d=await r.json();add(d.message);plan(d.action)}
+async function approve(id,safety){const dangerous=safety==='DANGEROUS';if(dangerous&&!confirm('This action is marked DANGEROUS. Execute it?'))return;const r=await api('/api/actions/'+id+'/approve',{danger_confirmed:dangerous});const d=await r.json();add(d.result||d.detail);$('plan').hidden=true}
+async function cancel(id){await api('/api/actions/'+id+'/cancel',{});$('plan').hidden=true}
+function render(s){$('status').textContent='MA2 ● '+s.connection.state;$('messages').innerHTML='';(s.chat||[]).forEach(m=>add(m.text,m.role));$('state').textContent=Object.entries(s.state_browser||{}).map(([k,v])=>k+': '+v).join('\n');$('settings').textContent=`${s.connection.status}\nInternet: ${s.internet}\nPhone: ${s.phone_connected} connected`}
+function boot(){if(!token)return;$('pair').hidden=true;$('app').hidden=false;api('/api/state').then(r=>r.json()).then(render);socket=new WebSocket((location.protocol==='https:'?'wss':'ws')+'://'+location.host+'/ws?token='+encodeURIComponent(token));socket.onmessage=e=>{const x=JSON.parse(e.data);if(x.data&&x.data.connection)render(x.data)};socket.onclose=()=>setTimeout(boot,1500)}
+boot();if('serviceWorker'in navigator)navigator.serviceWorker.register('/assets/sw.js');
