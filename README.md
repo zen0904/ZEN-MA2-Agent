@@ -77,6 +77,12 @@ Install dependencies into a project virtual environment, then run:
 .\.venv\Scripts\python.exe scripts\build_portable.py
 ```
 
+Verify the built EXE itself (not the source Python process) with:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\smoke_portable.py
+```
+
 The portable bundle is `dist\ZEN_MA2_Agent\ZEN_MA2_Agent.exe`. Its `web`,
 `lua`, `skills`, `config`, `logs`, and `cache` resources resolve relative to the EXE, so
 moving the folder to another USB drive letter is supported.
