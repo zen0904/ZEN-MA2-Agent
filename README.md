@@ -48,6 +48,11 @@ the UI instead shows `Settings changed — reconnect required`.
 7. Paired local-LAN mobile PWA at port `8765` by default. The QR contains only
    the selected LAN address and a pairing nonce; it never exposes a permanent
    secret. A six-digit pairing code is still required.
+8. General MA2 State cache: Groups and Fixture inventory can be read through
+   core-owned generic `List Group` / `List Fixture` providers when MA2 is READY.
+9. Workflow-first Skill registry: each Skill may describe state dependencies,
+   subtasks, multi-step commands, approval gates, verification, and recovery
+   metadata. User-installed code is never auto-imported.
 
 ## Desktop and Phone
 
@@ -73,8 +78,21 @@ Install dependencies into a project virtual environment, then run:
 ```
 
 The portable bundle is `dist\ZEN_MA2_Agent\ZEN_MA2_Agent.exe`. Its `web`,
-`lua`, `config`, `logs`, and `cache` resources resolve relative to the EXE, so
+`lua`, `skills`, `config`, `logs`, and `cache` resources resolve relative to the EXE, so
 moving the folder to another USB drive letter is supported.
+
+## Skills and Show State
+
+Use **MA2 State** to refresh Groups or Fixture inventory, or ask in Chat:
+`現在 Show 裡有哪些 Group？` / `List Fixtures`.
+
+The initial executable builtins are Group Select, Set Dimmer, Fixture Select,
+and Go Sequence. Geometry Clone, Auto Position, Effect Builder, Timecode
+Offset, Show Diagnostics, and Programmer Inspect are explicit placeholders;
+they do not claim to run yet.
+
+See [Skill system](docs/SKILL_SYSTEM.md) and
+[self-extension](docs/SELF_EXTENSION.md) for the controlled install boundary.
 
 Supported examples:
 

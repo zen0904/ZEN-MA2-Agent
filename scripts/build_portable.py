@@ -17,7 +17,7 @@ def main() -> int:
         sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean", "--onedir",
         "--name", "ZEN_MA2_Agent", "--add-data", data("web", "web"),
         "--add-data", data("config", "config"), "--add-data", data("gma2", "gma2"),
-        "--add-data", data("lua", "lua"), "--collect-all", "PySide6", "--collect-all",
+        "--add-data", data("lua", "lua"), "--add-data", data("skills", "skills"), "--collect-all", "PySide6", "--collect-all",
         "qrcode", "main.py",
     ]
     result = subprocess.call(command, cwd=ROOT)
@@ -27,7 +27,7 @@ def main() -> int:
     internal = bundle / "_internal"
     # PyInstaller stores --add-data under _internal by default. Copy mutable and
     # user-facing resources alongside the EXE so USB-relative lookup is stable.
-    for name in ("web", "lua", "config", "gma2"):
+    for name in ("web", "lua", "config", "gma2", "skills"):
         copytree(internal / name, bundle / name, dirs_exist_ok=True)
     for name in ("logs", "cache"):
         (bundle / name).mkdir(exist_ok=True)

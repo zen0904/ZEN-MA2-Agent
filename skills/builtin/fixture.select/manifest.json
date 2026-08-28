@@ -1,0 +1,9 @@
+{
+  "id": "fixture.select",
+  "name": "Fixture Select",
+  "version": "1.0",
+  "description": "Select a fixture range through an approved SAFE workflow.",
+  "intents": ["select_fixture_range"],
+  "required_state": [],
+  "safety": "SAFE"
+}

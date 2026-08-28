@@ -1,0 +1,9 @@
+{
+  "id": "sequence.go",
+  "name": "Go Sequence",
+  "version": "1.0",
+  "description": "Run a sequence through an approved SAFE workflow.",
+  "intents": ["go_sequence"],
+  "required_state": [],
+  "safety": "SAFE"
+}

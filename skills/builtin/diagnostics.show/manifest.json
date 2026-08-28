@@ -1,0 +1,1 @@
+{"id":"diagnostics.show","name":"Show Diagnostics","version":"0.0","description":"Workflow placeholder.","intents":["diagnose_show"],"required_state":["groups","fixtures"],"safety":"SAFE","enabled":false}

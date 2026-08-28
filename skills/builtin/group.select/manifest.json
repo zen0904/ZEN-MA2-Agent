@@ -1,0 +1,9 @@
+{
+  "id": "group.select",
+  "name": "Group Select",
+  "version": "1.0",
+  "description": "Select a named grandMA2 Group through an approved SAFE workflow.",
+  "intents": ["select_group"],
+  "required_state": [],
+  "safety": "SAFE"
+}

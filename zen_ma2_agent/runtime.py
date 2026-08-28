@@ -88,6 +88,26 @@ class AgentRuntime:
         self.log("execute", {"plan": self.current_plan.as_dict(), "response": response})
         return response
 
+    def read_state(self, command: str) -> str:
+        """Core-owned read-only transport entrypoint for generic state providers."""
+        if not self.ready or not self.client:
+            raise ConnectionError("Connect and reach MA2 READY before reading show state.")
+        response = self.client.execute(command)
+        self.log("state_read", {"command": command, "response": response})
+        return response
+
+    def execute_approved_commands(self, commands: tuple[str, ...]) -> list[str]:
+        """Only AgentCore calls this after approval; Skills never receive the client."""
+        if not self.ready or not self.client:
+            raise ConnectionError("Connect and reach MA2 READY before executing.")
+        if not commands:
+            raise ValueError("Approved workflow has no MA2 commands.")
+        responses: list[str] = []
+        for command in commands:
+            responses.append(self.client.execute(command))
+        self.log("workflow_execute", {"commands": list(commands), "responses": responses})
+        return responses
+
     def status_text(self) -> str:
         if self.reconnect_required:
             return "Settings changed — reconnect required"

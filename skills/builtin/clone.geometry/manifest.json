@@ -1,0 +1,10 @@
+{
+  "id": "clone.geometry",
+  "name": "Geometry Clone",
+  "version": "0.0",
+  "description": "Workflow placeholder: inspect layouts, calculate mapping, preview clone and verify.",
+  "intents": ["clone_geometry"],
+  "required_state": ["fixtures", "layouts"],
+  "safety": "MODIFY",
+  "enabled": false
+}

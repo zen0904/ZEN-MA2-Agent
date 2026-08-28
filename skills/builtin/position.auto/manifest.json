@@ -1,0 +1,1 @@
+{"id":"position.auto","name":"Auto Position","version":"0.0","description":"Workflow placeholder.","intents":["position_auto"],"required_state":["fixtures","layouts"],"safety":"MODIFY","enabled":false}

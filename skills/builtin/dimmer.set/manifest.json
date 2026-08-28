@@ -1,0 +1,9 @@
+{
+  "id": "dimmer.set",
+  "name": "Set Dimmer",
+  "version": "1.0",
+  "description": "Set a group dimmer level through an approved MODIFY workflow.",
+  "intents": ["beam_intensity"],
+  "required_state": [],
+  "safety": "MODIFY"
+}

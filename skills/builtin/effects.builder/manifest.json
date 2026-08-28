@@ -1,0 +1,1 @@
+{"id":"effects.builder","name":"Effect Builder","version":"0.0","description":"Workflow placeholder.","intents":["build_effect"],"required_state":["effects","selection"],"safety":"MODIFY","enabled":false}

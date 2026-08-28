@@ -49,10 +49,15 @@ class ZenDesktop(QMainWindow):
         self.cancel.clicked.connect(self.cancel_action); self.execute.clicked.connect(self.execute_action); return page
 
     def _state_page(self) -> QWidget:
-        page = QWidget(); layout = QVBoxLayout(page); layout.setContentsMargins(22, 20, 22, 20); title = QLabel("MA2 State"); title.setStyleSheet("font-size:18px;font-weight:700;"); layout.addWidget(title); self.state_list = QTextEdit(readOnly=True); layout.addWidget(self.state_list); return page
+        page = QWidget(); layout = QVBoxLayout(page); layout.setContentsMargins(22, 20, 22, 20); title = QLabel("MA2 State"); title.setStyleSheet("font-size:18px;font-weight:700;"); layout.addWidget(title); buttons = QHBoxLayout(); groups = QPushButton("Refresh Groups"); fixtures = QPushButton("Refresh Fixtures"); groups.clicked.connect(lambda: self.refresh_state("groups")); fixtures.clicked.connect(lambda: self.refresh_state("fixtures")); buttons.addWidget(groups); buttons.addWidget(fixtures); buttons.addStretch(); layout.addLayout(buttons); self.state_list = QTextEdit(readOnly=True); layout.addWidget(self.state_list); return page
 
     def _skills_page(self) -> QWidget:
-        return self._info_page("Skills", "Selection — Built-in — SAFE — Enabled\nSet Dimmer — Built-in — MODIFY — Enabled\nClone / Geometry / Position / Effects — interface reserved")
+        page = QWidget(); layout = QVBoxLayout(page); layout.setContentsMargins(22, 20, 22, 20)
+        title = QLabel("Skills"); title.setStyleSheet("font-size:18px;font-weight:700;"); layout.addWidget(title)
+        self.skill_picker = QComboBox(); self.skill_picker.currentIndexChanged.connect(self.inspect_skill); layout.addWidget(self.skill_picker)
+        self.skills_view = QTextEdit(readOnly=True); layout.addWidget(self.skills_view, 1)
+        buttons = QHBoxLayout(); enable = QPushButton("Enable"); disable = QPushButton("Disable"); inspect = QPushButton("Inspect"); enable.clicked.connect(lambda: self.set_skill_enabled(True)); disable.clicked.connect(lambda: self.set_skill_enabled(False)); inspect.clicked.connect(self.inspect_skill); buttons.addWidget(enable); buttons.addWidget(disable); buttons.addStretch(); buttons.addWidget(inspect); layout.addLayout(buttons)
+        return page
 
     def _plugins_page(self) -> QWidget:
         return self._info_page("Plugins", "Built-in Plugins\nZEN_AGENT.lua — grandMA2 adapter scaffold — Not installed / not verified\n\nGenerated Plugins\nNot available yet")
@@ -97,6 +102,33 @@ class ZenDesktop(QMainWindow):
     def disconnect(self) -> None:
         self.core.disconnect(); self.refresh()
 
+    def refresh_state(self, resource: str) -> None:
+        try:
+            self.core.refresh_state(resource)
+        except Exception as exc:
+            QMessageBox.warning(self, "MA2 State", str(exc))
+        self.refresh()
+
+    def set_skill_enabled(self, enabled: bool) -> None:
+        skill_id = self.skill_picker.currentData()
+        if not skill_id:
+            return
+        try:
+            self.core.set_skill_enabled(skill_id, enabled)
+        except Exception as exc:
+            QMessageBox.warning(self, "Skill", str(exc))
+        self.refresh()
+
+    def inspect_skill(self) -> None:
+        skill_id = self.skill_picker.currentData()
+        if not skill_id or not hasattr(self, "skills_view"):
+            return
+        try:
+            manifest = self.core.skills.get(skill_id).summary()
+            self.skills_view.setPlainText("\n".join(f"{key}: {value}" for key, value in manifest.items()))
+        except Exception:
+            pass
+
     def refresh_qr(self) -> None:
         url = self.addresses.currentData()
         if not url: return
@@ -106,7 +138,16 @@ class ZenDesktop(QMainWindow):
         self.core.tick(); snap = self.core.snapshot(); c = snap["connection"]; color = {"READY":"#44c98a", "AUTHENTICATING":"#e3ad54", "AUTH_FAILED":"#e16868"}.get(c["state"], "#93a1af"); self.status.setStyleSheet(f"color:{color};font-weight:600;"); self.status.setText(f"● MA2 {c['state']} | {c['user'] or c['host']} | {c['host']}:{c['port']}   Internet ● {snap['internet']}   Phone ● {snap['phone_connected']} Connected")
         self.chat.setPlainText("\n\n".join(f"{m['role'].upper()}\n{m['text']}" for m in snap["chat"]))
         pending = next((item for item in snap["actions"] if item["status"] == "PENDING_APPROVAL"), None); self.execute.setEnabled(bool(pending and c["ready"])); self.cancel.setEnabled(bool(pending)); self.plan_text.setText("No action plan pending." if not pending else f"ACTION PLAN\nTarget: {pending['intent']['parameters']}\nCommand: {pending['command']}\nSafety: {pending['safety']}\n{pending['preview_note']}")
-        self.state_list.setPlainText("\n".join(f"{name}: {value}" for name, value in snap["state_browser"].items()))
+        state_lines = []
+        for name, value in snap["state_browser"].items():
+            if value["status"] == "available":
+                state_lines.append(f"{name.title()} — {value['count']} items\n" + "\n".join(str(item) for item in value["values"]))
+            else:
+                state_lines.append(f"{name.title()} — {value['status']}")
+        self.state_list.setPlainText("\n\n".join(state_lines))
+        skills = snap["skills"]; old_skill = self.skill_picker.currentData(); self.skill_picker.blockSignals(True); self.skill_picker.clear(); [self.skill_picker.addItem(f"{item['name']} — {item['source']} — {item['safety']} — {'Enabled' if item['enabled'] else 'Disabled'}", item['id']) for item in skills]; self.skill_picker.blockSignals(False)
+        if skills:
+            self.skill_picker.setCurrentIndex(next((index for index, item in enumerate(skills) if item["id"] == old_skill), 0)); self.inspect_skill()
         urls = self.core.phone_urls(self.server.port); old = self.addresses.currentData(); self.addresses.blockSignals(True); self.addresses.clear(); [self.addresses.addItem(url, url) for url in urls]; self.addresses.blockSignals(False); self.pairing.setText(f"Pairing code: {self.core.pairing.code}");
         if urls and old not in urls: self.addresses.setCurrentIndex(0); self.refresh_qr()
 

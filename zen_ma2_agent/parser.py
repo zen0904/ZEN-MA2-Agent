@@ -18,6 +18,12 @@ def parse(text: str) -> Intent:
     if not source:
         raise ParseError("Enter a command request.")
 
+    state_source = source.rstrip("?？").strip()
+    if re.fullmatch(r"(?:現在\s*show\s*[裡里]?\s*有\s*哪些|list|show)\s*groups?", state_source, flags=re.I):
+        return Intent("state_groups", {}, source)
+    if re.fullmatch(r"(?:現在\s*show\s*[裡里]?\s*有\s*哪些|list|show)\s*fixtures?", state_source, flags=re.I):
+        return Intent("state_fixtures", {}, source)
+
     match = re.fullmatch(r"(?:選|选择|select)\s+fixture\s+(\d+)\s*(?:到|to|thru)\s*(\d+)", source, flags=re.I)
     if match:
         first, last = int(match.group(1)), int(match.group(2))

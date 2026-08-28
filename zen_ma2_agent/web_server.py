@@ -49,6 +49,11 @@ def create_app(core: AgentCore, root: Path | None = None) -> FastAPI:
         require(authorization)
         return core.snapshot()
 
+    @app.get("/api/skills")
+    def skills(authorization: str | None = Header(default=None)) -> list[dict[str, Any]]:
+        require(authorization)
+        return core.skills.list()
+
     @app.post("/api/chat")
     def chat(payload: dict[str, Any], authorization: str | None = Header(default=None)) -> dict[str, Any]:
         require(authorization)

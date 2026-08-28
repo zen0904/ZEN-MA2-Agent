@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
+from shutil import copytree
 
 from fastapi.testclient import TestClient
 
@@ -35,6 +36,7 @@ class AgentCoreMobileTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="zen-agent-core-")
         self.root = Path(self.temp.name)
+        copytree(Path(__file__).resolve().parents[1] / "skills", self.root / "skills")
         self.runtime = AgentRuntime(self.root, client_factory=ReadyClient)
         self.core = AgentCore(self.runtime)
         self.app_root = Path(__file__).resolve().parents[1]

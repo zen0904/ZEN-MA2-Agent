@@ -1,0 +1,1 @@
+{"id":"programmer.inspect","name":"Programmer Inspect","version":"0.0","description":"Workflow placeholder.","intents":["inspect_programmer"],"required_state":["programmer"],"safety":"SAFE","enabled":false}

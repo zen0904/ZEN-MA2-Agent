@@ -1,0 +1,1 @@
+{"id":"timecode.offset","name":"Timecode Offset","version":"0.0","description":"Workflow placeholder.","intents":["offset_timecode"],"required_state":["timecodes"],"safety":"MODIFY","enabled":false}
