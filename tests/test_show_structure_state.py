@@ -1,9 +1,15 @@
 import unittest
+import tempfile
+from pathlib import Path
+from shutil import copytree
 
+from zen_ma2_agent.core import AgentCore
 from zen_ma2_agent.parser import parse
+from zen_ma2_agent.runtime import AgentRuntime
 from zen_ma2_agent.state.providers.layouts import LayoutExportProvider
 from zen_ma2_agent.state.providers.sequences import CueProvider, SequenceProvider
 from zen_ma2_agent.state.providers.show_pools import EffectProvider, ExecutorProvider, PageProvider, PresetProvider
+from zen_ma2_agent.telnet_client import ConnectionState
 
 
 LAYOUT_XML = '''<MA xmlns="http://schemas.malighting.de/grandma2/xml/MA"><Group index="0" name="Stage"><LayoutData><CObjects>
@@ -52,6 +58,20 @@ class ShowStructureProviderTests(unittest.TestCase):
         self.assertEqual(parse('Layout 1 裡有哪些燈？').kind,'layout_items_query')
         self.assertEqual(parse('Layout 1 裡有哪些燈？').parameters,{"layout_no":1})
         self.assertEqual(parse('HYBRID 在 Layout 1 怎麼排？').parameters,{"layout_no":1,"object_name":"HYBRID"})
+
+    def test_preset_provider_uses_the_read_only_allow_list(self):
+        class Client:
+            def __init__(self, *_args): self.state=ConnectionState.DISCONNECTED; self.authenticated_user=None; self.audit_entries=[]; self.commands=[]
+            def connect(self, username, password=""): self.state=ConnectionState.READY; self.authenticated_user=username; return "ready"
+            def execute(self, command): self.commands.append(command); return ""
+            def close(self): self.state=ConnectionState.DISCONNECTED
+        with tempfile.TemporaryDirectory(prefix="zen-preset-") as temporary:
+            root=Path(temporary); copytree(Path(__file__).resolve().parents[1] / "skills",root / "skills")
+            runtime=AgentRuntime(root,client_factory=Client); core=AgentCore(runtime); core.connect("127.0.0.1",30000,"MM","")
+            response=core.handle_request("有哪些 Position Preset？")
+            self.assertEqual(response["type"],"ANSWER")
+            self.assertEqual(response["message"],"Position Presets (0)\nNo entries returned.")
+            self.assertEqual(runtime.client.commands,["List Preset Position"])
 
 
 if __name__ == '__main__': unittest.main()
