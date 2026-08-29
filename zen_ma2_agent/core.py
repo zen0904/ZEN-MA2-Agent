@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import uuid
 from dataclasses import dataclass
 from time import monotonic
@@ -409,10 +410,12 @@ class AgentCore:
 
     @staticmethod
     def _format_layout_item(item: dict[str, Any]) -> str:
-        label = f" {item['name']}" if item.get("name") else ""
-        via = f" via Group {item['via_group']}" if item.get("via_group") is not None else ""
         reference = item["reference"] if item["type"] != "unknown" else f"unresolved {item.get('reference_tokens', [])}"
-        return f"{item['type']} {reference}{label}{via}: x={item['x']}, y={item['y']}"
+        name = str(item.get("name") or "").strip()
+        if item["type"] in {"preset", "group"} and name:
+            name = re.sub(rf"\s+{re.escape(str(reference))}$", "", name).strip()
+        label = f' "{name}"' if name else ""
+        return f"{str(item['type']).title()} {reference}{label}: x={item['x']}, y={item['y']}"
 
     def _format_layout_group_answer(self, group_name: str, result: dict[str, Any]) -> str:
         groups = self.state.get("groups")
@@ -426,9 +429,12 @@ class AgentCore:
             return membership.get("error") or f"Group {group_name} membership is unavailable."
         fixtures = set(membership["group"]["fixtures"])
         layout = next(item for item in result["values"] if item["layout"] == result["values"][-1]["layout"])
-        group_memberships = {group["number"]: list(fixtures)}
-        matching = [item for item in LayoutObjectResolver.lighting_items(layout, group_memberships) if item["reference"] in fixtures]
+        matching = [item for item in LayoutObjectResolver.lighting_items(layout) if item["reference"] in fixtures]
         if not matching:
+            group_items = [item for item in layout["items"] if item["type"] == "group" and item["reference"] == group["number"]]
+            if group_items:
+                item = group_items[0]
+                return f'Group {group["number"]} "{group["name"]}" is in Layout {layout["layout"]} at x={item["x"]}, y={item["y"]}.\nNo individual {group["name"]} fixture items are present.'
             return f"{group_name} has no resolved fixture items in Layout {layout['layout']}."
         return f"{group_name} in Layout {layout['layout']}\n" + "\n".join(self._format_layout_item(item) for item in matching[:self.CHAT_ROW_LIMIT])
 

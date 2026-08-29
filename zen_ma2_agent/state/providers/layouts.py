@@ -7,7 +7,7 @@ from typing import Any
 from xml.etree import ElementTree as ET
 
 from .group_membership import GroupMembershipProviderError, GroupMembershipProviderUnavailable, ImportExportPathResolver, _configured_path, _is_loopback_host, _timeout_seconds
-from .layout_cobject_registry import validated_class
+from .layout_cobject_registry import validated_mapping
 
 
 def _local_name(element: ET.Element) -> str:
@@ -23,7 +23,7 @@ class LayoutInventoryProvider:
 
 
 class LayoutObjectResolver:
-    """Resolve only explicit exported XML references; opaque tokens stay unknown."""
+    """Resolve explicit XML references and console-validated CObject tuples only."""
 
     _reference_attributes = (
         ("fixture", ("fix_id", "fixture_id")), ("subfixture", ("subfixture_id", "subfix_id")),
@@ -38,25 +38,26 @@ class LayoutObjectResolver:
         attributes, cobject_attributes = dict(element.attrib), dict(cobject.attrib) if cobject is not None else {}
         tokens = [child.text.strip() for child in (list(cobject) if cobject is not None else []) if child.text and child.text.strip()]
         object_class = next((attributes.get(name) or cobject_attributes.get(name) for name in ("object_class", "class", "type", "object_type") if attributes.get(name) or cobject_attributes.get(name)), None)
-        verified_token_class = validated_class(tokens)
+        token_mapping = validated_mapping(tokens)
         name = attributes.get("name") or cobject_attributes.get("name") or ""
         base = {"name": name, "object_class": object_class, "raw_xml_tag": _local_name(element), "raw_attributes": attributes, "cobject_attributes": cobject_attributes, "parent_path": parent_path, "reference_tokens": tokens}
         for object_type, names in cls._reference_attributes:
             value = next((attributes.get(name) or cobject_attributes.get(name) for name in names if attributes.get(name) or cobject_attributes.get(name)), None)
             if value is not None:
                 return {"type": object_type, "reference": int(value) if value.isdigit() else value, "resolved": True, **base}
-        return {"type": "unknown", "reference": tokens, "resolved": False, "validated_token_class": verified_token_class, **base}
+        if token_mapping:
+            reference: int | str
+            if token_mapping["object_type"] == "preset":
+                reference = f"{int(tokens[2])}.{int(tokens[3])}"
+            else:
+                reference = int(tokens[2])
+            return {"type": token_mapping["object_type"], "reference": reference, "resolved": True, "ma2_class": token_mapping["ma2_class"], "provenance": token_mapping["source"], **base}
+        return {"type": "unknown", "reference": tokens, "resolved": False, "validated_token_class": None, **base}
 
     @staticmethod
-    def lighting_items(layout: dict[str, Any], memberships: dict[int, list[int]] | None = None) -> list[dict[str, Any]]:
-        memberships = memberships or {}
-        result: list[dict[str, Any]] = []
-        for item in layout["items"]:
-            if item["type"] in {"fixture", "subfixture"}:
-                result.append(item)
-            elif item["type"] == "group" and isinstance(item["reference"], int):
-                result.extend({**item, "type": "fixture", "reference": fixture, "via_group": item["reference"]} for fixture in memberships.get(item["reference"], []))
-        return result
+    def lighting_items(layout: dict[str, Any]) -> list[dict[str, Any]]:
+        """A Group button is not an individual fixture item in a Layout."""
+        return [item for item in layout["items"] if item["type"] in {"fixture", "subfixture"}]
 
 
 class LayoutExportProvider:
