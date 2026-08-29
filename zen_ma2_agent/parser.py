@@ -24,10 +24,10 @@ def parse(text: str) -> Intent:
         return Intent("state_group_membership", {"group_no": int(match.group(1))}, source)
     match = re.fullmatch(r"(?:layout|佈局|布局)\s*(\d+)\s*(?:裡|里|中)\s*(?:有)?\s*(?:哪些)?\s*(?:燈|燈具|fixture|fixtures)", state_source, flags=re.I)
     if match:
-        return Intent("state_layout", {"layout_no": int(match.group(1))}, source)
+        return Intent("layout_items_query", {"layout_no": int(match.group(1))}, source)
     match = re.fullmatch(r"(.+?)\s*(?:在|於)\s*(?:layout|佈局|布局)\s*(\d+)\s*(?:怎麼排|如何排|怎麼排列)", state_source, flags=re.I)
     if match:
-        return Intent("state_layout", {"layout_no": int(match.group(2)), "object_name": match.group(1).strip()}, source)
+        return Intent("layout_items_query", {"layout_no": int(match.group(2)), "object_name": match.group(1).strip()}, source)
     match = re.fullmatch(r"(?:sequence|序列)\s*(\d+)\s*(?:掛在(?:哪個)?|在哪個)\s*(?:executor|exec|執行器)", state_source, flags=re.I)
     if match: return Intent("sequence_executor_lookup", {"sequence":int(match.group(1))}, source)
     match = re.fullmatch(r"(?:page|頁面)\s*(\d+)\s*(?:有)?\s*(?:哪些)?\s*(?:executor|exec|執行器)", state_source, flags=re.I)

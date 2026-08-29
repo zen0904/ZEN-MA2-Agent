@@ -1,4 +1,5 @@
 import sys
+import json
 from types import SimpleNamespace
 
 from PySide6.QtCore import QTimer
@@ -11,6 +12,9 @@ from zen_ma2_agent.web_server import MobileServer
 
 def main() -> int:
     core = AgentCore()
+    if "--build-identity" in sys.argv:
+        print(json.dumps(core.build_identity, ensure_ascii=False, sort_keys=True), flush=True)
+        return 0
     if "--ui-smoke-request" in sys.argv:
         index = sys.argv.index("--ui-smoke-request")
         if index + 1 >= len(sys.argv):

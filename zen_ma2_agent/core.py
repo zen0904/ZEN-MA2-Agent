@@ -7,6 +7,7 @@ from typing import Any
 
 from .events import EventBus
 from .config import save_preferences
+from .build_identity import load_build_identity
 from .extensions import ExtensionManager
 from .network import internet_online, lan_ipv4_addresses
 from .pairing import PairingManager
@@ -36,6 +37,7 @@ class AgentCore:
 
     def __init__(self, runtime: AgentRuntime | None = None, group_membership_provider: GroupMembershipProvider | None = None):
         self.runtime = runtime or AgentRuntime()
+        self.build_identity = load_build_identity(self.runtime.root)
         self.events = EventBus()
         self.pairing = PairingManager()
         self.chat: list[dict[str, Any]] = []
@@ -52,6 +54,7 @@ class AgentCore:
         self._active_action_id: str | None = None
         self._internet_status = False
         self._internet_checked_at = 0.0
+        self.runtime.log("startup", {"build_identity": self.build_identity, "runtime_root": str(self.runtime.root)})
 
     def snapshot(self) -> dict[str, Any]:
         ma2 = self.runtime.preferences["ma2"]
@@ -236,6 +239,13 @@ class AgentCore:
         self.progress = "Understanding request"
         self.events.emit("progress", {"stage": self.progress})
         route = self.router.route(text, self.skills)
+        self.runtime.log("chat_routing", {
+            "CHAT_INPUT": text,
+            "ROUTER_INTENT": route.intent.kind if route.intent else None,
+            "ROUTER_PARAMETERS": route.intent.parameters if route.intent else None,
+            "ROUTER_HANDLER": "state_answer" if route.response_type is ResponseType.ANSWER else route.response_type.value,
+            "PROVIDER": self._provider_for_intent(route.intent),
+        })
         if route.response_type is ResponseType.NEEDS_CLARIFICATION:
             return self._respond(ResponseType.NEEDS_CLARIFICATION, "I understand this needs an MA2 workflow, but need a target or action. For example: ‘選 Group HYBRID’, ‘有哪些 Group’, or ‘複製 Group 1 到 2’.")
         if route.response_type is ResponseType.NOT_IMPLEMENTED:
@@ -275,6 +285,7 @@ class AgentCore:
     def _respond(self, response_type: ResponseType, message: str, **extra: Any) -> dict[str, Any]:
         self.chat.append({"role": "assistant", "kind": response_type.value, "text": message})
         self.progress = "Idle"
+        self.runtime.log("chat_response", {"RESPONSE_TYPE": response_type.value, "message": message})
         self.events.emit("chat", self.snapshot())
         return {"type": response_type.value, "message": message, "action": None, **extra}
 
@@ -293,7 +304,7 @@ class AgentCore:
                 result = self.request_group_membership(group["number"])
             elif kind == "state_group_membership":
                 result = self.request_group_membership(parameters["group_no"])
-            elif kind == "state_layout":
+            elif kind == "layout_items_query":
                 result = self.refresh_state("layout_items", layout_no=parameters["layout_no"])
             elif kind == "state_selection":
                 result = self.get_selection()
@@ -325,7 +336,7 @@ class AgentCore:
             group_no = intent.parameters.get("group_no")
             group = next((item for item in values if group_no is None or item.get("group_no") == group_no), values[-1] if values else None)
             return f"Group {group['group_no']} {group['name']}\nFixtures ({len(group['fixtures'])}): " + ", ".join(str(item) for item in group["fixtures"])
-        if kind == "state_layout":
+        if kind == "layout_items_query":
             layout = next(item for item in values if item["layout"] == intent.parameters["layout_no"])
             rows = [f"{item['type']} {item['reference']}: x={item['x']}, y={item['y']}" for item in layout["items"]]
             return f"Layout {layout['layout']} {layout.get('name', '')}\n" + ("\n".join(rows) or "Empty layout.")
@@ -348,6 +359,21 @@ class AgentCore:
         if kind == "page_executor_list":
             rows=[item for item in values if item.get("page")==intent.parameters["page"]]; return f"Page {intent.parameters['page']} Executors ({len(rows)})\n" + ("\n".join(f"{item['location']}: {item.get('label') or ''}" for item in rows) or "No executor assignment returned.")
         return f"{result['resource'].title()} ({result['count']})"
+
+    @staticmethod
+    def _provider_for_intent(intent: Any | None) -> str | None:
+        if intent is None:
+            return None
+        providers = {
+            "layout_items_query": "LayoutExportProvider",
+            "state_layouts": "LayoutInventoryProvider",
+            "preset_list": "PresetProvider",
+            "effect_list": "EffectProvider",
+            "effect_lookup": "EffectProvider",
+            "sequence_executor_lookup": "ExecutorProvider",
+            "page_executor_list": "ExecutorProvider",
+        }
+        return providers.get(intent.kind)
 
     def cancel_action(self, action_id: str) -> bool:
         action = self.actions.get(action_id)
