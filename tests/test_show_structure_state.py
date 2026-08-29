@@ -21,7 +21,8 @@ LAYOUT_XML = '''<MA xmlns="http://schemas.malighting.de/grandma2/xml/MA"><Group 
 class ShowStructureProviderTests(unittest.TestCase):
     def test_layout_xml_preserves_negative_float_fixture_group_and_empty_items(self):
         layout=LayoutExportProvider.parse(LAYOUT_XML,1)
-        self.assertEqual(layout["items"][0], {"type":"fixture","reference":101,"name":"Key","x":-320.5,"y":140.25,"w":80.0,"h":80.0,"rotation":15.0,"export_order":0})
+        self.assertEqual({key:layout["items"][0][key] for key in ("type","reference","name","x","y","w","h","rotation","export_order")}, {"type":"fixture","reference":101,"name":"Key","x":-320.5,"y":140.25,"w":80.0,"h":80.0,"rotation":15.0,"export_order":0})
+        self.assertTrue(layout["items"][0]["resolved"])
         self.assertEqual(layout["items"][1]["type"],"group")
         empty=LayoutExportProvider.parse('<MA><Group index="0" name="Empty"><LayoutData><CObjects /></LayoutData></Group></MA>',1)
         self.assertEqual(empty["items"],[])

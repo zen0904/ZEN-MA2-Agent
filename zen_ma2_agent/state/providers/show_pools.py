@@ -31,6 +31,12 @@ class EffectProvider:
             rows.append({"number":int(match.group(1)),"name":match.group(2).strip().strip("'\""),"kind":kind.group(1).upper() if kind else None,"line_count":int(lines.group(1)) if lines else None,"attributes":attributes})
         return rows
 
+    @staticmethod
+    def diagnostics(rows: list[dict]) -> dict:
+        numbers=[item["number"] for item in rows]
+        unlabeled=[item for item in rows if not str(item.get("name") or "").strip() or str(item.get("name")).strip()==str(item["number"])]
+        return {"parsed_count":len(rows),"min_effect_number":min(numbers) if numbers else None,"max_effect_number":max(numbers) if numbers else None,"labeled_count":len(rows)-len(unlabeled),"unlabeled_count":len(unlabeled)}
+
 class PageProvider:
     command="List Page"
     _row=re.compile(r"^\s*(?:page\s+)?(\d+)\s+['\"]?(.+?)['\"]?\s*$",re.I)

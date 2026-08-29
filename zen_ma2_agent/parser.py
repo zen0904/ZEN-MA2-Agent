@@ -25,6 +25,9 @@ def parse(text: str) -> Intent:
     match = re.fullmatch(r"(?:layout|佈局|布局)\s*(\d+)\s*(?:裡|里|中)\s*(?:有)?\s*(?:哪些)?\s*(?:燈|燈具|fixture|fixtures)", state_source, flags=re.I)
     if match:
         return Intent("layout_items_query", {"layout_no": int(match.group(1))}, source)
+    match = re.fullmatch(r"(?:layout|佈局|布局)\s*(\d+)\s*(?:裡|里|中)\s*(?:有)?\s*(?:哪些)?\s*(?:物件|物件|objects?)", state_source, flags=re.I)
+    if match:
+        return Intent("layout_all_objects_query", {"layout_no": int(match.group(1))}, source)
     match = re.fullmatch(r"(.+?)\s*(?:在|於)\s*(?:layout|佈局|布局)\s*(\d+)\s*(?:怎麼排|如何排|怎麼排列)", state_source, flags=re.I)
     if match:
         return Intent("layout_items_query", {"layout_no": int(match.group(2)), "object_name": match.group(1).strip()}, source)
@@ -50,6 +53,7 @@ def parse(text: str) -> Intent:
     if match:
         aliases={"調光":"DIMMER","位置":"POSITION","圖案":"GOBO","顏色":"COLOR","光束":"BEAM"}; return Intent("preset_list", {"preset_type":aliases.get(match.group(1).casefold(),match.group(1).upper())}, source)
     if re.fullmatch(r"(?:現在\s*(?:show\s*)?[裡里]?\s*有\s*哪些|(?:show\s*)?有哪些|列出|list|show)\s*(?:effect|effects?|效果)", state_source, flags=re.I): return Intent("effect_list", {}, source)
+    if re.fullmatch(r"(?:下一頁|next\s+page)", state_source, flags=re.I): return Intent("effect_next_page", {}, source)
     match=re.fullmatch(r"(?:effect|效果)\s*(\d+)\s*(?:是什麼|是甚麼|what(?:\s+is)?|info)?", state_source, flags=re.I)
     if match: return Intent("effect_lookup", {"effect":int(match.group(1))}, source)
     if re.fullmatch(r"(?:現在\s*(?:show\s*)?[裡里]?\s*有\s*哪些|(?:show\s*)?有哪些|列出|list|show)\s*(?:群組|groups?)", state_source, flags=re.I):

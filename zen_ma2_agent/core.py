@@ -14,7 +14,7 @@ from .pairing import PairingManager
 from .router import IntentRouter, ResponseType
 from .runtime import AgentRuntime
 from .skill_system import SkillError, SkillRegistry
-from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvider, EffectProvider, ExecutorProvider, ExportFileGroupMembershipProvider, FixtureProvider, GroupMembershipProvider, GroupMembershipProviderError, GroupMembershipProviderUnavailable, GroupProvider, LayoutExportProvider, LayoutInventoryProvider, PageProvider, PresetProvider, SequenceProvider, ZenStateAdapter
+from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvider, EffectProvider, ExecutorProvider, ExportFileGroupMembershipProvider, FixtureProvider, GroupMembershipProvider, GroupMembershipProviderError, GroupMembershipProviderUnavailable, GroupProvider, LayoutExportProvider, LayoutInventoryProvider, LayoutObjectResolver, PageProvider, PresetProvider, SequenceProvider, ZenStateAdapter
 from .state.store import StateStore
 from .telnet_client import ConnectionState
 from .workflow import WorkflowPlan
@@ -34,6 +34,7 @@ class ActionRecord:
 
 class AgentCore:
     """Single control boundary used by Desktop UI and mobile HTTP/WebSocket UI."""
+    CHAT_ROW_LIMIT = 30
 
     def __init__(self, runtime: AgentRuntime | None = None, group_membership_provider: GroupMembershipProvider | None = None):
         self.runtime = runtime or AgentRuntime()
@@ -54,6 +55,7 @@ class AgentCore:
         self._active_action_id: str | None = None
         self._internet_status = False
         self._internet_checked_at = 0.0
+        self._effect_page = 0
         self.last_chat_routing: dict[str, Any] | None = None
         self.runtime.log("startup", {"build_identity": self.build_identity, "runtime_root": str(self.runtime.root)})
 
@@ -126,7 +128,7 @@ class AgentCore:
                 existing = self.state.get("presets"); retained=[item for item in (existing.values if existing else []) if item.get("preset_type") != preset_type]
                 snapshot = self.state.put("presets", [*retained,*values], source="ma2_telnet_list", capability={"requires_local_filesystem":False})
             elif resource == "effects":
-                provider=EffectProvider(); snapshot=self.state.put("effects", provider.parse(self.runtime.read_state(provider.command)), source="ma2_telnet_list", capability={"requires_local_filesystem":False})
+                provider=EffectProvider(); values=provider.parse(self.runtime.read_state(provider.command)); diagnostics=provider.diagnostics(values); self.runtime.log("effect_inventory_diagnostic", diagnostics); snapshot=self.state.put("effects", values, source="ma2_telnet_list", capability={"requires_local_filesystem":False,"diagnostics":diagnostics})
             elif resource == "pages":
                 provider=PageProvider(); snapshot=self.state.put("pages", provider.parse(self.runtime.read_state(provider.command)), source="ma2_telnet_list", capability={"requires_local_filesystem":False})
             elif resource == "executors":
@@ -294,6 +296,16 @@ class AgentCore:
     def _answer_state(self, intent: Any) -> dict[str, Any]:
         try:
             kind, parameters = intent.kind, intent.parameters
+            if kind == "effect_next_page":
+                current = self.state.get("effects")
+                if not current or current.stale or current.error:
+                    self.refresh_state("effects")
+                    current = self.state.get("effects")
+                if not current:
+                    return self._respond(ResponseType.NEEDS_CLARIFICATION, "Ask for Effects first.", intent=intent)
+                self._effect_page += 1
+                result = {"resource": "effects", "count": len(current.values), "values": current.values, "status": "available"}
+                return self._respond(ResponseType.ANSWER, self._format_state_answer(intent, result), intent=intent, state=result)
             if kind == "state_group_membership_name":
                 groups = self.state.get("groups")
                 if not groups or groups.stale or groups.error:
@@ -306,7 +318,7 @@ class AgentCore:
                 result = self.request_group_membership(group["number"])
             elif kind == "state_group_membership":
                 result = self.request_group_membership(parameters["group_no"])
-            elif kind == "layout_items_query":
+            elif kind in {"layout_items_query", "layout_all_objects_query"}:
                 result = self.refresh_state("layout_items", layout_no=parameters["layout_no"])
             elif kind == "state_selection":
                 result = self.get_selection()
@@ -316,7 +328,9 @@ class AgentCore:
                 result = self.refresh_state("cues", sequence=parameters["sequence"])
             elif kind in {"state_presets", "preset_list"}:
                 result = self.refresh_state("presets", sequence=parameters["preset_type"])
-            elif kind in {"state_effects", "effect_list", "effect_lookup"}: result = self.refresh_state("effects")
+            elif kind in {"state_effects", "effect_list", "effect_lookup"}:
+                result = self.refresh_state("effects")
+                if kind == "effect_list": self._effect_page = 0
             elif kind in {"state_sequence_executors", "sequence_executor_lookup", "page_executor_list"}: result = self.refresh_state("executors")
             else:
                 result = self.refresh_state(kind.removeprefix("state_"))
@@ -324,14 +338,15 @@ class AgentCore:
             return self._respond(ResponseType.ERROR, str(exc), intent=intent)
         if result["status"] != "available":
             return self._respond(ResponseType.ANSWER, result.get("error") or f"{result['resource']} is unavailable.", intent=intent, state=result)
+        if kind == "layout_items_query" and parameters.get("object_name"):
+            return self._respond(ResponseType.ANSWER, self._format_layout_group_answer(parameters["object_name"], result), intent=intent, state=result)
         return self._respond(ResponseType.ANSWER, self._format_state_answer(intent, result), intent=intent, state=result)
 
-    @staticmethod
-    def _format_state_answer(intent: Any, result: dict[str, Any]) -> str:
+    def _format_state_answer(self, intent: Any, result: dict[str, Any]) -> str:
         values = result["values"]
         kind = intent.kind
         if kind in {"state_groups", "state_fixtures", "state_sequences"}:
-            return f"{result['resource'].title()} ({result['count']})\n" + ("\n".join(f"{item['number']}: {item['name']}" for item in values) or "No entries returned.")
+            return AgentCore._format_rows(f"{result['resource'].title()} ({result['count']})", values, lambda item: f"{item['number']}: {item['name']}")
         if kind == "state_layouts":
             return f"Layouts ({result['count']})\n" + ("\n".join(f"{item['layout']}: {item.get('name', '')}" for item in values) or "No entries returned.")
         if kind in {"state_group_membership", "state_group_membership_name"}:
@@ -340,8 +355,14 @@ class AgentCore:
             return f"Group {group['group_no']} {group['name']}\nFixtures ({len(group['fixtures'])}): " + ", ".join(str(item) for item in group["fixtures"])
         if kind == "layout_items_query":
             layout = next(item for item in values if item["layout"] == intent.parameters["layout_no"])
-            rows = [f"{item['type']} {item['reference']}: x={item['x']}, y={item['y']}" for item in layout["items"]]
-            return f"Layout {layout['layout']} {layout.get('name', '')}\n" + ("\n".join(rows) or "Empty layout.")
+            lighting = LayoutObjectResolver.lighting_items(layout)
+            other_count = len(layout["items"]) - len(lighting)
+            rows = [AgentCore._format_layout_item(item) for item in lighting]
+            empty = "Empty layout.\n" if not layout["items"] else ""
+            return f"Layout {layout['layout']} {layout.get('name', '')}\n{empty}Fixtures: {len(lighting)}\n" + ("\n".join(rows) if rows else "No fixture entries returned.") + f"\nOther objects: {other_count}"
+        if kind == "layout_all_objects_query":
+            layout = next(item for item in values if item["layout"] == intent.parameters["layout_no"])
+            return AgentCore._format_rows(f"Layout {layout['layout']} {layout.get('name', '')} Objects ({len(layout['items'])})", layout["items"], AgentCore._format_layout_item)
         if kind == "state_selection":
             selection = values[0]
             return "Selected Fixtures: " + (", ".join(str(item) for item in selection["fixtures"]) or "none")
@@ -351,8 +372,8 @@ class AgentCore:
         if kind == "state_cues":
             sequence_cues = [item for item in values if item.get("sequence") == intent.parameters["sequence"]]
             return f"Sequence {intent.parameters['sequence']} Cues ({len(sequence_cues)})\n" + ("\n".join(f"{item['number']}: {item['name']}" for item in sequence_cues) or "No cues returned.")
-        if kind in {"state_presets", "preset_list"}: return f"{intent.parameters['preset_type'].title()} Presets ({len(values)})\n" + ("\n".join(f"{item['number']}: {item['name']}" for item in values) or "No entries returned.")
-        if kind in {"state_effects", "effect_list"}: return f"Effects ({len(values)})\n" + ("\n".join(f"{item['number']}: {item['name']}" for item in values) or "No entries returned.")
+        if kind in {"state_presets", "preset_list"}: return AgentCore._format_rows(f"{intent.parameters['preset_type'].title()} Presets ({len(values)})", values, lambda item: f"{item['number']}: {item['name']}")
+        if kind in {"state_effects", "effect_list", "effect_next_page"}: return self._format_effect_rows(values)
         if kind == "effect_lookup":
             item=next((item for item in values if item["number"]==intent.parameters["effect"]),None); return f"Effect {intent.parameters['effect']}: {item['name']}" if item else f"Effect {intent.parameters['effect']} not found."
         if kind in {"state_sequence_executors", "sequence_executor_lookup"}:
@@ -362,15 +383,63 @@ class AgentCore:
             rows=[item for item in values if item.get("page")==intent.parameters["page"]]; return f"Page {intent.parameters['page']} Executors ({len(rows)})\n" + ("\n".join(f"{item['location']}: {item.get('label') or ''}" for item in rows) or "No executor assignment returned.")
         return f"{result['resource'].title()} ({result['count']})"
 
+    @classmethod
+    def _format_rows(cls, heading: str, values: list[dict[str, Any]], render: Any) -> str:
+        rows = [render(item) for item in values[:cls.CHAT_ROW_LIMIT]]
+        shown = f"Showing first {cls.CHAT_ROW_LIMIT}\n" if len(values) > cls.CHAT_ROW_LIMIT else ""
+        return f"{heading}\n{shown}" + ("\n".join(rows) if rows else "No entries returned.")
+
+    @staticmethod
+    def _format_effect(item: dict[str, Any]) -> str:
+        label = str(item.get("name") or "").strip()
+        return f"{item['number']} (unlabeled)" if not label or label == str(item["number"]) else f"{item['number']}: {label}"
+
+    def _format_effect_rows(self, values: list[dict[str, Any]]) -> str:
+        first = self._effect_page * self.CHAT_ROW_LIMIT
+        if first >= len(values):
+            self._effect_page = max(0, (len(values) - 1) // self.CHAT_ROW_LIMIT)
+            return f"Effects ({len(values)})\nNo further Effect entries."
+        page = values[first:first + self.CHAT_ROW_LIMIT]
+        showing = f"Showing first {self.CHAT_ROW_LIMIT}" if first == 0 else f"Showing {first + 1}-{first + len(page)}"
+        hint = "\nNext page: 下一頁\nInspect: Effect <number> 是什麼？\nSearch: 搜尋 Effect 名稱" if first + len(page) < len(values) else ""
+        return f"Effects ({len(values)})\n{showing}\n" + "\n".join(self._format_effect(item) for item in page) + hint
+
+    @staticmethod
+    def _format_layout_item(item: dict[str, Any]) -> str:
+        label = f" {item['name']}" if item.get("name") else ""
+        via = f" via Group {item['via_group']}" if item.get("via_group") is not None else ""
+        reference = item["reference"] if item["type"] != "unknown" else f"unresolved {item.get('reference_tokens', [])}"
+        return f"{item['type']} {reference}{label}{via}: x={item['x']}, y={item['y']}"
+
+    def _format_layout_group_answer(self, group_name: str, result: dict[str, Any]) -> str:
+        groups = self.state.get("groups")
+        if not groups or groups.stale or groups.error:
+            self.refresh_state("groups"); groups = self.state.get("groups")
+        group = next((item for item in (groups.values if groups else []) if item["name"].casefold() == group_name.casefold()), None)
+        if not group:
+            return f"No Group named {group_name} is available in the current Group inventory."
+        membership = self.request_group_membership(group["number"])
+        if membership["status"] != "available" or not membership.get("group"):
+            return membership.get("error") or f"Group {group_name} membership is unavailable."
+        fixtures = set(membership["group"]["fixtures"])
+        layout = next(item for item in result["values"] if item["layout"] == result["values"][-1]["layout"])
+        group_memberships = {group["number"]: list(fixtures)}
+        matching = [item for item in LayoutObjectResolver.lighting_items(layout, group_memberships) if item["reference"] in fixtures]
+        if not matching:
+            return f"{group_name} has no resolved fixture items in Layout {layout['layout']}."
+        return f"{group_name} in Layout {layout['layout']}\n" + "\n".join(self._format_layout_item(item) for item in matching[:self.CHAT_ROW_LIMIT])
+
     @staticmethod
     def _provider_for_intent(intent: Any | None) -> str | None:
         if intent is None:
             return None
         providers = {
             "layout_items_query": "LayoutExportProvider",
+            "layout_all_objects_query": "LayoutExportProvider",
             "state_layouts": "LayoutInventoryProvider",
             "preset_list": "PresetProvider",
             "effect_list": "EffectProvider",
+            "effect_next_page": "EffectProvider",
             "effect_lookup": "EffectProvider",
             "sequence_executor_lookup": "ExecutorProvider",
             "page_executor_list": "ExecutorProvider",
