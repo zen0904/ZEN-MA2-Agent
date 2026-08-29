@@ -50,6 +50,7 @@ class ShowStructureProviderTests(unittest.TestCase):
         self.assertEqual(parse('Sequence 5 掛在哪個 Executor？').kind,'sequence_executor_lookup')
         self.assertEqual(parse('Page 1 有哪些 Executor？').kind,'page_executor_list')
         self.assertEqual(parse('Layout 1 裡有哪些燈？').parameters,{"layout_no":1})
+        self.assertEqual(parse('HYBRID 在 Layout 1 怎麼排？').parameters,{"layout_no":1,"object_name":"HYBRID"})
 
 
 if __name__ == '__main__': unittest.main()
