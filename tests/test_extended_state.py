@@ -92,6 +92,10 @@ class ExtendedStateTests(unittest.TestCase):
             adapter.group_membership("ZEN_STATE|abc123|BEGIN|group_membership|1\r\nZEN_STATE|abc123|END|group_membership|2", request)
         with self.assertRaises(AdapterUnsupported):
             adapter.group_membership("ZEN_STATE|abc123|ERROR|UNKNOWN_COMMAND", request)
+        with self.assertRaises(AdapterUnsupported):
+            adapter.group_membership("ZEN_STATE|abc123|BEGIN|group_membership|1\r\nZEN_STATE|abc123|END|group_membership|1", request)
+        with self.assertRaises(AdapterUnsupported):
+            adapter.group_membership("ZEN_STATE|abc123|ERROR|GROUP_NOT_FOUND", request)
 
     def test_chat_and_mobile_share_mailbox_state(self):
         membership = self.core.handle_request("HYBRID 裡有哪些燈？", source="desktop")

@@ -41,6 +41,11 @@ class GrandMA2PluginPackageTests(unittest.TestCase):
         self.assertIn('"MALFORMED_REQUEST"', lua)
         self.assertIn('"UNKNOWN_COMMAND"', lua)
         self.assertIn('command == "group_membership"', lua)
+        self.assertIn('debug("GROUP_HANDLE", group)', lua)
+        self.assertIn('debug("CLASS", safely(gma.show.getobj.class, group))', lua)
+        self.assertIn('debug("AMOUNT", amount)', lua)
+        self.assertIn('debug("CHILD", tostring(index)', lua)
+        self.assertIn('"UNSUPPORTED_SAFE_ACCESS"', lua)
         for forbidden in ("gma.cmd", "Store", "Update", "Delete", "Clone", "Patch", "ClearSelection"):
             self.assertNotIn(forbidden, lua)
         self.assertNotIn("main(display_handle, argument)", lua)
@@ -49,7 +54,8 @@ class GrandMA2PluginPackageTests(unittest.TestCase):
         self.assertIn("ZEN_AGENT.lua", readme)
         self.assertIn('SetUserVar $ZEN_AGENT_REQUEST="abc123 group_membership 1"', readme)
         self.assertIn("Plugin 3", readme)
-        self.assertIn("ZEN_STATE|abc123|BEGIN|group_membership|1", readme)
+        self.assertIn("ZEN_DEBUG|GROUP_HANDLE", readme)
+        self.assertIn("UNSUPPORTED_SAFE_ACCESS", readme)
         self.assertIn("import `ZEN_AGENT.xml` again", readme)
 
 

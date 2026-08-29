@@ -12,6 +12,7 @@ end
 
 local function handle(path) return safely(gma.show.getobj.handle, path) end
 local function number(object) return tonumber(safely(gma.show.getobj.number, object)) end
+local function debug(topic, payload) gma.feedback("ZEN_DEBUG|" .. topic .. "|" .. tostring(payload)) end
 
 local function feedback(request_id, frame, payload)
     local line = "ZEN_STATE|" .. request_id .. "|" .. frame
@@ -21,18 +22,29 @@ end
 
 local function group_membership(request_id, group_no)
     local group = handle("Group " .. group_no)
+    debug("GROUP_HANDLE", group)
     if not group then
         feedback(request_id, "ERROR", "GROUP_NOT_FOUND")
         return
     end
-    feedback(request_id, "BEGIN", "group_membership|" .. group_no)
     local amount = tonumber(safely(gma.show.getobj.amount, group) or 0) or 0
+    debug("CLASS", safely(gma.show.getobj.class, group))
+    debug("AMOUNT", amount)
+    if amount < 1 then
+        feedback(request_id, "ERROR", "UNSUPPORTED_SAFE_ACCESS")
+        return
+    end
     for index = 0, amount - 1 do
         local child = safely(gma.show.getobj.child, group, index)
-        local fixture_no = child and number(child)
-        if fixture_no and fixture_no > 0 then feedback(request_id, "MEMBER", tostring(fixture_no)) end
+        local child_class = child and safely(gma.show.getobj.class, child)
+        local child_number = child and number(child)
+        local child_name = child and safely(gma.show.getobj.name, child)
+        debug("CHILD", tostring(index) .. "|" .. tostring(child_class) .. "|" .. tostring(child_number) .. "|" .. tostring(child_name))
     end
-    feedback(request_id, "END", "group_membership|" .. group_no)
+    -- The Group object's child schema is console/show dependent. Until a
+    -- fixture-class mapping is confirmed from this diagnostic output, do not
+    -- mistake arbitrary children for fixtures or report an empty membership.
+    feedback(request_id, "ERROR", "UNSUPPORTED_SAFE_ACCESS")
 end
 
 local function main()

@@ -88,6 +88,8 @@ class ZenStateAdapter:
             if kind != "MEMBER" or not re.fullmatch(r"[1-9]\d*", payload):
                 raise AdapterResponseError("Malformed group membership fixture ID.")
             fixtures.append(int(payload))
+        if not fixtures:
+            raise AdapterUnsupported("UNSUPPORTED group_membership: no safe fixture members were exposed by the Group object.")
         return {"group_no": request.argument, "fixtures": fixtures}
 
     def unsupported_resource(self, output: str, request: AdapterRequest) -> None:

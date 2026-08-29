@@ -38,15 +38,18 @@ using its actual slot. For example:
   SetUserVar $ZEN_AGENT_REQUEST="abc123 group_membership 1"
   Plugin 3
 
-Use the actual imported Plugin Pool slot in place of `3`. The adapter first
-emits a diagnostic record, then read-only group membership frames:
+Use the actual imported Plugin Pool slot in place of `3`. The adapter emits
+read-only Group object diagnostics before any membership result:
 
   ZEN_DEBUG|REQUEST|abc123|group_membership|1
-  ZEN_STATE|abc123|BEGIN|group_membership|1
-  ZEN_STATE|abc123|MEMBER|101
-  ZEN_STATE|abc123|END|group_membership|1
+  ZEN_DEBUG|GROUP_HANDLE|...
+  ZEN_DEBUG|CLASS|...
+  ZEN_DEBUG|AMOUNT|...
+  ZEN_DEBUG|CHILD|0|<class>|<number>|<name>
 
 The plugin clears `ZEN_AGENT_REQUEST` after safely copying it, so a stale
 request cannot run a second time. It rejects malformed, duplicate, and unknown
-requests. This revision implements only read-only `group_membership`; it does
-not Store, Update, Delete, Clone, Patch, Clear, or modify selection/programmer.
+requests. Until a Group child class is verified as a fixture member, the plugin
+returns `ZEN_STATE|abc123|ERROR|UNSUPPORTED_SAFE_ACCESS` instead of silently
+reporting an empty Group. It does not Store, Update, Delete, Clone, Patch,
+Clear, or modify selection/programmer.
