@@ -70,6 +70,7 @@ def main() -> int:
         for name in ("logs", "cache"):
             (bundle / name).mkdir(exist_ok=True)
         assert_portable_resources(bundle)
+        (bundle / "portable_build_complete.json").write_text(json.dumps({"head": _git_head(), "completed_at": datetime.now(timezone.utc).isoformat()}) + "\n", encoding="utf-8")
         return 0
     finally:
         identity.unlink(missing_ok=True)

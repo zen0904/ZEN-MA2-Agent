@@ -20,6 +20,8 @@ def _chat_routing_smoke() -> int:
 
     bundle = EXE.parent
     assert_portable_resources(bundle)
+    if not (bundle / "portable_build_complete.json").is_file():
+        raise SystemExit("Portable build is incomplete: completion marker is missing.")
     expected_head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     environment = dict(os.environ)
     environment["QT_QPA_PLATFORM"] = "offscreen"
