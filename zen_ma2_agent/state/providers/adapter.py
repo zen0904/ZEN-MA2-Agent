@@ -22,7 +22,7 @@ class AdapterRequest:
 
     @property
     def wire(self) -> str:
-        return f"{self.request_id}|{self.command}" + (f"|{self.argument}" if self.argument is not None else "")
+        return f"{self.request_id} {self.command}" + (f" {self.argument}" if self.argument is not None else "")
 
 
 class ZenStateAdapter:

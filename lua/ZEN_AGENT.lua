@@ -43,12 +43,14 @@ local function main()
         return
     end
 
-    local request_id, command, argument = tostring(request):match("^([A-Za-z0-9_-]+)|([a-z_]+)|(.+)$")
+    local normalized = tostring(request):match("^%s*(.-)%s*$")
+    local visible_request_id = normalized:match("^(%S+)") or "none"
+    local request_id, command, argument = normalized:match("^([A-Za-z0-9_-]+)%s+([a-z_]+)%s*(.-)%s*$")
     -- The request was safely copied into local variables before clearing the
     -- one-shot mailbox, which prevents it from running again after an error.
     gma.user.setvar("ZEN_AGENT_REQUEST", "")
-    if not request_id or not command or not argument then
-        feedback("none", "ERROR", "MALFORMED_REQUEST")
+    if not request_id or not command then
+        feedback(visible_request_id, "ERROR", "MALFORMED_REQUEST")
         return
     end
     if last_request_id == request_id then
@@ -57,7 +59,9 @@ local function main()
     end
     last_request_id = request_id
 
-    if command == "group_membership" and argument:match("^[1-9][0-9]*$") then
+    if command == "group_membership" and argument == "" then
+        feedback(request_id, "ERROR", "MALFORMED_REQUEST")
+    elseif command == "group_membership" and argument:match("^[1-9][0-9]*$") then
         group_membership(request_id, tonumber(argument))
     elseif command == "group_membership" then
         feedback(request_id, "ERROR", "MALFORMED_ARGUMENT")

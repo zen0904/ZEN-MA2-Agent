@@ -35,7 +35,7 @@ already-imported object.
 Set the one-shot request variable, then run the imported Plugin Pool object
 using its actual slot. For example:
 
-  SetUserVar $ZEN_AGENT_REQUEST="abc123|group_membership|1"
+  SetUserVar $ZEN_AGENT_REQUEST="abc123 group_membership 1"
   Plugin 3
 
 Use the actual imported Plugin Pool slot in place of `3`. The adapter first

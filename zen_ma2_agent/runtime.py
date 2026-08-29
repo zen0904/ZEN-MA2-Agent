@@ -116,7 +116,7 @@ class AgentRuntime:
             raise ConnectionError("Connect and reach MA2 READY before reading show state.")
         if isinstance(plugin_slot, bool) or not isinstance(plugin_slot, int) or not 2 <= plugin_slot <= 9999:
             raise ValueError("ZEN_AGENT Plugin slot must be a configured number from 2 to 9999.")
-        if not re.fullmatch(r"[A-Za-z0-9_-]+\|[a-z_]+(?:\|\d+)?", request):
+        if not re.fullmatch(r"[A-Za-z0-9_-]+ [a-z_]+(?: \d+)?", request):
             raise ValueError("Invalid ZEN_AGENT mailbox request.")
         try:
             timeout = float(timeout_seconds)
@@ -126,7 +126,7 @@ class AgentRuntime:
             raise ValueError("ZEN_AGENT timeout must be positive.")
         if not self._state_adapter_lock.acquire(timeout=timeout):
             raise TimeoutError("Timed out waiting for the ZEN_AGENT state mailbox.")
-        request_id = request.split("|", 1)[0]
+        request_id = request.split(" ", 1)[0]
         set_command = self.user_var_command(request)
         plugin_command = f"Plugin {plugin_slot}"
         started = monotonic()

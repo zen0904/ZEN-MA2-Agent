@@ -32,7 +32,7 @@ class MailboxStateClient:
             self.mailbox = command.removeprefix('SetUserVar $ZEN_AGENT_REQUEST="').removesuffix('"')
             return ""
         if command == "Plugin 3":
-            request_id, operation, argument = self.mailbox.split("|", 2)
+            request_id, operation, argument = self.mailbox.split(" ", 2)
             if operation == "group_membership" and argument == "1":
                 return (f"stale ZEN_STATE|stale01|BEGIN|group_membership|1\r\n"
                         f"ZEN_STATE|{request_id}|BEGIN|group_membership|1\r\n"
@@ -70,7 +70,7 @@ class ExtendedStateTests(unittest.TestCase):
         self.assertEqual(result["group"], {"group_no": 1, "name": "HYBRID", "fixtures": [1, 101, 1007]})
         commands = self.core.runtime.client.executed
         mailbox = next(command for command in commands if command.startswith("SetUserVar $ZEN_AGENT_REQUEST="))
-        self.assertRegex(mailbox, r'^SetUserVar \$ZEN_AGENT_REQUEST="[a-f0-9]{16}\|group_membership\|1"$')
+        self.assertRegex(mailbox, r'^SetUserVar \$ZEN_AGENT_REQUEST="[a-f0-9]{16} group_membership 1"$')
         plugin_index = commands.index("Plugin 3")
         self.assertNotIn('"', commands[plugin_index])
         self.assertEqual(commands[plugin_index - 1], mailbox)
@@ -78,6 +78,8 @@ class ExtendedStateTests(unittest.TestCase):
     def test_request_id_filtering_and_fragmented_frames(self):
         adapter = ZenStateAdapter()
         request = adapter.request("group_membership", 1, request_id="abc123")
+        self.assertEqual(request.wire, "abc123 group_membership 1")
+        self.assertNotIn("|", request.wire)
         fragmented = "noise ZEN_STA" + "TE|old001|BEGIN|group_membership|1\r\n" + "ZEN_STATE|abc123|BEGIN|group_membership|1\r\nZEN_STATE|abc123|MEMBER|101\r\nZEN_STATE|abc123|END|group_membership|1"
         self.assertEqual(adapter.group_membership(fragmented, request)["fixtures"], [101])
         with self.assertRaises(AdapterResponseError):
@@ -116,7 +118,7 @@ class ExtendedStateTests(unittest.TestCase):
 
         def run(request_id):
             try:
-                self.core.runtime.read_adapter_state(plugin_slot=3, request=f"{request_id}|group_membership|1", timeout_seconds=1)
+                self.core.runtime.read_adapter_state(plugin_slot=3, request=f"{request_id} group_membership 1", timeout_seconds=1)
             except Exception as exc:  # pragma: no cover - assertion below captures it
                 errors.append(exc)
 

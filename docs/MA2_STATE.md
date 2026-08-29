@@ -21,7 +21,7 @@ refresh replaces them.
 The runtime accepts only these state commands:
 
 - `List Group`, `List Fixture`, `List Layout`, `List Sequence`, `List Cue <n>`
-- `SetUserVar $ZEN_AGENT_REQUEST="<request_id>|<allow-listed request>|<argument>"`
+- `SetUserVar $ZEN_AGENT_REQUEST="<request_id> <allow-listed request> <argument>"`
   followed by `Plugin <configured numeric Plugin Pool slot>`
 
 No State provider can send `Store`, `Update`, `Delete`, `Clone`, `Patch`,
@@ -37,7 +37,7 @@ USB drive. In **System → Plugin**, edit an empty Plugin Pool object, press
 object is named `ZEN_AGENT`. The default portable setting invokes:
 
 ```text
-SetUserVar $ZEN_AGENT_REQUEST="abc123|group_membership|1"
+SetUserVar $ZEN_AGENT_REQUEST="abc123 group_membership 1"
 Plugin 12
 ```
 
