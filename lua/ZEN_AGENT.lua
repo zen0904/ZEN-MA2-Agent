@@ -11,7 +11,6 @@ local function safely(fn, ...)
 end
 
 local function handle(path) return safely(gma.show.getobj.handle, path) end
-local function number(object) return tonumber(safely(gma.show.getobj.number, object)) end
 local function debug(topic, payload) gma.feedback("ZEN_DEBUG|" .. topic .. "|" .. tostring(payload)) end
 
 local function feedback(request_id, frame, payload)
@@ -30,20 +29,17 @@ local function group_membership(request_id, group_no)
     local amount = tonumber(safely(gma.show.getobj.amount, group) or 0) or 0
     debug("CLASS", safely(gma.show.getobj.class, group))
     debug("AMOUNT", amount)
-    if amount < 1 then
-        feedback(request_id, "ERROR", "UNSUPPORTED_SAFE_ACCESS")
-        return
+    -- grandMA2's bundled API Test enumerates properties with zero-based
+    -- indexes from 0 through property.amount(handle) - 1.
+    local property_amount = tonumber(safely(gma.show.property.amount, group) or 0) or 0
+    debug("PROP_AMOUNT", property_amount)
+    for property_index = 0, property_amount - 1 do
+        local property_name = safely(gma.show.property.name, group, property_index)
+        local property_value = safely(gma.show.property.get, group, property_index)
+        debug("PROP", tostring(property_index) .. "|" .. tostring(property_name) .. "|" .. tostring(property_value))
     end
-    for index = 0, amount - 1 do
-        local child = safely(gma.show.getobj.child, group, index)
-        local child_class = child and safely(gma.show.getobj.class, child)
-        local child_number = child and number(child)
-        local child_name = child and safely(gma.show.getobj.name, child)
-        debug("CHILD", tostring(index) .. "|" .. tostring(child_class) .. "|" .. tostring(child_number) .. "|" .. tostring(child_name))
-    end
-    -- The Group object's child schema is console/show dependent. Until a
-    -- fixture-class mapping is confirmed from this diagnostic output, do not
-    -- mistake arbitrary children for fixtures or report an empty membership.
+    -- Group membership is not stored in this object's child tree on MA2 3.9.
+    -- Do not infer fixtures from any hierarchy or report an empty membership.
     feedback(request_id, "ERROR", "UNSUPPORTED_SAFE_ACCESS")
 end
 

@@ -44,8 +44,12 @@ class GrandMA2PluginPackageTests(unittest.TestCase):
         self.assertIn('debug("GROUP_HANDLE", group)', lua)
         self.assertIn('debug("CLASS", safely(gma.show.getobj.class, group))', lua)
         self.assertIn('debug("AMOUNT", amount)', lua)
-        self.assertIn('debug("CHILD", tostring(index)', lua)
+        self.assertIn('debug("PROP_AMOUNT", property_amount)', lua)
+        self.assertIn('gma.show.property.name, group, property_index', lua)
+        self.assertIn('gma.show.property.get, group, property_index', lua)
+        self.assertIn('debug("PROP", tostring(property_index)', lua)
         self.assertIn('"UNSUPPORTED_SAFE_ACCESS"', lua)
+        self.assertNotIn("gma.show.getobj.child", lua)
         for forbidden in ("gma.cmd", "Store", "Update", "Delete", "Clone", "Patch", "ClearSelection"):
             self.assertNotIn(forbidden, lua)
         self.assertNotIn("main(display_handle, argument)", lua)
