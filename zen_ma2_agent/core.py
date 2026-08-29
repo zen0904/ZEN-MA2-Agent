@@ -13,7 +13,7 @@ from .pairing import PairingManager
 from .router import IntentRouter, ResponseType
 from .runtime import AgentRuntime
 from .skill_system import SkillError, SkillRegistry
-from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvider, FixtureProvider, GroupProvider, LayoutInventoryProvider, SequenceProvider, ZenStateAdapter
+from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvider, ExportFileGroupMembershipProvider, FixtureProvider, GroupMembershipProvider, GroupMembershipProviderError, GroupMembershipProviderUnavailable, GroupProvider, LayoutInventoryProvider, SequenceProvider, ZenStateAdapter
 from .state.store import StateStore
 from .telnet_client import ConnectionState
 from .workflow import WorkflowPlan
@@ -34,13 +34,14 @@ class ActionRecord:
 class AgentCore:
     """Single control boundary used by Desktop UI and mobile HTTP/WebSocket UI."""
 
-    def __init__(self, runtime: AgentRuntime | None = None):
+    def __init__(self, runtime: AgentRuntime | None = None, group_membership_provider: GroupMembershipProvider | None = None):
         self.runtime = runtime or AgentRuntime()
         self.events = EventBus()
         self.pairing = PairingManager()
         self.chat: list[dict[str, Any]] = []
         self.actions: dict[str, ActionRecord] = {}
         self.state = StateStore()
+        self.group_membership_provider = group_membership_provider or ExportFileGroupMembershipProvider()
         self.skills = SkillRegistry(self.runtime.root)
         self.skills.discover()
         self.router = IntentRouter()
@@ -125,7 +126,16 @@ class AgentCore:
             elif resource == "layouts" and layout_no is None:
                 provider = LayoutInventoryProvider()
                 snapshot = self.state.put("layouts", provider.parse(self.runtime.read_state(provider.command)), source="ma2_telnet_list")
-            elif resource in {"group_membership", "layouts", "selection", "programmer"}:
+            elif resource == "group_membership":
+                if not isinstance(group_no, int) or isinstance(group_no, bool) or group_no < 1:
+                    raise ValueError("Group membership requires a positive group number.")
+                value = self.group_membership_provider.get_group_membership(
+                    self.runtime,
+                    group_no,
+                    self.runtime.preferences.get("state_adapter"),
+                )
+                snapshot = self.state.upsert(resource, "group_no", value, source=self.group_membership_provider.source)
+            elif resource in {"layouts", "selection", "programmer"}:
                 adapter = ZenStateAdapter()
                 request, parser = self._adapter_state_request(resource, group_no=group_no, layout_no=layout_no)
                 settings = self.runtime.preferences.get("state_adapter")
@@ -135,12 +145,7 @@ class AgentCore:
                     timeout_seconds=adapter.timeout_seconds(settings),
                 )
                 value = parser(adapter, output, request)
-                if resource == "group_membership":
-                    groups = self.state.get("groups")
-                    group = next((item for item in (groups.values if groups else []) if item.get("number") == group_no), None)
-                    value["name"] = group["name"] if group else f"Group {group_no}"
-                    snapshot = self.state.upsert(resource, "group_no", value, source=adapter.source)
-                elif resource == "layouts":
+                if resource == "layouts":
                     snapshot = self.state.upsert(resource, "layout", value, source=adapter.source)
                 else:
                     snapshot = self.state.put(resource, [value], source=adapter.source)
@@ -156,16 +161,22 @@ class AgentCore:
             self.progress = "Idle"
             self.events.emit("state", self.snapshot())
             return {"resource": resource, "count": len(snapshot.values), "values": snapshot.values, "status": "ERROR", "error": snapshot.error}
+        except GroupMembershipProviderUnavailable as exc:
+            snapshot = self.state.record_error(resource, f"UNSUPPORTED {exc}", source=self.group_membership_provider.source)
+            self.progress = "Idle"
+            self.events.emit("state", self.snapshot())
+            return {"resource": resource, "count": len(snapshot.values), "values": snapshot.values, "status": "UNSUPPORTED", "error": snapshot.error}
+        except GroupMembershipProviderError as exc:
+            snapshot = self.state.record_error(resource, str(exc), source=self.group_membership_provider.source)
+            self.progress = "Idle"
+            self.events.emit("state", self.snapshot())
+            return {"resource": resource, "count": len(snapshot.values), "values": snapshot.values, "status": "ERROR", "error": snapshot.error}
         self.progress = "Idle"
         self.events.emit("state", self.snapshot())
         return {"resource": resource, "count": len(snapshot.values), "values": snapshot.values, "status": "available"}
 
     @staticmethod
     def _adapter_state_request(resource: str, *, group_no: int | None, layout_no: int | None) -> tuple[Any, Any]:
-        if resource == "group_membership":
-            if not isinstance(group_no, int) or group_no < 1:
-                raise ValueError("Group membership requires a positive group number.")
-            return ZenStateAdapter.request("group_membership", group_no), lambda adapter, output, request: adapter.group_membership(output, request)
         if resource == "layouts":
             if not isinstance(layout_no, int) or layout_no < 1:
                 raise ValueError("Layout state requires a positive layout number.")

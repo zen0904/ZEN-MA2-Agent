@@ -68,6 +68,7 @@ class StateAndSkillsTests(unittest.TestCase):
 
     def test_provider_parsers_only_accept_inventory_rows(self):
         self.assertEqual(GroupProvider().parse("List Group\nGroup 3 'HYBRID'\n"), [Group(3, "HYBRID")])
+        self.assertEqual(GroupProvider().parse("No. Name\nGroup  1 1    HYBRID\nGroup 10 10   Clone To\n"), [Group(1, "HYBRID"), Group(10, "Clone To")])
         fixture = FixtureProvider().parse('Fixture 4 "Key" (VL3000)')[0]
         self.assertEqual((fixture.number, fixture.name, fixture.fixture_type), (4, "Key", "VL3000"))
 

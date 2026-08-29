@@ -1,0 +1,151 @@
+import os
+import tempfile
+import threading
+import unittest
+from pathlib import Path
+
+from zen_ma2_agent.state.providers.group_membership import (
+    ExportFileGroupMembershipProvider,
+    GroupMembershipProviderError,
+    GroupMembershipProviderUnavailable,
+    ImportExportPathResolver,
+)
+
+
+def group_xml(*fixture_ids: int, index: int = 0, name: str = "HYBRID", include_subfixtures: bool = True) -> str:
+    subfixtures = "" if not include_subfixtures else "<Subfixtures>" + "".join(f'<Subfixture fix_id="{fixture_id}" />' for fixture_id in fixture_ids) + "</Subfixtures>"
+    return f'<MA xmlns="http://schemas.malighting.de/grandma2/xml/MA"><Group index="{index}" name="{name}">{subfixtures}</Group></MA>'
+
+
+class ExportRuntime:
+    def __init__(self, directory: Path, *, host: str = "127.0.0.1", xml_factory=group_xml):
+        self.preferences = {"ma2": {"host": host}}
+        self.directory = directory
+        self.xml_factory = xml_factory
+        self.commands: list[tuple[int, str]] = []
+
+    def export_group_file(self, group_no: int, filename: str) -> str:
+        self.commands.append((group_no, filename))
+        (self.directory / filename).write_text(self.xml_factory(101, 1007, 2, index=group_no - 1), encoding="utf-8")
+        return "exported"
+
+
+class GroupMembershipExportProviderTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix="zen-group-export-")
+        self.directory = Path(self.temp.name)
+        self.settings = {"importexport_path": str(self.directory), "timeout_seconds": 1.0}
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def provider(self, request_id_factory=lambda: "request0001"):
+        return ExportFileGroupMembershipProvider(request_id_factory=request_id_factory)
+
+    def test_group_one_maps_to_zero_based_xml_and_preserves_sparse_export_order(self):
+        runtime = ExportRuntime(self.directory)
+        result = self.provider().get_group_membership(runtime, 1, self.settings)
+        self.assertEqual(result["fixtures"], [101, 1007, 2])
+        self.assertEqual(result["members"], [
+            {"fix_id": 101, "export_order": 0},
+            {"fix_id": 1007, "export_order": 1},
+            {"fix_id": 2, "export_order": 2},
+        ])
+        self.assertEqual(result["source"], "ma2_export_xml")
+        self.assertEqual(runtime.commands, [(1, "ZEN_AGENT_G1_request0001.xml")])
+        self.assertFalse((self.directory / "ZEN_AGENT_G1_request0001.xml").exists())
+
+    def test_32_member_export_sample_is_preserved(self):
+        fixture_ids = [*range(101, 117), *range(129, 116, -1), 132, 130, 131]
+        self.assertEqual(len(fixture_ids), 32)
+        runtime = ExportRuntime(self.directory, xml_factory=lambda *_args, **_kwargs: group_xml(*fixture_ids))
+        result = self.provider().get_group_membership(runtime, 1, self.settings)
+        self.assertEqual(result["fixtures"], fixture_ids)
+        self.assertEqual(result["members"][-1], {"fix_id": 131, "export_order": 31})
+
+    def test_empty_real_group_is_not_an_error(self):
+        runtime = ExportRuntime(self.directory, xml_factory=lambda *_args, **_kwargs: group_xml())
+        self.assertEqual(self.provider().get_group_membership(runtime, 1, self.settings)["fixtures"], [])
+
+    def test_wrong_group_or_malformed_xml_is_rejected_and_retained_for_diagnostics(self):
+        wrong = ExportRuntime(self.directory, xml_factory=lambda *_args, **_kwargs: group_xml(101, index=1))
+        with self.assertRaisesRegex(GroupMembershipProviderError, "GROUP_NUMBER_MISMATCH"):
+            self.provider().get_group_membership(wrong, 1, self.settings)
+        self.assertTrue((self.directory / "ZEN_AGENT_G1_request0001.xml").exists())
+        (self.directory / "ZEN_AGENT_G1_request0001.xml").unlink()
+        malformed = ExportRuntime(self.directory, xml_factory=lambda *_args, **_kwargs: "<MA><Group>")
+        with self.assertRaisesRegex(GroupMembershipProviderError, "MALFORMED"):
+            self.provider().get_group_membership(malformed, 1, self.settings)
+
+    def test_missing_subfixtures_is_rejected(self):
+        runtime = ExportRuntime(self.directory, xml_factory=lambda *_args, **_kwargs: group_xml(include_subfixtures=False))
+        with self.assertRaisesRegex(GroupMembershipProviderError, "NO_MEMBERSHIP"):
+            self.provider().get_group_membership(runtime, 1, self.settings)
+
+    def test_stale_mtime_cannot_be_accepted(self):
+        class StaleRuntime(ExportRuntime):
+            def export_group_file(inner, group_no, filename):
+                inner.commands.append((group_no, filename))
+                target = inner.directory / filename
+                target.write_text(group_xml(101), encoding="utf-8")
+                os.utime(target, ns=(1, 1))
+                return "exported"
+
+        ticks = iter((0.0, 0.0, 1.0))
+        provider = ExportFileGroupMembershipProvider(
+            request_id_factory=lambda: "request0001",
+            wall_clock_ns=lambda: 2,
+            monotonic_clock=lambda: next(ticks),
+            sleep=lambda _seconds: None,
+        )
+        with self.assertRaisesRegex(GroupMembershipProviderError, "EXPORT_FILE_TIMEOUT"):
+            provider.get_group_membership(StaleRuntime(self.directory), 1, {**self.settings, "timeout_seconds": 0.5})
+
+    def test_cleanup_is_limited_to_agent_owned_prefix(self):
+        unrelated = self.directory / "keep-this.xml"
+        unrelated.write_text("unrelated", encoding="utf-8")
+        self.provider().get_group_membership(ExportRuntime(self.directory), 1, self.settings)
+        self.assertTrue(unrelated.exists())
+
+    def test_remote_host_reports_explicit_filesystem_capability_error(self):
+        runtime = ExportRuntime(self.directory, host="10.20.30.40")
+        provider = self.provider()
+        self.assertFalse(provider.capabilities(runtime, self.settings)["local_export_access"])
+        with self.assertRaisesRegex(GroupMembershipProviderUnavailable, "REMOTE_EXPORT_ACCESS_UNAVAILABLE"):
+            provider.get_group_membership(runtime, 1, self.settings)
+        self.assertEqual(runtime.commands, [])
+
+    def test_unique_filenames_keep_concurrent_exports_independent(self):
+        request_ids = iter(("request0001", "request0002"))
+        provider = self.provider(lambda: next(request_ids))
+        runtime = ExportRuntime(self.directory)
+        results, errors = [], []
+
+        def run():
+            try:
+                results.append(provider.get_group_membership(runtime, 1, self.settings))
+            except Exception as exc:  # pragma: no cover - asserted below
+                errors.append(exc)
+
+        threads = [threading.Thread(target=run), threading.Thread(target=run)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        self.assertEqual(errors, [])
+        self.assertEqual(len(results), 2)
+        self.assertEqual({filename for _group, filename in runtime.commands}, {"ZEN_AGENT_G1_request0001.xml", "ZEN_AGENT_G1_request0002.xml"})
+
+    def test_auto_resolver_prefers_the_running_onpc_version_then_newest(self):
+        program_data = self.directory / "ProgramData"
+        base = program_data / "MA Lighting Technologies" / "grandma"
+        (base / "gma2_V_3.9.60" / "importexport").mkdir(parents=True)
+        (base / "gma2_V_3.9.61" / "importexport").mkdir(parents=True)
+        resolver = ImportExportPathResolver(program_data, running_onpc_paths=lambda: [Path(r"C:\\Program Files\\MA Lighting Technologies\\grandma\\grandMA2 onPC 3.9.60.65\\gma2onpc.exe")])
+        self.assertEqual(resolver.resolve(), (base / "gma2_V_3.9.60" / "importexport").resolve())
+        latest = ImportExportPathResolver(program_data, running_onpc_paths=lambda: [])
+        self.assertEqual(latest.resolve(), (base / "gma2_V_3.9.61" / "importexport").resolve())
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from zen_ma2_agent.config import SettingsError, load_preferences, save_preferences, settings_path, validate_ma2_settings
+from zen_ma2_agent.config import SettingsError, load_preferences, save_preferences, settings_path, validate_ma2_settings, validate_state_adapter_settings
 from zen_ma2_agent.runtime import AgentRuntime
 from zen_ma2_agent.telnet_client import ConnectionState, MA2TelnetClient, login_command, strip_ansi
 
@@ -180,6 +180,13 @@ class ConnectionSettingsTests(unittest.TestCase):
         save_preferences({"ma2": {"host": "127.0.0.1", "port": 30000, "username": "User", "password": "bad"}}, self.root)
         saved = json.loads(settings_path(self.root).read_text(encoding="utf-8"))
         self.assertNotIn("password", json.dumps(saved).lower())
+
+    def test_importexport_path_setting_accepts_auto_or_an_absolute_override(self):
+        self.assertEqual(validate_state_adapter_settings({"plugin_slot": 375, "importexport_path": "auto"})["importexport_path"], "auto")
+        override = r"C:\\ProgramData\\MA Lighting Technologies\\grandma\\gma2_V_3.9.60\\importexport"
+        self.assertEqual(validate_state_adapter_settings({"importexport_path": override})["importexport_path"], override)
+        with self.assertRaises(SettingsError):
+            validate_state_adapter_settings({"importexport_path": "relative/importexport"})
 
 
 if __name__ == "__main__":

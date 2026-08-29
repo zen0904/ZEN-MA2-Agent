@@ -16,7 +16,7 @@ DEFAULTS: dict[str, Any] = {
     "internet_access": "AUTO",
     # The imported Plugin Pool slot is deliberately opt-in: no show has a
     # universal Plugin slot. The Lua request itself travels through a UserVar.
-    "state_adapter": {"plugin_slot": None, "timeout_seconds": 3.0},
+    "state_adapter": {"plugin_slot": None, "timeout_seconds": 3.0, "importexport_path": "auto"},
 }
 
 HOST_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.-]*$")
@@ -66,7 +66,18 @@ def validate_state_adapter_settings(settings: object) -> dict[str, Any]:
         raise SettingsError("ZEN_AGENT timeout must be a number.") from exc
     if not 0.1 <= timeout_seconds <= 30:
         raise SettingsError("ZEN_AGENT timeout must be from 0.1 to 30 seconds.")
-    return {"plugin_slot": plugin_slot, "timeout_seconds": timeout_seconds}
+    raw_path = settings.get("importexport_path", "auto")
+    if raw_path in (None, ""):
+        importexport_path = "auto"
+    elif not isinstance(raw_path, str):
+        raise SettingsError("MA2 importexport path must be 'auto' or an absolute path.")
+    else:
+        importexport_path = raw_path.strip() or "auto"
+        if importexport_path.casefold() == "auto":
+            importexport_path = "auto"
+        elif not (Path(importexport_path).is_absolute() or importexport_path.startswith("\\\\")):
+            raise SettingsError("MA2 importexport path must be 'auto' or an absolute path.")
+    return {"plugin_slot": plugin_slot, "timeout_seconds": timeout_seconds, "importexport_path": importexport_path}
 
 
 def load_preferences(root: Path | None = None) -> dict[str, Any]:

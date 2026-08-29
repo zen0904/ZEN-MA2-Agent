@@ -26,6 +26,7 @@ class AgentRuntime:
         self.reconnect_required = False
         self._audit_cursor = 0
         self._state_adapter_lock = threading.Lock()
+        self._export_state_lock = threading.Lock()
 
     @property
     def state(self) -> ConnectionState:
@@ -100,6 +101,20 @@ class AgentRuntime:
             raise PermissionError("State transport only accepts allow-listed read-only List commands.")
         response = self.client.execute(command)
         self.log("state_read", {"command": command, "response": response})
+        return response
+
+    def export_group_file(self, group_no: int, filename: str) -> str:
+        """Run the one allow-listed, read-only-state filesystem export command."""
+        if not self.ready or not self.client:
+            raise ConnectionError("Connect and reach MA2 READY before exporting show state.")
+        if isinstance(group_no, bool) or not isinstance(group_no, int) or group_no < 1:
+            raise ValueError("Export Group requires a positive group number.")
+        if not re.fullmatch(r"ZEN_AGENT_G[1-9]\d*_[A-Za-z0-9_-]{6,64}\.xml", filename):
+            raise PermissionError("Export state only permits Agent-owned temporary XML filenames.")
+        command = f'Export Group {group_no} "{filename}" /nc'
+        with self._export_state_lock:
+            response = self.client.execute(command)
+        self.log("state_export", {"command": command, "group_no": group_no, "filename": filename})
         return response
 
     @staticmethod

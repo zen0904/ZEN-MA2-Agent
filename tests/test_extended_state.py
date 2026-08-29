@@ -2,6 +2,7 @@ import tempfile
 import threading
 import time
 import unittest
+import re
 from pathlib import Path
 from shutil import copytree
 
@@ -15,6 +16,8 @@ from zen_ma2_agent.web_server import create_app
 
 
 class MailboxStateClient:
+    export_directory: Path | None = None
+
     def __init__(self, *_args):
         self.state = ConnectionState.DISCONNECTED
         self.authenticated_user = None
@@ -28,6 +31,15 @@ class MailboxStateClient:
 
     def execute(self, command):
         self.executed.append(command)
+        match = re.fullmatch(r'Export Group (\d+) "(ZEN_AGENT_G\d+_[A-Za-z0-9_-]+\.xml)" /nc', command)
+        if match:
+            assert self.export_directory is not None
+            group_no, filename = match.groups()
+            (self.export_directory / filename).write_text(
+                f'<MA xmlns="http://schemas.malighting.de/grandma2/xml/MA"><Group index="{int(group_no) - 1}" name="HYBRID"><Subfixtures><Subfixture fix_id="1" /><Subfixture fix_id="101" /><Subfixture fix_id="1007" /></Subfixtures></Group></MA>',
+                encoding="utf-8",
+            )
+            return "exported"
         if command.startswith('SetUserVar $ZEN_AGENT_REQUEST="'):
             self.mailbox = command.removeprefix('SetUserVar $ZEN_AGENT_REQUEST="').removesuffix('"')
             return ""
@@ -56,24 +68,31 @@ class ExtendedStateTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.source_root = Path(__file__).resolve().parents[1]
         copytree(self.source_root / "skills", self.root / "skills")
+        self.export_directory = self.root / "ma2-importexport"
+        self.export_directory.mkdir()
+        MailboxStateClient.export_directory = self.export_directory
         self.core = AgentCore(AgentRuntime(self.root, client_factory=MailboxStateClient))
-        self.core.runtime.preferences["state_adapter"] = {"plugin_slot": 3, "timeout_seconds": 1.0}
+        self.core.runtime.preferences["state_adapter"] = {"plugin_slot": 3, "timeout_seconds": 1.0, "importexport_path": str(self.export_directory)}
         self.core.connect("127.0.0.1", 30000, "MM", "")
 
     def tearDown(self):
         self.temp.cleanup()
 
-    def test_groups_fixtures_and_membership_use_serialized_mailbox(self):
+    def test_groups_fixtures_and_membership_use_export_provider(self):
         self.assertEqual([item["number"] for item in self.core.refresh_state("groups")["values"]], [1, 8])
         self.assertEqual([item["number"] for item in self.core.refresh_state("fixtures")["values"]], [1, 101, 1007])
         result = self.core.request_group_membership(1)
-        self.assertEqual(result["group"], {"group_no": 1, "name": "HYBRID", "fixtures": [1, 101, 1007]})
+        self.assertEqual(result["group"]["fixtures"], [1, 101, 1007])
+        self.assertEqual(result["group"]["members"], [
+            {"fix_id": 1, "export_order": 0},
+            {"fix_id": 101, "export_order": 1},
+            {"fix_id": 1007, "export_order": 2},
+        ])
         commands = self.core.runtime.client.executed
-        mailbox = next(command for command in commands if command.startswith("SetUserVar $ZEN_AGENT_REQUEST="))
-        self.assertRegex(mailbox, r'^SetUserVar \$ZEN_AGENT_REQUEST="[a-f0-9]{16} group_membership 1"$')
-        plugin_index = commands.index("Plugin 3")
-        self.assertNotIn('"', commands[plugin_index])
-        self.assertEqual(commands[plugin_index - 1], mailbox)
+        export = next(command for command in commands if command.startswith("Export Group 1 "))
+        self.assertRegex(export, r'^Export Group 1 "ZEN_AGENT_G1_[a-f0-9]{16}\.xml" /nc$')
+        self.assertNotIn("Plugin 3", commands)
+        self.assertEqual(self.core.state.get("group_membership").source, "ma2_export_xml")
 
     def test_request_id_filtering_and_fragmented_frames(self):
         adapter = ZenStateAdapter()
@@ -137,10 +156,10 @@ class ExtendedStateTests(unittest.TestCase):
         self.assertTrue(commands[2].startswith("SetUserVar"))
         self.assertEqual(commands[3], "Plugin 3")
 
-    def test_unconfigured_slot_does_not_fallback_to_direct_plugin_command(self):
-        self.core.runtime.preferences["state_adapter"] = {"plugin_slot": None, "timeout_seconds": 1.0}
+    def test_group_export_does_not_require_a_plugin_slot(self):
+        self.core.runtime.preferences["state_adapter"] = {"plugin_slot": None, "timeout_seconds": 1.0, "importexport_path": str(self.export_directory)}
         result = self.core.request_group_membership(1)
-        self.assertEqual(result["status"], "UNSUPPORTED")
+        self.assertEqual(result["status"], "available")
         self.assertFalse(any(command.startswith("Plugin") for command in self.core.runtime.client.executed))
 
 

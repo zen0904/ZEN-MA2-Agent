@@ -29,14 +29,16 @@ the mobile PWA uses event push with reconnect rather than polling.
 
 The General State layer is frontend-independent and read-only. Groups,
 Fixtures, Layout Pool inventory, Sequences and Cue metadata use allow-listed
-`List` commands. Group membership and Layout object XY use only the bundled
-`ZEN_AGENT` Lua Echo protocol. Selection and Programmer are never inferred by
-changing MA2 selection or clearing the programmer: when no verified accessor is
-available they report `UNSUPPORTED`.
+`List` commands. Local onPC Group membership uses a dedicated Export XML
+provider; it is available only when the Agent can read the MA2 `importexport`
+filesystem and otherwise reports `REMOTE_EXPORT_ACCESS_UNAVAILABLE`. Layout
+object XY uses the bundled `ZEN_AGENT` Lua Echo protocol. Selection and
+Programmer are never inferred by changing MA2 selection or clearing the
+programmer: when no verified accessor is available they report `UNSUPPORTED`.
 
 ```text
 Chat / Desktop / Mobile → AgentCore.refresh_state()
-      → allow-listed List provider OR read-only ZEN_AGENT adapter
+      → allow-listed List provider OR local Export XML provider OR read-only ZEN_AGENT adapter
       → parser validates only typed records
       → StateStore(resource, values, timestamp, source, stale, error)
 ```

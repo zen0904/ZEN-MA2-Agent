@@ -49,9 +49,10 @@ the UI instead shows `Settings changed — reconnect required`.
    the selected LAN address and a pairing nonce; it never exposes a permanent
    secret. A six-digit pairing code is still required.
 8. General MA2 State cache: Groups, Fixtures, Layout Pool, Sequences and Cue
-   metadata use core-owned read-only providers. Group membership and Layout XY
-   use the bundled Echo-only Lua adapter; unsupported accessors are reported
-   explicitly and never emulated through a selection/programmer mutation.
+   metadata use core-owned read-only providers. Local onPC Group membership
+   uses a temporary native Export XML file; Layout XY retains the bundled
+   Echo-only Lua adapter. Unsupported accessors are reported explicitly and
+   never emulated through a selection/programmer mutation.
 9. Workflow-first Skill registry: each Skill may describe state dependencies,
    subtasks, multi-step commands, approval gates, verification, and recovery
    metadata. User-installed code is never auto-imported.
@@ -96,8 +97,11 @@ Use **MA2 State** to refresh Groups or Fixture inventory, or ask in Chat:
 
 The general State layer also supports Group membership, Layout XY, selection,
 programmer summary, and Cue metadata. It records each cached resource's source,
-timestamp, stale flag, and error state. See [MA2 State adapter](docs/MA2_STATE.md)
-for the safe adapter install step and current compatibility boundary.
+timestamp, stale flag, and error state. Local Group membership needs access to
+the onPC `importexport` filesystem; a remote console without filesystem access
+returns `REMOTE_EXPORT_ACCESS_UNAVAILABLE`. See [MA2 State adapter](docs/MA2_STATE.md)
+and [Group Export provider](docs/MA2_GROUP_EXPORT.md) for the compatibility
+boundary.
 
 The initial executable builtins are Group Select, Set Dimmer, Fixture Select,
 and Go Sequence. Geometry Clone, Auto Position, Effect Builder, Timecode
