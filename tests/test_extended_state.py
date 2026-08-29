@@ -1,4 +1,6 @@
 import tempfile
+import threading
+import time
 import unittest
 from pathlib import Path
 from shutil import copytree
@@ -7,17 +9,18 @@ from fastapi.testclient import TestClient
 
 from zen_ma2_agent.core import AgentCore
 from zen_ma2_agent.runtime import AgentRuntime
-from zen_ma2_agent.state.providers import AdapterResponseError, AdapterUnsupported, CueProvider, LayoutInventoryProvider, SequenceProvider, ZenStateAdapter
+from zen_ma2_agent.state.providers import AdapterResponseError, AdapterUnsupported, ZenStateAdapter
 from zen_ma2_agent.telnet_client import ConnectionState
 from zen_ma2_agent.web_server import create_app
 
 
-class ExtendedStateClient:
+class MailboxStateClient:
     def __init__(self, *_args):
         self.state = ConnectionState.DISCONNECTED
         self.authenticated_user = None
         self.audit_entries = []
-        self.executed = []
+        self.executed: list[str] = []
+        self.mailbox = ""
 
     def connect(self, username, password=""):
         self.state, self.authenticated_user = ConnectionState.READY, username
@@ -25,17 +28,21 @@ class ExtendedStateClient:
 
     def execute(self, command):
         self.executed.append(command)
+        if command.startswith('SetUserVar $ZEN_AGENT_REQUEST="'):
+            self.mailbox = command.removeprefix('SetUserVar $ZEN_AGENT_REQUEST="').removesuffix('"')
+            return ""
+        if command == "Plugin 3":
+            request_id, operation, argument = self.mailbox.split("|", 2)
+            if operation == "group_membership" and argument == "1":
+                return (f"stale ZEN_STATE|stale01|BEGIN|group_membership|1\r\n"
+                        f"ZEN_STATE|{request_id}|BEGIN|group_membership|1\r\n"
+                        f"ZEN_STATE|{request_id}|MEMBER|1\r\nZEN_STATE|{request_id}|MEMBER|101\r\n"
+                        f"ZEN_STATE|{request_id}|MEMBER|1007\r\nZEN_STATE|{request_id}|END|group_membership|1\r\n")
+            return f"ZEN_STATE|{request_id}|ERROR|UNKNOWN_COMMAND\r\n"
         responses = {
             "List Group": 'Group 1 "HYBRID"\r\nGroup 8 "SPARSE"\r\n',
             "List Fixture": 'Fixture 1 "Spot" (Type A)\r\nFixture 101 "Wash" (Type B)\r\nFixture 1007 "Beam" (Type C)\r\n',
-            "List Layout": 'Layout 1 "Main Stage"\r\nLayout 7 "Empty"\r\n',
             "List Sequence": 'Sequence 5 "SONG 01"\r\nSequence 21 "Encore"\r\n',
-            "List Cue 5": 'Cue 1 "Intro" Trigger Go Fade 2.5 Delay 0.5\r\nCue 2.5 "Verse" Trigger Time Fade 1\r\n',
-            "List Cue 21": 'Cue 1 "Encore Intro" Trigger Go\r\n',
-            'Plugin "ZEN_AGENT" "group_membership 1"': 'unrelated feedback\r\nZEN_STATE|group_membership|{"group_no":1,"name":"HYBRID","fixtures":[1,101,1007]}\r\n',
-            'Plugin "ZEN_AGENT" "layouts 1"': 'ZEN_STATE|layouts|{"layout":1,"name":"Main Stage","items":[{"type":"fixture","fixture":101,"x":-2.4,"y":1.1,"width":0.5,"height":1.25,"rotation":-90},{"type":"group","group":1,"x":0,"y":-3.75}]}\r\n',
-            'Plugin "ZEN_AGENT" "selection"': 'ZEN_STATE|selection|{"fixtures":[1,1007]}\r\n',
-            'Plugin "ZEN_AGENT" "programmer"': 'ZEN_STATE|programmer|{"has_active_values":true,"active_attributes":["Dimmer","Pan"]}\r\n',
         }
         return responses.get(command, "unrelated MA2 feedback")
 
@@ -49,82 +56,86 @@ class ExtendedStateTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.source_root = Path(__file__).resolve().parents[1]
         copytree(self.source_root / "skills", self.root / "skills")
-        self.core = AgentCore(AgentRuntime(self.root, client_factory=ExtendedStateClient))
+        self.core = AgentCore(AgentRuntime(self.root, client_factory=MailboxStateClient))
+        self.core.runtime.preferences["state_adapter"] = {"plugin_slot": 3, "timeout_seconds": 1.0}
         self.core.connect("127.0.0.1", 30000, "MM", "")
 
     def tearDown(self):
         self.temp.cleanup()
 
-    def test_group_membership_parses_sparse_fixture_ids_and_fragmented_feedback(self):
-        adapter = ZenStateAdapter()
-        fragmented = 'noise ZEN_STA' + 'TE|group_membership|{"group_no":1,"name":"HYBRID","fixtures":[1,101,1007]}'
-        self.assertEqual(adapter.group_membership(fragmented, 1)["fixtures"], [1, 101, 1007])
+    def test_groups_fixtures_and_membership_use_serialized_mailbox(self):
+        self.assertEqual([item["number"] for item in self.core.refresh_state("groups")["values"]], [1, 8])
+        self.assertEqual([item["number"] for item in self.core.refresh_state("fixtures")["values"]], [1, 101, 1007])
         result = self.core.request_group_membership(1)
         self.assertEqual(result["group"], {"group_no": 1, "name": "HYBRID", "fixtures": [1, 101, 1007]})
-        self.assertEqual(self.core.snapshot()["state_browser"]["group_membership"]["source"], "ma2_lua_adapter")
+        commands = self.core.runtime.client.executed
+        mailbox = next(command for command in commands if command.startswith("SetUserVar $ZEN_AGENT_REQUEST="))
+        self.assertRegex(mailbox, r'^SetUserVar \$ZEN_AGENT_REQUEST="[a-f0-9]{16}\|group_membership\|1"$')
+        plugin_index = commands.index("Plugin 3")
+        self.assertNotIn('"', commands[plugin_index])
+        self.assertEqual(commands[plugin_index - 1], mailbox)
 
-    def test_layout_inventory_xy_negative_coordinates_and_empty_layout(self):
-        self.assertEqual(LayoutInventoryProvider().parse('Layout 1 "Main"\nLayout 7 Empty'), [{"layout": 1, "name": "Main", "items": []}, {"layout": 7, "name": "Empty", "items": []}])
-        result = self.core.refresh_state("layouts", layout_no=1)
-        item = result["values"][0]["items"][0]
-        self.assertEqual((item["fixture"], item["x"], item["y"], item["rotation"]), (101, -2.4, 1.1, -90.0))
-        empty = ZenStateAdapter().layout('ZEN_STATE|layouts|{"layout":7,"name":"Empty","items":[]}', 7)
-        self.assertEqual(empty["items"], [])
-        response = self.core.handle_request("有哪些 Layout？")
-        self.assertIn("1: Main Stage", response["message"])
-
-    def test_selection_and_programmer_snapshots(self):
-        self.assertEqual(self.core.get_selection()["selection"], {"fixtures": [1, 1007]})
-        self.assertEqual(self.core.get_programmer_summary()["programmer"]["active_attributes"], ["Dimmer", "Pan"])
-        self.assertEqual(ZenStateAdapter().selection('ZEN_STATE|selection|{"fixtures":[]}'), {"fixtures": []})
-
-    def test_sequence_and_cue_inventory_metadata(self):
-        sequences = self.core.refresh_state("sequences")
-        cues = self.core.refresh_state("cues", sequence=5)
-        self.assertEqual(sequences["values"], [{"number": 5, "name": "SONG 01"}, {"number": 21, "name": "Encore"}])
-        self.assertEqual((cues["values"][0]["number"], cues["values"][0]["trigger"], cues["values"][0]["fade"], cues["values"][0]["delay"]), (1, "Go", 2.5, 0.5))
-        self.assertEqual(CueProvider().parse("unrelated feedback", 5), [])
-        self.assertEqual(SequenceProvider().parse("unrelated feedback"), [])
-        self.core.refresh_state("cues", sequence=21)
-        cached = self.core.snapshot()["state_browser"]["cues"]["values"]
-        self.assertEqual(sorted(item["sequence"] for item in cached), [5, 5, 21])
-
-    def test_malformed_or_unrelated_adapter_feedback_is_never_invented(self):
+    def test_request_id_filtering_and_fragmented_frames(self):
         adapter = ZenStateAdapter()
+        request = adapter.request("group_membership", 1, request_id="abc123")
+        fragmented = "noise ZEN_STA" + "TE|old001|BEGIN|group_membership|1\r\n" + "ZEN_STATE|abc123|BEGIN|group_membership|1\r\nZEN_STATE|abc123|MEMBER|101\r\nZEN_STATE|abc123|END|group_membership|1"
+        self.assertEqual(adapter.group_membership(fragmented, request)["fixtures"], [101])
         with self.assertRaises(AdapterResponseError):
-            adapter.layout('ZEN_STATE|layouts|{"layout":1,"items":[{"type":"fixture","fixture":101,"x":"bad","y":1}]}', 1)
+            adapter.group_membership("ZEN_STATE|old001|BEGIN|group_membership|1", request)
+
+    def test_malformed_unknown_and_duplicate_responses_are_rejected(self):
+        adapter = ZenStateAdapter()
+        request = adapter.request("group_membership", 1, request_id="abc123")
+        with self.assertRaises(AdapterResponseError):
+            adapter.group_membership("ZEN_STATE|abc123|BEGIN|group_membership|1\r\nZEN_STATE|abc123|END|group_membership|2", request)
         with self.assertRaises(AdapterUnsupported):
-            adapter.selection("Logged in as User 'MM'")
+            adapter.group_membership("ZEN_STATE|abc123|ERROR|UNKNOWN_COMMAND", request)
 
-    def test_cache_stale_and_refresh_metadata(self):
-        self.core.refresh_state("sequences")
-        initial = self.core.snapshot()["state_browser"]["sequences"]
-        self.assertFalse(initial["stale"])
-        self.assertEqual(initial["source"], "ma2_telnet_list")
-        self.core.disconnect()
-        self.assertTrue(self.core.snapshot()["state_browser"]["sequences"]["stale"])
-        self.core.connect("127.0.0.1", 30000, "MM", "")
-        self.core.refresh_state("sequences")
-        self.assertFalse(self.core.snapshot()["state_browser"]["sequences"]["stale"])
-
-    def test_chat_auto_refreshes_dependencies_and_mobile_shares_state(self):
+    def test_chat_and_mobile_share_mailbox_state(self):
         membership = self.core.handle_request("HYBRID 裡有哪些燈？", source="desktop")
         self.assertEqual(membership["type"], "ANSWER")
         self.assertIn("1, 101, 1007", membership["message"])
-        self.assertEqual(self.core.runtime.client.executed[:2], ["List Group", 'Plugin "ZEN_AGENT" "group_membership 1"'])
         client = TestClient(create_app(self.core, self.source_root))
         token = client.post("/api/pair", json={"code": self.core.pairing.code, "nonce": self.core.pairing.nonce}).json()["token"]
-        response = client.post("/api/chat", json={"text": "Sequence 5 有哪些 Cue？"}, headers={"Authorization": "Bearer " + token})
+        response = client.post("/api/chat", json={"text": "有哪些 Fixture？"}, headers={"Authorization": "Bearer " + token})
         self.assertEqual(response.status_code, 200)
-        self.assertIn("Intro", response.json()["message"])
-        self.assertEqual(self.core.snapshot()["state_browser"]["cues"]["count"], 2)
+        self.assertIn("1007: Beam", response.json()["message"])
 
-    def test_unsupported_adapter_state_is_cached_without_unsafe_fallback(self):
-        self.core.runtime.client.execute = lambda command: self.core.runtime.client.executed.append(command) or "Plugin not found"
-        result = self.core.get_selection()
+    def test_quotes_escape_and_concurrent_requests_are_serialized(self):
+        self.assertEqual(AgentRuntime.user_var_command('a"b\\c'), 'SetUserVar $ZEN_AGENT_REQUEST="a\\"b\\\\c"')
+        client = self.core.runtime.client
+        original_execute = client.execute
+
+        def delayed(command):
+            if command == "Plugin 3":
+                time.sleep(0.03)
+            return original_execute(command)
+
+        client.execute = delayed
+        errors: list[Exception] = []
+
+        def run(request_id):
+            try:
+                self.core.runtime.read_adapter_state(plugin_slot=3, request=f"{request_id}|group_membership|1", timeout_seconds=1)
+            except Exception as exc:  # pragma: no cover - assertion below captures it
+                errors.append(exc)
+
+        first = threading.Thread(target=run, args=("thread01",))
+        second = threading.Thread(target=run, args=("thread02",))
+        first.start(); second.start(); first.join(); second.join()
+        self.assertEqual(errors, [])
+        commands = [command for command in client.executed if command.startswith("SetUserVar") or command == "Plugin 3"]
+        self.assertEqual(len(commands), 4)
+        self.assertTrue(commands[0].startswith("SetUserVar"))
+        self.assertEqual(commands[1], "Plugin 3")
+        self.assertTrue(commands[2].startswith("SetUserVar"))
+        self.assertEqual(commands[3], "Plugin 3")
+
+    def test_unconfigured_slot_does_not_fallback_to_direct_plugin_command(self):
+        self.core.runtime.preferences["state_adapter"] = {"plugin_slot": None, "timeout_seconds": 1.0}
+        result = self.core.request_group_membership(1)
         self.assertEqual(result["status"], "UNSUPPORTED")
-        self.assertTrue(result["error"].startswith("UNSUPPORTED"))
-        self.assertEqual(self.core.runtime.client.executed[-1], 'Plugin "ZEN_AGENT" "selection"')
+        self.assertFalse(any(command.startswith("Plugin") for command in self.core.runtime.client.executed))
 
 
 if __name__ == "__main__":

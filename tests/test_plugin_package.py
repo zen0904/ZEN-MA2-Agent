@@ -22,24 +22,29 @@ class GrandMA2PluginPackageTests(unittest.TestCase):
         self.assertTrue(lua_path.is_file())
         self.assertEqual(lua_path.name, plugin.attrib["luafile"])
 
-    def test_ma2_lua_entrypoint_is_a_minimal_mailbox_smoke_test(self):
+    def test_ma2_lua_entrypoint_uses_the_read_only_mailbox_protocol(self):
         lua = (PLUGIN_DIR / "ZEN_AGENT.lua").read_text(encoding="utf-8")
         portable_lua = (ROOT / "lua" / "ZEN_AGENT.lua").read_text(encoding="utf-8")
         self.assertEqual(lua, portable_lua)
         self.assertIn("local function main()", lua)
         self.assertIn("return main", lua)
-        self.assertIn('gma.echo("ZEN_SMOKE_ECHO")', lua)
-        self.assertIn('gma.feedback("ZEN_SMOKE_FEEDBACK")', lua)
         self.assertIn('gma.user.getvar("ZEN_AGENT_REQUEST")', lua)
-        self.assertIn('gma.feedback("ZEN_REQUEST|" .. tostring(request))', lua)
+        self.assertIn('gma.feedback("ZEN_DEBUG|REQUEST|" .. tostring(request))', lua)
         self.assertIn('gma.user.setvar("ZEN_AGENT_REQUEST", "")', lua)
+        self.assertIn('"ZEN_STATE|" .. request_id', lua)
+        self.assertIn('"DUPLICATE_REQUEST"', lua)
+        self.assertIn('"MALFORMED_REQUEST"', lua)
+        self.assertIn('"UNKNOWN_COMMAND"', lua)
+        self.assertIn('command == "group_membership"', lua)
+        for forbidden in ("gma.cmd", "Store", "Update", "Delete", "Clone", "Patch", "ClearSelection"):
+            self.assertNotIn(forbidden, lua)
         self.assertNotIn("main(display_handle, argument)", lua)
         readme = (PLUGIN_DIR / "README.txt").read_text(encoding="utf-8")
         self.assertIn("ZEN_AGENT.xml", readme)
         self.assertIn("ZEN_AGENT.lua", readme)
-        self.assertIn('SetUserVar $ZEN_AGENT_REQUEST="group_membership 1"', readme)
+        self.assertIn('SetUserVar $ZEN_AGENT_REQUEST="abc123|group_membership|1"', readme)
         self.assertIn("Plugin 3", readme)
-        self.assertIn("ZEN_SMOKE_FEEDBACK", readme)
+        self.assertIn("ZEN_STATE|abc123|BEGIN|group_membership|1", readme)
         self.assertIn("import `ZEN_AGENT.xml` again", readme)
 
 

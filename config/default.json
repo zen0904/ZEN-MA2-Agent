@@ -6,6 +6,10 @@
   },
   "read_timeout_seconds": 0.35,
   "blackout_command_template": null,
+  "state_adapter": {
+    "plugin_slot": null,
+    "timeout_seconds": 3.0
+  },
   "mobile": {
     "enabled": true,
     "port": 8765

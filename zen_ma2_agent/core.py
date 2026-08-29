@@ -128,9 +128,17 @@ class AgentCore:
             elif resource in {"group_membership", "layouts", "selection", "programmer"}:
                 adapter = ZenStateAdapter()
                 request, parser = self._adapter_state_request(resource, group_no=group_no, layout_no=layout_no)
-                output = self.runtime.read_state(adapter.command(self.runtime.preferences["state_adapter"]["command_template"], request))
-                value = parser(adapter, output)
+                settings = self.runtime.preferences.get("state_adapter")
+                output = self.runtime.read_adapter_state(
+                    plugin_slot=adapter.plugin_slot(settings),
+                    request=request.wire,
+                    timeout_seconds=adapter.timeout_seconds(settings),
+                )
+                value = parser(adapter, output, request)
                 if resource == "group_membership":
+                    groups = self.state.get("groups")
+                    group = next((item for item in (groups.values if groups else []) if item.get("number") == group_no), None)
+                    value["name"] = group["name"] if group else f"Group {group_no}"
                     snapshot = self.state.upsert(resource, "group_no", value, source=adapter.source)
                 elif resource == "layouts":
                     snapshot = self.state.upsert(resource, "layout", value, source=adapter.source)
@@ -153,22 +161,25 @@ class AgentCore:
         return {"resource": resource, "count": len(snapshot.values), "values": snapshot.values, "status": "available"}
 
     @staticmethod
-    def _adapter_state_request(resource: str, *, group_no: int | None, layout_no: int | None) -> tuple[str, Any]:
+    def _adapter_state_request(resource: str, *, group_no: int | None, layout_no: int | None) -> tuple[Any, Any]:
         if resource == "group_membership":
             if not isinstance(group_no, int) or group_no < 1:
                 raise ValueError("Group membership requires a positive group number.")
-            return f"group_membership {group_no}", lambda adapter, output: adapter.group_membership(output, group_no)
+            return ZenStateAdapter.request("group_membership", group_no), lambda adapter, output, request: adapter.group_membership(output, request)
         if resource == "layouts":
             if not isinstance(layout_no, int) or layout_no < 1:
                 raise ValueError("Layout state requires a positive layout number.")
-            return f"layouts {layout_no}", lambda adapter, output: adapter.layout(output, layout_no)
+            return ZenStateAdapter.request("layouts", layout_no), lambda adapter, output, request: adapter.unsupported_resource(output, request)
         if resource == "selection":
-            return "selection", lambda adapter, output: adapter.selection(output)
+            return ZenStateAdapter.request("selection"), lambda adapter, output, request: adapter.unsupported_resource(output, request)
         if resource == "programmer":
-            return "programmer", lambda adapter, output: adapter.programmer(output)
+            return ZenStateAdapter.request("programmer"), lambda adapter, output, request: adapter.unsupported_resource(output, request)
         raise ValueError(f"No adapter request for state resource: {resource}")
 
     def request_group_membership(self, group_no: int) -> dict[str, Any]:
+        groups = self.state.get("groups")
+        if not groups or groups.stale or groups.error:
+            self.refresh_state("groups")
         result = self.refresh_state("group_membership", group_no=group_no)
         result["group"] = next((item for item in result["values"] if item.get("group_no") == group_no), None)
         return result

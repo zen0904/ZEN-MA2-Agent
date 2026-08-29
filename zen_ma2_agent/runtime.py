@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import json
 import re
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
+from time import monotonic
 from typing import Callable
 
 from .config import load_preferences, save_preferences, validate_ma2_settings
@@ -23,6 +25,7 @@ class AgentRuntime:
         self.current_plan: CommandPlan | None = None
         self.reconnect_required = False
         self._audit_cursor = 0
+        self._state_adapter_lock = threading.Lock()
 
     @property
     def state(self) -> ConnectionState:
@@ -93,10 +96,56 @@ class AgentRuntime:
         """Core-owned read-only transport entrypoint for generic state providers."""
         if not self.ready or not self.client:
             raise ConnectionError("Connect and reach MA2 READY before reading show state.")
-        if not re.fullmatch(r'(?:List (?:Group|Fixture|Layout|Sequence|Cue)(?: \d+)?|Plugin (?:"ZEN_AGENT"|\d+) "[a-z_]+(?: \d+)?")', command, re.I):
-            raise PermissionError("State transport only accepts allow-listed read-only List commands or ZEN_AGENT adapter reads.")
+        if not re.fullmatch(r'List (?:Group|Fixture|Layout|Sequence|Cue)(?: \d+)?', command, re.I):
+            raise PermissionError("State transport only accepts allow-listed read-only List commands.")
         response = self.client.execute(command)
         self.log("state_read", {"command": command, "response": response})
+        return response
+
+    @staticmethod
+    def user_var_command(value: str) -> str:
+        """Build a single safe SetUserVar command without allowing a new MA line."""
+        if "\r" in value or "\n" in value:
+            raise ValueError("ZEN_AGENT request cannot contain a newline.")
+        escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+        return f'SetUserVar $ZEN_AGENT_REQUEST="{escaped}"'
+
+    def read_adapter_state(self, *, plugin_slot: int, request: str, timeout_seconds: float) -> str:
+        """Serialize the two-command, read-only ZEN_AGENT UserVar mailbox."""
+        if not self.ready or not self.client:
+            raise ConnectionError("Connect and reach MA2 READY before reading show state.")
+        if isinstance(plugin_slot, bool) or not isinstance(plugin_slot, int) or not 2 <= plugin_slot <= 9999:
+            raise ValueError("ZEN_AGENT Plugin slot must be a configured number from 2 to 9999.")
+        if not re.fullmatch(r"[A-Za-z0-9_-]+\|[a-z_]+(?:\|\d+)?", request):
+            raise ValueError("Invalid ZEN_AGENT mailbox request.")
+        try:
+            timeout = float(timeout_seconds)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("ZEN_AGENT timeout must be numeric.") from exc
+        if timeout <= 0:
+            raise ValueError("ZEN_AGENT timeout must be positive.")
+        if not self._state_adapter_lock.acquire(timeout=timeout):
+            raise TimeoutError("Timed out waiting for the ZEN_AGENT state mailbox.")
+        request_id = request.split("|", 1)[0]
+        set_command = self.user_var_command(request)
+        plugin_command = f"Plugin {plugin_slot}"
+        started = monotonic()
+        try:
+            self.client.execute(set_command)
+            response = self.client.execute(plugin_command)
+            if monotonic() - started > timeout:
+                raise TimeoutError(f"Timed out waiting for ZEN_AGENT request {request_id}.")
+        except Exception:
+            # If Plugin could not start, clear the mailbox before releasing the
+            # serialization lock so a future request cannot consume stale data.
+            try:
+                self.client.execute(self.user_var_command(""))
+            except Exception:
+                pass
+            raise
+        finally:
+            self._state_adapter_lock.release()
+        self.log("state_adapter_read", {"request_id": request_id, "set_command": set_command, "plugin_command": plugin_command, "response": response})
         return response
 
     def execute_approved_commands(self, commands: tuple[str, ...]) -> list[str]:

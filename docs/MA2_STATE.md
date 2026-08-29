@@ -21,8 +21,8 @@ refresh replaces them.
 The runtime accepts only these state commands:
 
 - `List Group`, `List Fixture`, `List Layout`, `List Sequence`, `List Cue <n>`
-- `Plugin "ZEN_AGENT" "<allow-listed request>"` (or a configured numeric Plugin
-  Pool slot)
+- `SetUserVar $ZEN_AGENT_REQUEST="<request_id>|<allow-listed request>|<argument>"`
+  followed by `Plugin <configured numeric Plugin Pool slot>`
 
 No State provider can send `Store`, `Update`, `Delete`, `Clone`, `Patch`,
 `Clear`, or a fixture/group selection command. An unknown adapter response is
@@ -37,7 +37,8 @@ USB drive. In **System → Plugin**, edit an empty Plugin Pool object, press
 object is named `ZEN_AGENT`. The default portable setting invokes:
 
 ```text
-Plugin "ZEN_AGENT" "group_membership 1"
+SetUserVar $ZEN_AGENT_REQUEST="abc123|group_membership|1"
+Plugin 12
 ```
 
 If the console uses a numeric Plugin Pool slot, set only this portable,
@@ -46,22 +47,26 @@ non-secret value in `config/settings.json`:
 ```json
 {
   "state_adapter": {
-    "command_template": "Plugin 12 \"{request}\""
+    "plugin_slot": 12,
+    "timeout_seconds": 3.0
   }
 }
 ```
 
 The command compiler permits only the exact `ZEN_AGENT` label or a numeric slot,
-with a generated allow-listed request. The bundled Lua file only traverses
-objects and uses `Echo` to emit one JSON payload:
+with a generated request id and allow-listed request. The bundled Lua file only
+traverses objects and uses `gma.feedback()` to emit framed responses:
 
 ```text
-ZEN_STATE|layouts|{"layout":1,"items":[...]}
+ZEN_STATE|abc123|BEGIN|group_membership|1
+ZEN_STATE|abc123|MEMBER|101
+ZEN_STATE|abc123|END|group_membership|1
 ```
 
-It intentionally returns `ZEN_STATE_ERROR` for Selection and Programmer on
-grandMA2 3.9.x until a real console test proves a non-mutating accessor. Do not
-replace this with a Group-selection, Clear, Store, or Programmer probe.
+It currently returns a request-id-scoped `ZEN_STATE|<id>|ERROR|UNKNOWN_COMMAND`
+for Selection and Programmer until a real console test proves a non-mutating
+accessor. Do not replace this with a Group-selection, Clear, Store, or
+Programmer probe.
 
 ## Chat dependencies
 

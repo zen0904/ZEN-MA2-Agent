@@ -14,9 +14,9 @@ DEFAULTS: dict[str, Any] = {
     "blackout_command_template": None,
     "mobile": {"enabled": True, "port": 8765},
     "internet_access": "AUTO",
-    # This only invokes the bundled read-only Lua protocol. Operators may use a
-    # Plugin Pool number after importing ZEN_AGENT.lua, without storing secrets.
-    "state_adapter": {"command_template": 'Plugin "ZEN_AGENT" "{request}"'},
+    # The imported Plugin Pool slot is deliberately opt-in: no show has a
+    # universal Plugin slot. The Lua request itself travels through a UserVar.
+    "state_adapter": {"plugin_slot": None, "timeout_seconds": 3.0},
 }
 
 HOST_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.-]*$")
@@ -46,6 +46,29 @@ def validate_ma2_settings(host: str, port: object, username: str, *, require_use
     return {"host": host, "port": port, "username": username}
 
 
+def validate_state_adapter_settings(settings: object) -> dict[str, Any]:
+    settings = settings if isinstance(settings, dict) else {}
+    raw_slot = settings.get("plugin_slot")
+    if raw_slot in (None, ""):
+        plugin_slot = None
+    else:
+        if isinstance(raw_slot, bool):
+            raise SettingsError("ZEN_AGENT Plugin slot must be a number.")
+        try:
+            plugin_slot = int(str(raw_slot).strip())
+        except ValueError as exc:
+            raise SettingsError("ZEN_AGENT Plugin slot must be a number.") from exc
+        if not 2 <= plugin_slot <= 9999:
+            raise SettingsError("ZEN_AGENT Plugin slot must be from 2 to 9999.")
+    try:
+        timeout_seconds = float(settings.get("timeout_seconds", DEFAULTS["state_adapter"]["timeout_seconds"]))
+    except (TypeError, ValueError) as exc:
+        raise SettingsError("ZEN_AGENT timeout must be a number.") from exc
+    if not 0.1 <= timeout_seconds <= 30:
+        raise SettingsError("ZEN_AGENT timeout must be from 0.1 to 30 seconds.")
+    return {"plugin_slot": plugin_slot, "timeout_seconds": timeout_seconds}
+
+
 def load_preferences(root: Path | None = None) -> dict[str, Any]:
     root = root or app_root()
     ensure_runtime_dirs(root)
@@ -55,9 +78,8 @@ def load_preferences(root: Path | None = None) -> dict[str, Any]:
         if not isinstance(stored, dict):
             raise ValueError("settings root is not an object")
         ma2 = {**DEFAULTS["ma2"], **(stored.get("ma2") if isinstance(stored.get("ma2"), dict) else {})}
-        adapter = stored.get("state_adapter") if isinstance(stored.get("state_adapter"), dict) else {}
-        template = str(adapter.get("command_template", DEFAULTS["state_adapter"]["command_template"]))
-        return {**DEFAULTS, **stored, "ma2": validate_ma2_settings(ma2["host"], ma2["port"], ma2["username"]), "state_adapter": {"command_template": template}}
+        adapter = stored.get("state_adapter")
+        return {**DEFAULTS, **stored, "ma2": validate_ma2_settings(ma2["host"], ma2["port"], ma2["username"]), "state_adapter": validate_state_adapter_settings(adapter)}
     except (OSError, json.JSONDecodeError):
         defaults = {**DEFAULTS, "ma2": dict(DEFAULTS["ma2"])}
         save_preferences(defaults, root)
@@ -76,7 +98,7 @@ def save_preferences(preferences: dict[str, Any], root: Path | None = None) -> P
         "blackout_command_template": preferences.get("blackout_command_template"),
         "mobile": {"enabled": bool((preferences.get("mobile") or {}).get("enabled", True)), "port": int((preferences.get("mobile") or {}).get("port", 8765))},
         "internet_access": str(preferences.get("internet_access", "AUTO")),
-        "state_adapter": {"command_template": str((preferences.get("state_adapter") or {}).get("command_template", DEFAULTS["state_adapter"]["command_template"]))},
+        "state_adapter": validate_state_adapter_settings(preferences.get("state_adapter")),
     }
     # Password is intentionally absent from this portable file.
     path.write_text(json.dumps(saved, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import json
 import re
+import secrets
+from dataclasses import dataclass
 from typing import Any
 
 
@@ -13,87 +14,83 @@ class AdapterUnsupported(AdapterResponseError):
     pass
 
 
+@dataclass(frozen=True)
+class AdapterRequest:
+    request_id: str
+    command: str
+    argument: int | None = None
+
+    @property
+    def wire(self) -> str:
+        return f"{self.request_id}|{self.command}" + (f"|{self.argument}" if self.argument is not None else "")
+
+
 class ZenStateAdapter:
-    """Strict parser/compiler for the bundled read-only ZEN_AGENT Lua protocol."""
+    """Compiler/parser for the read-only ZEN_AGENT UserVar mailbox protocol."""
 
     source = "ma2_lua_adapter"
-    _request = re.compile(r"^[a-z_]+(?:\s+\d+)?$")
+    _request_id = re.compile(r"^[A-Za-z0-9_-]{6,64}$")
+    _commands = frozenset({"groups", "fixtures", "group_membership", "layouts", "layout_items", "sequences", "cues", "selection", "programmer"})
+    _requires_number = frozenset({"group_membership", "layouts", "layout_items", "cues"})
+    _frame = re.compile(r"ZEN_STATE\|(?P<request_id>[A-Za-z0-9_-]+)\|(?P<kind>BEGIN|MEMBER|END|ERROR)(?:\|(?P<payload>[^\r\n]*))?")
 
-    def command(self, template: str, request: str) -> str:
-        if not self._request.fullmatch(request):
-            raise ValueError("Invalid read-only adapter request.")
-        if "{request}" not in template:
-            raise ValueError("State adapter command template must contain {request}.")
-        command = template.replace("{request}", request)
-        if not re.fullmatch(r'Plugin\s+(?:"ZEN_AGENT"|\d+)\s+"[a-z_]+(?:\s+\d+)?"', command, re.I):
-            raise ValueError("State adapter command template is not a safe ZEN_AGENT Plugin invocation.")
-        return command
+    @classmethod
+    def request(cls, command: str, argument: int | None = None, *, request_id: str | None = None) -> AdapterRequest:
+        if command not in cls._commands:
+            raise ValueError("Unknown ZEN_AGENT read-only command.")
+        if command in cls._requires_number:
+            if isinstance(argument, bool) or not isinstance(argument, int) or argument < 1:
+                raise ValueError(f"ZEN_AGENT {command} requires a positive numeric argument.")
+        elif argument is not None:
+            raise ValueError(f"ZEN_AGENT {command} does not accept an argument.")
+        request_id = request_id or secrets.token_hex(8)
+        if not cls._request_id.fullmatch(request_id):
+            raise ValueError("Invalid ZEN_AGENT request id.")
+        return AdapterRequest(request_id, command, argument)
 
-    def payload(self, output: str, resource: str) -> Any:
-        error_marker = f"ZEN_STATE_ERROR|{resource}|"
-        if error_marker in output:
-            detail = output.split(error_marker, 1)[1].splitlines()[0].strip()
-            raise AdapterUnsupported(f"UNSUPPORTED {resource}: {detail or 'adapter reported no safe accessor'}")
-        marker = f"ZEN_STATE|{resource}|"
-        if marker not in output:
-            raise AdapterUnsupported(f"UNSUPPORTED {resource}: read-only ZEN_AGENT adapter is missing or returned no compatible data.")
-        encoded = output.split(marker, 1)[1].lstrip()
+    @staticmethod
+    def plugin_slot(settings: object) -> int:
+        settings = settings if isinstance(settings, dict) else {}
+        slot = settings.get("plugin_slot")
+        if isinstance(slot, bool) or not isinstance(slot, int) or not 2 <= slot <= 9999:
+            raise AdapterUnsupported("UNSUPPORTED ZEN_AGENT: configure state_adapter.plugin_slot with the imported Plugin Pool slot.")
+        return slot
+
+    @staticmethod
+    def timeout_seconds(settings: object) -> float:
+        settings = settings if isinstance(settings, dict) else {}
         try:
-            value, _ = json.JSONDecoder().raw_decode(encoded)
-        except json.JSONDecodeError as exc:
-            raise AdapterResponseError(f"Malformed ZEN_AGENT {resource} response.") from exc
-        return value
+            timeout = float(settings.get("timeout_seconds", 3.0))
+        except (TypeError, ValueError) as exc:
+            raise ValueError("ZEN_AGENT timeout must be numeric.") from exc
+        if not 0.1 <= timeout <= 30:
+            raise ValueError("ZEN_AGENT timeout must be from 0.1 to 30 seconds.")
+        return timeout
 
-    def group_membership(self, output: str, group_no: int) -> dict[str, Any]:
-        value = self.payload(output, "group_membership")
-        if not isinstance(value, dict) or value.get("group_no") != group_no or not isinstance(value.get("name"), str) or not isinstance(value.get("fixtures"), list):
-            raise AdapterResponseError("Malformed group membership response.")
-        fixtures = value["fixtures"]
-        if any(isinstance(item, bool) or not isinstance(item, int) or item < 1 for item in fixtures):
-            raise AdapterResponseError("Malformed group membership fixture IDs.")
-        return {"group_no": group_no, "name": value["name"], "fixtures": fixtures}
+    def _frames(self, output: str, request: AdapterRequest) -> list[tuple[str, str]]:
+        frames = [(match.group("kind"), match.group("payload") or "") for match in self._frame.finditer(output) if match.group("request_id") == request.request_id]
+        if not frames:
+            raise AdapterResponseError(f"No ZEN_STATE response matching request id {request.request_id}.")
+        for kind, payload in frames:
+            if kind == "ERROR":
+                raise AdapterUnsupported(f"UNSUPPORTED {request.command}: {payload or 'adapter reported an error'}")
+        return frames
 
-    def layout(self, output: str, layout_no: int) -> dict[str, Any]:
-        value = self.payload(output, "layouts")
-        if not isinstance(value, dict) or value.get("layout") != layout_no or not isinstance(value.get("items"), list):
-            raise AdapterResponseError("Malformed layout response.")
-        items: list[dict[str, Any]] = []
-        for item in value["items"]:
-            if not isinstance(item, dict) or item.get("type") not in {"fixture", "group"}:
-                raise AdapterResponseError("Malformed layout item type.")
-            reference = item.get(item["type"])
-            if isinstance(reference, bool) or not isinstance(reference, int) or reference < 1:
-                raise AdapterResponseError("Malformed layout object reference.")
-            normalized = {"type": item["type"], item["type"]: reference}
-            for key in ("x", "y", "width", "height", "rotation"):
-                if key in item:
-                    if isinstance(item[key], bool) or not isinstance(item[key], (int, float)):
-                        raise AdapterResponseError(f"Malformed layout {key}.")
-                    normalized[key] = float(item[key])
-            if "x" not in normalized or "y" not in normalized:
-                raise AdapterResponseError("Layout item lacks XY coordinates.")
-            items.append(normalized)
-        result = {"layout": layout_no, "items": items}
-        if isinstance(value.get("name"), str):
-            result["name"] = value["name"]
-        return result
+    def group_membership(self, output: str, request: AdapterRequest) -> dict[str, Any]:
+        if request.command != "group_membership" or request.argument is None:
+            raise ValueError("Group membership parser requires a group_membership mailbox request.")
+        frames = self._frames(output, request)
+        expected = f"group_membership|{request.argument}"
+        if frames[0] != ("BEGIN", expected) or frames[-1] != ("END", expected):
+            raise AdapterResponseError("Malformed group membership response framing.")
+        fixtures: list[int] = []
+        for kind, payload in frames[1:-1]:
+            if kind != "MEMBER" or not re.fullmatch(r"[1-9]\d*", payload):
+                raise AdapterResponseError("Malformed group membership fixture ID.")
+            fixtures.append(int(payload))
+        return {"group_no": request.argument, "fixtures": fixtures}
 
-    def selection(self, output: str) -> dict[str, Any]:
-        value = self.payload(output, "selection")
-        if not isinstance(value, dict) or not isinstance(value.get("fixtures"), list):
-            raise AdapterResponseError("Malformed selection response.")
-        fixtures = value["fixtures"]
-        if any(isinstance(item, bool) or not isinstance(item, int) or item < 1 for item in fixtures):
-            raise AdapterResponseError("Malformed selection fixture IDs.")
-        return {"fixtures": fixtures}
-
-    def programmer(self, output: str) -> dict[str, Any]:
-        value = self.payload(output, "programmer")
-        if not isinstance(value, dict) or not isinstance(value.get("has_active_values"), bool):
-            raise AdapterResponseError("Malformed programmer response.")
-        result = {"has_active_values": value["has_active_values"]}
-        if "active_attributes" in value:
-            if not isinstance(value["active_attributes"], (dict, list)):
-                raise AdapterResponseError("Malformed active attribute summary.")
-            result["active_attributes"] = value["active_attributes"]
-        return result
+    def unsupported_resource(self, output: str, request: AdapterRequest) -> None:
+        """Keep the dispatcher generic while this Lua revision implements membership only."""
+        self._frames(output, request)
+        raise AdapterUnsupported(f"UNSUPPORTED {request.command}: no safe mailbox parser is implemented yet.")
