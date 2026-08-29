@@ -101,6 +101,8 @@ class LayoutEffectChatTests(unittest.TestCase):
         self.assertIn("Showing 31-60", second["message"])
         self.assertIn("1030 (unlabeled)", second["message"])
         self.assertEqual(EffectProvider.diagnostics(effects), {"parsed_count": 1780, "min_effect_number": 1000, "max_effect_number": 2779, "labeled_count": 1, "unlabeled_count": 1779})
+        empty = self.core._format_state_answer(Intent("effect_list", {}, "Effects"), {"resource": "effects", "count": 0, "values": [], "status": "available"})
+        self.assertEqual(empty, "Effects (0)\nNo entries returned.")
         fixtures = [{"number": number, "name": f"Fixture {number}"} for number in range(1, 32)]
         limited = self.core._format_state_answer(Intent("state_fixtures", {}, "Fixtures"), {"resource": "fixtures", "count": 31, "values": fixtures, "status": "available"})
         self.assertIn("Showing first 30", limited)

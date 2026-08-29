@@ -395,6 +395,9 @@ class AgentCore:
         return f"{item['number']} (unlabeled)" if not label or label == str(item["number"]) else f"{item['number']}: {label}"
 
     def _format_effect_rows(self, values: list[dict[str, Any]]) -> str:
+        if not values:
+            self._effect_page = 0
+            return "Effects (0)\nNo entries returned."
         first = self._effect_page * self.CHAT_ROW_LIMIT
         if first >= len(values):
             self._effect_page = max(0, (len(values) - 1) // self.CHAT_ROW_LIMIT)
