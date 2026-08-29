@@ -30,26 +30,24 @@ def _chat_routing_smoke() -> int:
     if identity.get("head") != expected_head:
         raise SystemExit(f"Portable build identity mismatch: {identity.get('head')} != {expected_head}")
 
-    log_path = bundle / "logs" / "agent.jsonl"
-    log_path.unlink(missing_ok=True)
     checks = (
         ("Layout 1 裡有哪些燈？", "layout_items_query", "LayoutExportProvider", "configure state_adapter.plugin_slot"),
         ("有哪些 Position Preset？", "preset_list", "PresetProvider", "I understand this needs an MA2 workflow"),
         ("有哪些 Effect？", "effect_list", "EffectProvider", "I understand this needs an MA2 workflow"),
     )
     for query, intent, provider, forbidden in checks:
-        run = subprocess.run([str(EXE), "--ui-smoke-request", query], cwd=bundle, env=environment, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=20)
+        run = subprocess.run([str(EXE), "--portable-routing-smoke", query], cwd=bundle, env=environment, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=20)
         output = run.stdout + run.stderr
         if run.returncode or forbidden in output:
             raise SystemExit(f"Portable chat smoke failed for {query}:\n{output}")
-        events = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines() if line.strip()]
-        route = next((event["data"] for event in reversed(events) if event.get("event") == "chat_routing" and event["data"].get("CHAT_INPUT") == query), None)
+        payload = json.loads(next(line for line in reversed(run.stdout.splitlines()) if line.startswith("{")))
+        route = payload.get("routing")
         if not route or route.get("ROUTER_INTENT") != intent or route.get("PROVIDER") != provider or route.get("ROUTER_HANDLER") != "state_answer":
             raise SystemExit(f"Portable chat routing mismatch for {query}: {route}")
-        response = next((event["data"] for event in reversed(events) if event.get("event") == "chat_response"), None)
-        if not response or response.get("RESPONSE_TYPE") != "ANSWER":
+        response = payload.get("response", {})
+        if response.get("kind") != "ANSWER":
             raise SystemExit(f"Portable chat response mismatch for {query}: {response}")
-        print(f"PACKAGED_CHAT|{intent}|{provider}|{response['message']}")
+        print(f"PACKAGED_CHAT|{intent}|{provider}|{response['text']}")
     print(f"PACKAGED_BUILD|HEAD|{identity['head']}")
     return 0
 

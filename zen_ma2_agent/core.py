@@ -54,6 +54,7 @@ class AgentCore:
         self._active_action_id: str | None = None
         self._internet_status = False
         self._internet_checked_at = 0.0
+        self.last_chat_routing: dict[str, Any] | None = None
         self.runtime.log("startup", {"build_identity": self.build_identity, "runtime_root": str(self.runtime.root)})
 
     def snapshot(self) -> dict[str, Any]:
@@ -239,13 +240,14 @@ class AgentCore:
         self.progress = "Understanding request"
         self.events.emit("progress", {"stage": self.progress})
         route = self.router.route(text, self.skills)
-        self.runtime.log("chat_routing", {
+        self.last_chat_routing = {
             "CHAT_INPUT": text,
             "ROUTER_INTENT": route.intent.kind if route.intent else None,
             "ROUTER_PARAMETERS": route.intent.parameters if route.intent else None,
             "ROUTER_HANDLER": "state_answer" if route.response_type is ResponseType.ANSWER else route.response_type.value,
             "PROVIDER": self._provider_for_intent(route.intent),
-        })
+        }
+        self.runtime.log("chat_routing", self.last_chat_routing)
         if route.response_type is ResponseType.NEEDS_CLARIFICATION:
             return self._respond(ResponseType.NEEDS_CLARIFICATION, "I understand this needs an MA2 workflow, but need a target or action. For example: ‘選 Group HYBRID’, ‘有哪些 Group’, or ‘複製 Group 1 到 2’.")
         if route.response_type is ResponseType.NOT_IMPLEMENTED:
