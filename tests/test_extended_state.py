@@ -175,7 +175,9 @@ class ExtendedStateTests(unittest.TestCase):
         self.core.runtime.preferences["state_adapter"] = {"plugin_slot": None, "timeout_seconds": 1.0, "importexport_path": str(self.export_directory)}
         result = self.core.handle_request("Layout 1 裡有哪些燈？", source="mobile")
         self.assertEqual(result["type"], "ANSWER")
-        self.assertIn("Empty layout.", result["message"])
+        self.assertIn("Fixture layout data is not available from the current MA2 Layout Export provider.", result["message"])
+        self.assertIn("Visible CObjects: 0.", result["message"])
+        self.assertNotIn("Fixtures: 0", result["message"])
         self.assertEqual(self.core.state.get("layout_items").source, "ma2_export_xml")
         self.assertFalse(any(command.startswith("Plugin") for command in self.core.runtime.client.executed))
 

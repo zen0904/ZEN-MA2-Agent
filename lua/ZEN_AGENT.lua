@@ -74,6 +74,52 @@ local function object_probe(request_id, argument)
     feedback(request_id, "END", "object_probe")
 end
 
+local function layout_probe_feedback(request_id, node_path, field, value)
+    gma.feedback("ZEN_LAYOUT_FIXTURE_PROBE|" .. request_id .. "|" .. node_path .. "|" .. field .. "|" .. tostring(value))
+end
+
+local function layout_probe_node(request_id, node, node_path, depth)
+    local child_count = tonumber(safely(gma.show.getobj.amount, node) or 0) or 0
+    layout_probe_feedback(request_id, node_path, "HANDLE", node)
+    layout_probe_feedback(request_id, node_path, "CLASS", safely(gma.show.getobj.class, node))
+    layout_probe_feedback(request_id, node_path, "NUMBER", safely(gma.show.getobj.number, node))
+    layout_probe_feedback(request_id, node_path, "NAME", safely(gma.show.getobj.name, node))
+    layout_probe_feedback(request_id, node_path, "PARENT", safely(gma.show.getobj.parent, node))
+    layout_probe_feedback(request_id, node_path, "CHILD_COUNT", child_count)
+
+    local property_count = math.min(tonumber(safely(gma.show.property.amount, node) or 0) or 0, 16)
+    layout_probe_feedback(request_id, node_path, "PROPERTY_COUNT", property_count)
+    for property_index = 0, property_count - 1 do
+        local property_name = safely(gma.show.property.name, node, property_index)
+        layout_probe_feedback(request_id, node_path, "PROPERTY", tostring(property_index) .. "|" .. tostring(property_name) .. "|" .. tostring(safely(gma.show.property.get, node, property_index)))
+    end
+
+    -- Two levels / twelve children per node keep the probe bounded even if the
+    -- Layout object is attached to a larger MA2 object tree.
+    if depth >= 2 then return end
+    local child_limit = math.min(child_count, 12)
+    for child_index = 0, child_limit - 1 do
+        local child = safely(gma.show.getobj.child, node, child_index)
+        if child then
+            layout_probe_node(request_id, child, node_path .. "/" .. tostring(child_index), depth + 1)
+        else
+            layout_probe_feedback(request_id, node_path .. "/" .. tostring(child_index), "HANDLE", "nil")
+        end
+    end
+end
+
+local function layout_fixture_probe(request_id, layout_no)
+    local path = "Layout " .. layout_no
+    local layout = handle(path)
+    layout_probe_feedback(request_id, "root", "PATH", path)
+    if not layout then
+        feedback(request_id, "ERROR", "LAYOUT_NOT_FOUND")
+        return
+    end
+    layout_probe_node(request_id, layout, "root", 0)
+    feedback(request_id, "END", "layout_fixture_probe")
+end
+
 local function main()
     local request = gma.user.getvar("ZEN_AGENT_REQUEST")
     gma.feedback("ZEN_DEBUG|REQUEST|" .. tostring(request))
@@ -106,6 +152,10 @@ local function main()
         feedback(request_id, "ERROR", "MALFORMED_ARGUMENT")
     elseif command == "object_probe" then
         object_probe(request_id, argument)
+    elseif command == "layout_fixture_probe" and argument:match("^[1-9][0-9]*$") then
+        layout_fixture_probe(request_id, tonumber(argument))
+    elseif command == "layout_fixture_probe" then
+        feedback(request_id, "ERROR", "MALFORMED_ARGUMENT")
     else
         feedback(request_id, "ERROR", "UNKNOWN_COMMAND")
     end

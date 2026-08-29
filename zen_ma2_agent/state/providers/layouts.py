@@ -60,20 +60,41 @@ class LayoutObjectResolver:
         return [item for item in layout["items"] if item["type"] in {"fixture", "subfixture"}]
 
 
+class LayoutFixtureProvider:
+    """Future read-only source for Fixture/Subfixture XY, separate from XML CObjects."""
+
+    source = "ma2_layout_fixture_probe"
+    capability = "UNSUPPORTED"
+    reason = "Fixture layout data is not available from the current MA2 Layout Export provider."
+
+    def state(self) -> dict[str, str]:
+        return {"status": self.capability, "source": self.source, "reason": self.reason}
+
+
 class LayoutExportProvider:
+    """Partial LayoutState provider: exported CObjects plus fixture-geometry capability."""
+
     source = "ma2_export_xml"
     requires_local_filesystem = True
     _name = re.compile(r"^ZEN_AGENT_LAYOUT_[1-9]\d*_[A-Za-z0-9_-]{6,64}\.xml$")
 
-    def __init__(self, resolver: ImportExportPathResolver | None = None) -> None:
+    def __init__(self, resolver: ImportExportPathResolver | None = None, fixture_provider: LayoutFixtureProvider | None = None) -> None:
         self.resolver = resolver or ImportExportPathResolver()
+        self.fixture_provider = fixture_provider or LayoutFixtureProvider()
 
     def capabilities(self, runtime: Any, settings: object) -> dict[str, object]:
         try:
             path = self.resolver.resolve(_configured_path(settings)) if _is_loopback_host(runtime.preferences.get("ma2", {}).get("host", "")) else None
         except GroupMembershipProviderUnavailable:
             path = None
-        return {"requires_local_filesystem": True, "local_export_access": bool(path), "importexport_path": str(path) if path else None}
+        return {
+            "requires_local_filesystem": True,
+            "local_export_access": bool(path),
+            "importexport_path": str(path) if path else None,
+            "layout_cobjects": "supported",
+            "layout_fixture_geometry": self.fixture_provider.capability,
+            "layout_fixture_geometry_source": self.fixture_provider.source,
+        }
 
     def get_layout(self, runtime: Any, layout_no: int, settings: object) -> dict:
         if not isinstance(layout_no, int) or isinstance(layout_no, bool) or layout_no < 1:
@@ -94,6 +115,10 @@ class LayoutExportProvider:
         if path.parent.resolve() == directory.resolve() and self._name.fullmatch(path.name): path.unlink(missing_ok=True)
         for item in result["items"]:
             runtime.log("layout_object_diagnostic", {"layout": layout_no, **{key: item.get(key) for key in ("type", "reference", "resolved", "provenance", "raw_xml_tag", "raw_attributes", "cobject_attributes", "parent_path", "reference_tokens", "object_class", "name", "x", "y")}})
+        # Export Layout 99 on grandMA2 3.9.60 can omit visible Fixture items.
+        # Preserve XML CObjects while explicitly surfacing the unavailable part.
+        result["fixture_geometry"] = self.fixture_provider.state()
+        result["layout_cobjects"] = {"status": "supported", "source": self.source}
         return result
 
     @staticmethod

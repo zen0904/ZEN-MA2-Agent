@@ -10,7 +10,7 @@ refresh replaces them.
 | `groups` | `List Group` | Pool number and name |
 | `fixtures` | `List Fixture` | Fixture number, name, type |
 | `layouts` | `List Layout` + adapter for an individual layout | Pool metadata; item type/reference/XY and optional width/height/rotation |
-| `layout_items` | Local native Export XML provider | Ordered object references and geometry; requires local onPC filesystem access |
+| `layout_items` | Partial LayoutState: native Export XML CObjects + Fixture geometry capability | Exported CObject references/geometry; Fixture/Subfixture XY currently `UNSUPPORTED` pending a separate safe provider |
 | `group_membership` | Local native Export XML provider | Group number/name, ordered `Subfixture@fix_id` members, when the Agent can read onPC `importexport` |
 | `sequences` | `List Sequence` | Number and name |
 | `cues` | `List Cue <sequence>` | Number, name, and parsed trigger/fade/delay when present |
@@ -72,10 +72,18 @@ the console filesystem. Future remote backends remain separate providers.
 `LayoutExportProvider` follows the same unique-name, fresh-mtime and
 Agent-owned-cleanup boundary as Group membership, using `Export Layout <n>
 "ZEN_AGENT_LAYOUT_<n>_<request-id>.xml" /nc`. It preserves `center_x`,
-`center_y`, `size_w`, `size_h`, and `rotation` when present. A direct exported
-fixture/group reference is typed; otherwise the `CObject` reference is retained
-as `unknown` rather than guessed. It requires `local_export_access`; remote
-use returns `REMOTE_EXPORT_ACCESS_UNAVAILABLE`.
+`center_y`, `size_w`, `size_h`, and `rotation` for exported CObjects. A direct
+exported fixture/group reference is typed; otherwise the `CObject` reference is
+retained as `unknown` rather than guessed. It requires `local_export_access`;
+remote use returns `REMOTE_EXPORT_ACCESS_UNAVAILABLE`.
+
+This is explicitly a partial LayoutState. A grandMA2 3.9.60 Layout 99 export
+was observed to contain its Group CObject while omitting a visible Fixture 101.
+Consequently `layout_cobjects` is `supported`, while
+`layout_fixture_geometry` is `UNSUPPORTED` until a separate verified read-only
+provider supplies Fixture/Subfixture XY. A Layout fixture query must report the
+unavailable capability instead of interpreting an empty exported fixture list
+as “no fixtures”.
 
 Sequence/Cue, Preset, Effect, Page and Executor inventories use Telnet `List`
 commands and therefore do not require local filesystem access. All StateStore

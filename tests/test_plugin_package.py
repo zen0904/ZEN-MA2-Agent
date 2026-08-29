@@ -42,6 +42,7 @@ class GrandMA2PluginPackageTests(unittest.TestCase):
         self.assertIn('"UNKNOWN_COMMAND"', lua)
         self.assertIn('command == "group_membership"', lua)
         self.assertIn('command == "object_probe"', lua)
+        self.assertIn('command == "layout_fixture_probe"', lua)
         self.assertIn('argument:match("^(Preset)%s+([1-9][0-9]*%.[1-9][0-9]*)$")', lua)
         self.assertIn('argument:match("^(Group)%s+([1-9][0-9]*)$")', lua)
         self.assertIn('argument:match("^(Fixture)%s+([1-9][0-9]*)$")', lua)
@@ -54,6 +55,12 @@ class GrandMA2PluginPackageTests(unittest.TestCase):
         self.assertIn('gma.show.getobj.number, object_handle', lua)
         self.assertIn('gma.show.getobj.name, object_handle', lua)
         self.assertIn('ZEN_LAYOUT_PROBE|', lua)
+        self.assertIn('ZEN_LAYOUT_FIXTURE_PROBE|', lua)
+        self.assertIn('gma.show.getobj.child, node, child_index', lua)
+        self.assertIn('gma.show.getobj.parent, node', lua)
+        self.assertIn('if depth >= 2 then return end', lua)
+        self.assertIn('math.min(child_count, 12)', lua)
+        self.assertIn('math.min(tonumber(safely(gma.show.property.amount, node) or 0) or 0, 16)', lua)
         self.assertIn('debug("GROUP_HANDLE", group)', lua)
         self.assertIn('debug("CLASS", safely(gma.show.getobj.class, group))', lua)
         self.assertIn('debug("AMOUNT", amount)', lua)
@@ -62,7 +69,6 @@ class GrandMA2PluginPackageTests(unittest.TestCase):
         self.assertIn('gma.show.property.get, group, property_index', lua)
         self.assertIn('debug("PROP", tostring(property_index)', lua)
         self.assertIn('"UNSUPPORTED_SAFE_ACCESS"', lua)
-        self.assertNotIn("gma.show.getobj.child", lua)
         for forbidden in ("gma.cmd", "Store", "Update", "Delete", "Clone", "Patch", "ClearSelection"):
             self.assertNotIn(forbidden, lua)
         self.assertNotIn("main(display_handle, argument)", lua)
@@ -82,6 +88,7 @@ class GrandMA2PluginPackageTests(unittest.TestCase):
         self.assertIn('object_probe Executor 1.1', readme)
         self.assertIn('object_probe Sequence 1', readme)
         self.assertIn('object_probe Effect 1', readme)
+        self.assertIn('layout_fixture_probe 99', readme)
 
 
 if __name__ == "__main__":

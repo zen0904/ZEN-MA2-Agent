@@ -8,7 +8,7 @@ from shutil import copytree
 from zen_ma2_agent.core import AgentCore
 from zen_ma2_agent.models import Intent
 from zen_ma2_agent.runtime import AgentRuntime
-from zen_ma2_agent.state.providers.layouts import LayoutExportProvider, LayoutObjectResolver
+from zen_ma2_agent.state.providers.layouts import LayoutExportProvider, LayoutFixtureProvider, LayoutObjectResolver
 from zen_ma2_agent.state.providers.layout_cobject_registry import VALIDATED_FIRST_TOKEN_CLASSES
 from zen_ma2_agent.state.providers.show_pools import EffectProvider
 from zen_ma2_agent.telnet_client import ConnectionState
@@ -96,9 +96,9 @@ class LayoutEffectChatTests(unittest.TestCase):
 
     def test_fixture_only_all_objects_and_group_layout_intersection(self):
         fixtures = self.core.handle_request("Layout 1 裡有哪些燈？")
-        self.assertIn("Fixtures: 1", fixtures["message"])
-        self.assertIn("Other objects: 4", fixtures["message"])
-        self.assertNotIn("unknown", fixtures["message"])
+        self.assertIn("Fixture layout data is not available from the current MA2 Layout Export provider.", fixtures["message"])
+        self.assertIn("Visible CObjects: 5.", fixtures["message"])
+        self.assertNotIn("Fixtures:", fixtures["message"])
         all_objects = self.core.handle_request("Layout 1 裡有哪些物件？")
         self.assertIn('Fixture 101 "Key"', all_objects["message"])
         self.assertIn('Macro 7 "Look"', all_objects["message"])
@@ -116,10 +116,21 @@ class LayoutEffectChatTests(unittest.TestCase):
     def test_hybrid_group_button_is_not_a_fixture_and_reports_its_position(self):
         LayoutEffectClient.layout_xml = GROUP_ONLY_LAYOUT_XML
         fixtures = self.core.handle_request("Layout 1 裡有哪些燈？")
-        self.assertIn("Fixtures: 0", fixtures["message"])
-        self.assertIn("Other objects: 1", fixtures["message"])
+        self.assertIn("Fixture layout data is not available", fixtures["message"])
+        self.assertIn("Visible CObjects: 1.", fixtures["message"])
+        self.assertNotIn("Fixtures: 0", fixtures["message"])
         hybrid = self.core.handle_request("HYBRID 在 Layout 1 怎麼排？")
         self.assertEqual(hybrid["message"], 'Group 1 "HYBRID" is in Layout 1 at x=-4.85, y=-5.35.\nNo individual HYBRID fixture items are present.')
+
+    def test_layout_state_keeps_cobjects_and_marks_fixture_geometry_unsupported(self):
+        result = self.core.refresh_state("layout_items", layout_no=1)
+        self.assertEqual(result["status"], "available")
+        layout = result["values"][0]
+        self.assertEqual(layout["layout_cobjects"], {"status": "supported", "source": "ma2_export_xml"})
+        self.assertEqual(layout["fixture_geometry"], LayoutFixtureProvider().state())
+        snapshot = self.core.state.get("layout_items")
+        self.assertEqual(snapshot.capability["layout_cobjects"], "supported")
+        self.assertEqual(snapshot.capability["layout_fixture_geometry"], "UNSUPPORTED")
 
     def test_effect_pagination_formatting_diagnostics_and_generic_row_limit(self):
         effects = [{"number": number, "name": "DIM Chase" if number == 1005 else str(number)} for number in range(1000, 2780)]

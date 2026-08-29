@@ -101,3 +101,18 @@ record to its matching `ZEN_LAYOUT_PROBE` output. Do not add a resolver mapping
 until both observations match and no conflicting sample exists. A nil handle or
 an object that MA2 cannot put in a Layout remains unsupported, not unknown type
 inference.
+
+LAYOUT FIXTURE GEOMETRY PROBE (READ-ONLY)
+------------------------------------------
+`Export Layout` is a partial CObject source: on grandMA2 3.9.60 it can omit a
+visible Fixture item. To investigate the separate Fixture/Subfixture geometry
+source without changing the Show, run:
+
+  SetUserVar $ZEN_AGENT_REQUEST="lf99 layout_fixture_probe 99"
+  Plugin 375
+
+The bounded diagnostic emits `ZEN_LAYOUT_FIXTURE_PROBE` feedback for `Layout
+99`: root/child handles, class, number, name, parent handle, child count, and
+at most 16 properties. Traversal is limited to depth 2 and 12 children per
+node. It only calls `gma.show.getobj.*` and `gma.show.property.*`; it does not
+select, Store, Assign, Move, Delete, or modify the Layout.

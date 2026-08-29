@@ -356,6 +356,9 @@ class AgentCore:
             return f"Group {group['group_no']} {group['name']}\nFixtures ({len(group['fixtures'])}): " + ", ".join(str(item) for item in group["fixtures"])
         if kind == "layout_items_query":
             layout = next(item for item in values if item["layout"] == intent.parameters["layout_no"])
+            fixture_geometry = layout.get("fixture_geometry", {})
+            if fixture_geometry.get("status") != "available":
+                return f"Layout {layout['layout']} {layout.get('name', '')}\n{fixture_geometry.get('reason', 'Fixture layout data is unavailable.')}\nVisible CObjects: {len(layout['items'])}."
             lighting = LayoutObjectResolver.lighting_items(layout)
             other_count = len(layout["items"]) - len(lighting)
             rows = [AgentCore._format_layout_item(item) for item in lighting]
