@@ -52,7 +52,10 @@ class ZenDesktop(QMainWindow):
         self.cancel.clicked.connect(self.cancel_action); self.execute.clicked.connect(self.execute_action); return page
 
     def _state_page(self) -> QWidget:
-        page = QWidget(); layout = QVBoxLayout(page); layout.setContentsMargins(22, 20, 22, 20); title = QLabel("MA2 State"); title.setStyleSheet("font-size:18px;font-weight:700;"); layout.addWidget(title); buttons = QHBoxLayout(); groups = QPushButton("Refresh Groups"); fixtures = QPushButton("Refresh Fixtures"); groups.clicked.connect(lambda: self.refresh_state("groups")); fixtures.clicked.connect(lambda: self.refresh_state("fixtures")); buttons.addWidget(groups); buttons.addWidget(fixtures); buttons.addStretch(); layout.addLayout(buttons); self.state_list = QTextEdit(readOnly=True); layout.addWidget(self.state_list); return page
+        page = QWidget(); layout = QVBoxLayout(page); layout.setContentsMargins(22, 20, 22, 20); title = QLabel("MA2 State"); title.setStyleSheet("font-size:18px;font-weight:700;"); layout.addWidget(title); buttons = QHBoxLayout()
+        for label, resource in [("Groups","groups"),("Fixtures","fixtures"),("Layouts","layouts"),("Sequences","sequences"),("Presets","presets"),("Effects","effects"),("Pages","pages"),("Executors","executors")]:
+            button=QPushButton(f"Refresh {label}"); button.clicked.connect(lambda _checked=False, name=resource: self.refresh_state(name)); buttons.addWidget(button)
+        buttons.addStretch(); layout.addLayout(buttons); self.state_list = QTextEdit(readOnly=True); layout.addWidget(self.state_list); return page
 
     def _skills_page(self) -> QWidget:
         page = QWidget(); layout = QVBoxLayout(page); layout.setContentsMargins(22, 20, 22, 20)

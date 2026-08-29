@@ -42,8 +42,9 @@ class StateSnapshot:
     source: str
     stale: bool = False
     error: str | None = None
+    capability: dict[str, Any] | None = None
 
     @classmethod
-    def create(cls, resource: str, values: list[Any], *, source: str) -> "StateSnapshot":
+    def create(cls, resource: str, values: list[Any], *, source: str, capability: dict[str, Any] | None = None) -> "StateSnapshot":
         normalized = [asdict(value) if is_dataclass(value) else dict(value) for value in values]
-        return cls(resource, normalized, datetime.now(timezone.utc).isoformat(), source)
+        return cls(resource, normalized, datetime.now(timezone.utc).isoformat(), source, capability=capability)

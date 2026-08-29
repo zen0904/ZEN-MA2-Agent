@@ -13,7 +13,7 @@ from .pairing import PairingManager
 from .router import IntentRouter, ResponseType
 from .runtime import AgentRuntime
 from .skill_system import SkillError, SkillRegistry
-from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvider, ExportFileGroupMembershipProvider, FixtureProvider, GroupMembershipProvider, GroupMembershipProviderError, GroupMembershipProviderUnavailable, GroupProvider, LayoutInventoryProvider, SequenceProvider, ZenStateAdapter
+from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvider, EffectProvider, ExecutorProvider, ExportFileGroupMembershipProvider, FixtureProvider, GroupMembershipProvider, GroupMembershipProviderError, GroupMembershipProviderUnavailable, GroupProvider, LayoutExportProvider, LayoutInventoryProvider, PageProvider, PresetProvider, SequenceProvider, ZenStateAdapter
 from .state.store import StateStore
 from .telnet_client import ConnectionState
 from .workflow import WorkflowPlan
@@ -42,6 +42,7 @@ class AgentCore:
         self.actions: dict[str, ActionRecord] = {}
         self.state = StateStore()
         self.group_membership_provider = group_membership_provider or ExportFileGroupMembershipProvider()
+        self.layout_export_provider = LayoutExportProvider()
         self.skills = SkillRegistry(self.runtime.root)
         self.skills.discover()
         self.router = IntentRouter()
@@ -115,6 +116,17 @@ class AgentCore:
             elif resource == "sequences":
                 provider = SequenceProvider()
                 snapshot = self.state.put("sequences", provider.parse(self.runtime.read_state(provider.command)), source="ma2_telnet_list")
+            elif resource == "presets":
+                provider = PresetProvider(); preset_type = "ALL" if sequence is None else str(sequence).upper()
+                values = provider.parse(self.runtime.read_state(provider.command(preset_type)), preset_type)
+                existing = self.state.get("presets"); retained=[item for item in (existing.values if existing else []) if item.get("preset_type") != preset_type]
+                snapshot = self.state.put("presets", [*retained,*values], source="ma2_telnet_list", capability={"requires_local_filesystem":False})
+            elif resource == "effects":
+                provider=EffectProvider(); snapshot=self.state.put("effects", provider.parse(self.runtime.read_state(provider.command)), source="ma2_telnet_list", capability={"requires_local_filesystem":False})
+            elif resource == "pages":
+                provider=PageProvider(); snapshot=self.state.put("pages", provider.parse(self.runtime.read_state(provider.command)), source="ma2_telnet_list", capability={"requires_local_filesystem":False})
+            elif resource == "executors":
+                provider=ExecutorProvider(); snapshot=self.state.put("executors", provider.parse(self.runtime.read_state(provider.command)), source="ma2_telnet_list", capability={"requires_local_filesystem":False})
             elif resource == "cues":
                 if not isinstance(sequence, int) or sequence < 1:
                     raise ValueError("Cue inventory requires a positive sequence number.")
@@ -135,6 +147,10 @@ class AgentCore:
                     self.runtime.preferences.get("state_adapter"),
                 )
                 snapshot = self.state.upsert(resource, "group_no", value, source=self.group_membership_provider.source)
+            elif resource == "layout_items":
+                if not isinstance(layout_no, int) or isinstance(layout_no, bool) or layout_no < 1: raise ValueError("Layout requires a positive number.")
+                value=self.layout_export_provider.get_layout(self.runtime, layout_no, self.runtime.preferences.get("state_adapter"))
+                snapshot=self.state.upsert(resource,"layout",value,source=self.layout_export_provider.source,capability=self.layout_export_provider.capabilities(self.runtime,self.runtime.preferences.get("state_adapter")))
             elif resource in {"layouts", "selection", "programmer"}:
                 adapter = ZenStateAdapter()
                 request, parser = self._adapter_state_request(resource, group_no=group_no, layout_no=layout_no)
@@ -285,13 +301,17 @@ class AgentCore:
             elif kind == "state_group_membership":
                 result = self.request_group_membership(parameters["group_no"])
             elif kind == "state_layout":
-                result = self.refresh_state("layouts", layout_no=parameters["layout_no"])
+                result = self.refresh_state("layout_items", layout_no=parameters["layout_no"])
             elif kind == "state_selection":
                 result = self.get_selection()
             elif kind == "state_programmer":
                 result = self.get_programmer_summary()
             elif kind == "state_cues":
                 result = self.refresh_state("cues", sequence=parameters["sequence"])
+            elif kind == "state_presets":
+                result = self.refresh_state("presets", sequence=parameters["preset_type"])
+            elif kind == "state_effects": result = self.refresh_state("effects")
+            elif kind == "state_sequence_executors": result = self.refresh_state("executors")
             else:
                 result = self.refresh_state(kind.removeprefix("state_"))
         except (ConnectionError, PermissionError, ValueError) as exc:
@@ -314,7 +334,7 @@ class AgentCore:
             return f"Group {group['group_no']} {group['name']}\nFixtures ({len(group['fixtures'])}): " + ", ".join(str(item) for item in group["fixtures"])
         if kind == "state_layout":
             layout = next(item for item in values if item["layout"] == intent.parameters["layout_no"])
-            rows = [f"{item['type']} {item[item['type']]}: x={item['x']}, y={item['y']}" for item in layout["items"]]
+            rows = [f"{item['type']} {item['reference']}: x={item['x']}, y={item['y']}" for item in layout["items"]]
             return f"Layout {layout['layout']} {layout.get('name', '')}\n" + ("\n".join(rows) or "Empty layout.")
         if kind == "state_selection":
             selection = values[0]
@@ -325,6 +345,11 @@ class AgentCore:
         if kind == "state_cues":
             sequence_cues = [item for item in values if item.get("sequence") == intent.parameters["sequence"]]
             return f"Sequence {intent.parameters['sequence']} Cues ({len(sequence_cues)})\n" + ("\n".join(f"{item['number']}: {item['name']}" for item in sequence_cues) or "No cues returned.")
+        if kind == "state_presets": return f"{intent.parameters['preset_type'].title()} Presets ({len(values)})\n" + ("\n".join(f"{item['number']}: {item['name']}" for item in values) or "No entries returned.")
+        if kind == "state_effects": return f"Effects ({len(values)})\n" + ("\n".join(f"{item['number']}: {item['name']}" for item in values) or "No entries returned.")
+        if kind == "state_sequence_executors":
+            rows=[item for item in values if item.get("assignment_type")=="sequence" and item.get("assignment")==intent.parameters["sequence"]]
+            return f"Sequence {intent.parameters['sequence']} Executors ({len(rows)})\n" + ("\n".join(f"{item['location']}: {item.get('label') or ''}" for item in rows) or "No executor assignment returned.")
         return f"{result['resource'].title()} ({result['count']})"
 
     def cancel_action(self, action_id: str) -> bool:

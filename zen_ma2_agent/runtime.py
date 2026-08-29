@@ -97,7 +97,7 @@ class AgentRuntime:
         """Core-owned read-only transport entrypoint for generic state providers."""
         if not self.ready or not self.client:
             raise ConnectionError("Connect and reach MA2 READY before reading show state.")
-        if not re.fullmatch(r'List (?:Group|Fixture|Layout|Sequence|Cue)(?: \d+)?', command, re.I):
+        if not re.fullmatch(r'List (?:Group|Fixture|Layout|Sequence|Cue|Effect|Page|Executor)(?: (?:\d+|Dimmer|Position|Gobo|Color|Beam|Focus|Control|All))?', command, re.I):
             raise PermissionError("State transport only accepts allow-listed read-only List commands.")
         response = self.client.execute(command)
         self.log("state_read", {"command": command, "response": response})
@@ -115,6 +115,15 @@ class AgentRuntime:
         with self._export_state_lock:
             response = self.client.execute(command)
         self.log("state_export", {"command": command, "group_no": group_no, "filename": filename})
+        return response
+
+    def export_layout_file(self, layout_no: int, filename: str) -> str:
+        if not self.ready or not self.client: raise ConnectionError("Connect and reach MA2 READY before exporting show state.")
+        if isinstance(layout_no, bool) or not isinstance(layout_no, int) or layout_no < 1: raise ValueError("Export Layout requires a positive number.")
+        if not re.fullmatch(r"ZEN_AGENT_LAYOUT_[1-9]\d*_[A-Za-z0-9_-]{6,64}\.xml", filename): raise PermissionError("Export state only permits Agent-owned temporary XML filenames.")
+        command=f'Export Layout {layout_no} "{filename}" /nc'
+        with self._export_state_lock: response=self.client.execute(command)
+        self.log("state_export", {"command":command,"layout_no":layout_no,"filename":filename})
         return response
 
     @staticmethod

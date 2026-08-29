@@ -10,9 +10,14 @@ refresh replaces them.
 | `groups` | `List Group` | Pool number and name |
 | `fixtures` | `List Fixture` | Fixture number, name, type |
 | `layouts` | `List Layout` + adapter for an individual layout | Pool metadata; item type/reference/XY and optional width/height/rotation |
+| `layout_items` | Local native Export XML provider | Ordered object references and geometry; requires local onPC filesystem access |
 | `group_membership` | Local native Export XML provider | Group number/name, ordered `Subfixture@fix_id` members, when the Agent can read onPC `importexport` |
 | `sequences` | `List Sequence` | Number and name |
 | `cues` | `List Cue <sequence>` | Number, name, and parsed trigger/fade/delay when present |
+| `presets` | `List Preset <type>` | Type, number and label only; no content/value inspection |
+| `effects` | `List Effect` | Number, label and only explicitly returned basic metadata |
+| `pages` | `List Page` | Page number and label |
+| `executors` | `List Executor` | Page/location and explicitly returned assignment metadata |
 | `selection` | `ZEN_AGENT` adapter | `UNSUPPORTED` unless a verified non-mutating fixture-ID accessor is available |
 | `programmer` | `ZEN_AGENT` adapter | `UNSUPPORTED` unless a verified non-mutating active-value summary is available |
 
@@ -61,6 +66,20 @@ connection and the selected directory is readable. A LAN/remote MA2 endpoint
 does not imply filesystem access and returns
 `REMOTE_EXPORT_ACCESS_UNAVAILABLE`; ZEN does not pretend that a local path is
 the console filesystem. Future remote backends remain separate providers.
+
+## Layout geometry: local Export XML backend
+
+`LayoutExportProvider` follows the same unique-name, fresh-mtime and
+Agent-owned-cleanup boundary as Group membership, using `Export Layout <n>
+"ZEN_AGENT_LAYOUT_<n>_<request-id>.xml" /nc`. It preserves `center_x`,
+`center_y`, `size_w`, `size_h`, and `rotation` when present. A direct exported
+fixture/group reference is typed; otherwise the `CObject` reference is retained
+as `unknown` rather than guessed. It requires `local_export_access`; remote
+use returns `REMOTE_EXPORT_ACCESS_UNAVAILABLE`.
+
+Sequence/Cue, Preset, Effect, Page and Executor inventories use Telnet `List`
+commands and therefore do not require local filesystem access. All StateStore
+records expose `source`, `updated_at`, `stale`, `error`, and `capability`.
 
 The exported Group schema is documented in
 [MA2 Group Export research](MA2_GROUP_EXPORT.md). `Subfixture@fix_id` is the

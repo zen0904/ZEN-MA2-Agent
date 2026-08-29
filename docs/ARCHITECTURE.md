@@ -44,7 +44,8 @@ Chat / Desktop / Mobile → AgentCore.refresh_state()
 ```
 
 `StateStore` currently holds `groups`, `fixtures`, `group_membership`,
-`layouts`, `selection`, `programmer`, `sequences`, and `cues`. It is shared by
+`layouts`, `layout_items`, `selection`, `programmer`, `sequences`, `cues`,
+`presets`, `effects`, `pages`, and `executors`. It is shared by
 Desktop, mobile HTTP/WebSocket, and future Skills; no provider is Clone-specific.
 Disconnect marks cached state stale. A successful refresh replaces that stale
 entry. Provider errors are cached rather than converted into invented state.
