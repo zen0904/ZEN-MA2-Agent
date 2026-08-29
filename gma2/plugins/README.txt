@@ -54,3 +54,28 @@ requests. Until a Group child class is verified as a fixture member, the plugin
 returns `ZEN_STATE|abc123|ERROR|UNSUPPORTED_SAFE_ACCESS` instead of silently
 reporting an empty Group. It does not Store, Update, Delete, Clone, Patch,
 Clear, or modify selection/programmer.
+
+LAYOUT COBJECT VALIDATION (READ-ONLY)
+--------------------------------------
+Run these mailbox probes with a fresh request id each time. Replace `375` with
+the actual imported Plugin Pool slot:
+
+  SetUserVar $ZEN_AGENT_REQUEST="p11 object_probe Preset 1.1"
+  Plugin 375
+  SetUserVar $ZEN_AGENT_REQUEST="p42 object_probe Preset 4.2"
+  Plugin 375
+  SetUserVar $ZEN_AGENT_REQUEST="p515 object_probe Preset 5.15"
+  Plugin 375
+  SetUserVar $ZEN_AGENT_REQUEST="g1 object_probe Group 1"
+  Plugin 375
+  SetUserVar $ZEN_AGENT_REQUEST="g2 object_probe Group 2"
+  Plugin 375
+  SetUserVar $ZEN_AGENT_REQUEST="g7 object_probe Group 7"
+  Plugin 375
+
+Each emits only read-only feedback: `ZEN_LAYOUT_PROBE|<id>|PATH|...`, then
+`HANDLE`, `CLASS`, `NUMBER`, `NAME`, and `LABEL`. The documented `getobj.name`
+value is used for both Name and Label; no unverified label accessor is called.
+To prove an XML token mapping, also create a disposable Layout with exactly one
+known object of each type, export it, and compare its first CObject token with
+the probe output. Do not add a resolver mapping until both observations match.

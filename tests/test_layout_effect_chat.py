@@ -8,6 +8,7 @@ from zen_ma2_agent.core import AgentCore
 from zen_ma2_agent.models import Intent
 from zen_ma2_agent.runtime import AgentRuntime
 from zen_ma2_agent.state.providers.layouts import LayoutExportProvider, LayoutObjectResolver
+from zen_ma2_agent.state.providers.layout_cobject_registry import VALIDATED_FIRST_TOKEN_CLASSES
 from zen_ma2_agent.state.providers.show_pools import EffectProvider
 from zen_ma2_agent.telnet_client import ConnectionState
 
@@ -72,6 +73,8 @@ class LayoutEffectChatTests(unittest.TestCase):
         unknown = layout["items"][2]
         self.assertEqual(unknown["type"], "unknown")
         self.assertEqual(unknown["reference_tokens"], ["17", "1", "1", "1"])
+        self.assertIsNone(unknown["validated_token_class"])
+        self.assertEqual(VALIDATED_FIRST_TOKEN_CLASSES, {})
         self.assertIn("LayoutCObject", unknown["parent_path"])
         self.assertEqual([item["reference"] for item in LayoutObjectResolver.lighting_items(layout)], [101])
 

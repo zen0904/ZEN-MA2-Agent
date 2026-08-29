@@ -43,6 +43,31 @@ local function group_membership(request_id, group_no)
     feedback(request_id, "ERROR", "UNSUPPORTED_SAFE_ACCESS")
 end
 
+local function object_probe(request_id, argument)
+    local object_kind, object_number = argument:match("^(Preset)%s+([1-9][0-9]*%.[1-9][0-9]*)$")
+    if not object_kind then
+        object_kind, object_number = argument:match("^(Group)%s+([1-9][0-9]*)$")
+    end
+    if not object_kind then
+        feedback(request_id, "ERROR", "MALFORMED_ARGUMENT")
+        return
+    end
+    local path = object_kind .. " " .. object_number
+    local object_handle = handle(path)
+    gma.feedback("ZEN_LAYOUT_PROBE|" .. request_id .. "|PATH|" .. path)
+    gma.feedback("ZEN_LAYOUT_PROBE|" .. request_id .. "|HANDLE|" .. tostring(object_handle))
+    if not object_handle then
+        feedback(request_id, "ERROR", "OBJECT_NOT_FOUND")
+        return
+    end
+    gma.feedback("ZEN_LAYOUT_PROBE|" .. request_id .. "|CLASS|" .. tostring(safely(gma.show.getobj.class, object_handle)))
+    gma.feedback("ZEN_LAYOUT_PROBE|" .. request_id .. "|NUMBER|" .. tostring(safely(gma.show.getobj.number, object_handle)))
+    gma.feedback("ZEN_LAYOUT_PROBE|" .. request_id .. "|NAME|" .. tostring(safely(gma.show.getobj.name, object_handle)))
+    -- The documented getobj name is the only verified human-readable label accessor.
+    gma.feedback("ZEN_LAYOUT_PROBE|" .. request_id .. "|LABEL|" .. tostring(safely(gma.show.getobj.name, object_handle)))
+    feedback(request_id, "END", "object_probe")
+end
+
 local function main()
     local request = gma.user.getvar("ZEN_AGENT_REQUEST")
     gma.feedback("ZEN_DEBUG|REQUEST|" .. tostring(request))
@@ -73,6 +98,8 @@ local function main()
         group_membership(request_id, tonumber(argument))
     elseif command == "group_membership" then
         feedback(request_id, "ERROR", "MALFORMED_ARGUMENT")
+    elseif command == "object_probe" then
+        object_probe(request_id, argument)
     else
         feedback(request_id, "ERROR", "UNKNOWN_COMMAND")
     end
