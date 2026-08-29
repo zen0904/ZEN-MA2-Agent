@@ -40,6 +40,15 @@ class MailboxStateClient:
                 encoding="utf-8",
             )
             return "exported"
+        match = re.fullmatch(r'Export Layout (\d+) "(ZEN_AGENT_LAYOUT_\d+_[A-Za-z0-9_-]+\.xml)" /nc', command)
+        if match:
+            assert self.export_directory is not None
+            layout_no, filename = match.groups()
+            (self.export_directory / filename).write_text(
+                f'<MA xmlns="http://schemas.malighting.de/grandma2/xml/MA"><Group index="{int(layout_no) - 1}" name="Empty"><LayoutData><CObjects /></LayoutData></Group></MA>',
+                encoding="utf-8",
+            )
+            return "exported"
         if command.startswith('SetUserVar $ZEN_AGENT_REQUEST="'):
             self.mailbox = command.removeprefix('SetUserVar $ZEN_AGENT_REQUEST="').removesuffix('"')
             return ""
@@ -160,6 +169,14 @@ class ExtendedStateTests(unittest.TestCase):
         self.core.runtime.preferences["state_adapter"] = {"plugin_slot": None, "timeout_seconds": 1.0, "importexport_path": str(self.export_directory)}
         result = self.core.request_group_membership(1)
         self.assertEqual(result["status"], "available")
+        self.assertFalse(any(command.startswith("Plugin") for command in self.core.runtime.client.executed))
+
+    def test_empty_layout_chat_uses_export_provider_without_plugin_slot(self):
+        self.core.runtime.preferences["state_adapter"] = {"plugin_slot": None, "timeout_seconds": 1.0, "importexport_path": str(self.export_directory)}
+        result = self.core.handle_request("Layout 1 裡有哪些燈？", source="mobile")
+        self.assertEqual(result["type"], "ANSWER")
+        self.assertIn("Empty layout.", result["message"])
+        self.assertEqual(self.core.state.get("layout_items").source, "ma2_export_xml")
         self.assertFalse(any(command.startswith("Plugin") for command in self.core.runtime.client.executed))
 
 

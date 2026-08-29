@@ -151,7 +151,7 @@ class AgentCore:
                 if not isinstance(layout_no, int) or isinstance(layout_no, bool) or layout_no < 1: raise ValueError("Layout requires a positive number.")
                 value=self.layout_export_provider.get_layout(self.runtime, layout_no, self.runtime.preferences.get("state_adapter"))
                 snapshot=self.state.upsert(resource,"layout",value,source=self.layout_export_provider.source,capability=self.layout_export_provider.capabilities(self.runtime,self.runtime.preferences.get("state_adapter")))
-            elif resource in {"layouts", "selection", "programmer"}:
+            elif resource in {"selection", "programmer"}:
                 adapter = ZenStateAdapter()
                 request, parser = self._adapter_state_request(resource, group_no=group_no, layout_no=layout_no)
                 settings = self.runtime.preferences.get("state_adapter")
@@ -161,10 +161,7 @@ class AgentCore:
                     timeout_seconds=adapter.timeout_seconds(settings),
                 )
                 value = parser(adapter, output, request)
-                if resource == "layouts":
-                    snapshot = self.state.upsert(resource, "layout", value, source=adapter.source)
-                else:
-                    snapshot = self.state.put(resource, [value], source=adapter.source)
+                snapshot = self.state.put(resource, [value], source=adapter.source)
             else:
                 raise ValueError(f"State resource is not implemented: {resource}")
         except AdapterUnsupported as exc:
@@ -193,10 +190,6 @@ class AgentCore:
 
     @staticmethod
     def _adapter_state_request(resource: str, *, group_no: int | None, layout_no: int | None) -> tuple[Any, Any]:
-        if resource == "layouts":
-            if not isinstance(layout_no, int) or layout_no < 1:
-                raise ValueError("Layout state requires a positive layout number.")
-            return ZenStateAdapter.request("layouts", layout_no), lambda adapter, output, request: adapter.unsupported_resource(output, request)
         if resource == "selection":
             return ZenStateAdapter.request("selection"), lambda adapter, output, request: adapter.unsupported_resource(output, request)
         if resource == "programmer":
@@ -308,10 +301,10 @@ class AgentCore:
                 result = self.get_programmer_summary()
             elif kind == "state_cues":
                 result = self.refresh_state("cues", sequence=parameters["sequence"])
-            elif kind == "state_presets":
+            elif kind in {"state_presets", "preset_list"}:
                 result = self.refresh_state("presets", sequence=parameters["preset_type"])
-            elif kind == "state_effects": result = self.refresh_state("effects")
-            elif kind == "state_sequence_executors": result = self.refresh_state("executors")
+            elif kind in {"state_effects", "effect_list", "effect_lookup"}: result = self.refresh_state("effects")
+            elif kind in {"state_sequence_executors", "sequence_executor_lookup", "page_executor_list"}: result = self.refresh_state("executors")
             else:
                 result = self.refresh_state(kind.removeprefix("state_"))
         except (ConnectionError, PermissionError, ValueError) as exc:
@@ -345,11 +338,15 @@ class AgentCore:
         if kind == "state_cues":
             sequence_cues = [item for item in values if item.get("sequence") == intent.parameters["sequence"]]
             return f"Sequence {intent.parameters['sequence']} Cues ({len(sequence_cues)})\n" + ("\n".join(f"{item['number']}: {item['name']}" for item in sequence_cues) or "No cues returned.")
-        if kind == "state_presets": return f"{intent.parameters['preset_type'].title()} Presets ({len(values)})\n" + ("\n".join(f"{item['number']}: {item['name']}" for item in values) or "No entries returned.")
-        if kind == "state_effects": return f"Effects ({len(values)})\n" + ("\n".join(f"{item['number']}: {item['name']}" for item in values) or "No entries returned.")
-        if kind == "state_sequence_executors":
+        if kind in {"state_presets", "preset_list"}: return f"{intent.parameters['preset_type'].title()} Presets ({len(values)})\n" + ("\n".join(f"{item['number']}: {item['name']}" for item in values) or "No entries returned.")
+        if kind in {"state_effects", "effect_list"}: return f"Effects ({len(values)})\n" + ("\n".join(f"{item['number']}: {item['name']}" for item in values) or "No entries returned.")
+        if kind == "effect_lookup":
+            item=next((item for item in values if item["number"]==intent.parameters["effect"]),None); return f"Effect {intent.parameters['effect']}: {item['name']}" if item else f"Effect {intent.parameters['effect']} not found."
+        if kind in {"state_sequence_executors", "sequence_executor_lookup"}:
             rows=[item for item in values if item.get("assignment_type")=="sequence" and item.get("assignment")==intent.parameters["sequence"]]
             return f"Sequence {intent.parameters['sequence']} Executors ({len(rows)})\n" + ("\n".join(f"{item['location']}: {item.get('label') or ''}" for item in rows) or "No executor assignment returned.")
+        if kind == "page_executor_list":
+            rows=[item for item in values if item.get("page")==intent.parameters["page"]]; return f"Page {intent.parameters['page']} Executors ({len(rows)})\n" + ("\n".join(f"{item['location']}: {item.get('label') or ''}" for item in rows) or "No executor assignment returned.")
         return f"{result['resource'].title()} ({result['count']})"
 
     def cancel_action(self, action_id: str) -> bool:

@@ -43,9 +43,12 @@ class ShowStructureProviderTests(unittest.TestCase):
         self.assertIsNone(executors[2]["assignment_type"])
 
     def test_chat_intents_auto_request_state_dependencies(self):
-        self.assertEqual(parse('有哪些 Position Preset？').kind,'state_presets')
-        self.assertEqual(parse('有哪些 Effect？').kind,'state_effects')
-        self.assertEqual(parse('Sequence 5 掛在哪個 Executor？').parameters,{"sequence":5})
+        self.assertEqual(parse('有哪些 Position Preset？').kind,'preset_list')
+        self.assertEqual(parse('有哪些 Color Preset？').parameters,{"preset_type":"COLOR"})
+        self.assertEqual(parse('有哪些 Effect？').kind,'effect_list')
+        self.assertEqual(parse('Effect 10 是什麼？').kind,'effect_lookup')
+        self.assertEqual(parse('Sequence 5 掛在哪個 Executor？').kind,'sequence_executor_lookup')
+        self.assertEqual(parse('Page 1 有哪些 Executor？').kind,'page_executor_list')
         self.assertEqual(parse('Layout 1 裡有哪些燈？').parameters,{"layout_no":1})
 
 
