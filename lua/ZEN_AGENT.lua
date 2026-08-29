@@ -44,10 +44,16 @@ local function group_membership(request_id, group_no)
 end
 
 local function object_probe(request_id, argument)
+    -- This allow-list is deliberately read-only.  A nil handle is a diagnostic
+    -- result, not proof that an MA2 object type or CObject token does not exist.
     local object_kind, object_number = argument:match("^(Preset)%s+([1-9][0-9]*%.[1-9][0-9]*)$")
-    if not object_kind then
-        object_kind, object_number = argument:match("^(Group)%s+([1-9][0-9]*)$")
-    end
+    if not object_kind then object_kind, object_number = argument:match("^(Executor)%s+([1-9][0-9]*%.[1-9][0-9]*)$") end
+    if not object_kind then object_kind, object_number = argument:match("^(Group)%s+([1-9][0-9]*)$") end
+    if not object_kind then object_kind, object_number = argument:match("^(Fixture)%s+([1-9][0-9]*)$") end
+    if not object_kind then object_kind, object_number = argument:match("^(Subfixture)%s+([1-9][0-9]*)$") end
+    if not object_kind then object_kind, object_number = argument:match("^(Macro)%s+([1-9][0-9]*)$") end
+    if not object_kind then object_kind, object_number = argument:match("^(Sequence)%s+([1-9][0-9]*)$") end
+    if not object_kind then object_kind, object_number = argument:match("^(Effect)%s+([1-9][0-9]*)$") end
     if not object_kind then
         feedback(request_id, "ERROR", "MALFORMED_ARGUMENT")
         return

@@ -76,6 +76,28 @@ the actual imported Plugin Pool slot:
 Each emits only read-only feedback: `ZEN_LAYOUT_PROBE|<id>|PATH|...`, then
 `HANDLE`, `CLASS`, `NUMBER`, `NAME`, and `LABEL`. The documented `getobj.name`
 value is used for both Name and Label; no unverified label accessor is called.
-To prove an XML token mapping, also create a disposable Layout with exactly one
-known object of each type, export it, and compare its first CObject token with
-the probe output. Do not add a resolver mapping until both observations match.
+To validate a disposable Layout 99, first create it in MA2's Layout View with
+one known object of each supported type, then use fresh IDs below. Replace the
+placeholder object numbers and Plugin slot `375` with objects that actually
+exist in the current show:
+
+  SetUserVar $ZEN_AGENT_REQUEST="fx1 object_probe Fixture 1"
+  Plugin 375
+  SetUserVar $ZEN_AGENT_REQUEST="sf1 object_probe Subfixture 1"
+  Plugin 375
+  SetUserVar $ZEN_AGENT_REQUEST="m1 object_probe Macro 1"
+  Plugin 375
+  SetUserVar $ZEN_AGENT_REQUEST="ex11 object_probe Executor 1.1"
+  Plugin 375
+  SetUserVar $ZEN_AGENT_REQUEST="s1 object_probe Sequence 1"
+  Plugin 375
+  SetUserVar $ZEN_AGENT_REQUEST="ef1 object_probe Effect 1"
+  Plugin 375
+
+Then ask the Agent `Layout 99 裡有哪些物件？`. Its Logs page writes one
+`layout_object_diagnostic` record for every exported item, including raw XML
+tag/attributes, parent path, CObject tokens, label/name, and XY. Compare each
+record to its matching `ZEN_LAYOUT_PROBE` output. Do not add a resolver mapping
+until both observations match and no conflicting sample exists. A nil handle or
+an object that MA2 cannot put in a Layout remains unsupported, not unknown type
+inference.

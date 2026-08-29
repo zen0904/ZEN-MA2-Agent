@@ -93,8 +93,7 @@ class LayoutExportProvider:
             raise GroupMembershipProviderError("EXPORT_LAYOUT_XML_INVALID") from exc
         if path.parent.resolve() == directory.resolve() and self._name.fullmatch(path.name): path.unlink(missing_ok=True)
         for item in result["items"]:
-            if not item["resolved"]:
-                runtime.log("layout_object_diagnostic", {"layout": layout_no, **{key: item[key] for key in ("raw_xml_tag", "raw_attributes", "cobject_attributes", "parent_path", "reference_tokens", "object_class")}})
+            runtime.log("layout_object_diagnostic", {"layout": layout_no, **{key: item.get(key) for key in ("type", "reference", "resolved", "provenance", "raw_xml_tag", "raw_attributes", "cobject_attributes", "parent_path", "reference_tokens", "object_class", "name", "x", "y")}})
         return result
 
     @staticmethod

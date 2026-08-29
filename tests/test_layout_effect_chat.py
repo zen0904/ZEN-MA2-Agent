@@ -1,3 +1,4 @@
+import json
 import re
 import tempfile
 import unittest
@@ -88,6 +89,10 @@ class LayoutEffectChatTests(unittest.TestCase):
         self.assertEqual(set(VALIDATED_FIRST_TOKEN_CLASSES), {"17", "22"})
         self.assertIn("LayoutCObject", unknown["parent_path"])
         self.assertEqual([item["reference"] for item in LayoutObjectResolver.lighting_items(layout)], [101])
+        conflicting = LayoutExportProvider.parse('''<MA><Group index="0"><LayoutData><CObjects>
+<LayoutCObject><CObject><Token>17</Token><Token>1</Token><Token>1</Token></CObject></LayoutCObject>
+</CObjects></LayoutData></Group></MA>''', 1)["items"][0]
+        self.assertEqual((conflicting["type"], conflicting["resolved"]), ("unknown", False))
 
     def test_fixture_only_all_objects_and_group_layout_intersection(self):
         fixtures = self.core.handle_request("Layout 1 裡有哪些燈？")
@@ -100,6 +105,10 @@ class LayoutEffectChatTests(unittest.TestCase):
         self.assertIn('Preset 4.2 "Red"', all_objects["message"])
         self.assertIn('Group 1 "HYBRID"', all_objects["message"])
         self.assertIn("Unknown unresolved ['99', '1']", all_objects["message"])
+        records = [json.loads(line) for line in (self.runtime.root / "logs" / "agent.jsonl").read_text(encoding="utf-8").splitlines()]
+        diagnostics = [record["data"] for record in records if record["event"] == "layout_object_diagnostic"]
+        self.assertGreaterEqual(len(diagnostics), 5)
+        self.assertTrue(all({"raw_xml_tag", "raw_attributes", "parent_path", "reference_tokens", "name", "x", "y"} <= set(item) for item in diagnostics[-5:]))
         hybrid = self.core.handle_request("HYBRID 在 Layout 1 怎麼排？")
         self.assertEqual(hybrid["type"], "ANSWER")
         self.assertIn('Fixture 101 "Key"', hybrid["message"])

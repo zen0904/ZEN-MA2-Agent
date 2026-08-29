@@ -44,6 +44,12 @@ class GrandMA2PluginPackageTests(unittest.TestCase):
         self.assertIn('command == "object_probe"', lua)
         self.assertIn('argument:match("^(Preset)%s+([1-9][0-9]*%.[1-9][0-9]*)$")', lua)
         self.assertIn('argument:match("^(Group)%s+([1-9][0-9]*)$")', lua)
+        self.assertIn('argument:match("^(Fixture)%s+([1-9][0-9]*)$")', lua)
+        self.assertIn('argument:match("^(Subfixture)%s+([1-9][0-9]*)$")', lua)
+        self.assertIn('argument:match("^(Macro)%s+([1-9][0-9]*)$")', lua)
+        self.assertIn('argument:match("^(Executor)%s+([1-9][0-9]*%.[1-9][0-9]*)$")', lua)
+        self.assertIn('argument:match("^(Sequence)%s+([1-9][0-9]*)$")', lua)
+        self.assertIn('argument:match("^(Effect)%s+([1-9][0-9]*)$")', lua)
         self.assertIn('gma.show.getobj.class, object_handle', lua)
         self.assertIn('gma.show.getobj.number, object_handle', lua)
         self.assertIn('gma.show.getobj.name, object_handle', lua)
@@ -70,6 +76,12 @@ class GrandMA2PluginPackageTests(unittest.TestCase):
         self.assertIn("import `ZEN_AGENT.xml` again", readme)
         self.assertIn('object_probe Preset 1.1', readme)
         self.assertIn('object_probe Group 1', readme)
+        self.assertIn('object_probe Fixture 1', readme)
+        self.assertIn('object_probe Subfixture 1', readme)
+        self.assertIn('object_probe Macro 1', readme)
+        self.assertIn('object_probe Executor 1.1', readme)
+        self.assertIn('object_probe Sequence 1', readme)
+        self.assertIn('object_probe Effect 1', readme)
 
 
 if __name__ == "__main__":
