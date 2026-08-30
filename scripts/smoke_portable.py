@@ -36,6 +36,7 @@ def _chat_routing_smoke() -> int:
         ("Layout 1 裡有哪些燈？", "layout_items_query", "LayoutExportProvider", "configure state_adapter.plugin_slot"),
         ("有哪些 Position Preset？", "preset_list", "PresetProvider", "I understand this needs an MA2 workflow"),
         ("有哪些 Effect？", "effect_list", "EffectProvider", "I understand this needs an MA2 workflow"),
+        ("檢查 Show", "diagnose_show", "ShowDiagnostics", "I understand this needs an MA2 workflow"),
     )
     for query, intent, provider, forbidden in checks:
         run = subprocess.run([str(EXE), "--portable-routing-smoke", query], cwd=bundle, env=environment, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=20)
@@ -49,6 +50,8 @@ def _chat_routing_smoke() -> int:
         response = payload.get("response", {})
         if response.get("kind") != "ANSWER":
             raise SystemExit(f"Portable chat response mismatch for {query}: {response}")
+        if query == "檢查 Show" and ("Show Diagnostics" not in response.get("text", "") or "ACTION PLAN" in response.get("text", "")):
+            raise SystemExit(f"Portable diagnostics response mismatch:\n{response}")
         print(f"PACKAGED_CHAT|{intent}|{provider}|{response['text']}")
     print(f"PACKAGED_BUILD|HEAD|{identity['head']}")
     return 0

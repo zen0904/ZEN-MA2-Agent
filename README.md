@@ -104,9 +104,19 @@ and [Group Export provider](docs/MA2_GROUP_EXPORT.md) for the compatibility
 boundary.
 
 The initial executable builtins are Group Select, Set Dimmer, Fixture Select,
-and Go Sequence. Geometry Clone, Auto Position, Effect Builder, Timecode
-Offset, Show Diagnostics, and Programmer Inspect are explicit placeholders;
+Go Sequence, and Show Diagnostics. Geometry Clone, Auto Position, Effect
+Builder, Timecode Offset, and Programmer Inspect remain explicit placeholders;
 they do not claim to run yet.
+
+## Show Diagnostics v1
+
+Ask `檢查 Show`, `Show Diagnostics`, or `幫我檢查目前 Show` for a SAFE,
+read-only health summary. It refreshes the supported Group, Fixture, Layout,
+Preset, Effect, Sequence/Cue, Page, and Executor providers, then reports
+deterministic findings with `INFO`, `WARNING`, or `ERROR` severity. Use
+`顯示詳細診斷`, `只看 Warning`, or `Layout 有什麼問題？` for a filtered view.
+Unsupported data is explicitly shown as a capability limit: the current
+grandMA2 Layout Export path supports CObjects but not fixture-level geometry.
 
 See [Skill system](docs/SKILL_SYSTEM.md) and
 [self-extension](docs/SELF_EXTENSION.md) for the controlled install boundary.

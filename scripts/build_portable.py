@@ -35,7 +35,7 @@ def _write_build_identity() -> Path:
         "head": _git_head(),
         "build_timestamp": datetime.now(timezone.utc).isoformat(),
         "source_root": str(ROOT.resolve()),
-        "router_build_id": "intent-router-v2",
+        "router_build_id": "intent-router-v3-diagnostics",
     }
     path = ROOT / "build_identity.json"
     path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

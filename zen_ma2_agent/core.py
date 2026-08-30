@@ -8,6 +8,7 @@ from typing import Any
 
 from .events import EventBus
 from .config import save_preferences
+from .diagnostics import DiagnosticReport, ShowDiagnostics
 from .build_identity import load_build_identity
 from .extensions import ExtensionManager
 from .network import internet_online, lan_ipv4_addresses
@@ -57,6 +58,8 @@ class AgentCore:
         self._internet_status = False
         self._internet_checked_at = 0.0
         self._effect_page = 0
+        self.diagnostics = ShowDiagnostics()
+        self.last_diagnostics: DiagnosticReport | None = None
         self.last_chat_routing: dict[str, Any] | None = None
         self.runtime.log("startup", {"build_identity": self.build_identity, "runtime_root": str(self.runtime.root)})
 
@@ -80,6 +83,7 @@ class AgentCore:
             "chat": list(self.chat[-40:]),
             "actions": [{"id": item.id, "status": item.status, "result": item.result, **item.plan} for item in self.actions.values()],
             "state_browser": self.state.summary(),
+            "diagnostics": self.last_diagnostics.as_dict() if self.last_diagnostics else None,
             "skills": self.skills.list(),
             "proposals": [proposal.summary() for proposal in self.extensions.proposals.values()],
         }
@@ -297,6 +301,15 @@ class AgentCore:
     def _answer_state(self, intent: Any) -> dict[str, Any]:
         try:
             kind, parameters = intent.kind, intent.parameters
+            if kind == "diagnose_show":
+                report = self.run_show_diagnostics()
+                return self._respond(ResponseType.ANSWER, self._format_diagnostics(report), intent=intent, diagnostics=report.as_dict())
+            if kind == "diagnose_show_details":
+                report = self.last_diagnostics or self.run_show_diagnostics()
+                return self._respond(ResponseType.ANSWER, self._format_diagnostics(report, detailed=True), intent=intent, diagnostics=report.as_dict())
+            if kind == "diagnose_show_filter":
+                report = self.last_diagnostics or self.run_show_diagnostics()
+                return self._respond(ResponseType.ANSWER, self._format_diagnostics(report, detailed=True, **parameters), intent=intent, diagnostics=report.as_dict())
             if kind == "effect_next_page":
                 current = self.state.get("effects")
                 if not current or current.stale or current.error:
@@ -342,6 +355,61 @@ class AgentCore:
         if kind == "layout_items_query" and parameters.get("object_name"):
             return self._respond(ResponseType.ANSWER, self._format_layout_group_answer(parameters["object_name"], result), intent=intent, state=result)
         return self._respond(ResponseType.ANSWER, self._format_state_answer(intent, result), intent=intent, state=result)
+
+    def run_show_diagnostics(self) -> DiagnosticReport:
+        """Refresh supported read-only state, then evaluate deterministic findings."""
+        self.progress = "Reading Show State"
+        for resource in ("groups", "fixtures", "layouts", "presets", "effects", "sequences", "pages", "executors"):
+            self._diagnostic_refresh(resource, sequence="ALL" if resource == "presets" else None)
+        groups = self.state.get("groups")
+        for group in (groups.values if groups and not groups.error else []):
+            self._diagnostic_refresh("group_membership", group_no=group.get("number"))
+        layouts = self.state.get("layouts")
+        for layout in (layouts.values if layouts and not layouts.error else []):
+            self._diagnostic_refresh("layout_items", layout_no=layout.get("layout"))
+        sequences = self.state.get("sequences")
+        sequence_values = sequences.values if sequences and not sequences.error else []
+        for sequence in sequence_values:
+            self._diagnostic_refresh("cues", sequence=sequence.get("number"))
+        if not sequence_values:
+            self.state.put("cues", [], source="ma2_telnet_list")
+        self.last_diagnostics = self.diagnostics.evaluate(self.state)
+        self.progress = "Idle"
+        self.events.emit("diagnostics", self.snapshot())
+        return self.last_diagnostics
+
+    def _diagnostic_refresh(self, resource: str, **kwargs: Any) -> None:
+        """Diagnostics retains typed provider errors instead of failing as a whole."""
+        try:
+            self.refresh_state(resource, **kwargs)
+        except Exception as exc:  # Individual state failure is a diagnostic finding.
+            self.state.record_error(resource, str(exc) or exc.__class__.__name__, source="diagnostics_refresh")
+
+    @staticmethod
+    def _format_diagnostics(report: DiagnosticReport, *, detailed: bool = False, severity: str | None = None, category: str | None = None) -> str:
+        findings = list(report.findings)
+        if severity:
+            findings = [item for item in findings if item.severity == severity]
+        if category:
+            findings = [item for item in findings if item.category == category]
+        counts = report.counts
+        lines = ["Show Diagnostics", "", f"Status: {report.status}", "", f"Errors: {counts['ERROR']}", f"Warnings: {counts['WARNING']}", f"Info: {counts['INFO']}"]
+        if detailed or severity or category:
+            lines.extend(["", "Findings:"])
+            if findings:
+                lines.extend(f"[{item.severity}] {item.summary}" + (f"\n  Details: {item.details}" if detailed else "") for item in findings)
+            else:
+                lines.append("No matching findings.")
+        else:
+            warnings = [item for item in findings if item.severity in {"ERROR", "WARNING"}][:3]
+            if warnings:
+                lines.extend(["", "Warnings:"])
+                lines.extend(f"{index}. {item.summary}" for index, item in enumerate(warnings, 1))
+        lines.extend(["", "Capabilities:"])
+        lines.extend(f"- {item['name']}: {item['status'].title()}" for item in report.capabilities)
+        if not detailed and not severity and not category:
+            lines.extend(["", "Type: 「顯示詳細診斷」 to show full findings."])
+        return "\n".join(lines)
 
     def _format_state_answer(self, intent: Any, result: dict[str, Any]) -> str:
         values = result["values"]
@@ -446,6 +514,9 @@ class AgentCore:
         if intent is None:
             return None
         providers = {
+            "diagnose_show": "ShowDiagnostics",
+            "diagnose_show_details": "ShowDiagnostics",
+            "diagnose_show_filter": "ShowDiagnostics",
             "layout_items_query": "LayoutExportProvider",
             "layout_all_objects_query": "LayoutExportProvider",
             "state_layouts": "LayoutInventoryProvider",

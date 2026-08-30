@@ -1,1 +1,1 @@
-{"id":"diagnostics.show","name":"Show Diagnostics","version":"0.0","description":"Workflow placeholder.","intents":["diagnose_show"],"required_state":["groups","fixtures"],"safety":"SAFE","enabled":false}
+{"id":"diagnostics.show","name":"Show Diagnostics","version":"1.0","description":"Read-only deterministic Show Diagnostics using verified State providers.","intents":["diagnose_show"],"required_state":[],"safety":"SAFE","enabled":true}

@@ -50,6 +50,14 @@ Desktop, mobile HTTP/WebSocket, and future Skills; no provider is Clone-specific
 Disconnect marks cached state stale. A successful refresh replaces that stale
 entry. Provider errors are cached rather than converted into invented state.
 
+Show Diagnostics v1 is a frontend-independent SAFE read-only workflow inside
+`AgentCore`. It refreshes supported snapshots, keeps provider errors and stale
+timestamps as findings, then evaluates deterministic rules. `DiagnosticFinding`
+contains an id, category, severity, summary, details, object identity, source,
+confidence, and suggested action. Empty Preset/Effect/Sequence pools are valid;
+unsupported Layout fixture geometry is capability information, never evidence
+that a Layout has no fixture items. Desktop and mobile render the same report.
+
 The portable runtime resolves `config`, `data`, `logs`, `cache`, `web`, and
 `lua` relative to the app folder. The frontend is PySide6, with a separate PWA
 asset folder bundled by PyInstaller. Web research, local LLMs, advanced show

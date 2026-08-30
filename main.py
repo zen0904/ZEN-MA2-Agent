@@ -40,7 +40,7 @@ class _PortableSmokeClient:
                 encoding="utf-8",
             )
             return "exported"
-        if command in {"List Preset Position", "List Effect"}:
+        if command in {"List Group", "List Fixture", "List Layout", "List Preset All", "List Preset Position", "List Effect", "List Sequence", "List Page", "List Executor"}:
             return ""
         raise AssertionError(f"Unexpected portable smoke command: {command}")
 

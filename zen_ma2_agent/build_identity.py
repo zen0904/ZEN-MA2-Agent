@@ -19,7 +19,7 @@ DEVELOPMENT_IDENTITY = {
     "head": "development",
     "build_timestamp": "development",
     "source_root": "source checkout",
-    "router_build_id": "intent-router-v2",
+    "router_build_id": "intent-router-v3-diagnostics",
 }
 
 

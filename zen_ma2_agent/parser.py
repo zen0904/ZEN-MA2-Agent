@@ -19,6 +19,17 @@ def parse(text: str) -> Intent:
         raise ParseError("Enter a command request.")
 
     state_source = source.rstrip("?？").strip()
+    if re.fullmatch(r"(?:檢查(?:這個|目前)?\s*show|show\s*diagnostics|這個\s*show\s*有沒有問題|幫我檢查(?:目前)?\s*show)", state_source, flags=re.I):
+        return Intent("diagnose_show", {}, source)
+    if re.fullmatch(r"(?:顯示)?詳細診斷", state_source, flags=re.I):
+        return Intent("diagnose_show_details", {}, source)
+    match = re.fullmatch(r"只看\s*(warning|warnings|警告|error|errors|錯誤)", state_source, flags=re.I)
+    if match:
+        return Intent("diagnose_show_filter", {"severity": "WARNING" if match.group(1).casefold() in {"warning", "warnings", "警告"} else "ERROR"}, source)
+    match = re.fullmatch(r"(layout|佈局|布局|group|群組|sequence|序列)\s*有什麼問題", state_source, flags=re.I)
+    if match:
+        aliases = {"佈局": "layout", "布局": "layout", "群組": "group", "序列": "sequence"}
+        return Intent("diagnose_show_filter", {"category": aliases.get(match.group(1).casefold(), match.group(1).casefold())}, source)
     match = re.fullmatch(r"(?:群組|group)\s*(\d+)\s*(?:裡|里|中)\s*(?:有)?\s*(?:哪些)?\s*(?:燈|燈具|fixture|fixtures)", state_source, flags=re.I)
     if match:
         return Intent("state_group_membership", {"group_no": int(match.group(1))}, source)

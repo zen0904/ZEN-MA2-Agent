@@ -183,6 +183,11 @@ class ZenDesktop(QMainWindow):
         self._update_text(self.chat, "\n\n".join(f"{m['role'].upper()}\n{m['text']}" for m in snap["chat"]), follow_bottom=True)
         pending = next((item for item in snap["actions"] if item["status"] == "PENDING_APPROVAL"), None); self.execute.setEnabled(bool(pending and c["ready"])); self.cancel.setEnabled(bool(pending)); self.plan_text.setText("No action plan pending." if not pending else f"ACTION PLAN\nTarget: {pending['intent']['parameters']}\nCommand: {pending['command']}\nSafety: {pending['safety']}\n{pending['preview_note']}")
         state_lines = []
+        diagnostics = snap.get("diagnostics")
+        if diagnostics:
+            checked = next((item["updated_at"] for item in snap["state_browser"].values() if item["updated_at"]), "Not checked")
+            counts = diagnostics["counts"]
+            state_lines.append(f"Show Diagnostics — {diagnostics['status']}\nErrors: {counts['ERROR']}  Warnings: {counts['WARNING']}  Info: {counts['INFO']}\nLast checked: {checked}")
         for name, value in snap["state_browser"].items():
             if value["status"] == "available":
                 state_lines.append(f"{name.title()} — {value['count']} items\n" + "\n".join(str(item) for item in value["values"]))
