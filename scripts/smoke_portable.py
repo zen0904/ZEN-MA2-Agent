@@ -52,7 +52,9 @@ def _chat_routing_smoke() -> int:
             raise SystemExit(f"Portable chat response mismatch for {query}: {response}")
         if query == "檢查 Show" and ("Show Diagnostics" not in response.get("text", "") or "ACTION PLAN" in response.get("text", "")):
             raise SystemExit(f"Portable diagnostics response mismatch:\n{response}")
-        print(f"PACKAGED_CHAT|{intent}|{provider}|{response['text']}")
+        # Keep the outer Windows console smoke portable even when its active
+        # code page cannot encode a localized response body.
+        print(f"PACKAGED_CHAT|{intent}|{provider}|{response['text'].splitlines()[0]}")
     print(f"PACKAGED_BUILD|HEAD|{identity['head']}")
     return 0
 
