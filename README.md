@@ -125,8 +125,10 @@ boundary.
 The executable builtins include Group Select, Set Dimmer, Fixture Select, Go
 Sequence, Show Diagnostics, Effect Builder, and Timecode Offset. Timecode
 Offset v1 is intentionally narrow: it applies MA2's documented positive,
-whole-show `Timecode/Offset` property through Preview and Approval. Event/track
-readback, range offsets, and moving a Timecode earlier remain explicit
+whole-show `Timecode/Offset` property through Preview and Approval, only when
+the requested offset is exactly representable by the verified 30 FPS `List
+Timecode` read-back (for example 100 ms, 500 ms, or 1 s). Event/track
+readback, range offsets, non-frame-aligned offsets, and moving a Timecode earlier remain explicit
 `UNSUPPORTED` capabilities rather than guessed commands. Geometry Clone, Auto
 Position, and Programmer Inspect remain explicit placeholders.
 

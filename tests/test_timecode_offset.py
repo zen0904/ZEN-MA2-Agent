@@ -28,7 +28,7 @@ class TimecodeClient:
     def execute(self, command):
         self.commands.append(command)
         if command == "List Timecode":
-            offset = "0:50" if self.offset == "0.50s" else "0:00"
+            offset = "0:15" if self.offset == "0.50s" else "0:00"
             return f"Timecode 9000 {self.name} Intern 0:00 {offset} Endless Repeat\n" if self.present else "WARNING, NO OBJECTS FOUND FOR LIST\n"
         if command.startswith("Assign Timecode 9000/Offset = "):
             self.offset = command.rsplit("= ", 1)[1]
@@ -61,10 +61,11 @@ class TimecodeOffsetTests(unittest.TestCase):
         self.assertEqual(ranged, {"timecode_number": 3, "offset_ms": 250, "range_start_ms": 10000, "range_end_ms": 30000})
 
     def test_timecode_provider_inventory_and_event_capability(self):
-        rows = TimecodeProvider().parse("Timecode 9000 ZEN Test Intern 0:00 0:50 Endless Repeat\n")
+        rows = TimecodeProvider().parse("Timecode 9000 ZEN Test Intern 0:00 0:15 Endless Repeat\n")
         self.assertEqual(rows[0]["timecode_number"], 9000)
         self.assertEqual(rows[0]["name"], "ZEN Test")
-        self.assertEqual((rows[0]["offset_raw"], rows[0]["offset_ms"]), ("0:50", 500))
+        self.assertEqual((rows[0]["offset_raw"], rows[0]["offset_ms"]), ("0:15", 500))
+        self.assertEqual(TimecodeProvider().parse("Timecode 9000 ZEN Test Intern 0:00 0:08 Endless Repeat\n")[0]["offset_ms"], 267)
         self.assertEqual(rows[0]["events"], [])
         self.assertEqual(rows[0]["event_capability"], "UNSUPPORTED")
 
@@ -86,6 +87,12 @@ class TimecodeOffsetTests(unittest.TestCase):
         self.assertEqual(ranged["type"], "ERROR")
         self.assertIn("range-based", ranged["message"])
         self.assertEqual(self.client.commands, ["List Timecode", "List Timecode"])
+
+    def test_non_frame_aligned_offset_is_rejected_without_writes(self):
+        response = self.core.handle_request("Timecode 9000 往後 250ms")
+        self.assertEqual(response["type"], "ERROR")
+        self.assertIn("30 FPS", response["message"])
+        self.assertEqual(self.client.commands, ["List Timecode"])
 
     def test_approval_refreshes_then_executes_and_reports_partial_readback(self):
         action = self.core.handle_request("Timecode 9000 往後 500ms")["action"]

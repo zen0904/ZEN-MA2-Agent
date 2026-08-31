@@ -45,8 +45,10 @@ adapter response is not parsed optimistically; it becomes `UNSUPPORTED` or
 3.9 documentation verifies the positive whole-show `Timecode/Offset` property,
 but it does not provide a verified non-mutating event/track readback contract
 for this Agent. Therefore Timecode Offset v1 can only set a positive whole-show
-offset after Preview and Approval. Event count, per-event diffs, range offsets,
-negative offsets, and exact event-time verification are reported as
+offset after Preview and Approval. The verified 3.9.60 `List Timecode` read-back
+uses a 30 FPS seconds:frames display (`0.50s` -> `0:15`); v1 therefore accepts
+only exact 30 FPS whole-show offsets. Event count, per-event diffs, range offsets,
+negative offsets, non-frame-aligned offsets, and exact event-time verification are reported as
 `UNSUPPORTED`, never inferred from an empty event list.
 
 ## Group membership: local Export XML backend

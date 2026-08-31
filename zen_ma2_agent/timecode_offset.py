@@ -81,6 +81,8 @@ def resolve_timecode_offset_spec(intent: Intent, timecodes: list[dict[str, Any]]
     start, end = intent.parameters.get("range_start_ms"), intent.parameters.get("range_end_ms")
     if start is not None or end is not None:
         raise TimecodeOffsetError("UNSUPPORTED: range-based Timecode event movement has no verified grandMA2 3.9 read/write command path.")
+    if offset * 30 % 1_000:
+        raise TimecodeOffsetError("UNSUPPORTED: current MA2 3.9 List Timecode read-back is 30 FPS; v1 accepts only whole-show offsets exactly representable at 30 FPS (for example 100 ms, 500 ms, or 1 s).")
     return TimecodeOffsetSpec(
         timecode_number=number,
         timecode_name=str(timecode.get("name") or number),

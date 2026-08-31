@@ -75,5 +75,7 @@ MODIFY-only workflow only for the officially documented whole-show forward
 `Assign Timecode <id>/Offset = <positive duration>` property. It preserves a
 fresh inventory fingerprint in the ActionPlan and refreshes it again before
 approval; a changed/missing target returns `STATE_CHANGED_SINCE_PREVIEW` before
-any write. Individual Timecode event/track state has no verified read-only
-provider, so range and negative movement are rejected rather than emulated.
+any write. The verified MA2 `List Timecode` read-back is 30 FPS seconds:frames,
+so v1 accepts only exactly representable whole-show offsets. Individual
+Timecode event/track state has no verified read-only provider, so range and
+negative movement are rejected rather than emulated.

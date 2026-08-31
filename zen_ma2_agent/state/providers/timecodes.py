@@ -28,7 +28,8 @@ class TimecodeProvider:
                     "tracks": [],
                     "events": [],
                     "offset_raw": offset_raw,
-                    "offset_ms": self._hundredths_to_ms(offset_raw),
+                    "offset_ms": self._list_frames_to_ms(offset_raw),
+                    "offset_timebase": "30 FPS List Timecode readout (validated controlled differential)",
                     "event_capability": "UNSUPPORTED",
                     "source": "ma2_telnet_list",
                 })
@@ -66,11 +67,16 @@ class TimecodeProvider:
         return rows
 
     @staticmethod
-    def _hundredths_to_ms(value: str) -> int | None:
+    def _list_frames_to_ms(value: str) -> int | None:
         match = re.fullmatch(r"(\d+):(\d{2})", value)
         if not match:
             return None
-        return int(match.group(1)) * 1_000 + int(match.group(2)) * 10
+        # On the verified MA2 3.9.60 onPC session, List Timecode renders
+        # ``0.25s`` as ``0:08`` and ``0.50s`` as ``0:15``.  Its colon form is
+        # consequently a 30 FPS seconds:frames readout, even when the object
+        # TimeUnit column says 1/100 Seconds (that setting is graphical only).
+        seconds, frames = map(int, match.groups())
+        return round((seconds + frames / 30) * 1_000)
 
     @staticmethod
     def capability() -> dict[str, str]:

@@ -63,6 +63,10 @@ def main() -> int:
     if "--real-machine" not in sys.argv:
         raise SystemExit("Refusing real MA2 modification without --real-machine.")
     reuse_existing = "--reuse-existing" in sys.argv
+    calibration = "--calibrate-250ms" in sys.argv
+    requested_offset_ms = 250 if calibration else 500
+    expected_literal = f"{requested_offset_ms // 1000}.{(requested_offset_ms % 1000) // 10:02d}s"
+    offset_query = f"Timecode {TEST_TIMECODE} 往後 {requested_offset_ms}ms"
     if not EXE.is_file():
         raise SystemExit(f"Portable EXE not found: {EXE}")
     expected_head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
@@ -75,7 +79,7 @@ def main() -> int:
     report: dict[str, object] = {
         "timecode": TEST_TIMECODE,
         "setup_query": SETUP_QUERY,
-        "offset_query": OFFSET_QUERY,
+        "offset_query": offset_query,
         "reuse_existing": reuse_existing,
     }
     try:
@@ -108,9 +112,10 @@ def main() -> int:
             report["setup_execute"] = _request(port, "execute_pending", timeout=60)
 
         # The actual product workflow is a separate, fresh Preview and approval.
-        report["offset_submit"] = _request(port, "submit", text=OFFSET_QUERY)
+        report["offset_submit"] = _request(port, "submit", text=offset_query)
         offset_preview = _request(port, "chat_text")["chat_text"]
-        if "Timecode Offset Preview" not in offset_preview or "Offset: +0.500 s" not in offset_preview or "Approval required." not in offset_preview:
+        expected_preview_offset = f"Offset: +{requested_offset_ms / 1000:.3f} s"
+        if "Timecode Offset Preview" not in offset_preview or expected_preview_offset not in offset_preview or "Approval required." not in offset_preview:
             raise RuntimeError(f"Timecode Offset preview missing: {offset_preview}")
         records_before_approval = _new_records(log_path, log_offset)
         workflows_before = [item for item in records_before_approval if item.get("event") == "workflow_execute"]
@@ -122,17 +127,19 @@ def main() -> int:
         report["offset_preview"] = offset_preview
         report["offset_execute"] = _request(port, "execute_pending", timeout=60)
         transcript = _request(port, "chat_text")["chat_text"]
-        if "Verification: VERIFIED" not in transcript:
+        if not calibration and "Verification: VERIFIED" not in transcript:
             raise RuntimeError(f"Timecode Offset verification was not reported: {transcript}")
         records = _new_records(log_path, log_offset)
         workflows = [item.get("data", {}) for item in records if item.get("event") == "workflow_execute"]
         verification = [item.get("data", {}) for item in records if item.get("event") == "timecode_offset_verification"]
-        expected = f"Assign Timecode {TEST_TIMECODE}/Offset = 0.50s"
+        expected = f"Assign Timecode {TEST_TIMECODE}/Offset = {expected_literal}"
         expected_workflow_count = 1 if reuse_existing else 2
         if len(workflows) != expected_workflow_count or workflows[-1].get("commands") != [expected]:
             raise RuntimeError(f"Unexpected approved Timecode workflow audit: {workflows}")
-        if not verification or not verification[-1].get("exists") or verification[-1].get("status") != "VERIFIED":
+        if not verification or not verification[-1].get("exists"):
             raise RuntimeError(f"Timecode was not read back after approved offset: {verification}")
+        if not calibration and verification[-1].get("status") != "VERIFIED":
+            raise RuntimeError(f"Timecode Offset was not verified: {verification}")
         report.update({"chat": transcript, "workflows": workflows, "verification": verification})
         print(json.dumps(report, ensure_ascii=False, indent=2))
         return 0
