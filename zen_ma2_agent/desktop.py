@@ -9,6 +9,7 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QApplication, QComboBox, QFormLayout, QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QMainWindow, QMessageBox, QPushButton, QSplitter, QStackedWidget, QTextEdit, QVBoxLayout, QWidget)
 
 from .core import AgentCore
+from .desktop_automation import DesktopAutomationBridge
 from .build_identity import display_build_identity
 from .telnet_client import ConnectionState
 from .web_server import MobileServer
@@ -199,5 +200,14 @@ class ZenDesktop(QMainWindow):
         if urls and old not in urls: self.addresses.setCurrentIndex(0); self.refresh_qr()
 
 
-def run_desktop(core: AgentCore, server: MobileServer) -> int:
-    app = QApplication.instance() or QApplication([]); app.setStyleSheet(THEME); window = ZenDesktop(core, server); window.show(); return app.exec()
+def run_desktop(core: AgentCore, server: MobileServer, *, automation_port: int | None = None) -> int:
+    app = QApplication.instance() or QApplication([]); app.setStyleSheet(THEME); window = ZenDesktop(core, server)
+    bridge = DesktopAutomationBridge(window, port=automation_port) if automation_port is not None else None
+    if bridge:
+        bridge.start()
+    window.show()
+    try:
+        return app.exec()
+    finally:
+        if bridge:
+            bridge.stop()

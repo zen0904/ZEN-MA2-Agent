@@ -11,6 +11,7 @@ from PySide6.QtWidgets import QApplication
 
 from zen_ma2_agent.core import AgentCore
 from zen_ma2_agent.desktop import ZenDesktop, run_desktop
+from zen_ma2_agent.desktop_automation import automation_enabled, automation_port
 from zen_ma2_agent.web_server import MobileServer
 from zen_ma2_agent.runtime import AgentRuntime
 from zen_ma2_agent.telnet_client import ConnectionState
@@ -95,7 +96,7 @@ def main() -> int:
     if mobile.get("enabled", True):
         server.start()
     try:
-        return run_desktop(core, server)
+        return run_desktop(core, server, automation_port=automation_port() if automation_enabled(sys.argv) else None)
     finally:
         server.stop()
 

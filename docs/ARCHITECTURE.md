@@ -58,6 +58,13 @@ confidence, and suggested action. Empty Preset/Effect/Sequence pools are valid;
 unsupported Layout fixture geometry is capability information, never evidence
 that a Layout has no fixture items. Desktop and mobile render the same report.
 
+For test-only packaged Desktop verification, an optional localhost bridge can
+be enabled with an explicit command-line flag or environment variable. Its
+socket worker posts fixed test actions to the `ZenDesktop` QObject, so actual
+Connect and Send handlers run on the Qt GUI thread. It is absent in normal
+startup, binds only `127.0.0.1`, and deliberately exposes neither preferences,
+passwords, raw Telnet, code execution, nor filesystem access.
+
 The portable runtime resolves `config`, `data`, `logs`, `cache`, `web`, and
 `lua` relative to the app folder. The frontend is PySide6, with a separate PWA
 asset folder bundled by PyInstaller. Web research, local LLMs, advanced show

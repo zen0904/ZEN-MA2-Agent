@@ -374,6 +374,7 @@ class AgentCore:
         if not sequence_values:
             self.state.put("cues", [], source="ma2_telnet_list")
         self.last_diagnostics = self.diagnostics.evaluate(self.state)
+        self.runtime.log("diagnostics", self.last_diagnostics.as_dict())
         self.progress = "Idle"
         self.events.emit("diagnostics", self.snapshot())
         return self.last_diagnostics

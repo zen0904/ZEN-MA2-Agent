@@ -86,6 +86,25 @@ Verify the built EXE itself (not the source Python process) with:
 .\.venv\Scripts\python.exe scripts\smoke_portable.py
 ```
 
+### Test-only packaged Desktop bridge
+
+For explicit real-machine validation when Windows UI Automation cannot type
+into PySide6, the packaged EXE has a deliberately inactive-by-default bridge.
+It starts only with `ZEN_MA2_AUTOMATION=1` or `--automation-test`, binds only
+to `127.0.0.1`, and accepts only fixed `status`, `connect`, `submit`,
+`chat_text`, `connection_state`, and `shutdown` actions. It never returns the
+session password and has no raw Telnet, code, or filesystem endpoint.
+
+Run the real-current-show verification only after an explicit operator choice:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\real_packaged_desktop_smoke.py --real-machine
+```
+
+The verifier drives the packaged `ZenDesktop.connect()` and
+`ZenDesktop.submit()` handlers on the Qt GUI thread; it does not call
+`AgentCore` directly.
+
 The portable bundle is `dist\ZEN_MA2_Agent\ZEN_MA2_Agent.exe`. Its `web`,
 `lua`, `skills`, `config`, `logs`, and `cache` resources resolve relative to the EXE, so
 moving the folder to another USB drive letter is supported.
