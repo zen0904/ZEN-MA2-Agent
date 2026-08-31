@@ -43,6 +43,13 @@ class GrandMA2PluginPackageTests(unittest.TestCase):
         self.assertIn('command == "group_membership"', lua)
         self.assertIn('command == "object_probe"', lua)
         self.assertIn('command == "layout_fixture_probe"', lua)
+        self.assertIn('command == "selection_probe"', lua)
+        self.assertIn('command == "programmer_probe"', lua)
+        self.assertIn('ZEN_INSPECT_PROBE|', lua)
+        self.assertIn('inspect_show_object(request_id, "selection", "Selection")', lua)
+        self.assertIn('inspect_show_object(request_id, "programmer", "Programmer")', lua)
+        self.assertIn('gma.user.getcmddest', lua)
+        self.assertIn('gma.user.getselectedexec', lua)
         self.assertIn('argument:match("^(Preset)%s+([1-9][0-9]*%.[1-9][0-9]*)$")', lua)
         self.assertIn('argument:match("^(Group)%s+([1-9][0-9]*)$")', lua)
         self.assertIn('argument:match("^(Fixture)%s+([1-9][0-9]*)$")', lua)
@@ -89,6 +96,8 @@ class GrandMA2PluginPackageTests(unittest.TestCase):
         self.assertIn('object_probe Sequence 1', readme)
         self.assertIn('object_probe Effect 1', readme)
         self.assertIn('layout_fixture_probe 99', readme)
+        self.assertIn('selection_probe', readme)
+        self.assertIn('programmer_probe', readme)
 
 
 if __name__ == "__main__":

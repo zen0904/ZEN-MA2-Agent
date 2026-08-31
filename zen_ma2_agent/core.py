@@ -216,14 +216,37 @@ class AgentCore:
         return result
 
     def get_selection(self) -> dict[str, Any]:
-        result = self.refresh_state("selection")
+        result = self._unsupported_inspect_result("selection")
         result["selection"] = result["values"][0] if result["values"] else None
         return result
 
     def get_programmer_summary(self) -> dict[str, Any]:
-        result = self.refresh_state("programmer")
+        result = self._unsupported_inspect_result("programmer")
         result["programmer"] = result["values"][0] if result["values"] else None
         return result
+
+    def _unsupported_inspect_result(self, resource: str) -> dict[str, Any]:
+        """Return an explicit read-only capability gap without probing MA2.
+
+        grandMA2 3.9's verified Lua API has no non-mutating accessor for the
+        current fixture selection or Programmer's active values.  Never fall
+        back to selecting fixtures, creating temporary objects, or clearing the
+        Programmer merely to answer an inspect request.
+        """
+        details = {
+            "selection": {
+                "error": "UNSUPPORTED selection: no verified non-mutating MA2 3.9 accessor exposes current fixture members.",
+                "capability": {"selection_presence": "unsupported", "selection_members": "unsupported", "subfixtures": "unsupported"},
+            },
+            "programmer": {
+                "error": "UNSUPPORTED programmer: no verified non-mutating MA2 3.9 accessor exposes Programmer presence, members, attributes, or values.",
+                "capability": {"programmer_presence": "unsupported", "programmer_members": "unsupported", "programmer_attributes": "unsupported", "programmer_values": "unsupported"},
+            },
+        }[resource]
+        snapshot = self.state.record_error(resource, details["error"], source="ma2_3_9_verified_api_gap", capability=details["capability"])
+        self.progress = "Idle"
+        self.events.emit("state", self.snapshot())
+        return {"resource": resource, "count": len(snapshot.values), "values": snapshot.values, "status": "UNSUPPORTED", "error": snapshot.error, "capability": snapshot.capability}
 
     def set_skill_enabled(self, skill_id: str, enabled: bool) -> dict[str, Any]:
         manifest = self.skills.set_enabled(skill_id, enabled)
@@ -527,6 +550,8 @@ class AgentCore:
             "effect_lookup": "EffectProvider",
             "sequence_executor_lookup": "ExecutorProvider",
             "page_executor_list": "ExecutorProvider",
+            "state_selection": "SelectionInspectCapability",
+            "state_programmer": "ProgrammerInspectCapability",
         }
         return providers.get(intent.kind)
 

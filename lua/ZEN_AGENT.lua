@@ -120,6 +120,50 @@ local function layout_fixture_probe(request_id, layout_no)
     feedback(request_id, "END", "layout_fixture_probe")
 end
 
+local function inspect_probe_feedback(request_id, scope, field, value)
+    gma.feedback("ZEN_INSPECT_PROBE|" .. request_id .. "|" .. scope .. "|" .. field .. "|" .. tostring(value))
+end
+
+local function inspect_show_object(request_id, scope, path)
+    local object_handle = handle(path)
+    inspect_probe_feedback(request_id, scope, "API", "gma.show.getobj.handle")
+    inspect_probe_feedback(request_id, scope, "PATH", path)
+    inspect_probe_feedback(request_id, scope, "HANDLE", object_handle)
+    if not object_handle then return end
+    inspect_probe_feedback(request_id, scope, "CLASS", safely(gma.show.getobj.class, object_handle))
+    inspect_probe_feedback(request_id, scope, "NUMBER", safely(gma.show.getobj.number, object_handle))
+    inspect_probe_feedback(request_id, scope, "NAME", safely(gma.show.getobj.name, object_handle))
+    inspect_probe_feedback(request_id, scope, "CHILD_COUNT", safely(gma.show.getobj.amount, object_handle))
+    local property_count = math.min(tonumber(safely(gma.show.property.amount, object_handle) or 0) or 0, 16)
+    inspect_probe_feedback(request_id, scope, "PROPERTY_COUNT", property_count)
+    for property_index = 0, property_count - 1 do
+        local property_name = safely(gma.show.property.name, object_handle, property_index)
+        inspect_probe_feedback(request_id, scope, "PROPERTY", tostring(property_index) .. "|" .. tostring(property_name) .. "|" .. tostring(safely(gma.show.property.get, object_handle, property_index)))
+    end
+end
+
+local function selection_probe(request_id)
+    -- These API calls are documented read-only.  They do not expose a verified
+    -- Selection member list, so their output is diagnostic evidence only.
+    inspect_show_object(request_id, "selection", "Selection")
+    inspect_probe_feedback(request_id, "selection", "API", "gma.user.getcmddest")
+    inspect_probe_feedback(request_id, "selection", "CMD_DEST", safely(gma.user.getcmddest))
+    inspect_probe_feedback(request_id, "selection", "API", "gma.user.getselectedexec")
+    inspect_probe_feedback(request_id, "selection", "SELECTED_EXEC", safely(gma.user.getselectedexec))
+    feedback(request_id, "BEGIN", "selection_probe")
+    feedback(request_id, "END", "selection_probe")
+end
+
+local function programmer_probe(request_id)
+    -- No command execution, fixture selection, Programmer mutation, or traversal is
+    -- performed.  This records only the documented object/property API shape.
+    inspect_show_object(request_id, "programmer", "Programmer")
+    inspect_probe_feedback(request_id, "programmer", "API", "gma.user.getcmddest")
+    inspect_probe_feedback(request_id, "programmer", "CMD_DEST", safely(gma.user.getcmddest))
+    feedback(request_id, "BEGIN", "programmer_probe")
+    feedback(request_id, "END", "programmer_probe")
+end
+
 local function main()
     local request = gma.user.getvar("ZEN_AGENT_REQUEST")
     gma.feedback("ZEN_DEBUG|REQUEST|" .. tostring(request))
@@ -155,6 +199,14 @@ local function main()
     elseif command == "layout_fixture_probe" and argument:match("^[1-9][0-9]*$") then
         layout_fixture_probe(request_id, tonumber(argument))
     elseif command == "layout_fixture_probe" then
+        feedback(request_id, "ERROR", "MALFORMED_ARGUMENT")
+    elseif command == "selection_probe" and argument == "" then
+        selection_probe(request_id)
+    elseif command == "selection_probe" then
+        feedback(request_id, "ERROR", "MALFORMED_ARGUMENT")
+    elseif command == "programmer_probe" and argument == "" then
+        programmer_probe(request_id)
+    elseif command == "programmer_probe" then
         feedback(request_id, "ERROR", "MALFORMED_ARGUMENT")
     else
         feedback(request_id, "ERROR", "UNKNOWN_COMMAND")

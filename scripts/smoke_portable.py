@@ -37,6 +37,8 @@ def _chat_routing_smoke() -> int:
         ("有哪些 Position Preset？", "preset_list", "PresetProvider", "I understand this needs an MA2 workflow"),
         ("有哪些 Effect？", "effect_list", "EffectProvider", "I understand this needs an MA2 workflow"),
         ("檢查 Show", "diagnose_show", "ShowDiagnostics", "I understand this needs an MA2 workflow"),
+        ("Programmer 有沒有東西？", "state_programmer", "ProgrammerInspectCapability", "I understand this needs an MA2 workflow"),
+        ("目前選了哪些燈？", "state_selection", "SelectionInspectCapability", "I understand this needs an MA2 workflow"),
     )
     for query, intent, provider, forbidden in checks:
         run = subprocess.run([str(EXE), "--portable-routing-smoke", query], cwd=bundle, env=environment, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=20)
@@ -50,6 +52,8 @@ def _chat_routing_smoke() -> int:
         response = payload.get("response", {})
         if response.get("kind") != "ANSWER":
             raise SystemExit(f"Portable chat response mismatch for {query}: {response}")
+        if intent in {"state_programmer", "state_selection"} and "UNSUPPORTED" not in response.get("text", ""):
+            raise SystemExit(f"Portable inspect capability response mismatch for {query}: {response}")
         if query == "檢查 Show" and ("Show Diagnostics" not in response.get("text", "") or "ACTION PLAN" in response.get("text", "")):
             raise SystemExit(f"Portable diagnostics response mismatch:\n{response}")
         # Keep the outer Windows console smoke portable even when its active

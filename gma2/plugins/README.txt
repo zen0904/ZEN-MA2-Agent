@@ -116,3 +116,23 @@ The bounded diagnostic emits `ZEN_LAYOUT_FIXTURE_PROBE` feedback for `Layout
 at most 16 properties. Traversal is limited to depth 2 and 12 children per
 node. It only calls `gma.show.getobj.*` and `gma.show.property.*`; it does not
 select, Store, Assign, Move, Delete, or modify the Layout.
+
+PROGRAMMER / SELECTION API PROBES (TEST-ONLY, READ-ONLY)
+--------------------------------------------------------
+These probes record the shape of documented, non-mutating MA2 APIs only. They
+are not a Selection or Programmer provider, and they must not be used to infer
+fixture members, active attributes, or values from a nil/empty result. Re-import
+the XML, Save, and Reload before probing after changing this Lua file. With a
+fresh request ID and the actual imported Plugin Pool slot, run:
+
+  SetUserVar $ZEN_AGENT_REQUEST="sel01 selection_probe"
+  Plugin 375
+  SetUserVar $ZEN_AGENT_REQUEST="prog01 programmer_probe"
+  Plugin 375
+
+The feedback uses `ZEN_INSPECT_PROBE` and records only handles, object class,
+number, name, bounded property fields, `gma.user.getcmddest()`, and (for the
+Selection probe) `gma.user.getselectedexec()`. It never invokes `gma.cmd` or a
+fixture/group/programmer command. Until an MA2 3.9 source has been proven to
+expose useful inspect data, the normal Agent intentionally returns UNSUPPORTED
+for Selection and Programmer Chat queries and keeps Programmer Inspect disabled.

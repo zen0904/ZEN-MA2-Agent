@@ -34,10 +34,10 @@ class StateStore:
         values.append(value)
         return self.put(resource, values, source=source, capability=capability)
 
-    def record_error(self, resource: str, error: str, *, source: str) -> StateSnapshot:
+    def record_error(self, resource: str, error: str, *, source: str, capability: dict[str, Any] | None = None) -> StateSnapshot:
         existing = self.get(resource)
         values = list(existing.values) if existing else []
-        snapshot = StateSnapshot.create(resource, values, source=source, capability=existing.capability if existing else None)
+        snapshot = StateSnapshot.create(resource, values, source=source, capability=capability if capability is not None else existing.capability if existing else None)
         snapshot = StateSnapshot(snapshot.resource, snapshot.values, snapshot.updated_at, snapshot.source, bool(existing), error, snapshot.capability)
         self._snapshots[resource] = snapshot
         return snapshot

@@ -46,13 +46,13 @@ def parse(text: str) -> Intent:
     if match: return Intent("sequence_executor_lookup", {"sequence":int(match.group(1))}, source)
     match = re.fullmatch(r"(?:page|頁面)\s*(\d+)\s*(?:有)?\s*(?:哪些)?\s*(?:executor|exec|執行器)", state_source, flags=re.I)
     if match: return Intent("page_executor_list", {"page":int(match.group(1))}, source)
+    if re.fullmatch(r"(?:我\s*)?(?:(?:現在|目前)\s*)?(?:選了|選取了|selected)\s*(?:哪些)?\s*(?:燈|燈具|fixture|fixtures)|(?:selection|選擇)\s*(?:裡|里|中)?\s*(?:有)?\s*(?:哪些)?\s*(?:燈|燈具|fixture|fixtures)", state_source, flags=re.I):
+        return Intent("state_selection", {}, source)
+    if re.fullmatch(r"(?:(?:現在|目前)\s*)?(?:programmer|編程器|程式器)(?:\s*(?:裡|里|中))?(?:\s*(?:有什麼|有東西嗎|有沒有東西|summary))?|(?:哪些燈\s*有\s*active\s*value|現在\s*有什麼\s*attribute\s*在\s*programmer)", state_source, flags=re.I):
+        return Intent("state_programmer", {}, source)
     match = re.fullmatch(r"(.+?)\s*(?:裡|里|中)\s*(?:有)?\s*(?:哪些)?\s*(?:燈|燈具|fixture|fixtures)", state_source, flags=re.I)
     if match:
         return Intent("state_group_membership_name", {"group_name": match.group(1).strip().strip("'\"")}, source)
-    if re.fullmatch(r"(?:我\s*)?(?:現在\s*)?(?:選了|選取了|selected)\s*(?:哪些)?\s*(?:燈具|fixture|fixtures)", state_source, flags=re.I):
-        return Intent("state_selection", {}, source)
-    if re.fullmatch(r"(?:現在\s*)?(?:programmer|programmer\s*有東西嗎|編程器|程式器)(?:\s*(?:有東西嗎|summary))?", state_source, flags=re.I):
-        return Intent("state_programmer", {}, source)
     match = re.fullmatch(r"(?:序列|sequence)\s*(\d+)\s*(?:有)?\s*(?:哪些)?\s*(?:cue|cues|提示)", state_source, flags=re.I)
     if match:
         return Intent("state_cues", {"sequence": int(match.group(1))}, source)

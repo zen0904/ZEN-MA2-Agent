@@ -18,8 +18,8 @@ refresh replaces them.
 | `effects` | `List Effect` | Number, label and only explicitly returned basic metadata |
 | `pages` | `List Page` | Page number and label |
 | `executors` | `List Executor` | Page/location and explicitly returned assignment metadata |
-| `selection` | `ZEN_AGENT` adapter | `UNSUPPORTED` unless a verified non-mutating fixture-ID accessor is available |
-| `programmer` | `ZEN_AGENT` adapter | `UNSUPPORTED` unless a verified non-mutating active-value summary is available |
+| `selection` | Verified MA2 3.9 API capability boundary | `UNSUPPORTED`: no verified non-mutating accessor exposes current fixture members |
+| `programmer` | Verified MA2 3.9 API capability boundary | `UNSUPPORTED`: no verified non-mutating accessor exposes presence, members, attributes, or values |
 
 ## Read-only boundary
 
@@ -135,6 +135,23 @@ It currently returns a request-id-scoped `ZEN_STATE|<id>|ERROR|UNKNOWN_COMMAND`
 for Selection and Programmer until a real console test proves a non-mutating
 accessor. Do not replace this with a Group-selection, Clear, Store, or
 Programmer probe.
+
+## Programmer and Selection inspect boundary
+
+The installed grandMA2 3.9.60 API Test documents `gma.show.getobj.*`,
+`gma.show.property.*`, `gma.user.getvar`, `gma.user.getcmddest`, and
+`gma.user.getselectedexec`. It does not document a read-only accessor for the
+current selected Fixture/Subfixture list or for Programmer presence, active
+Fixture members, attributes, or values. The normal Agent therefore records a
+typed `UNSUPPORTED` cache record and does not contact the MA2 adapter for these
+Chat queries.
+
+The paired plugin includes `selection_probe` and `programmer_probe` as bounded
+diagnostics only. They emit API/object metadata through `ZEN_INSPECT_PROBE` and
+never call `gma.cmd`; they are not a state provider. A future provider may only
+be enabled after repeatable real-console evidence ties one of those read-only
+API values to Selection or Programmer state. Until then, `programmer.inspect`
+remains a disabled SAFE Skill and Show Diagnostics does not depend on it.
 
 ## Chat dependencies
 
