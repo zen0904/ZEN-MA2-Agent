@@ -12,9 +12,12 @@ import re
 import secrets
 import subprocess
 import time
+from contextlib import contextmanager, nullcontext
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Callable
+from xml.etree import ElementTree as ET
+from shutil import copy2
 
 from .group_export import GroupExportParseError, group_membership_from_export
 
@@ -145,18 +148,26 @@ class ExportFileGroupMembershipProvider(GroupMembershipProvider):
         request_id = self.request_id_factory()
         filename = self._filename(group_no, request_id)
         path = export_dir / filename
-        if path.exists():
-            raise GroupMembershipProviderError("EXPORT_FILE_NAME_COLLISION")
-
         started_at_ns = self.wall_clock_ns()
+        feedback: str | None = None
         try:
-            runtime.export_group_file(group_no, filename)
-            self._wait_for_fresh_file(path, started_at_ns, _timeout_seconds(settings))
-            parsed = group_membership_from_export(path, group_no)
+            with _export_transaction(runtime):
+                self._remove_owned_stale(path, export_dir)
+                started_at_ns = self.wall_clock_ns()
+                feedback = runtime.export_group_file(group_no, filename)
+                xml = self._wait_for_fresh_stable_xml(path, started_at_ns, _timeout_seconds(settings))
+                parsed = group_membership_from_export(xml, group_no)
         except GroupExportParseError as exc:
-            raise GroupMembershipProviderError(str(exc)) from exc
+            error = GroupMembershipProviderError(str(exc))
+            self._record_failed_export(runtime, path, export_dir, group_no, request_id, filename, started_at_ns, feedback, str(error))
+            raise error from exc
+        except GroupMembershipProviderError as exc:
+            self._record_failed_export(runtime, path, export_dir, group_no, request_id, filename, started_at_ns, feedback, str(exc))
+            raise
         except OSError as exc:
-            raise GroupMembershipProviderError("EXPORT_FILE_ACCESS_ERROR") from exc
+            error = GroupMembershipProviderError("EXPORT_FILE_ACCESS_ERROR")
+            self._record_failed_export(runtime, path, export_dir, group_no, request_id, filename, started_at_ns, feedback, str(error))
+            raise error from exc
 
         self._cleanup(path, export_dir)
         fixtures = list(parsed["fixtures"])
@@ -169,15 +180,42 @@ class ExportFileGroupMembershipProvider(GroupMembershipProvider):
             "source": self.source,
         }
 
-    def _wait_for_fresh_file(self, path: Path, started_at_ns: int, timeout_seconds: float) -> None:
+    def _wait_for_fresh_stable_xml(self, path: Path, started_at_ns: int, timeout_seconds: float) -> bytes:
+        """Wait for a new, stable, well-formed MA2 Export file.
+
+        The exporter can create the destination before its XML has finished
+        writing.  A candidate must be fresh, non-empty, unchanged across two
+        polls, and XML-well-formed before the membership parser sees it.
+        """
         deadline = self.monotonic_clock() + timeout_seconds
+        last_signature: tuple[int, int] | None = None
+        stable_polls = 0
+        saw_stable_malformed = False
         while self.monotonic_clock() <= deadline:
             try:
-                if path.is_file() and path.stat().st_mtime_ns >= started_at_ns:
-                    return
+                stat = path.stat()
+                if path.is_file() and stat.st_mtime_ns >= started_at_ns and stat.st_size > 0:
+                    signature = (stat.st_mtime_ns, stat.st_size)
+                    stable_polls = stable_polls + 1 if signature == last_signature else 1
+                    last_signature = signature
+                    if stable_polls >= 2:
+                        xml = path.read_bytes()
+                        after_read = path.stat()
+                        if (after_read.st_mtime_ns, after_read.st_size) != signature:
+                            stable_polls = 0
+                            last_signature = None
+                        else:
+                            try:
+                                ET.fromstring(xml)
+                            except ET.ParseError:
+                                saw_stable_malformed = True
+                            else:
+                                return xml
             except OSError:
                 pass
             self.sleep(self.poll_seconds)
+        if saw_stable_malformed:
+            raise GroupMembershipProviderError("EXPORT_XML_MALFORMED")
         raise GroupMembershipProviderError("EXPORT_FILE_TIMEOUT")
 
     def _filename(self, group_no: int, request_id: str) -> str:
@@ -192,6 +230,83 @@ class ExportFileGroupMembershipProvider(GroupMembershipProvider):
         except OSError:
             # Cleanup is best-effort; a verified parse result remains valid.
             pass
+
+    def _remove_owned_stale(self, path: Path, export_dir: Path) -> None:
+        """Remove only this provider's stale request file before Export."""
+        if path.exists() and path.parent.resolve() == export_dir.resolve() and self._temporary_name.fullmatch(path.name):
+            path.unlink()
+
+    def _record_failed_export(
+        self,
+        runtime: Any,
+        path: Path,
+        export_dir: Path,
+        group_no: int,
+        request_id: str,
+        filename: str,
+        started_at_ns: int,
+        feedback: str | None,
+        error: str,
+    ) -> None:
+        """Keep a bounded, Agent-owned diagnostic copy without changing MA2."""
+        details: dict[str, Any] = {
+            "group_no": group_no,
+            "request_id": request_id,
+            "export_command": f'Export Group {group_no} "{filename}" /nc',
+            "expected_temp_filename": filename,
+            "actual_file_path": str(path),
+            "request_started_at_ns": started_at_ns,
+            "ma_feedback": feedback,
+            "error": error,
+        }
+        if path.is_file():
+            try:
+                stat = path.stat()
+                raw = path.read_bytes()
+                details.update({"file_size": stat.st_size, "mtime_ns": stat.st_mtime_ns, **self._xml_diagnostics(raw)})
+                root = getattr(runtime, "root", None)
+                if isinstance(root, Path):
+                    retained = root / "logs" / "group_export_diagnostics" / filename
+                    retained.parent.mkdir(parents=True, exist_ok=True)
+                    copy2(path, retained)
+                    details["diagnostic_copy_path"] = str(retained)
+            except OSError as exc:
+                details["diagnostic_capture_error"] = exc.__class__.__name__
+        log = getattr(runtime, "log", None)
+        if callable(log):
+            log("group_export_diagnostic", details)
+
+    @staticmethod
+    def _xml_diagnostics(raw: bytes) -> dict[str, Any]:
+        sample = raw.decode("utf-8", errors="replace")[:2048]
+        sample = re.sub(r'(showfile=")[^"]*(")', r'\1[redacted]\2', sample, flags=re.I)
+        details: dict[str, Any] = {"raw_xml_sample": sample, "xml_well_formed": False}
+        try:
+            root = ET.fromstring(raw)
+        except ET.ParseError:
+            return details
+        groups = [item for item in root.iter() if item.tag.rsplit("}", 1)[-1] == "Group"]
+        tags = sorted({item.tag.rsplit("}", 1)[-1] for item in root.iter()})
+        details.update({
+            "xml_well_formed": True,
+            "xml_root": root.tag.rsplit("}", 1)[-1],
+            "xml_tags": tags,
+            "group_indexes": [item.get("index") for item in groups],
+            "has_subfixtures": any(any(child.tag.rsplit("}", 1)[-1] == "Subfixtures" for child in group) for group in groups),
+            "membership_like_nodes": sorted({item.tag.rsplit("}", 1)[-1] for item in root.iter() if re.search(r"fixture|member|selection", item.tag.rsplit("}", 1)[-1], re.I)}),
+        })
+        return details
+
+
+@contextmanager
+def _export_transaction(runtime: Any):
+    transaction = getattr(runtime, "export_transaction", None)
+    if callable(transaction):
+        with transaction():
+            yield
+    else:
+        with nullcontext():
+            yield
 
 
 def _configured_path(settings: object) -> object:

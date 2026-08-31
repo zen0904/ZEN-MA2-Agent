@@ -37,6 +37,17 @@ def group_membership_from_export(source: str | bytes | Path, group_no: int) -> d
 
     subfixtures = next((item for item in group if _local_name(item.tag) == "Subfixtures"), None)
     if subfixtures is None:
+        # Native grandMA2 3.9 exports a genuinely empty Group as a self-closing
+        # Group node.  That is a supported empty membership, not a missing
+        # schema.  Unknown child nodes still remain a schema error: never guess
+        # that they are fixture membership.
+        if not list(group):
+            return {
+                "group_no": group_no,
+                "name": group.get("name", ""),
+                "fixtures": [],
+                "source": "ma2_group_export_xml",
+            }
         raise GroupExportParseError("EXPORT_XML_NO_MEMBERSHIP")
 
     fixtures: list[int] = []

@@ -6,7 +6,7 @@ import time
 from typing import Any
 from xml.etree import ElementTree as ET
 
-from .group_membership import GroupMembershipProviderError, GroupMembershipProviderUnavailable, ImportExportPathResolver, _configured_path, _is_loopback_host, _timeout_seconds
+from .group_membership import GroupMembershipProviderError, GroupMembershipProviderUnavailable, ImportExportPathResolver, _configured_path, _export_transaction, _is_loopback_host, _timeout_seconds
 from .layout_cobject_registry import validated_mapping
 
 
@@ -103,13 +103,10 @@ class LayoutExportProvider:
             raise GroupMembershipProviderUnavailable("REMOTE_EXPORT_ACCESS_UNAVAILABLE")
         directory = self.resolver.resolve(_configured_path(settings)); request_id = secrets.token_hex(8); filename = f"ZEN_AGENT_LAYOUT_{layout_no}_{request_id}.xml"; path = directory / filename; started = time.time_ns()
         try:
-            runtime.export_layout_file(layout_no, filename)
-            deadline = time.monotonic() + _timeout_seconds(settings)
-            while time.monotonic() <= deadline:
-                if path.is_file() and path.stat().st_mtime_ns >= started: break
-                time.sleep(.05)
-            else: raise GroupMembershipProviderError("EXPORT_FILE_TIMEOUT")
-            result = self.parse(path.read_text(encoding="utf-8"), layout_no)
+            with _export_transaction(runtime):
+                runtime.export_layout_file(layout_no, filename)
+                xml = self._wait_for_fresh_stable_xml(path, started, _timeout_seconds(settings))
+                result = self.parse(xml, layout_no)
         except (OSError, ET.ParseError, ValueError) as exc:
             raise GroupMembershipProviderError("EXPORT_LAYOUT_XML_INVALID") from exc
         if path.parent.resolve() == directory.resolve() and self._name.fullmatch(path.name): path.unlink(missing_ok=True)
@@ -120,6 +117,39 @@ class LayoutExportProvider:
         result["fixture_geometry"] = self.fixture_provider.state()
         result["layout_cobjects"] = {"status": "supported", "source": self.source}
         return result
+
+    @staticmethod
+    def _wait_for_fresh_stable_xml(path, started_at_ns: int, timeout_seconds: float) -> str:
+        """Use the same file-stability contract as Group exports."""
+        deadline = time.monotonic() + timeout_seconds
+        previous: tuple[int, int] | None = None
+        stable_polls = 0
+        malformed = False
+        while time.monotonic() <= deadline:
+            try:
+                stat = path.stat()
+                if path.is_file() and stat.st_mtime_ns >= started_at_ns and stat.st_size > 0:
+                    signature = (stat.st_mtime_ns, stat.st_size)
+                    stable_polls = stable_polls + 1 if signature == previous else 1
+                    previous = signature
+                    if stable_polls >= 2:
+                        xml = path.read_text(encoding="utf-8")
+                        after = path.stat()
+                        if (after.st_mtime_ns, after.st_size) != signature:
+                            stable_polls, previous = 0, None
+                        else:
+                            try:
+                                ET.fromstring(xml)
+                            except ET.ParseError:
+                                malformed = True
+                            else:
+                                return xml
+            except OSError:
+                pass
+            time.sleep(.05)
+        if malformed:
+            raise GroupMembershipProviderError("EXPORT_LAYOUT_XML_INVALID")
+        raise GroupMembershipProviderError("EXPORT_FILE_TIMEOUT")
 
     @staticmethod
     def parse(xml: str, layout_no: int) -> dict:

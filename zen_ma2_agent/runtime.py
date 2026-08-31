@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import threading
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from time import monotonic
@@ -26,7 +27,11 @@ class AgentRuntime:
         self.reconnect_required = False
         self._audit_cursor = 0
         self._state_adapter_lock = threading.Lock()
-        self._export_state_lock = threading.Lock()
+        # One MA2 importexport directory is shared by every export-backed
+        # read-only provider.  The transaction lock intentionally covers file
+        # removal, Export, stability wait, parse, and cleanup—not merely the
+        # individual Telnet command.
+        self._export_state_lock = threading.RLock()
 
     @property
     def state(self) -> ConnectionState:
@@ -102,6 +107,12 @@ class AgentRuntime:
         response = self.client.execute(command)
         self.log("state_read", {"command": command, "response": response})
         return response
+
+    @contextmanager
+    def export_transaction(self):
+        """Serialize an Agent-owned MA2 importexport transaction."""
+        with self._export_state_lock:
+            yield
 
     def export_group_file(self, group_no: int, filename: str) -> str:
         """Run the one allow-listed, read-only-state filesystem export command."""

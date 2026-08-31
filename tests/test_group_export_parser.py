@@ -34,9 +34,12 @@ class GroupExportParserTests(unittest.TestCase):
         xml = GROUP_EXPORT.replace('<Subfixture fix_id="101" />\n      <Subfixture fix_id="1007" />\n      <Subfixture fix_id="2" />', "")
         self.assertEqual(group_membership_from_export(xml, 1)["fixtures"], [])
 
-    def test_missing_or_invalid_fixture_reference_is_not_invented(self):
+    def test_empty_group_and_unknown_schema_are_distinguished(self):
+        self.assertEqual(group_membership_from_export('<MA><Group index="0" name="Empty" /></MA>', 1)["fixtures"], [])
         with self.assertRaisesRegex(GroupExportParseError, "NO_MEMBERSHIP"):
-            group_membership_from_export('<MA><Group index="0" name="HYBRID" /></MA>', 1)
+            group_membership_from_export('<MA><Group index="0" name="HYBRID"><Selection /></Group></MA>', 1)
+
+    def test_invalid_fixture_reference_is_not_invented(self):
         with self.assertRaisesRegex(GroupExportParseError, "INVALID_FIX_ID"):
             group_membership_from_export(GROUP_EXPORT.replace('fix_id="101"', 'fix_id="channel-101"'), 1)
 
