@@ -62,6 +62,7 @@ def _new_records(path: Path, offset: int) -> list[dict]:
 def main() -> int:
     if "--real-machine" not in sys.argv:
         raise SystemExit("Refusing real MA2 modification without --real-machine.")
+    reuse_existing = "--reuse-existing" in sys.argv
     if not EXE.is_file():
         raise SystemExit(f"Portable EXE not found: {EXE}")
     expected_head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
@@ -71,7 +72,12 @@ def main() -> int:
     port = _free_port()
     environment = dict(os.environ, ZEN_MA2_AUTOMATION="1", ZEN_MA2_AUTOMATION_PORT=str(port), ZEN_MA2_TIMECODE_TEST_MODE="1")
     process = subprocess.Popen([str(EXE), "--automation-test"], cwd=bundle, env=environment)
-    report: dict[str, object] = {"timecode": TEST_TIMECODE, "setup_query": SETUP_QUERY, "offset_query": OFFSET_QUERY}
+    report: dict[str, object] = {
+        "timecode": TEST_TIMECODE,
+        "setup_query": SETUP_QUERY,
+        "offset_query": OFFSET_QUERY,
+        "reuse_existing": reuse_existing,
+    }
     try:
         status = _wait_for(port)
         if status.get("build_head") != expected_head:
@@ -88,15 +94,18 @@ def main() -> int:
             raise RuntimeError(f"Desktop did not reach READY: {connection}")
         report["connection"] = connection
 
-        # Test data itself has the ordinary UI preview/approval lifecycle.
-        report["setup_submit"] = _request(port, "submit", text=SETUP_QUERY)
-        setup_preview = _request(port, "chat_text")["chat_text"]
-        if "TEST-ONLY Timecode Setup Preview" not in setup_preview:
-            raise RuntimeError(f"Test Timecode setup preview missing: {setup_preview}")
-        if any(item.get("event") == "workflow_execute" for item in _new_records(log_path, log_offset)):
-            raise RuntimeError("Test Timecode setup wrote before the Desktop approval handler.")
-        report["setup_preview"] = setup_preview
-        report["setup_execute"] = _request(port, "execute_pending", timeout=60)
+        if reuse_existing:
+            report["setup"] = f"Reused controlled Timecode {TEST_TIMECODE}; no setup write issued."
+        else:
+            # Test data itself has the ordinary UI preview/approval lifecycle.
+            report["setup_submit"] = _request(port, "submit", text=SETUP_QUERY)
+            setup_preview = _request(port, "chat_text")["chat_text"]
+            if "TEST-ONLY Timecode Setup Preview" not in setup_preview:
+                raise RuntimeError(f"Test Timecode setup preview missing: {setup_preview}")
+            if any(item.get("event") == "workflow_execute" for item in _new_records(log_path, log_offset)):
+                raise RuntimeError("Test Timecode setup wrote before the Desktop approval handler.")
+            report["setup_preview"] = setup_preview
+            report["setup_execute"] = _request(port, "execute_pending", timeout=60)
 
         # The actual product workflow is a separate, fresh Preview and approval.
         report["offset_submit"] = _request(port, "submit", text=OFFSET_QUERY)
@@ -105,8 +114,11 @@ def main() -> int:
             raise RuntimeError(f"Timecode Offset preview missing: {offset_preview}")
         records_before_approval = _new_records(log_path, log_offset)
         workflows_before = [item for item in records_before_approval if item.get("event") == "workflow_execute"]
-        if len(workflows_before) != 1 or workflows_before[0].get("data", {}).get("commands") != [f"Store Timecode {TEST_TIMECODE} /nc"]:
-            raise RuntimeError(f"Offset Preview wrote before approval or setup was not isolated: {workflows_before}")
+        expected_prior_workflows = 0 if reuse_existing else 1
+        if len(workflows_before) != expected_prior_workflows:
+            raise RuntimeError(f"Offset Preview wrote before approval: {workflows_before}")
+        if not reuse_existing and workflows_before[0].get("data", {}).get("commands") != [f"Store Timecode {TEST_TIMECODE} /nc"]:
+            raise RuntimeError(f"Test setup was not isolated: {workflows_before}")
         report["offset_preview"] = offset_preview
         report["offset_execute"] = _request(port, "execute_pending", timeout=60)
         transcript = _request(port, "chat_text")["chat_text"]
@@ -116,7 +128,8 @@ def main() -> int:
         workflows = [item.get("data", {}) for item in records if item.get("event") == "workflow_execute"]
         verification = [item.get("data", {}) for item in records if item.get("event") == "timecode_offset_verification"]
         expected = f"Assign Timecode {TEST_TIMECODE}/Offset = 500ms"
-        if len(workflows) != 2 or workflows[-1].get("commands") != [expected]:
+        expected_workflow_count = 1 if reuse_existing else 2
+        if len(workflows) != expected_workflow_count or workflows[-1].get("commands") != [expected]:
             raise RuntimeError(f"Unexpected approved Timecode workflow audit: {workflows}")
         if not verification or not verification[-1].get("exists") or verification[-1].get("status") != "VERIFIED":
             raise RuntimeError(f"Timecode was not read back after approved offset: {verification}")
