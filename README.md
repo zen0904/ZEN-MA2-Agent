@@ -122,10 +122,13 @@ returns `REMOTE_EXPORT_ACCESS_UNAVAILABLE`. See [MA2 State adapter](docs/MA2_STA
 and [Group Export provider](docs/MA2_GROUP_EXPORT.md) for the compatibility
 boundary.
 
-The initial executable builtins are Group Select, Set Dimmer, Fixture Select,
-Go Sequence, and Show Diagnostics. Geometry Clone, Auto Position, Effect
-Builder, Timecode Offset, and Programmer Inspect remain explicit placeholders;
-they do not claim to run yet.
+The executable builtins include Group Select, Set Dimmer, Fixture Select, Go
+Sequence, Show Diagnostics, Effect Builder, and Timecode Offset. Timecode
+Offset v1 is intentionally narrow: it applies MA2's documented positive,
+whole-show `Timecode/Offset` property through Preview and Approval. Event/track
+readback, range offsets, and moving a Timecode earlier remain explicit
+`UNSUPPORTED` capabilities rather than guessed commands. Geometry Clone, Auto
+Position, and Programmer Inspect remain explicit placeholders.
 
 ## Show Diagnostics v1
 

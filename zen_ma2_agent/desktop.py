@@ -55,7 +55,7 @@ class ZenDesktop(QMainWindow):
 
     def _state_page(self) -> QWidget:
         page = QWidget(); layout = QVBoxLayout(page); layout.setContentsMargins(22, 20, 22, 20); title = QLabel("MA2 State"); title.setStyleSheet("font-size:18px;font-weight:700;"); layout.addWidget(title); buttons = QHBoxLayout()
-        for label, resource in [("Groups","groups"),("Fixtures","fixtures"),("Layouts","layouts"),("Sequences","sequences"),("Presets","presets"),("Effects","effects"),("Pages","pages"),("Executors","executors")]:
+        for label, resource in [("Groups","groups"),("Fixtures","fixtures"),("Layouts","layouts"),("Sequences","sequences"),("Presets","presets"),("Effects","effects"),("Timecodes","timecodes"),("Pages","pages"),("Executors","executors")]:
             button=QPushButton(f"Refresh {label}"); button.clicked.connect(lambda _checked=False, name=resource: self.refresh_state(name)); buttons.addWidget(button)
         buttons.addStretch(); layout.addLayout(buttons); self.state_list = QTextEdit(readOnly=True); layout.addWidget(self.state_list); return page
 

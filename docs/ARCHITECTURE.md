@@ -45,7 +45,7 @@ Chat / Desktop / Mobile → AgentCore.refresh_state()
 
 `StateStore` currently holds `groups`, `fixtures`, `group_membership`,
 `layouts`, `layout_items`, `selection`, `programmer`, `sequences`, `cues`,
-`presets`, `effects`, `pages`, and `executors`. It is shared by
+`presets`, `effects`, `pages`, `executors`, and `timecodes`. It is shared by
 Desktop, mobile HTTP/WebSocket, and future Skills; no provider is Clone-specific.
 Disconnect marks cached state stale. A successful refresh replaces that stale
 entry. Provider errors are cached rather than converted into invented state.
@@ -69,3 +69,11 @@ The portable runtime resolves `config`, `data`, `logs`, `cache`, `web`, and
 `lua` relative to the app folder. The frontend is PySide6, with a separate PWA
 asset folder bundled by PyInstaller. Web research, local LLMs, advanced show
 state and generated plugin installation remain explicitly future interfaces.
+
+Timecode Offset v1 uses the shared `timecodes` snapshot and creates a
+MODIFY-only workflow only for the officially documented whole-show forward
+`Assign Timecode <id>/Offset = <positive duration>` property. It preserves a
+fresh inventory fingerprint in the ActionPlan and refreshes it again before
+approval; a changed/missing target returns `STATE_CHANGED_SINCE_PREVIEW` before
+any write. Individual Timecode event/track state has no verified read-only
+provider, so range and negative movement are rejected rather than emulated.

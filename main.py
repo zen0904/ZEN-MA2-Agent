@@ -28,6 +28,7 @@ class _PortableSmokeClient:
         self.audit_entries: list[str] = []
         self.commands: list[str] = []
         self.effect_label = ""
+        self.timecode_offset = "0s"
 
     def connect(self, username: str, password: str = "") -> str:
         self.state, self.authenticated_user = ConnectionState.READY, username
@@ -50,8 +51,12 @@ class _PortableSmokeClient:
             return "Effect 1 Base\n"
         if command == "List Effect 2500":
             return f'Effect 2500 "{self.effect_label}"\n' if self.effect_label else "WARNING, NO OBJECTS FOUND FOR LIST\n"
+        if command == "List Timecode":
+            return f"Timecode 9000 9000  ZEN Timecode Test Offset: {self.timecode_offset} (0)\n"
         if command.startswith("Label Effect 2500 "):
             self.effect_label = command.split('"', 2)[1]
+        if command.startswith("Assign Timecode 9000/Offset = "):
+            self.timecode_offset = command.rsplit("= ", 1)[1]
         if command in {"List Fixture", "List Layout", "List Preset All", "List Preset Position", "List Sequence", "List Page", "List Executor"}:
             return ""
         return "Executing : " + command
@@ -81,13 +86,14 @@ def main() -> int:
         return 0
     smoke_mode = "--portable-routing-smoke" in sys.argv
     effect_approval_smoke = "--portable-effect-approval-smoke" in sys.argv
-    if "--ui-smoke-request" in sys.argv or smoke_mode or effect_approval_smoke:
-        option = "--portable-effect-approval-smoke" if effect_approval_smoke else "--portable-routing-smoke" if smoke_mode else "--ui-smoke-request"
+    timecode_approval_smoke = "--portable-timecode-approval-smoke" in sys.argv
+    if "--ui-smoke-request" in sys.argv or smoke_mode or effect_approval_smoke or timecode_approval_smoke:
+        option = "--portable-effect-approval-smoke" if effect_approval_smoke else "--portable-timecode-approval-smoke" if timecode_approval_smoke else "--portable-routing-smoke" if smoke_mode else "--ui-smoke-request"
         index = sys.argv.index(option)
         if index + 1 >= len(sys.argv):
             raise SystemExit(f"{option} requires text")
         smoke_temporary = None
-        if smoke_mode or effect_approval_smoke:
+        if smoke_mode or effect_approval_smoke or timecode_approval_smoke:
             core, smoke_temporary = _portable_smoke_core()
         app = QApplication.instance() or QApplication([])
         window = ZenDesktop(core, SimpleNamespace(port=8765))
@@ -101,6 +107,13 @@ def main() -> int:
             pending = next((item for item in core.actions.values() if item.status == "PENDING_APPROVAL"), None)
             if not pending:
                 raise SystemExit("Portable effect approval smoke did not produce a pending ActionPlan.")
+            before = list(core.runtime.client.commands)
+            window.execute_action()
+            print(json.dumps({"before": before, "action_status": pending.status, "result": pending.result, "commands": core.runtime.client.commands}, ensure_ascii=False), flush=True)
+        if timecode_approval_smoke:
+            pending = next((item for item in core.actions.values() if item.status == "PENDING_APPROVAL"), None)
+            if not pending:
+                raise SystemExit("Portable Timecode approval smoke did not produce a pending ActionPlan.")
             before = list(core.runtime.client.commands)
             window.execute_action()
             print(json.dumps({"before": before, "action_status": pending.status, "result": pending.result, "commands": core.runtime.client.commands}, ensure_ascii=False), flush=True)

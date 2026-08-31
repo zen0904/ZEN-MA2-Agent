@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 
 from .models import Intent
@@ -13,12 +14,31 @@ def _quoted_group(value: str) -> str:
     return value.strip().strip('"').replace('"', "'")
 
 
+def _duration_ms(value: str, unit: str) -> int:
+    """Parse a user duration once into exact integer milliseconds."""
+    try:
+        numeric = float(value)
+    except ValueError as exc:
+        raise ParseError("Timecode offset duration must be numeric.") from exc
+    milliseconds = round(numeric * (1000 if unit.casefold() in {"s", "sec", "secs", "second", "seconds", "秒"} else 1))
+    if milliseconds < 0:
+        raise ParseError("Timecode offset duration must be non-negative; direction supplies the sign.")
+    return milliseconds
+
+
 def parse(text: str) -> Intent:
     source = text.strip()
     if not source:
         raise ParseError("Enter a command request.")
 
     state_source = source.rstrip("?？").strip()
+    # This exact request exists solely for the explicit packaged real-machine
+    # verifier.  It is unreachable in normal Desktop/Mobile operation and lets
+    # the test create an isolated Timecode through the same preview/approval
+    # boundary as a user workflow—never through a raw bridge command.
+    test_setup = re.fullmatch(r"ZEN TEST create Timecode\s+(\d+)", state_source, re.I)
+    if test_setup and os.environ.get("ZEN_MA2_TIMECODE_TEST_MODE") == "1":
+        return Intent("timecode_test_setup", {"timecode_number": int(test_setup.group(1))}, source)
     if re.fullmatch(r"(?:檢查(?:這個|目前)?\s*show|show\s*diagnostics|這個\s*show\s*有沒有問題|幫我檢查(?:目前)?\s*show)", state_source, flags=re.I):
         return Intent("diagnose_show", {}, source)
     if re.fullmatch(r"(?:顯示)?詳細診斷", state_source, flags=re.I):
@@ -67,6 +87,14 @@ def parse(text: str) -> Intent:
     if re.fullmatch(r"(?:下一頁|next\s+page)", state_source, flags=re.I): return Intent("effect_next_page", {}, source)
     match=re.fullmatch(r"(?:effect|效果)\s*(\d+)\s*(?:是什麼|是甚麼|what(?:\s+is)?|info)?", state_source, flags=re.I)
     if match: return Intent("effect_lookup", {"effect":int(match.group(1))}, source)
+    if re.fullmatch(r"(?:現在\s*(?:show\s*)?[裡里]?\s*有\s*哪些|(?:show\s*)?有哪些|列出|list|show)\s*(?:timecode|timecodes?|時間碼)", state_source, flags=re.I):
+        return Intent("state_timecodes", {}, source)
+    match = re.fullmatch(r"(?:timecode|時間碼)\s*(\d+)\s*(?:有)?\s*(?:哪些)?\s*(?:event|events?|事件)|(?:timecode|時間碼)\s*(\d+)\s*(?:從幾秒開始|有幾個\s*(?:event|events?|事件))", state_source, flags=re.I)
+    if match:
+        return Intent("state_timecode_events", {"timecode_number": int(match.group(1) or match.group(2))}, source)
+    timecode_offset = _parse_timecode_offset(source)
+    if timecode_offset:
+        return timecode_offset
     build = _parse_dimmer_chase(source)
     if build:
         return build
@@ -140,3 +168,34 @@ def _parse_dimmer_chase(source: str) -> Intent | None:
             if name:
                 parameters.update({"target_type": "group_name", "target": name})
     return Intent("build_dimmer_chase", parameters, source)
+
+
+def _parse_timecode_offset(source: str) -> Intent | None:
+    """Normalize a narrow Timecode Offset request without compiling MA2 text."""
+    normalized = source.rstrip("?？").strip()
+    number = re.search(r"(?:timecode|時間碼)\s*(\d+)", normalized, re.I)
+    if not number:
+        return None
+    direction = re.search(r"(?:往後|延後|往前|提前|after|later|before|earlier)", normalized, re.I)
+    if not direction:
+        return None
+    durations = list(re.finditer(r"(\d+(?:\.\d+)?)\s*(ms|milliseconds?|s|sec(?:onds?)?|秒)", normalized, re.I))
+    if not durations:
+        return Intent("offset_timecode", {"timecode_number": int(number.group(1))}, source)
+    # The request's final duration is the offset when a preceding range also
+    # contains time values (for example: 10 s to 30 s, then +250 ms).
+    duration = durations[-1]
+    offset = _duration_ms(duration.group(1), duration.group(2))
+    forward = direction.group(0).casefold() in {"往後", "延後", "after", "later"}
+    parameters: dict[str, object] = {"timecode_number": int(number.group(1)), "offset_ms": offset if forward else -offset}
+    # v1 keeps the source text and range boundaries structured even though the
+    # planner deliberately rejects ranges until MA2 event movement is proven.
+    unit = r"(ms|milliseconds?|s|sec(?:onds?)?|秒)"
+    range_match = re.search(rf"(?:從|from|的)\s*(\d+(?:\.\d+)?)\s*{unit}\s*(?:到|to)\s*(\d+(?:\.\d+)?)\s*{unit}", normalized, re.I)
+    after_match = re.search(rf"(?:從|from|的)\s*(\d+(?:\.\d+)?)\s*{unit}\s*(?:之後|之後全部|after)", normalized, re.I)
+    if range_match:
+        parameters["range_start_ms"] = _duration_ms(range_match.group(1), range_match.group(2))
+        parameters["range_end_ms"] = _duration_ms(range_match.group(3), range_match.group(4))
+    elif after_match:
+        parameters["range_start_ms"] = _duration_ms(after_match.group(1), after_match.group(2))
+    return Intent("offset_timecode", parameters, source)

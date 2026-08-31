@@ -36,6 +36,8 @@ class AutomationClient:
             return 'Group 1 "HYBRID"\n'
         if command == "List Effect":
             return "Effect 1 Base\n"
+        if command == "List Timecode":
+            return "Timecode 9000 9000 ZEN Test Offset: 0s (0)\n"
         return ""
 
     def close(self):
@@ -128,6 +130,14 @@ class DesktopAutomationTests(unittest.TestCase):
         self.assertIn("Effect Builder Preview", transcript)
         self.assertIn("Approval required.", transcript)
         self.assertEqual(self.runtime.client.commands, ["List Group", "List Effect"])
+
+    def test_packaged_desktop_path_previews_timecode_offset_before_any_modify(self):
+        self.bridge_request({"action": "connect"})
+        self.bridge_request({"action": "submit", "text": "Timecode 9000 往後 500ms"})
+        transcript = self.bridge_request({"action": "chat_text"})["chat_text"]
+        self.assertIn("Timecode Offset Preview", transcript)
+        self.assertIn("Approval required.", transcript)
+        self.assertEqual(self.runtime.client.commands, ["List Timecode"])
 
     def test_shutdown_is_fixed_action(self):
         # Dispatch is queued to the GUI thread and returns before close executes.

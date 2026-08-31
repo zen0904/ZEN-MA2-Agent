@@ -66,6 +66,13 @@ def _chat_routing_smoke() -> int:
     if payload.get("routing", {}).get("ROUTER_INTENT") != "build_dimmer_chase" or payload.get("response", {}).get("kind") != "ACTION_PLAN":
         raise SystemExit(f"Portable Effect Builder preview routing mismatch: {payload}")
     print("PACKAGED_CHAT|build_dimmer_chase|EffectBuilderSkill|Effect Builder Preview")
+    timecode = subprocess.run([str(EXE), "--portable-routing-smoke", "Timecode 9000 往後 500ms"], cwd=bundle, env=environment, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=20)
+    if timecode.returncode:
+        raise SystemExit(timecode.stdout + timecode.stderr)
+    payload = json.loads(next(line for line in reversed(timecode.stdout.splitlines()) if line.startswith("{")))
+    if payload.get("routing", {}).get("ROUTER_INTENT") != "offset_timecode" or payload.get("routing", {}).get("PROVIDER") != "TimecodeOffsetSkill" or payload.get("response", {}).get("kind") != "ACTION_PLAN":
+        raise SystemExit(f"Portable Timecode Offset preview routing mismatch: {payload}")
+    print("PACKAGED_CHAT|offset_timecode|TimecodeOffsetSkill|Timecode Offset Preview")
     print(f"PACKAGED_BUILD|HEAD|{identity['head']}")
     return 0
 
@@ -86,11 +93,28 @@ def _effect_approval_smoke() -> int:
     return 0
 
 
+def _timecode_approval_smoke() -> int:
+    environment = dict(os.environ, QT_QPA_PLATFORM="offscreen")
+    run = subprocess.run([str(EXE), "--portable-timecode-approval-smoke", "Timecode 9000 往後 500ms"], cwd=EXE.parent, env=environment, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=25)
+    if run.returncode:
+        raise SystemExit(run.stdout + run.stderr)
+    payload = json.loads(next(line for line in reversed(run.stdout.splitlines()) if line.startswith("{")))
+    if payload.get("before") != ["List Timecode"]:
+        raise SystemExit(f"Timecode preview sent an unexpected command: {payload}")
+    if payload.get("action_status") != "EXECUTED" or "Verification: PARTIAL" not in str(payload.get("result")):
+        raise SystemExit(f"Timecode approval did not execute/verify: {payload}")
+    if payload.get("commands") != ["List Timecode", "List Timecode", "Assign Timecode 9000/Offset = 0.5s", "List Timecode"]:
+        raise SystemExit(f"Timecode approval did not use the planned guarded command sequence: {payload}")
+    print("PACKAGED_TIMECODE_APPROVAL|PASS")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--ui-request", help="Run a request through the packaged PySide6 chat widget.")
     parser.add_argument("--chat-routing", action="store_true", help="Run the three routing checks through the packaged desktop widget.")
     parser.add_argument("--effect-approval", action="store_true", help="Run a fake-transport Effect Builder preview and approval smoke through the packaged Desktop.")
+    parser.add_argument("--timecode-approval", action="store_true", help="Run a fake-transport Timecode Offset preview and approval smoke through the packaged Desktop.")
     args = parser.parse_args()
     if not EXE.is_file():
         raise SystemExit(f"Portable EXE not found: {EXE}")
@@ -98,6 +122,8 @@ def main() -> int:
         return _chat_routing_smoke()
     if args.effect_approval:
         return _effect_approval_smoke()
+    if args.timecode_approval:
+        return _timecode_approval_smoke()
     if args.ui_request:
         environment = dict(os.environ)
         environment["QT_QPA_PLATFORM"] = "offscreen"

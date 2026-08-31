@@ -18,6 +18,7 @@ refresh replaces them.
 | `effects` | `List Effect` | Number, label and only explicitly returned basic metadata |
 | `pages` | `List Page` | Page number and label |
 | `executors` | `List Executor` | Page/location and explicitly returned assignment metadata |
+| `timecodes` | `List Timecode` | Pool number/name only; tracks/events/event times are explicitly `UNSUPPORTED` |
 | `selection` | Verified MA2 3.9 API capability boundary | `UNSUPPORTED`: no verified non-mutating accessor exposes current fixture members |
 | `programmer` | Verified MA2 3.9 API capability boundary | `UNSUPPORTED`: no verified non-mutating accessor exposes presence, members, attributes, or values |
 
@@ -26,6 +27,7 @@ refresh replaces them.
 The runtime accepts only these state commands:
 
 - `List Group`, `List Fixture`, `List Layout`, `List Sequence`, `List Cue <n>`
+- `List Timecode`
 - `Export Group <n> "ZEN_AGENT_G<n>_<request-id>.xml" /nc` for temporary local
   Group membership state only
 - `SetUserVar $ZEN_AGENT_REQUEST="<request_id> <allow-listed request> <argument>"`
@@ -36,6 +38,16 @@ No State provider can send `Store`, `Update`, `Delete`, `Clone`, `Patch`,
 Agent-owned temporary XML file; it does not modify Show content. An unknown
 adapter response is not parsed optimistically; it becomes `UNSUPPORTED` or
 `ERROR` in the cache.
+
+## Timecode boundary
+
+`List Timecode` is allow-listed as a read-only inventory source. The grandMA2
+3.9 documentation verifies the positive whole-show `Timecode/Offset` property,
+but it does not provide a verified non-mutating event/track readback contract
+for this Agent. Therefore Timecode Offset v1 can only set a positive whole-show
+offset after Preview and Approval. Event count, per-event diffs, range offsets,
+negative offsets, and exact event-time verification are reported as
+`UNSUPPORTED`, never inferred from an empty event list.
 
 ## Group membership: local Export XML backend
 

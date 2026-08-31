@@ -16,11 +16,12 @@ from .pairing import PairingManager
 from .router import IntentRouter, ResponseType
 from .runtime import AgentRuntime
 from .skill_system import SkillError, SkillRegistry
-from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvider, EffectProvider, ExecutorProvider, ExportFileGroupMembershipProvider, FixtureProvider, GroupMembershipProvider, GroupMembershipProviderError, GroupMembershipProviderUnavailable, GroupProvider, LayoutExportProvider, LayoutInventoryProvider, LayoutObjectResolver, PageProvider, PresetProvider, SequenceProvider, ZenStateAdapter
+from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvider, EffectProvider, ExecutorProvider, ExportFileGroupMembershipProvider, FixtureProvider, GroupMembershipProvider, GroupMembershipProviderError, GroupMembershipProviderUnavailable, GroupProvider, LayoutExportProvider, LayoutInventoryProvider, LayoutObjectResolver, PageProvider, PresetProvider, SequenceProvider, TimecodeProvider, ZenStateAdapter
 from .state.store import StateStore
 from .telnet_client import ConnectionState
 from .workflow import WorkflowPlan
 from .effect_builder import EffectBuildError, EffectTargetAmbiguous, resolve_effect_spec
+from .timecode_offset import TimecodeOffsetError, fingerprint_timecode, resolve_timecode_offset_spec
 from .models import Intent
 
 
@@ -136,6 +137,9 @@ class AgentCore:
                 snapshot = self.state.put("presets", [*retained,*values], source="ma2_telnet_list", capability={"requires_local_filesystem":False})
             elif resource == "effects":
                 provider=EffectProvider(); values=provider.parse(self.runtime.read_state(provider.command)); diagnostics=provider.diagnostics(values); self.runtime.log("effect_inventory_diagnostic", diagnostics); snapshot=self.state.put("effects", values, source="ma2_telnet_list", capability={"requires_local_filesystem":False,"diagnostics":diagnostics})
+            elif resource == "timecodes":
+                provider = TimecodeProvider()
+                snapshot = self.state.put("timecodes", provider.parse(self.runtime.read_state(provider.command)), source="ma2_telnet_list", capability=provider.capability())
             elif resource == "pages":
                 provider=PageProvider(); snapshot=self.state.put("pages", provider.parse(self.runtime.read_state(provider.command)), source="ma2_telnet_list", capability={"requires_local_filesystem":False})
             elif resource == "executors":
@@ -296,12 +300,16 @@ class AgentCore:
             assert route.intent
             if route.intent.kind == "build_dimmer_chase":
                 workflow = self._plan_effect_builder(route.intent)
+            elif route.intent.kind == "offset_timecode":
+                workflow = self._plan_timecode_offset(route.intent)
+            elif route.intent.kind == "timecode_test_setup":
+                workflow = self._plan_timecode_test_setup(route.intent)
             else:
                 workflow = self.skills.plan_intent(route.intent, self.state, self.runtime.preferences)
             self.runtime.log("workflow_preview", workflow.as_dict())
         except EffectTargetAmbiguous as exc:
             return self._respond(ResponseType.NEEDS_CLARIFICATION, str(exc), intent=route.intent)
-        except (SkillError, ConnectionError, EffectBuildError, ValueError) as exc:
+        except (SkillError, ConnectionError, EffectBuildError, TimecodeOffsetError, ValueError) as exc:
             return self._respond(ResponseType.ERROR, str(exc) or "Unable to prepare a safe workflow.", intent=route.intent)
         action_id = uuid.uuid4().hex[:12]
         if self._active_action_id:
@@ -311,7 +319,7 @@ class AgentCore:
         record = ActionRecord(action_id, workflow)
         self.actions[action_id] = record
         self._active_action_id = action_id
-        response = workflow.preview_note if workflow.task.skill_id == "effects.builder" else "Workflow plan ready for review." if workflow.executable else workflow.preview_note
+        response = workflow.preview_note if workflow.task.skill_id in {"effects.builder", "timecode.offset"} else "Workflow plan ready for review." if workflow.executable else workflow.preview_note
         self.chat.append({"role": "assistant", "kind": ResponseType.ACTION_PLAN.value, "text": response, "action_id": action_id})
         self.progress = "Waiting for approval"
         self.events.emit("plan", self.snapshot())
@@ -345,6 +353,25 @@ class AgentCore:
         )
         bound = Intent(intent.kind, {**intent.parameters, "effect_spec": spec.summary()}, intent.source_text)
         return self.skills.plan_intent(bound, self.state, self.runtime.preferences)
+
+    def _plan_timecode_offset(self, intent: Any) -> WorkflowPlan:
+        """Bind only fresh, read-only Timecode inventory into an OffsetSpec."""
+        self.refresh_state("timecodes")
+        timecodes = self.state.get("timecodes")
+        spec = resolve_timecode_offset_spec(intent, list(timecodes.values if timecodes else []))
+        bound = Intent(intent.kind, {**intent.parameters, "timecode_offset_spec": spec.summary()}, intent.source_text)
+        return self.skills.plan_intent(bound, self.state, self.runtime.preferences)
+
+    def _plan_timecode_test_setup(self, intent: Any) -> WorkflowPlan:
+        """Only the explicit packaged verifier can reach this test setup intent."""
+        self.refresh_state("timecodes")
+        number = intent.parameters.get("timecode_number")
+        if not isinstance(number, int) or number < 1:
+            raise TimecodeOffsetError("Test Timecode setup requires a positive number.")
+        current = self.state.get("timecodes")
+        if any(item.get("timecode_number") == number for item in (current.values if current else [])):
+            raise TimecodeOffsetError(f"Test Timecode {number} already exists; refusing to overwrite it.")
+        return self.skills.plan_intent(intent, self.state, self.runtime.preferences)
 
     def submit_request(self, text: str, source: str = "desktop") -> dict[str, Any]:
         """Backward-compatible alias; all callers should use handle_request."""
@@ -404,6 +431,11 @@ class AgentCore:
             elif kind in {"state_effects", "effect_list", "effect_lookup"}:
                 result = self.refresh_state("effects")
                 if kind == "effect_list": self._effect_page = 0
+            elif kind == "state_timecodes":
+                result = self.refresh_state("timecodes")
+            elif kind == "state_timecode_events":
+                self.refresh_state("timecodes")
+                return self._respond(ResponseType.ANSWER, "UNSUPPORTED: grandMA2 3.9 Timecode event/track readback has no verified non-mutating provider. Timecode inventory remains available.", intent=intent, state={"resource": "timecodes", "status": "UNSUPPORTED"})
             elif kind in {"state_sequence_executors", "sequence_executor_lookup", "page_executor_list"}: result = self.refresh_state("executors")
             else:
                 result = self.refresh_state(kind.removeprefix("state_"))
@@ -476,6 +508,8 @@ class AgentCore:
         kind = intent.kind
         if kind in {"state_groups", "state_fixtures", "state_sequences"}:
             return AgentCore._format_rows(f"{result['resource'].title()} ({result['count']})", values, lambda item: f"{item['number']}: {item['name']}")
+        if kind == "state_timecodes":
+            return AgentCore._format_rows(f"Timecodes ({result['count']})", values, lambda item: f"{item['timecode_number']}: {item['name']}")
         if kind == "state_layouts":
             return f"Layouts ({result['count']})\n" + ("\n".join(f"{item['layout']}: {item.get('name', '')}" for item in values) or "No entries returned.")
         if kind in {"state_group_membership", "state_group_membership_name"}:
@@ -589,6 +623,10 @@ class AgentCore:
             "state_selection": "SelectionInspectCapability",
             "state_programmer": "ProgrammerInspectCapability",
             "build_dimmer_chase": "EffectBuilderSkill",
+            "state_timecodes": "TimecodeProvider",
+            "state_timecode_events": "TimecodeProvider",
+            "offset_timecode": "TimecodeOffsetSkill",
+            "timecode_test_setup": "TimecodeOffsetSkill",
         }
         return providers.get(intent.kind)
 
@@ -613,6 +651,8 @@ class AgentCore:
             raise PermissionError("MA2 must be READY before an approved action can execute.")
         if action.workflow.safety == "DANGEROUS" and not danger_confirmed:
             raise PermissionError("Dangerous actions require a second confirmation.")
+        if action.workflow.task.intent.kind == "offset_timecode":
+            self._ensure_timecode_state_unchanged(action)
         action.status = "APPROVED"
         self.progress = "Executing"
         self.events.emit("progress", {"stage": self.progress})
@@ -622,6 +662,8 @@ class AgentCore:
             result = "\n".join(item for item in results if item) or "Approved MA2 workflow commands sent"
             if action.workflow.task.skill_id == "effects.builder":
                 result = self._verify_effect_builder(action, result)
+            elif action.workflow.task.intent.kind == "offset_timecode":
+                result = self._verify_timecode_offset(action, result)
             action.status, action.result = "EXECUTED", result
             self._active_action_id = None
             self.chat.append({"role": "assistant", "kind": "result", "text": action.result, "action_id": action_id})
@@ -634,6 +676,31 @@ class AgentCore:
             raise
         self.events.emit("execution", self.snapshot())
         return {"id": action.id, "status": action.status, "result": action.result}
+
+    def _ensure_timecode_state_unchanged(self, action: ActionRecord) -> None:
+        raw = action.workflow.task.intent.parameters.get("timecode_offset_spec", {})
+        number, expected = raw.get("timecode_number"), raw.get("state_fingerprint")
+        if not isinstance(number, int) or not isinstance(expected, str):
+            raise TimecodeOffsetError("STATE_CHANGED_SINCE_PREVIEW: Timecode preview metadata is incomplete.")
+        refreshed = self.refresh_state("timecodes")
+        current = next((item for item in refreshed["values"] if item.get("timecode_number") == number), None)
+        if not current or fingerprint_timecode(current) != expected:
+            raise TimecodeOffsetError("STATE_CHANGED_SINCE_PREVIEW: Timecode inventory changed; create a new Preview before executing.")
+
+    def _verify_timecode_offset(self, action: ActionRecord, execution_result: str) -> str:
+        raw = action.workflow.task.intent.parameters.get("timecode_offset_spec", {})
+        number = raw.get("timecode_number")
+        try:
+            result = self.refresh_state("timecodes")
+            found = next((item for item in result["values"] if item.get("timecode_number") == number), None)
+            if not found:
+                self.runtime.log("timecode_offset_verification", {"timecode_number": number, "status": "FAILED", "reason": "Timecode not returned by List Timecode"})
+                return execution_result + f"\nVerification: FAILED — Timecode {number} was not returned by List Timecode."
+            self.runtime.log("timecode_offset_verification", {"timecode_number": number, "status": "PARTIAL", "exists": True, "event_readback": "UNSUPPORTED"})
+            return execution_result + f"\nVerification: PARTIAL — Timecode {number} remains present. Event-level time read-back is unavailable from the verified provider."
+        except Exception as exc:
+            self.runtime.log("timecode_offset_verification", {"timecode_number": number, "status": "PARTIAL", "error": str(exc)})
+            return execution_result + f"\nVerification: PARTIAL — offset command was sent, but Timecode inventory re-read failed: {exc}"
 
     def _verify_effect_builder(self, action: ActionRecord, execution_result: str) -> str:
         """Perform the explicit read-only, necessarily partial v1 verification."""

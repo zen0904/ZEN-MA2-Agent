@@ -1,1 +1,1 @@
-{"id":"timecode.offset","name":"Timecode Offset","version":"0.0","description":"Workflow placeholder.","intents":["offset_timecode"],"required_state":["timecodes"],"safety":"MODIFY","enabled":false}
+{"id":"timecode.offset","name":"Timecode Offset","version":"1.0","description":"Deterministic grandMA2 3.9 whole-show forward Timecode Offset with preview, approval, freshness guard, and partial inventory verification.","intents":["offset_timecode","timecode_test_setup"],"required_state":["timecodes"],"safety":"MODIFY","enabled":true}

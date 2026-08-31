@@ -108,6 +108,9 @@ class SkillRegistry:
                     if manifest.id == "effects.builder":
                         from .effect_builder import EffectBuilderSkill
                         self._implementations[manifest.id] = EffectBuilderSkill(manifest)
+                    elif manifest.id == "timecode.offset":
+                        from .timecode_offset import TimecodeOffsetSkill
+                        self._implementations[manifest.id] = TimecodeOffsetSkill(manifest)
                     else:
                         self._implementations[manifest.id] = BuiltinCommandSkill(manifest)
 
