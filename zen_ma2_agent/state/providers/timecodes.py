@@ -19,12 +19,28 @@ class TimecodeProvider:
             line = raw_line.strip()
             if not line or line.casefold().startswith(("executing", "no.", "warning")):
                 continue
+            table_row = re.match(r"^Timecode\s+(\d+)\s+(.+?)\s+(Intern|Link\s+Selected|\d+)\s+(\d+:\d{2})\s+(\d+:\d{2})\b", line, re.I)
+            if table_row:
+                number, name, _slot, _length, offset_raw = table_row.groups()
+                rows.append({
+                    "timecode_number": int(number),
+                    "name": name.strip(),
+                    "tracks": [],
+                    "events": [],
+                    "offset_raw": offset_raw,
+                    "offset_ms": self._hundredths_to_ms(offset_raw),
+                    "event_capability": "UNSUPPORTED",
+                    "source": "ma2_telnet_list",
+                })
+                continue
             match = self._row.match(line)
             if not match:
                 continue
             number = int(match.group(1))
             name = match.group(2).strip().strip("'\"")
             rest = (match.group(3) or "").strip()
+            offset_raw = None
+            offset_ms = None
             # MA2's table format repeats the object No. before the visible name.
             if name == str(number) and rest:
                 visible = re.sub(r"\s+\([^)]*\)\s*$", "", rest).strip()
@@ -35,16 +51,26 @@ class TimecodeProvider:
                     else:
                         name, rest = visible, ""
             offset = re.search(r"\boffset\s*[:=]\s*([^\s]+)", rest, re.I)
+            if offset and offset_raw is None:
+                offset_raw = offset.group(1)
             rows.append({
                 "timecode_number": number,
                 "name": name,
                 "tracks": [],
                 "events": [],
-                "offset_raw": offset.group(1) if offset else None,
+                "offset_raw": offset_raw,
+                "offset_ms": offset_ms,
                 "event_capability": "UNSUPPORTED",
                 "source": "ma2_telnet_list",
             })
         return rows
+
+    @staticmethod
+    def _hundredths_to_ms(value: str) -> int | None:
+        match = re.fullmatch(r"(\d+):(\d{2})", value)
+        if not match:
+            return None
+        return int(match.group(1)) * 1_000 + int(match.group(2)) * 10
 
     @staticmethod
     def capability() -> dict[str, str]:

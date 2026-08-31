@@ -28,7 +28,8 @@ class TimecodeClient:
     def execute(self, command):
         self.commands.append(command)
         if command == "List Timecode":
-            return f"Timecode 9000 9000  {self.name} Offset: {self.offset} (0)\n" if self.present else "WARNING, NO OBJECTS FOUND FOR LIST\n"
+            offset = "0:50" if self.offset == "500ms" else "0:00"
+            return f"Timecode 9000 {self.name} Intern 0:00 {offset} Endless Repeat\n" if self.present else "WARNING, NO OBJECTS FOUND FOR LIST\n"
         if command.startswith("Assign Timecode 9000/Offset = "):
             self.offset = command.rsplit("= ", 1)[1]
         return "Executing : " + command
@@ -60,10 +61,10 @@ class TimecodeOffsetTests(unittest.TestCase):
         self.assertEqual(ranged, {"timecode_number": 3, "offset_ms": 250, "range_start_ms": 10000, "range_end_ms": 30000})
 
     def test_timecode_provider_inventory_and_event_capability(self):
-        rows = TimecodeProvider().parse("Timecode 9000 9000  ZEN Test Offset: 0.5s (0)\n")
+        rows = TimecodeProvider().parse("Timecode 9000 ZEN Test Intern 0:00 0:50 Endless Repeat\n")
         self.assertEqual(rows[0]["timecode_number"], 9000)
         self.assertEqual(rows[0]["name"], "ZEN Test")
-        self.assertEqual(rows[0]["offset_raw"], "0.5s")
+        self.assertEqual((rows[0]["offset_raw"], rows[0]["offset_ms"]), ("0:50", 500))
         self.assertEqual(rows[0]["events"], [])
         self.assertEqual(rows[0]["event_capability"], "UNSUPPORTED")
 
@@ -74,7 +75,7 @@ class TimecodeOffsetTests(unittest.TestCase):
         self.assertIn("Offset: +0.500 s", response["message"])
         self.assertIn("Events affected: unavailable", response["message"])
         self.assertEqual(self.client.commands, ["List Timecode"])
-        self.assertEqual(response["action"]["command"], "Assign Timecode 9000/Offset = 0.5s")
+        self.assertEqual(response["action"]["command"], "Assign Timecode 9000/Offset = 500ms")
         self.assertIn("no automatic rollback", response["action"]["rollback_strategy"])
 
     def test_negative_and_range_requests_are_explicitly_unsupported_without_writes(self):
@@ -91,9 +92,9 @@ class TimecodeOffsetTests(unittest.TestCase):
         self.assertEqual(self.client.commands, ["List Timecode"])
         result = self.core.approve_action(action["id"])
         self.assertEqual(result["status"], "EXECUTED")
-        self.assertEqual(self.client.commands, ["List Timecode", "List Timecode", "Assign Timecode 9000/Offset = 0.5s", "List Timecode"])
-        self.assertIn("Verification: PARTIAL", result["result"])
-        self.assertEqual(self.client.offset, "0.5s")
+        self.assertEqual(self.client.commands, ["List Timecode", "List Timecode", "Assign Timecode 9000/Offset = 500ms", "List Timecode"])
+        self.assertIn("Verification: VERIFIED", result["result"])
+        self.assertEqual(self.client.offset, "500ms")
 
     def test_state_changed_since_preview_blocks_execution(self):
         action = self.core.handle_request("Timecode 9000 往後 500ms")["action"]

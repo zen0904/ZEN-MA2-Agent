@@ -110,15 +110,15 @@ def main() -> int:
         report["offset_preview"] = offset_preview
         report["offset_execute"] = _request(port, "execute_pending", timeout=60)
         transcript = _request(port, "chat_text")["chat_text"]
-        if "Verification: PARTIAL" not in transcript:
+        if "Verification: VERIFIED" not in transcript:
             raise RuntimeError(f"Timecode Offset verification was not reported: {transcript}")
         records = _new_records(log_path, log_offset)
         workflows = [item.get("data", {}) for item in records if item.get("event") == "workflow_execute"]
         verification = [item.get("data", {}) for item in records if item.get("event") == "timecode_offset_verification"]
-        expected = f"Assign Timecode {TEST_TIMECODE}/Offset = 0.5s"
+        expected = f"Assign Timecode {TEST_TIMECODE}/Offset = 500ms"
         if len(workflows) != 2 or workflows[-1].get("commands") != [expected]:
             raise RuntimeError(f"Unexpected approved Timecode workflow audit: {workflows}")
-        if not verification or not verification[-1].get("exists"):
+        if not verification or not verification[-1].get("exists") or verification[-1].get("status") != "VERIFIED":
             raise RuntimeError(f"Timecode was not read back after approved offset: {verification}")
         report.update({"chat": transcript, "workflows": workflows, "verification": verification})
         print(json.dumps(report, ensure_ascii=False, indent=2))

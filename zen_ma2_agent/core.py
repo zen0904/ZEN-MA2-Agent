@@ -696,8 +696,14 @@ class AgentCore:
             if not found:
                 self.runtime.log("timecode_offset_verification", {"timecode_number": number, "status": "FAILED", "reason": "Timecode not returned by List Timecode"})
                 return execution_result + f"\nVerification: FAILED — Timecode {number} was not returned by List Timecode."
-            self.runtime.log("timecode_offset_verification", {"timecode_number": number, "status": "PARTIAL", "exists": True, "event_readback": "UNSUPPORTED"})
-            return execution_result + f"\nVerification: PARTIAL — Timecode {number} remains present. Event-level time read-back is unavailable from the verified provider."
+            expected_ms = raw.get("offset_ms")
+            actual_ms = found.get("offset_ms")
+            exact = isinstance(expected_ms, int) and actual_ms == expected_ms
+            status = "VERIFIED" if exact else "PARTIAL"
+            self.runtime.log("timecode_offset_verification", {"timecode_number": number, "status": status, "exists": True, "expected_offset_ms": expected_ms, "actual_offset_ms": actual_ms, "event_readback": "UNSUPPORTED"})
+            if exact:
+                return execution_result + f"\nVerification: VERIFIED — Timecode {number} Offset read back as +{expected_ms / 1000:.3f} s. Event-level time read-back is unavailable."
+            return execution_result + f"\nVerification: PARTIAL — Timecode {number} remains present, but Offset read-back was unavailable or mismatched (expected {expected_ms} ms; returned {actual_ms})."
         except Exception as exc:
             self.runtime.log("timecode_offset_verification", {"timecode_number": number, "status": "PARTIAL", "error": str(exc)})
             return execution_result + f"\nVerification: PARTIAL — offset command was sent, but Timecode inventory re-read failed: {exc}"

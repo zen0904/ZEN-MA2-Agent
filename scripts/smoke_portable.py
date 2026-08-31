@@ -85,7 +85,7 @@ def _effect_approval_smoke() -> int:
     payload = json.loads(next(line for line in reversed(run.stdout.splitlines()) if line.startswith("{")))
     if payload.get("before") != ["List Group", "List Effect"]:
         raise SystemExit(f"Effect preview sent an unexpected command: {payload}")
-    if payload.get("action_status") != "EXECUTED" or "Verification: PARTIAL" not in str(payload.get("result")):
+    if payload.get("action_status") != "EXECUTED" or "Verification: VERIFIED" not in str(payload.get("result")):
         raise SystemExit(f"Effect approval did not execute/verify: {payload}")
     if not any(command.startswith("Store Effect 2500") for command in payload.get("commands", [])):
         raise SystemExit(f"Effect approval did not use the planned commands: {payload}")
@@ -103,7 +103,7 @@ def _timecode_approval_smoke() -> int:
         raise SystemExit(f"Timecode preview sent an unexpected command: {payload}")
     if payload.get("action_status") != "EXECUTED" or "Verification: PARTIAL" not in str(payload.get("result")):
         raise SystemExit(f"Timecode approval did not execute/verify: {payload}")
-    if payload.get("commands") != ["List Timecode", "List Timecode", "Assign Timecode 9000/Offset = 0.5s", "List Timecode"]:
+    if payload.get("commands") != ["List Timecode", "List Timecode", "Assign Timecode 9000/Offset = 500ms", "List Timecode"]:
         raise SystemExit(f"Timecode approval did not use the planned guarded command sequence: {payload}")
     print("PACKAGED_TIMECODE_APPROVAL|PASS")
     return 0

@@ -31,8 +31,10 @@ def format_ms(milliseconds: int) -> str:
 def ma2_seconds(milliseconds: int) -> str:
     if milliseconds <= 0:
         raise TimecodeOffsetError("grandMA2 Timecode Offset must be a positive whole-show forward offset.")
-    whole, fraction = divmod(milliseconds, 1_000)
-    return f"{whole}s" if not fraction else f"{whole}.{fraction:03d}".rstrip("0") + "s"
+    # The 3.9 controlled test established decimal-second input is not a stable
+    # representation for an exact 500 ms intent.  MA2 accepts an integer ms
+    # literal and reports it in its 1/100-second table column.
+    return f"{milliseconds}ms"
 
 
 @dataclass(frozen=True)
@@ -54,7 +56,7 @@ class TimecodeOffsetSpec:
 def fingerprint_timecode(timecode: dict[str, Any]) -> str:
     # Only values obtained from the fresh read-only provider participate.  The
     # unavailable event list is intentionally not invented as a fingerprint.
-    stable = {key: timecode.get(key) for key in ("timecode_number", "name", "offset_raw", "source")}
+    stable = {key: timecode.get(key) for key in ("timecode_number", "name", "offset_raw", "offset_ms", "source")}
     return hashlib.sha256(json.dumps(stable, sort_keys=True, ensure_ascii=True).encode("utf-8")).hexdigest()
 
 
