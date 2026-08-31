@@ -103,7 +103,7 @@ def _timecode_approval_smoke() -> int:
         raise SystemExit(f"Timecode preview sent an unexpected command: {payload}")
     if payload.get("action_status") != "EXECUTED" or "Verification: VERIFIED" not in str(payload.get("result")):
         raise SystemExit(f"Timecode approval did not execute/verify: {payload}")
-    if payload.get("commands") != ["List Timecode", "List Timecode", "Assign Timecode 9000/Offset = 500ms", "List Timecode"]:
+    if payload.get("commands") != ["List Timecode", "List Timecode", "Assign Timecode 9000/Offset = 0.50s", "List Timecode"]:
         raise SystemExit(f"Timecode approval did not use the planned guarded command sequence: {payload}")
     print("PACKAGED_TIMECODE_APPROVAL|PASS")
     return 0

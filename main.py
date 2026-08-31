@@ -52,7 +52,7 @@ class _PortableSmokeClient:
         if command == "List Effect 2500":
             return f'Effect 2500 "{self.effect_label}"\n' if self.effect_label else "WARNING, NO OBJECTS FOUND FOR LIST\n"
         if command == "List Timecode":
-            offset = "0:50" if self.timecode_offset == "500ms" else "0:00"
+            offset = "0:50" if self.timecode_offset == "0.50s" else "0:00"
             return f"Timecode 9000 ZEN Timecode Test Intern 0:00 {offset} Endless Repeat\n"
         if command.startswith("Label Effect 2500 "):
             self.effect_label = command.split('"', 2)[1]

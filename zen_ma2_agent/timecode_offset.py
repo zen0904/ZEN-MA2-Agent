@@ -31,10 +31,14 @@ def format_ms(milliseconds: int) -> str:
 def ma2_seconds(milliseconds: int) -> str:
     if milliseconds <= 0:
         raise TimecodeOffsetError("grandMA2 Timecode Offset must be a positive whole-show forward offset.")
-    # The 3.9 controlled test established decimal-second input is not a stable
-    # representation for an exact 500 ms intent.  MA2 accepts an integer ms
-    # literal and reports it in its 1/100-second table column.
-    return f"{milliseconds}ms"
+    # MA2 3.9 documents Timecode Offset in seconds (with up to hundredths).
+    # It rejects an ``ms`` suffix, so preserve milliseconds internally while
+    # emitting an explicit two-decimal second literal such as ``0.50s``.
+    seconds, remainder = divmod(milliseconds, 1_000)
+    hundredths = remainder // 10
+    if remainder % 10:
+        raise TimecodeOffsetError("grandMA2 Timecode Offset supports whole 10 ms increments only.")
+    return f"{seconds}.{hundredths:02d}s"
 
 
 @dataclass(frozen=True)

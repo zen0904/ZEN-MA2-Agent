@@ -127,7 +127,7 @@ def main() -> int:
         records = _new_records(log_path, log_offset)
         workflows = [item.get("data", {}) for item in records if item.get("event") == "workflow_execute"]
         verification = [item.get("data", {}) for item in records if item.get("event") == "timecode_offset_verification"]
-        expected = f"Assign Timecode {TEST_TIMECODE}/Offset = 500ms"
+        expected = f"Assign Timecode {TEST_TIMECODE}/Offset = 0.50s"
         expected_workflow_count = 1 if reuse_existing else 2
         if len(workflows) != expected_workflow_count or workflows[-1].get("commands") != [expected]:
             raise RuntimeError(f"Unexpected approved Timecode workflow audit: {workflows}")
