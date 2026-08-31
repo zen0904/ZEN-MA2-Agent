@@ -101,7 +101,7 @@ def _timecode_approval_smoke() -> int:
     payload = json.loads(next(line for line in reversed(run.stdout.splitlines()) if line.startswith("{")))
     if payload.get("before") != ["List Timecode"]:
         raise SystemExit(f"Timecode preview sent an unexpected command: {payload}")
-    if payload.get("action_status") != "EXECUTED" or "Verification: PARTIAL" not in str(payload.get("result")):
+    if payload.get("action_status") != "EXECUTED" or "Verification: VERIFIED" not in str(payload.get("result")):
         raise SystemExit(f"Timecode approval did not execute/verify: {payload}")
     if payload.get("commands") != ["List Timecode", "List Timecode", "Assign Timecode 9000/Offset = 500ms", "List Timecode"]:
         raise SystemExit(f"Timecode approval did not use the planned guarded command sequence: {payload}")
