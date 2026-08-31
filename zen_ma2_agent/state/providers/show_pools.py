@@ -29,6 +29,16 @@ class EffectProvider:
             number=int(quoted.group(1)) if quoted else int(match.group(1))
             name=quoted.group(2).strip() if quoted else match.group(2).strip().strip("'\"")
             meta=quoted.group(3) if quoted else match.group(3) or ""
+            # grandMA2's tabular `List Effect` output repeats the pool number in
+            # the first data column: `Effect 2500 2500  My Label (1)`.  That
+            # duplicate is not the label.  Keep the normal/quoted parser for
+            # other MA2 output shapes, but decode this verified table form so
+            # read-back can attest to the label created by an approved plan.
+            if not quoted and name == str(number) and meta.strip():
+                table_label = re.sub(r"\s+\(\d+\)\s*$", "", meta).strip()
+                if table_label:
+                    name = table_label
+                    meta = ""
             attributes=[item.strip() for item in re.split(r"[,/]", re.search(r"attributes?\s*[:=]\s*(.+)",meta,re.I).group(1))] if re.search(r"attributes?\s*[:=]\s*(.+)",meta,re.I) else []
             lines=re.search(r"lines?\s*[:=]?\s*(\d+)",meta,re.I)
             kind=re.search(r"\b(template|selective)\b",meta,re.I)

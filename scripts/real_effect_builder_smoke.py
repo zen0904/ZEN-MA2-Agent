@@ -60,6 +60,7 @@ def _new_records(path: Path, offset: int) -> list[dict]:
 def main() -> int:
     if "--real-machine" not in sys.argv:
         raise SystemExit("Refusing real MA2 modification without --real-machine.")
+    verify_existing = "--verify-existing" in sys.argv
     if not EXE.is_file():
         raise SystemExit(f"Portable EXE not found: {EXE}")
     expected_head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
@@ -70,7 +71,7 @@ def main() -> int:
     port = _free_port()
     environment = dict(os.environ, ZEN_MA2_AUTOMATION="1", ZEN_MA2_AUTOMATION_PORT=str(port))
     process = subprocess.Popen([str(EXE), "--automation-test"], cwd=bundle, env=environment)
-    report: dict[str, object] = {"query": QUERY, "effect_number": 2500}
+    report: dict[str, object] = {"query": QUERY, "effect_number": 2500, "mode": "verify_existing" if verify_existing else "create"}
     try:
         status = _wait_for(port)
         if status.get("build_head") != expected_head:
@@ -86,6 +87,19 @@ def main() -> int:
         else:
             raise RuntimeError(f"Desktop did not reach READY: {connection}")
         report["connection"] = connection
+        if verify_existing:
+            # This is deliberately a Desktop Chat, read-only validation path for
+            # an already-created controlled Effect.  It avoids overwriting a
+            # real console object while proving the packaged parser/formatter.
+            report["lookup_submit"] = _request(port, "submit", text="Effect 2500 是什麼？")
+            transcript = _request(port, "chat_text")["chat_text"]
+            records = _new_records(log_path, offset)
+            writes = [item.get("data", {}).get("commands", []) for item in records if item.get("event") == "workflow_execute"]
+            if "Effect 2500: HYBRID Dimmer Chase" not in transcript or writes:
+                raise RuntimeError(f"Existing Effect read-back was not a clean Desktop read-only verification: {transcript}; writes={writes}")
+            report["chat"] = transcript
+            print(json.dumps(report, ensure_ascii=False, indent=2))
+            return 0
         report["preview_submit"] = _request(port, "submit", text=QUERY)
         preview = _request(port, "chat_text")["chat_text"]
         if "Effect Builder Preview" not in preview or "Approval required." not in preview:

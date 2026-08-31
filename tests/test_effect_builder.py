@@ -6,6 +6,7 @@ from shutil import copytree
 from zen_ma2_agent.core import AgentCore
 from zen_ma2_agent.parser import parse
 from zen_ma2_agent.runtime import AgentRuntime
+from zen_ma2_agent.state.providers.show_pools import EffectProvider
 from zen_ma2_agent.telnet_client import ConnectionState
 
 
@@ -128,6 +129,10 @@ class EffectBuilderTests(unittest.TestCase):
         self.assertEqual(response["type"], "ANSWER")
         self.assertFalse(self.core.actions)
         self.assertEqual(self.client.commands, ["List Effect"])
+
+    def test_real_ma2_list_effect_table_uses_label_not_repeated_number(self):
+        rows = EffectProvider().parse('Effect 2500 2500  HYBRID Dimmer Chase         (1)\n')
+        self.assertEqual(rows, [{"number": 2500, "name": "HYBRID Dimmer Chase", "kind": None, "line_count": None, "attributes": []}])
 
 
 if __name__ == "__main__":
