@@ -20,6 +20,8 @@ from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvid
 from .state.store import StateStore
 from .telnet_client import ConnectionState
 from .workflow import WorkflowPlan
+from .effect_builder import EffectBuildError, EffectTargetAmbiguous, resolve_effect_spec
+from .models import Intent
 
 
 @dataclass
@@ -292,9 +294,14 @@ class AgentCore:
             return self._answer_state(route.intent)
         try:
             assert route.intent
-            workflow = self.skills.plan_intent(route.intent, self.state, self.runtime.preferences)
+            if route.intent.kind == "build_dimmer_chase":
+                workflow = self._plan_effect_builder(route.intent)
+            else:
+                workflow = self.skills.plan_intent(route.intent, self.state, self.runtime.preferences)
             self.runtime.log("workflow_preview", workflow.as_dict())
-        except (SkillError, ConnectionError) as exc:
+        except EffectTargetAmbiguous as exc:
+            return self._respond(ResponseType.NEEDS_CLARIFICATION, str(exc), intent=route.intent)
+        except (SkillError, ConnectionError, EffectBuildError, ValueError) as exc:
             return self._respond(ResponseType.ERROR, str(exc) or "Unable to prepare a safe workflow.", intent=route.intent)
         action_id = uuid.uuid4().hex[:12]
         if self._active_action_id:
@@ -304,11 +311,40 @@ class AgentCore:
         record = ActionRecord(action_id, workflow)
         self.actions[action_id] = record
         self._active_action_id = action_id
-        response = "Workflow plan ready for review." if workflow.executable else workflow.preview_note
+        response = workflow.preview_note if workflow.task.skill_id == "effects.builder" else "Workflow plan ready for review." if workflow.executable else workflow.preview_note
         self.chat.append({"role": "assistant", "kind": ResponseType.ACTION_PLAN.value, "text": response, "action_id": action_id})
         self.progress = "Waiting for approval"
         self.events.emit("plan", self.snapshot())
         return {"type": ResponseType.ACTION_PLAN.value, "message": response, "action": {"id": action_id, "status": record.status, **record.plan}}
+
+    def _plan_effect_builder(self, intent: Any) -> WorkflowPlan:
+        """Refresh only the inventories needed to bind a safe EffectSpec."""
+        parameters = intent.parameters
+        target_type = parameters.get("target_type")
+        if target_type in {"group_number", "group_name"}:
+            groups = self.state.get("groups")
+            if not groups or groups.stale or groups.error:
+                self.refresh_state("groups")
+        elif target_type == "fixture_number":
+            fixtures = self.state.get("fixtures")
+            if not fixtures or fixtures.stale or fixtures.error:
+                self.refresh_state("fixtures")
+        else:
+            raise EffectBuildError("Dimmer Chase requires a Group name, Group number, or Fixture number.")
+        effects = self.state.get("effects")
+        if not effects or effects.stale or effects.error:
+            self.refresh_state("effects")
+        groups = self.state.get("groups")
+        fixtures = self.state.get("fixtures")
+        effects = self.state.get("effects")
+        spec = resolve_effect_spec(
+            intent,
+            groups=list(groups.values if groups else []),
+            fixtures=list(fixtures.values if fixtures else []),
+            effects=list(effects.values if effects else []),
+        )
+        bound = Intent(intent.kind, {**intent.parameters, "effect_spec": spec.summary()}, intent.source_text)
+        return self.skills.plan_intent(bound, self.state, self.runtime.preferences)
 
     def submit_request(self, text: str, source: str = "desktop") -> dict[str, Any]:
         """Backward-compatible alias; all callers should use handle_request."""
@@ -552,6 +588,7 @@ class AgentCore:
             "page_executor_list": "ExecutorProvider",
             "state_selection": "SelectionInspectCapability",
             "state_programmer": "ProgrammerInspectCapability",
+            "build_dimmer_chase": "EffectBuilderSkill",
         }
         return providers.get(intent.kind)
 
@@ -583,6 +620,8 @@ class AgentCore:
             commands = self.skills.approved_commands(action.workflow.task.skill_id, action.workflow)
             results = self.runtime.execute_approved_commands(commands)
             result = "\n".join(item for item in results if item) or "Approved MA2 workflow commands sent"
+            if action.workflow.task.skill_id == "effects.builder":
+                result = self._verify_effect_builder(action, result)
             action.status, action.result = "EXECUTED", result
             self._active_action_id = None
             self.chat.append({"role": "assistant", "kind": "result", "text": action.result, "action_id": action_id})
@@ -595,6 +634,31 @@ class AgentCore:
             raise
         self.events.emit("execution", self.snapshot())
         return {"id": action.id, "status": action.status, "result": action.result}
+
+    def _verify_effect_builder(self, action: ActionRecord, execution_result: str) -> str:
+        """Perform the explicit read-only, necessarily partial v1 verification."""
+        spec = action.workflow.task.intent.parameters.get("effect_spec", {})
+        number = spec.get("effect_number")
+        expected_name = str(spec.get("name") or "")
+        if not isinstance(number, int):
+            return execution_result + "\nVerification: partial — Effect number was unavailable."
+        try:
+            provider = EffectProvider()
+            output = self.runtime.read_state(f"List Effect {number}")
+            rows = provider.parse(output)
+            found = next((item for item in rows if item.get("number") == number), None)
+            if not found:
+                self.runtime.log("effect_builder_verification", {"effect_number": number, "status": "FAILED", "reason": "Effect not returned by List Effect <number>", "output": output})
+                return execution_result + f"\nVerification: FAILED — Effect {number} was not returned by List Effect {number}."
+            actual_name = str(found.get("name") or "")
+            label_verified = actual_name == expected_name
+            self.state.upsert("effects", "number", found, source="ma2_telnet_list")
+            self.runtime.log("effect_builder_verification", {"effect_number": number, "status": "PARTIAL", "exists": True, "expected_name": expected_name, "actual_name": actual_name, "label_verified": label_verified})
+            label = "label matches" if label_verified else f"label not exposed/matched (returned: {actual_name or 'none'})"
+            return execution_result + f"\nVerification: PARTIAL — Effect {number} exists; {label}. Parameter verification is not exposed by EffectProvider."
+        except Exception as exc:
+            self.runtime.log("effect_builder_verification", {"effect_number": number, "status": "PARTIAL", "error": str(exc)})
+            return execution_result + f"\nVerification: PARTIAL — Effect commands were sent, but read-back failed: {exc}"
 
     def phone_urls(self, port: int) -> list[str]:
         return [f"http://{address}:{port}/?nonce={self.pairing.nonce}" for address in lan_ipv4_addresses()]

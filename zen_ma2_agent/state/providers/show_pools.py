@@ -22,13 +22,17 @@ class EffectProvider:
     def parse(self, output: str) -> list[dict]:
         rows=[]
         for line in output.splitlines():
-            match=self._row.match(line.strip())
+            clean=line.strip()
+            quoted=re.match(r"^\s*(?:effect\s+)?(\d+)\s+['\"]([^'\"]+)['\"]\s*(.*)$", clean, re.I)
+            match=self._row.match(clean)
             if not match or line.strip().lower().startswith(("executing", "no.")): continue
-            meta=match.group(3) or ""
+            number=int(quoted.group(1)) if quoted else int(match.group(1))
+            name=quoted.group(2).strip() if quoted else match.group(2).strip().strip("'\"")
+            meta=quoted.group(3) if quoted else match.group(3) or ""
             attributes=[item.strip() for item in re.split(r"[,/]", re.search(r"attributes?\s*[:=]\s*(.+)",meta,re.I).group(1))] if re.search(r"attributes?\s*[:=]\s*(.+)",meta,re.I) else []
             lines=re.search(r"lines?\s*[:=]?\s*(\d+)",meta,re.I)
             kind=re.search(r"\b(template|selective)\b",meta,re.I)
-            rows.append({"number":int(match.group(1)),"name":match.group(2).strip().strip("'\""),"kind":kind.group(1).upper() if kind else None,"line_count":int(lines.group(1)) if lines else None,"attributes":attributes})
+            rows.append({"number":number,"name":name,"kind":kind.group(1).upper() if kind else None,"line_count":int(lines.group(1)) if lines else None,"attributes":attributes})
         return rows
 
     @staticmethod

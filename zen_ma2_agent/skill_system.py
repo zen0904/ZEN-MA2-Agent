@@ -105,7 +105,11 @@ class SkillRegistry:
                     raise SkillError(f"Duplicate skill id: {manifest.id}")
                 self._manifests[manifest.id] = manifest
                 if executable:
-                    self._implementations[manifest.id] = BuiltinCommandSkill(manifest)
+                    if manifest.id == "effects.builder":
+                        from .effect_builder import EffectBuilderSkill
+                        self._implementations[manifest.id] = EffectBuilderSkill(manifest)
+                    else:
+                        self._implementations[manifest.id] = BuiltinCommandSkill(manifest)
 
     def list(self) -> list[dict[str, Any]]:
         return [manifest.summary() for manifest in sorted(self._manifests.values(), key=lambda item: item.id)]

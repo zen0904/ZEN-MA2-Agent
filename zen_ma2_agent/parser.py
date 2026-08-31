@@ -67,6 +67,9 @@ def parse(text: str) -> Intent:
     if re.fullmatch(r"(?:下一頁|next\s+page)", state_source, flags=re.I): return Intent("effect_next_page", {}, source)
     match=re.fullmatch(r"(?:effect|效果)\s*(\d+)\s*(?:是什麼|是甚麼|what(?:\s+is)?|info)?", state_source, flags=re.I)
     if match: return Intent("effect_lookup", {"effect":int(match.group(1))}, source)
+    build = _parse_dimmer_chase(source)
+    if build:
+        return build
     if re.fullmatch(r"(?:現在\s*(?:show\s*)?[裡里]?\s*有\s*哪些|(?:show\s*)?有哪些|列出|list|show)\s*(?:群組|groups?)", state_source, flags=re.I):
         return Intent("state_groups", {}, source)
     if re.fullmatch(r"(?:現在\s*(?:show\s*)?[裡里]?\s*有\s*哪些|(?:show\s*)?有哪些|列出|list|show)\s*(?:燈具|fixtures?)", state_source, flags=re.I):
@@ -97,3 +100,43 @@ def parse(text: str) -> Intent:
     if source.lower() in {"blackout", "bo", "全黑"}:
         return Intent("blackout", {}, source)
     raise ParseError("No deterministic intent matched.")
+
+
+def _parse_dimmer_chase(source: str) -> Intent | None:
+    """Parse only the deterministic Effect Builder v1 vocabulary.
+
+    Other effect families deliberately remain unmatched until their MA2 command
+    grammar is verified on the real console.
+    """
+    normalized = source.rstrip("?？").strip()
+    if not re.search(r"(?:dimmer|調光|亮度)\s*(?:chase|effect|效果)|(?:chase|追逐)|(?:做|建立|create|build|make)\s*(?:一個\s*)?(?:effect|效果)\s*\d+", normalized, re.I):
+        return None
+    if not re.search(r"(?:做|建立|幫|create|build|make)", normalized, re.I):
+        return None
+    parameters: dict[str, object] = {}
+    number = re.search(r"(?:effect|效果)\s*(\d+)", normalized, re.I)
+    if number:
+        parameters["effect_number"] = int(number.group(1))
+    bpm = re.search(r"(\d{1,3})\s*bpm", normalized, re.I)
+    if bpm:
+        parameters["speed_bpm"] = int(bpm.group(1))
+    if re.search(r"(?:反方向|reverse|backward)", normalized, re.I):
+        parameters["direction"] = "reverse"
+    elif re.search(r"(?:從左到右|left\s*to\s*right|forward)", normalized, re.I):
+        parameters["direction"] = "forward"
+    group_no = re.search(r"(?:group|群組)\s*(\d+)", normalized, re.I)
+    fixture_no = re.search(r"(?:fixture|燈具)\s*(\d+)", normalized, re.I)
+    if group_no:
+        parameters.update({"target_type": "group_number", "target": int(group_no.group(1))})
+    elif fixture_no:
+        parameters.update({"target_type": "fixture_number", "target": int(fixture_no.group(1))})
+    else:
+        target = re.search(r"(?:幫|給|for)\s*([A-Za-z][A-Za-z0-9 _-]*)\s*(?:做|建立|create|build|make|一個|a)?", normalized, re.I)
+        if target:
+            name = target.group(1).strip()
+            # Stop at effect-description words if the natural phrase did not
+            # use a Chinese target separator.
+            name = re.split(r"\s+(?:dimmer|chase|effect|效果)", name, maxsplit=1, flags=re.I)[0].strip()
+            if name:
+                parameters.update({"target_type": "group_name", "target": name})
+    return Intent("build_dimmer_chase", parameters, source)

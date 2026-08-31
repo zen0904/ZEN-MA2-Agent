@@ -26,12 +26,15 @@ class _PortableSmokeClient:
         self.state = ConnectionState.DISCONNECTED
         self.authenticated_user = None
         self.audit_entries: list[str] = []
+        self.commands: list[str] = []
+        self.effect_label = ""
 
     def connect(self, username: str, password: str = "") -> str:
         self.state, self.authenticated_user = ConnectionState.READY, username
         return f"Logged in as User '{username}'"
 
     def execute(self, command: str) -> str:
+        self.commands.append(command)
         match = re.fullmatch(r'Export Layout (\d+) "(ZEN_AGENT_LAYOUT_\d+_[A-Za-z0-9_-]+\.xml)" /nc', command)
         if match:
             assert self.export_directory is not None
@@ -41,9 +44,17 @@ class _PortableSmokeClient:
                 encoding="utf-8",
             )
             return "exported"
-        if command in {"List Group", "List Fixture", "List Layout", "List Preset All", "List Preset Position", "List Effect", "List Sequence", "List Page", "List Executor"}:
+        if command == "List Group":
+            return 'Group 1 "HYBRID"\n'
+        if command == "List Effect":
+            return "Effect 1 Base\n"
+        if command == "List Effect 2500":
+            return f'Effect 2500 "{self.effect_label}"\n' if self.effect_label else "WARNING, NO OBJECTS FOUND FOR LIST\n"
+        if command.startswith("Label Effect 2500 "):
+            self.effect_label = command.split('"', 2)[1]
+        if command in {"List Fixture", "List Layout", "List Preset All", "List Preset Position", "List Sequence", "List Page", "List Executor"}:
             return ""
-        raise AssertionError(f"Unexpected portable smoke command: {command}")
+        return "Executing : " + command
 
     def close(self) -> None:
         self.state = ConnectionState.DISCONNECTED
@@ -69,13 +80,14 @@ def main() -> int:
         print(json.dumps(core.build_identity, ensure_ascii=False, sort_keys=True), flush=True)
         return 0
     smoke_mode = "--portable-routing-smoke" in sys.argv
-    if "--ui-smoke-request" in sys.argv or smoke_mode:
-        option = "--portable-routing-smoke" if smoke_mode else "--ui-smoke-request"
+    effect_approval_smoke = "--portable-effect-approval-smoke" in sys.argv
+    if "--ui-smoke-request" in sys.argv or smoke_mode or effect_approval_smoke:
+        option = "--portable-effect-approval-smoke" if effect_approval_smoke else "--portable-routing-smoke" if smoke_mode else "--ui-smoke-request"
         index = sys.argv.index(option)
         if index + 1 >= len(sys.argv):
             raise SystemExit(f"{option} requires text")
         smoke_temporary = None
-        if smoke_mode:
+        if smoke_mode or effect_approval_smoke:
             core, smoke_temporary = _portable_smoke_core()
         app = QApplication.instance() or QApplication([])
         window = ZenDesktop(core, SimpleNamespace(port=8765))
@@ -85,6 +97,13 @@ def main() -> int:
         if smoke_mode:
             response = core.chat[-1]
             print(json.dumps({"routing": core.last_chat_routing, "response": response}, ensure_ascii=False), flush=True)
+        if effect_approval_smoke:
+            pending = next((item for item in core.actions.values() if item.status == "PENDING_APPROVAL"), None)
+            if not pending:
+                raise SystemExit("Portable effect approval smoke did not produce a pending ActionPlan.")
+            before = list(core.runtime.client.commands)
+            window.execute_action()
+            print(json.dumps({"before": before, "action_status": pending.status, "result": pending.result, "commands": core.runtime.client.commands}, ensure_ascii=False), flush=True)
         window.close()
         QTimer.singleShot(0, app.quit)
         app.exec()

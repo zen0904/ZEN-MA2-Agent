@@ -1,1 +1,1 @@
-{"id":"effects.builder","name":"Effect Builder","version":"0.0","description":"Workflow placeholder.","intents":["build_effect"],"required_state":["effects","selection"],"safety":"MODIFY","enabled":false}
+{"id":"effects.builder","name":"Effect Builder","version":"1.0","description":"Deterministic grandMA2 3.9 Dimmer Chase builder with preview, approval, and partial pool verification.","intents":["build_dimmer_chase"],"required_state":["groups","effects"],"safety":"MODIFY","enabled":true}

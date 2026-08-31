@@ -32,6 +32,10 @@ class AutomationClient:
 
     def execute(self, command):
         self.commands.append(command)
+        if command == "List Group":
+            return 'Group 1 "HYBRID"\n'
+        if command == "List Effect":
+            return "Effect 1 Base\n"
         return ""
 
     def close(self):
@@ -109,6 +113,21 @@ class DesktopAutomationTests(unittest.TestCase):
         transcript = self.bridge_request({"action": "chat_text"})["chat_text"]
         self.assertIn("Show Diagnostics", transcript)
         self.assertEqual(self.core.last_chat_routing["ROUTER_INTENT"], "diagnose_show")
+
+    def test_execute_pending_is_fixed_desktop_handler_not_raw_transport(self):
+        self.bridge_request({"action": "connect"})
+        self.bridge_request({"action": "submit", "text": "Beam 亮 30%"})
+        executed = self.bridge_request({"action": "execute_pending"})
+        self.assertEqual((executed["ok"], executed["handler"], executed["pending"]), (True, "ZenDesktop.execute_action", False))
+        self.assertEqual(self.runtime.client.commands, ['Group "BEAM"; At 30'])
+
+    def test_packaged_desktop_path_previews_effect_builder_before_any_modify(self):
+        self.bridge_request({"action": "connect"})
+        self.bridge_request({"action": "submit", "text": "幫 HYBRID 做 Dimmer Chase"})
+        transcript = self.bridge_request({"action": "chat_text"})["chat_text"]
+        self.assertIn("Effect Builder Preview", transcript)
+        self.assertIn("Approval required.", transcript)
+        self.assertEqual(self.runtime.client.commands, ["List Group", "List Effect"])
 
     def test_shutdown_is_fixed_action(self):
         # Dispatch is queued to the GUI thread and returns before close executes.
