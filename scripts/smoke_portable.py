@@ -78,7 +78,7 @@ def _chat_routing_smoke() -> int:
         raise SystemExit(geometry.stdout + geometry.stderr)
     payload = json.loads(next(line for line in reversed(geometry.stdout.splitlines()) if line.startswith("{")))
     routing, response = payload.get("routing", {}), payload.get("response", {})
-    if routing.get("ROUTER_INTENT") != "geometry_clone_mapping" or routing.get("PROVIDER") != "GeometryCloneSkill" or response.get("kind") != "ANSWER" or "101 → 201" not in response.get("text", ""):
+    if routing.get("ROUTER_INTENT") != "geometry_clone_mapping" or routing.get("PROVIDER") != "GeometryCloneSkill" or response.get("kind") != "ANSWER" or "Fixtures: 2" not in response.get("text", "") or "Ordered 1:1" not in response.get("text", ""):
         raise SystemExit(f"Portable Geometry Clone mapping smoke mismatch: {payload}")
     preview = subprocess.run([str(EXE), "--portable-routing-smoke", "Clone Group 1 to Group 2"], cwd=bundle, env=environment, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=25)
     if preview.returncode:
