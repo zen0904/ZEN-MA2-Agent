@@ -160,7 +160,10 @@ def _parse_geometry_clone(source: str) -> Intent | None:
         return _geometry_intent("geometry_clone_mapping", match.group(1), match.group(2), source)
     match = re.fullmatch(r"(?:預覽|preview)\s+(.+?)\s*(?:→|->)\s*(.+?)\s*(?:clone|複製)", normalized, flags=re.I)
     if match:
-        return _geometry_intent("geometry_clone_mapping", match.group(1), match.group(2), source)
+        # A Clone Preview keeps MODIFY semantics and displays the same
+        # approval boundary as an ordinary Clone request.  It is still never
+        # an execution request by itself.
+        return _geometry_intent("geometry_clone", match.group(1), match.group(2), source)
     # This form must precede generic Clone matching because a Group name may
     # legitimately contain the word "to".
     match = re.fullmatch(r"(?:用\s+)?(.+?)\s*(?:當來源|as\s+source)\s*[,，]?\s*(.+?)\s*(?:當目標|as\s+destination)", normalized, flags=re.I)

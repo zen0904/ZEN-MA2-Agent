@@ -99,18 +99,18 @@ class GeometryCloneTests(unittest.TestCase):
 
     def test_natural_language_forms_bind_source_and_destination_without_commands(self):
         cases = {
-            "把 HYBRID Clone 到 SPOT": ("HYBRID", "SPOT"),
-            "Clone Group 1 到 Group 2": (1, 2),
-            "用 Clone From 當來源，Clone To 當目標": ("Clone From", "Clone To"),
-            "預覽 Group 1 → Group 2 Clone": (1, 2),
+            "把 HYBRID Clone 到 SPOT": ("geometry_clone", "HYBRID", "SPOT"),
+            "Clone Group 1 到 Group 2": ("geometry_clone", 1, 2),
+            "用 Clone From 當來源，Clone To 當目標": ("geometry_clone", "Clone From", "Clone To"),
+            "預覽 Group 1 → Group 2 Clone": ("geometry_clone", 1, 2),
         }
         for text, expected in cases.items():
             with self.subTest(text=text):
                 intent = parse(text)
-                self.assertIn(intent.kind, {"geometry_clone", "geometry_clone_mapping"})
+                self.assertEqual(intent.kind, expected[0])
                 source = intent.parameters.get("source_group_number", intent.parameters.get("source_group_name"))
                 destination = intent.parameters.get("destination_group_number", intent.parameters.get("destination_group_name"))
-                self.assertEqual((source, destination), expected)
+                self.assertEqual((source, destination), expected[1:])
 
     def test_safe_mapping_query_uses_same_ordered_state(self):
         response = self.core.handle_request("HYBRID 跟 SPOT 的 Clone mapping 是什麼？")
