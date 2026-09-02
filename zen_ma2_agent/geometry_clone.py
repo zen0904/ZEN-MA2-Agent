@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from dataclasses import asdict, dataclass
 from typing import Any
 
@@ -216,7 +217,15 @@ class GeometryCloneSkill:
             )
             for pair in spec.pairs
         )
-        executable = bool(self.manifest.enabled and spec.mapping_mode == "ORDERED_1_TO_1" and commands)
+        isolated_test = bool(task.intent.parameters.get("isolated_test_show"))
+        test_pair = (
+            os.environ.get("ZEN_MA2_GEOMETRY_TEST_MODE") == "1"
+            and spec.source_group_number == 90
+            and spec.destination_group_number == 91
+            and spec.source_group_name == "ZEN Clone Src TEST"
+            and spec.destination_group_name == "ZEN Clone Dst TEST"
+        )
+        executable = bool((self.manifest.enabled or (isolated_test and test_pair)) and spec.mapping_mode == "ORDERED_1_TO_1" and commands)
         return WorkflowPlan(
             task,
             (

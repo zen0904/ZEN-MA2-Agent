@@ -23,6 +23,17 @@ from .workflow import WorkflowPlan
 from .effect_builder import EffectBuildError, EffectTargetAmbiguous, resolve_effect_spec
 from .geometry_clone import GeometryCloneAmbiguous, GeometryCloneError, GeometryCloneSpec, format_mapping, membership_fingerprint, resolve_geometry_clone_spec
 from .timecode_offset import TimecodeOffsetError, fingerprint_timecode, resolve_timecode_offset_spec
+from .geometry_test_environment import (
+    DESTINATION_GROUP,
+    DESTINATION_LABEL,
+    GeometryTestEnvironmentError,
+    GeometryTestGroupSpec,
+    PRODUCTION_SHOW,
+    SOURCE_GROUP,
+    SOURCE_LABEL,
+    TEST_SHOW,
+    test_mode_enabled,
+)
 from .models import Intent
 
 
@@ -65,6 +76,7 @@ class AgentCore:
         self.diagnostics = ShowDiagnostics()
         self.last_diagnostics: DiagnosticReport | None = None
         self.last_chat_routing: dict[str, Any] | None = None
+        self._isolated_geometry_test_loaded = False
         self.runtime.log("startup", {"build_identity": self.build_identity, "runtime_root": str(self.runtime.root)})
 
     def snapshot(self) -> dict[str, Any]:
@@ -305,6 +317,14 @@ class AgentCore:
                 workflow = self._plan_timecode_offset(route.intent)
             elif route.intent.kind == "timecode_test_setup":
                 workflow = self._plan_timecode_test_setup(route.intent)
+            elif route.intent.kind == "geometry_test_setup_groups":
+                workflow = self._plan_geometry_test_groups(route.intent)
+            elif route.intent.kind == "geometry_test_load_show":
+                workflow = self.skills.plan_intent(route.intent, self.state, self.runtime.preferences)
+            elif route.intent.kind == "geometry_test_restore_show":
+                if not self._isolated_geometry_test_loaded:
+                    raise GeometryTestEnvironmentError("Production restore is available only after this process loaded the isolated Geometry test show.")
+                workflow = self.skills.plan_intent(route.intent, self.state, self.runtime.preferences)
             elif route.intent.kind == "geometry_clone":
                 workflow = self._plan_geometry_clone(route.intent)
             else:
@@ -312,7 +332,7 @@ class AgentCore:
             self.runtime.log("workflow_preview", workflow.as_dict())
         except (EffectTargetAmbiguous, GeometryCloneAmbiguous) as exc:
             return self._respond(ResponseType.NEEDS_CLARIFICATION, str(exc), intent=route.intent)
-        except (SkillError, ConnectionError, EffectBuildError, GeometryCloneError, TimecodeOffsetError, ValueError) as exc:
+        except (SkillError, ConnectionError, EffectBuildError, GeometryCloneError, TimecodeOffsetError, GeometryTestEnvironmentError, ValueError) as exc:
             return self._respond(ResponseType.ERROR, str(exc) or "Unable to prepare a safe workflow.", intent=route.intent)
         if not workflow.executable:
             message = workflow.preview_note + "\n\nExecution: Disabled pending safe real-machine Clone write validation."
@@ -328,7 +348,7 @@ class AgentCore:
         record = ActionRecord(action_id, workflow)
         self.actions[action_id] = record
         self._active_action_id = action_id
-        response = workflow.preview_note if workflow.task.skill_id in {"effects.builder", "timecode.offset", "clone.geometry"} else "Workflow plan ready for review." if workflow.executable else workflow.preview_note
+        response = workflow.preview_note if workflow.task.skill_id in {"effects.builder", "timecode.offset", "clone.geometry", "geometry.test_environment"} else "Workflow plan ready for review." if workflow.executable else workflow.preview_note
         self.chat.append({"role": "assistant", "kind": ResponseType.ACTION_PLAN.value, "text": response, "action_id": action_id})
         self.progress = "Waiting for approval"
         self.events.emit("plan", self.snapshot())
@@ -374,7 +394,15 @@ class AgentCore:
     def _plan_geometry_clone(self, intent: Any) -> WorkflowPlan:
         """Bind only fresh Group inventory and export-backed membership to Clone."""
         spec = self._resolve_geometry_clone_spec(intent)
-        bound = Intent(intent.kind, {**intent.parameters, "geometry_clone_spec": spec.summary()}, intent.source_text)
+        isolated_test = (
+            self._isolated_geometry_test_loaded
+            and test_mode_enabled()
+            and spec.source_group_number == SOURCE_GROUP
+            and spec.destination_group_number == DESTINATION_GROUP
+            and spec.source_group_name == SOURCE_LABEL
+            and spec.destination_group_name == DESTINATION_LABEL
+        )
+        bound = Intent(intent.kind, {**intent.parameters, "geometry_clone_spec": spec.summary(), "isolated_test_show": isolated_test}, intent.source_text)
         return self.skills.plan_intent(bound, self.state, self.runtime.preferences)
 
     def _resolve_geometry_clone_spec(self, intent: Any) -> GeometryCloneSpec:
@@ -410,6 +438,27 @@ class AgentCore:
         if any(item.get("timecode_number") == number for item in (current.values if current else [])):
             raise TimecodeOffsetError(f"Test Timecode {number} already exists; refusing to overwrite it.")
         return self.skills.plan_intent(intent, self.state, self.runtime.preferences)
+
+    def _plan_geometry_test_groups(self, intent: Any) -> WorkflowPlan:
+        """Bind two fresh Fixture identities into an isolated-only Group setup."""
+        if not (test_mode_enabled() and self._isolated_geometry_test_loaded):
+            raise GeometryTestEnvironmentError("Geometry test Group setup requires an approved isolated Test Show load in this process.")
+        source, destination = intent.parameters.get("source_fixture"), intent.parameters.get("destination_fixture")
+        if not isinstance(source, int) or not isinstance(destination, int) or source < 1 or destination < 1 or source == destination:
+            raise GeometryTestEnvironmentError("Geometry test Group setup requires two distinct positive Fixture IDs.")
+        self.refresh_state("groups")
+        groups = self.state.get("groups")
+        occupied = [number for number in (SOURCE_GROUP, DESTINATION_GROUP) if any(item.get("number") == number for item in (groups.values if groups else []))]
+        if occupied:
+            raise GeometryTestEnvironmentError(f"Refusing to overwrite existing isolated test Group(s): {', '.join(map(str, occupied))}.")
+        self.refresh_state("fixtures")
+        fixtures = self.state.get("fixtures")
+        numbers = {item.get("number") for item in (fixtures.values if fixtures else [])}
+        missing = [number for number in (source, destination) if number not in numbers]
+        if missing:
+            raise GeometryTestEnvironmentError(f"Test Fixture inventory does not contain: {', '.join(map(str, missing))}.")
+        bound = Intent(intent.kind, {**intent.parameters, "geometry_test_group_spec": GeometryTestGroupSpec(source, destination).summary()}, intent.source_text)
+        return self.skills.plan_intent(bound, self.state, self.runtime.preferences)
 
     def submit_request(self, text: str, source: str = "desktop") -> dict[str, Any]:
         """Backward-compatible alias; all callers should use handle_request."""
@@ -670,6 +719,9 @@ class AgentCore:
             "state_timecode_events": "TimecodeProvider",
             "offset_timecode": "TimecodeOffsetSkill",
             "timecode_test_setup": "TimecodeOffsetSkill",
+            "geometry_test_load_show": "GeometryTestEnvironmentSkill",
+            "geometry_test_restore_show": "GeometryTestEnvironmentSkill",
+            "geometry_test_setup_groups": "GeometryTestEnvironmentSkill",
             "geometry_clone": "GeometryCloneSkill",
             "geometry_clone_mapping": "GeometryCloneSkill",
         }
@@ -707,7 +759,22 @@ class AgentCore:
             commands = self.skills.approved_commands(action.workflow.task.skill_id, action.workflow)
             results = self.runtime.execute_approved_commands(commands)
             result = "\n".join(item for item in results if item) or "Approved MA2 workflow commands sent"
-            if action.workflow.task.skill_id == "effects.builder":
+            intent_kind = action.workflow.task.intent.kind
+            if intent_kind.startswith("geometry_test_") and re.search(r"(?:\berror\b|\billegal\b|\bfailed\b)", result, re.I):
+                raise GeometryTestEnvironmentError("MA2 reported an error while executing the approved workflow.")
+            if intent_kind == "geometry_test_load_show":
+                self._isolated_geometry_test_loaded = True
+                for resource in self.state.RESOURCES:
+                    self.state.mark_stale(resource)
+                result += f"\nVerification: Test Show \"{TEST_SHOW}\" load command completed. Refresh its Fixture inventory before any setup."
+            elif intent_kind == "geometry_test_restore_show":
+                self._isolated_geometry_test_loaded = False
+                for resource in self.state.RESOURCES:
+                    self.state.mark_stale(resource)
+                result += f"\nVerification: Production Show \"{PRODUCTION_SHOW}\" restore command completed. Refresh production state."
+            elif intent_kind == "geometry_test_setup_groups":
+                result = self._verify_geometry_test_groups(action, result)
+            elif action.workflow.task.skill_id == "effects.builder":
                 result = self._verify_effect_builder(action, result)
             elif action.workflow.task.intent.kind == "offset_timecode":
                 result = self._verify_timecode_offset(action, result)
@@ -725,6 +792,32 @@ class AgentCore:
             raise
         self.events.emit("execution", self.snapshot())
         return {"id": action.id, "status": action.status, "result": action.result}
+
+    def _verify_geometry_test_groups(self, action: ActionRecord, execution_result: str) -> str:
+        raw = action.workflow.task.intent.parameters.get("geometry_test_group_spec")
+        try:
+            spec = GeometryTestGroupSpec(int(raw["source_fixture"]), int(raw["destination_fixture"])) if isinstance(raw, dict) else None
+            if not spec:
+                raise GeometryTestEnvironmentError("Test Group setup metadata is incomplete.")
+            self.refresh_state("groups")
+            groups = self.state.get("groups")
+            expected_names = {SOURCE_GROUP: SOURCE_LABEL, DESTINATION_GROUP: DESTINATION_LABEL}
+            for number, name in expected_names.items():
+                group = next((item for item in (groups.values if groups else []) if item.get("number") == number and item.get("name") == name), None)
+                if not group:
+                    raise GeometryTestEnvironmentError(f"Group {number} was not returned with its expected test-only label.")
+            expected_members = {SOURCE_GROUP: spec.source_fixture, DESTINATION_GROUP: spec.destination_fixture}
+            for number, fixture in expected_members.items():
+                refreshed = self.refresh_state("group_membership", group_no=number)
+                member = next((item for item in refreshed["values"] if item.get("group_no") == number), None)
+                if not member or list(member.get("fixtures") or []) != [fixture]:
+                    raise GeometryTestEnvironmentError(f"Group {number} does not contain exactly Fixture {fixture}.")
+            return execution_result + f"\nVerification: PASSED — Group {SOURCE_GROUP} contains Fixture {spec.source_fixture}; Group {DESTINATION_GROUP} contains Fixture {spec.destination_fixture}."
+        except Exception as exc:
+            self.runtime.log("geometry_test_group_verification", {"status": "FAILED", "error": str(exc)})
+            raise GeometryTestEnvironmentError(
+                f"Verification failed — isolated Geometry test Groups could not be verified: {exc}"
+            ) from exc
 
     def _ensure_timecode_state_unchanged(self, action: ActionRecord) -> None:
         raw = action.workflow.task.intent.parameters.get("timecode_offset_spec", {})

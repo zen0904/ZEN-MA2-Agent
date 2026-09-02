@@ -110,6 +110,9 @@ class DesktopAutomationBridge(QObject):
                 result = {"ok": True, "handler": "ZenDesktop.submit", "connection_state": self.desktop.core.runtime.state.value}
             elif action == "chat_text":
                 result = {"ok": True, "chat_text": self.desktop.chat.toPlainText()}
+            elif action == "state_snapshot":
+                snapshot = self.desktop.core.snapshot()
+                result = {"ok": True, "state_browser": snapshot["state_browser"], "actions": snapshot["actions"]}
             elif action == "execute_pending":
                 # Deliberately use the actual Desktop Execute handler.  The
                 # bridge cannot supply an action id or arbitrary MA command.

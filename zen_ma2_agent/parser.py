@@ -39,6 +39,14 @@ def parse(text: str) -> Intent:
     test_setup = re.fullmatch(r"ZEN TEST create Timecode\s+(\d+)", state_source, re.I)
     if test_setup and os.environ.get("ZEN_MA2_TIMECODE_TEST_MODE") == "1":
         return Intent("timecode_test_setup", {"timecode_number": int(test_setup.group(1))}, source)
+    if os.environ.get("ZEN_MA2_GEOMETRY_TEST_MODE") == "1":
+        if re.fullmatch(r"ZEN TEST load geometry show", state_source, re.I):
+            return Intent("geometry_test_load_show", {}, source)
+        if re.fullmatch(r"ZEN TEST restore production show", state_source, re.I):
+            return Intent("geometry_test_restore_show", {}, source)
+        geometry_groups = re.fullmatch(r"ZEN TEST setup geometry groups\s+(\d+)\s+(\d+)", state_source, re.I)
+        if geometry_groups:
+            return Intent("geometry_test_setup_groups", {"source_fixture": int(geometry_groups.group(1)), "destination_fixture": int(geometry_groups.group(2))}, source)
     if re.fullmatch(r"(?:檢查(?:這個|目前)?\s*show|show\s*diagnostics|這個\s*show\s*有沒有問題|幫我檢查(?:目前)?\s*show)", state_source, flags=re.I):
         return Intent("diagnose_show", {}, source)
     if re.fullmatch(r"(?:顯示)?詳細診斷", state_source, flags=re.I):

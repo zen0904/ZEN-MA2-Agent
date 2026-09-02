@@ -1,0 +1,14 @@
+{
+  "id": "geometry.test_environment",
+  "name": "Geometry Clone Test Environment",
+  "version": "1.0",
+  "description": "Explicit test-mode-only isolated Show switching and Group setup for Geometry Clone real-machine verification.",
+  "intents": [
+    "geometry_test_load_show",
+    "geometry_test_restore_show",
+    "geometry_test_setup_groups"
+  ],
+  "required_state": [],
+  "safety": "MODIFY",
+  "enabled": true
+}

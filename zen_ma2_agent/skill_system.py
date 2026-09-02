@@ -114,6 +114,9 @@ class SkillRegistry:
                     elif manifest.id == "clone.geometry":
                         from .geometry_clone import GeometryCloneSkill
                         self._implementations[manifest.id] = GeometryCloneSkill(manifest)
+                    elif manifest.id == "geometry.test_environment":
+                        from .geometry_test_environment import GeometryTestEnvironmentSkill
+                        self._implementations[manifest.id] = GeometryTestEnvironmentSkill(manifest)
                     else:
                         self._implementations[manifest.id] = BuiltinCommandSkill(manifest)
 
