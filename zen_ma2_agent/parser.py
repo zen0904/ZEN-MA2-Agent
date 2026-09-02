@@ -50,6 +50,9 @@ def parse(text: str) -> Intent:
     if match:
         aliases = {"佈局": "layout", "布局": "layout", "群組": "group", "序列": "sequence"}
         return Intent("diagnose_show_filter", {"category": aliases.get(match.group(1).casefold(), match.group(1).casefold())}, source)
+    geometry_clone = _parse_geometry_clone(source)
+    if geometry_clone:
+        return geometry_clone
     match = re.fullmatch(r"(?:群組|group)\s*(\d+)\s*(?:裡|里|中)\s*(?:有)?\s*(?:哪些)?\s*(?:燈|燈具|fixture|fixtures)", state_source, flags=re.I)
     if match:
         return Intent("state_group_membership", {"group_no": int(match.group(1))}, source)
@@ -128,6 +131,49 @@ def parse(text: str) -> Intent:
     if source.lower() in {"blackout", "bo", "全黑"}:
         return Intent("blackout", {}, source)
     raise ParseError("No deterministic intent matched.")
+
+
+def _geometry_selector(value: str, parameters: dict[str, object], prefix: str) -> None:
+    candidate = value.strip().strip("'\"")
+    candidate = re.sub(r"^(?:group|群組)\s*", "", candidate, flags=re.I).strip()
+    if re.fullmatch(r"\d+", candidate):
+        parameters[f"{prefix}_group_number"] = int(candidate)
+    elif candidate:
+        parameters[f"{prefix}_group_name"] = candidate
+    else:
+        raise ParseError("Geometry Clone requires both source and destination Groups.")
+
+
+def _geometry_intent(kind: str, source_group: str, destination_group: str, source: str) -> Intent:
+    parameters: dict[str, object] = {}
+    _geometry_selector(source_group, parameters, "source")
+    _geometry_selector(destination_group, parameters, "destination")
+    return Intent(kind, parameters, source)
+
+
+def _parse_geometry_clone(source: str) -> Intent | None:
+    """Recognize v1 Group-order Clone requests without compiling MA2 text."""
+    normalized = source.rstrip("?？").strip()
+    # SAFE mapping/count queries.
+    match = re.fullmatch(r"(?:幫我看\s*)?(.+?)\s*(?:跟|and)\s*(.+?)\s*(?:數量一樣嗎|能不能\s*1\s*[:：]\s*1\s*(?:clone|複製)|的?\s*(?:clone|複製)\s*(?:mapping|對應)\s*(?:是什麼)?)", normalized, flags=re.I)
+    if match:
+        return _geometry_intent("geometry_clone_mapping", match.group(1), match.group(2), source)
+    match = re.fullmatch(r"(?:預覽|preview)\s+(.+?)\s*(?:→|->)\s*(.+?)\s*(?:clone|複製)", normalized, flags=re.I)
+    if match:
+        return _geometry_intent("geometry_clone_mapping", match.group(1), match.group(2), source)
+    # This form must precede generic Clone matching because a Group name may
+    # legitimately contain the word "to".
+    match = re.fullmatch(r"(?:用\s+)?(.+?)\s*(?:當來源|as\s+source)\s*[,，]?\s*(.+?)\s*(?:當目標|as\s+destination)", normalized, flags=re.I)
+    if match:
+        return _geometry_intent("geometry_clone", match.group(1), match.group(2), source)
+    # Action request forms.
+    match = re.fullmatch(r"(?:clone|複製)\s*(.+?)\s*(?:變|到|至|to)\s*(.+?)", normalized, flags=re.I)
+    if match:
+        return _geometry_intent("geometry_clone", match.group(1), match.group(2), source)
+    match = re.fullmatch(r"(?:把|將)?\s*(.+?)\s*(?:clone|複製)\s*(?:變|到|至|to)\s*(.+?)", normalized, flags=re.I)
+    if match:
+        return _geometry_intent("geometry_clone", match.group(1), match.group(2), source)
+    return None
 
 
 def _parse_dimmer_chase(source: str) -> Intent | None:

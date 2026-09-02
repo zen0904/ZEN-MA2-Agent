@@ -30,11 +30,6 @@ class RequestRoute:
 class IntentRouter:
     """General request entrypoint; deterministic parsing is one provider only."""
 
-    _clone = re.compile(
-        r"(?:複製|clone)\s*(?:群組|group)\s*(\d+)\s*(?:變|到|to)\s*(?:群組|group)?\s*(\d+)",
-        re.I,
-    )
-
     def normalize(self, text: str) -> str:
         return re.sub(r"\s+", " ", unicodedata.normalize("NFKC", text).strip())
 
@@ -42,15 +37,11 @@ class IntentRouter:
         normalized = self.normalize(text)
         if not normalized:
             return RequestRoute(ResponseType.NEEDS_CLARIFICATION, normalized)
-        clone = self._clone.fullmatch(normalized)
-        if clone:
-            intent = Intent("group_clone", {"source_group": int(clone.group(1)), "destination_group": int(clone.group(2))}, normalized)
-            return self._capability_route(normalized, intent, registry)
         try:
             intent = parse(normalized)
         except ParseError:
             return RequestRoute(ResponseType.NEEDS_CLARIFICATION, normalized)
-        if intent.kind.startswith("state_") or intent.kind in {"diagnose_show", "diagnose_show_details", "diagnose_show_filter", "layout_items_query", "layout_all_objects_query", "preset_list", "effect_list", "effect_next_page", "effect_lookup", "sequence_executor_lookup", "page_executor_list"}:
+        if intent.kind.startswith("state_") or intent.kind in {"diagnose_show", "diagnose_show_details", "diagnose_show_filter", "layout_items_query", "layout_all_objects_query", "preset_list", "effect_list", "effect_next_page", "effect_lookup", "sequence_executor_lookup", "page_executor_list", "geometry_clone_mapping"}:
             return RequestRoute(ResponseType.ANSWER, normalized, intent)
         return self._capability_route(normalized, intent, registry)
 
@@ -59,6 +50,10 @@ class IntentRouter:
         capability = registry.capability_for_intent(intent.kind)
         if not capability:
             return RequestRoute(ResponseType.NEEDS_CLARIFICATION, normalized, intent)
+        # Geometry Clone keeps its manifest disabled until a safe real-machine
+        # write target exists, but its deterministic Preview remains available.
+        if intent.kind == "geometry_clone" and capability.id == "clone.geometry":
+            return RequestRoute(ResponseType.ACTION_PLAN, normalized, intent, capability)
         if not capability.enabled or not capability.executable:
             return RequestRoute(ResponseType.NOT_IMPLEMENTED, normalized, intent, capability)
         return RequestRoute(ResponseType.ACTION_PLAN, normalized, intent, capability)

@@ -21,6 +21,7 @@ from .state.store import StateStore
 from .telnet_client import ConnectionState
 from .workflow import WorkflowPlan
 from .effect_builder import EffectBuildError, EffectTargetAmbiguous, resolve_effect_spec
+from .geometry_clone import GeometryCloneAmbiguous, GeometryCloneError, GeometryCloneSpec, format_mapping, membership_fingerprint, resolve_geometry_clone_spec
 from .timecode_offset import TimecodeOffsetError, fingerprint_timecode, resolve_timecode_offset_spec
 from .models import Intent
 
@@ -304,13 +305,21 @@ class AgentCore:
                 workflow = self._plan_timecode_offset(route.intent)
             elif route.intent.kind == "timecode_test_setup":
                 workflow = self._plan_timecode_test_setup(route.intent)
+            elif route.intent.kind == "geometry_clone":
+                workflow = self._plan_geometry_clone(route.intent)
             else:
                 workflow = self.skills.plan_intent(route.intent, self.state, self.runtime.preferences)
             self.runtime.log("workflow_preview", workflow.as_dict())
-        except EffectTargetAmbiguous as exc:
+        except (EffectTargetAmbiguous, GeometryCloneAmbiguous) as exc:
             return self._respond(ResponseType.NEEDS_CLARIFICATION, str(exc), intent=route.intent)
-        except (SkillError, ConnectionError, EffectBuildError, TimecodeOffsetError, ValueError) as exc:
+        except (SkillError, ConnectionError, EffectBuildError, GeometryCloneError, TimecodeOffsetError, ValueError) as exc:
             return self._respond(ResponseType.ERROR, str(exc) or "Unable to prepare a safe workflow.", intent=route.intent)
+        if not workflow.executable:
+            message = workflow.preview_note + "\n\nExecution: Disabled pending safe real-machine Clone write validation."
+            self.chat.append({"role": "assistant", "kind": ResponseType.ACTION_PLAN.value, "text": message})
+            self.progress = "Idle"
+            self.events.emit("plan", self.snapshot())
+            return {"type": ResponseType.ACTION_PLAN.value, "message": message, "action": {"id": None, "status": "PREVIEW_ONLY", **workflow.as_dict()}}
         action_id = uuid.uuid4().hex[:12]
         if self._active_action_id:
             previous = self.actions.get(self._active_action_id)
@@ -319,7 +328,7 @@ class AgentCore:
         record = ActionRecord(action_id, workflow)
         self.actions[action_id] = record
         self._active_action_id = action_id
-        response = workflow.preview_note if workflow.task.skill_id in {"effects.builder", "timecode.offset"} else "Workflow plan ready for review." if workflow.executable else workflow.preview_note
+        response = workflow.preview_note if workflow.task.skill_id in {"effects.builder", "timecode.offset", "clone.geometry"} else "Workflow plan ready for review." if workflow.executable else workflow.preview_note
         self.chat.append({"role": "assistant", "kind": ResponseType.ACTION_PLAN.value, "text": response, "action_id": action_id})
         self.progress = "Waiting for approval"
         self.events.emit("plan", self.snapshot())
@@ -362,6 +371,35 @@ class AgentCore:
         bound = Intent(intent.kind, {**intent.parameters, "timecode_offset_spec": spec.summary()}, intent.source_text)
         return self.skills.plan_intent(bound, self.state, self.runtime.preferences)
 
+    def _plan_geometry_clone(self, intent: Any) -> WorkflowPlan:
+        """Bind only fresh Group inventory and export-backed membership to Clone."""
+        spec = self._resolve_geometry_clone_spec(intent)
+        bound = Intent(intent.kind, {**intent.parameters, "geometry_clone_spec": spec.summary()}, intent.source_text)
+        return self.skills.plan_intent(bound, self.state, self.runtime.preferences)
+
+    def _resolve_geometry_clone_spec(self, intent: Any) -> GeometryCloneSpec:
+        self.refresh_state("groups")
+        groups_snapshot = self.state.get("groups")
+        groups = list(groups_snapshot.values if groups_snapshot else [])
+        # Resolve identity before exporting; ambiguous names never select a Group.
+        parameters = intent.parameters
+        from .geometry_clone import _resolve_group
+        source = _resolve_group(groups, number=parameters.get("source_group_number"), name=parameters.get("source_group_name"), role="source")
+        destination = _resolve_group(groups, number=parameters.get("destination_group_number"), name=parameters.get("destination_group_name"), role="destination")
+        memberships: dict[int, dict[str, Any]] = {}
+        try:
+            for group_no in (int(source["number"]), int(destination["number"])):
+                result = self.refresh_state("group_membership", group_no=group_no)
+                if result.get("status") != "available":
+                    raise GeometryCloneError("Cannot build Geometry Clone because Group Membership state is not fresh.")
+                member = next((item for item in result["values"] if item.get("group_no") == group_no), None)
+                if not member:
+                    raise GeometryCloneError("Cannot build Geometry Clone because Group Membership state is not fresh.")
+                memberships[group_no] = member
+        except (GroupMembershipProviderError, GroupMembershipProviderUnavailable, ConnectionError, ValueError) as exc:
+            raise GeometryCloneError(f"Cannot build Geometry Clone because Group Membership state is not fresh: {exc}") from exc
+        return resolve_geometry_clone_spec(intent, groups=groups, memberships=memberships)
+
     def _plan_timecode_test_setup(self, intent: Any) -> WorkflowPlan:
         """Only the explicit packaged verifier can reach this test setup intent."""
         self.refresh_state("timecodes")
@@ -387,6 +425,9 @@ class AgentCore:
     def _answer_state(self, intent: Any) -> dict[str, Any]:
         try:
             kind, parameters = intent.kind, intent.parameters
+            if kind == "geometry_clone_mapping":
+                spec = self._resolve_geometry_clone_spec(intent)
+                return self._respond(ResponseType.ANSWER, format_mapping(spec, preview=False), intent=intent, state={"resource": "group_membership", "status": "available"})
             if kind == "diagnose_show":
                 report = self.run_show_diagnostics()
                 return self._respond(ResponseType.ANSWER, self._format_diagnostics(report), intent=intent, diagnostics=report.as_dict())
@@ -439,7 +480,9 @@ class AgentCore:
             elif kind in {"state_sequence_executors", "sequence_executor_lookup", "page_executor_list"}: result = self.refresh_state("executors")
             else:
                 result = self.refresh_state(kind.removeprefix("state_"))
-        except (ConnectionError, PermissionError, ValueError) as exc:
+        except GeometryCloneAmbiguous as exc:
+            return self._respond(ResponseType.NEEDS_CLARIFICATION, str(exc), intent=intent)
+        except (ConnectionError, PermissionError, GeometryCloneError, ValueError) as exc:
             return self._respond(ResponseType.ERROR, str(exc), intent=intent)
         if result["status"] != "available":
             return self._respond(ResponseType.ANSWER, result.get("error") or f"{result['resource']} is unavailable.", intent=intent, state=result)
@@ -627,6 +670,8 @@ class AgentCore:
             "state_timecode_events": "TimecodeProvider",
             "offset_timecode": "TimecodeOffsetSkill",
             "timecode_test_setup": "TimecodeOffsetSkill",
+            "geometry_clone": "GeometryCloneSkill",
+            "geometry_clone_mapping": "GeometryCloneSkill",
         }
         return providers.get(intent.kind)
 
@@ -653,6 +698,8 @@ class AgentCore:
             raise PermissionError("Dangerous actions require a second confirmation.")
         if action.workflow.task.intent.kind == "offset_timecode":
             self._ensure_timecode_state_unchanged(action)
+        elif action.workflow.task.intent.kind == "geometry_clone":
+            self._ensure_geometry_clone_state_unchanged(action)
         action.status = "APPROVED"
         self.progress = "Executing"
         self.events.emit("progress", {"stage": self.progress})
@@ -664,6 +711,8 @@ class AgentCore:
                 result = self._verify_effect_builder(action, result)
             elif action.workflow.task.intent.kind == "offset_timecode":
                 result = self._verify_timecode_offset(action, result)
+            elif action.workflow.task.intent.kind == "geometry_clone":
+                result = self._verify_geometry_clone(action, result)
             action.status, action.result = "EXECUTED", result
             self._active_action_id = None
             self.chat.append({"role": "assistant", "kind": "result", "text": action.result, "action_id": action_id})
@@ -686,6 +735,55 @@ class AgentCore:
         current = next((item for item in refreshed["values"] if item.get("timecode_number") == number), None)
         if not current or fingerprint_timecode(current) != expected:
             raise TimecodeOffsetError("STATE_CHANGED_SINCE_PREVIEW: Timecode inventory changed; create a new Preview before executing.")
+
+    def _ensure_geometry_clone_state_unchanged(self, action: ActionRecord) -> None:
+        raw = action.workflow.task.intent.parameters.get("geometry_clone_spec", {})
+        try:
+            spec = GeometryCloneSpec.from_summary(raw)
+            expected = {
+                spec.source_group_number: spec.source_membership_fingerprint,
+                spec.destination_group_number: spec.destination_membership_fingerprint,
+            }
+            for group_no, fingerprint in expected.items():
+                refreshed = self.refresh_state("group_membership", group_no=group_no)
+                current = next((item for item in refreshed["values"] if item.get("group_no") == group_no), None)
+                if not current or membership_fingerprint(current) != fingerprint:
+                    raise GeometryCloneError("STATE_CHANGED_SINCE_PREVIEW")
+        except (GeometryCloneError, GroupMembershipProviderError, GroupMembershipProviderUnavailable, ConnectionError, ValueError) as exc:
+            message = str(exc) or "Group Membership could not be refreshed."
+            if not message.startswith("STATE_CHANGED_SINCE_PREVIEW"):
+                message = "STATE_CHANGED_SINCE_PREVIEW: " + message
+            raise GeometryCloneError(message) from exc
+
+    def _verify_geometry_clone(self, action: ActionRecord, execution_result: str) -> str:
+        raw = action.workflow.task.intent.parameters.get("geometry_clone_spec", {})
+        try:
+            spec = GeometryCloneSpec.from_summary(raw)
+            if re.search(r"(?:\berror\b|illegal)", execution_result, re.I):
+                self.runtime.log("geometry_clone_verification", {"status": "FAILED", "reason": "MA2 command feedback reported an error", "source_group": spec.source_group_number, "destination_group": spec.destination_group_number})
+                return execution_result + "\nVerification: FAILED — MA2 Clone command feedback reported an error."
+            memberships: dict[int, dict[str, Any]] = {}
+            for group_no in (spec.source_group_number, spec.destination_group_number):
+                refreshed = self.refresh_state("group_membership", group_no=group_no)
+                member = next((item for item in refreshed["values"] if item.get("group_no") == group_no), None)
+                if not member:
+                    raise GeometryCloneError(f"Group {group_no} membership was not returned after Clone.")
+                memberships[group_no] = member
+            unchanged = (
+                membership_fingerprint(memberships[spec.source_group_number]) == spec.source_membership_fingerprint
+                and membership_fingerprint(memberships[spec.destination_group_number]) == spec.destination_membership_fingerprint
+            )
+            fixtures = self.refresh_state("fixtures")
+            fixture_numbers = {item.get("number") for item in fixtures["values"]}
+            destination_exists = all(fixture in fixture_numbers for fixture in spec.destination_members)
+            if not unchanged or not destination_exists:
+                self.runtime.log("geometry_clone_verification", {"status": "FAILED", "membership_unchanged": unchanged, "destination_fixtures_exist": destination_exists, "source_group": spec.source_group_number, "destination_group": spec.destination_group_number})
+                return execution_result + "\nVerification: FAILED — Group membership changed unexpectedly or a destination Fixture is no longer present."
+            self.runtime.log("geometry_clone_verification", {"status": "PARTIAL", "membership_unchanged": True, "destination_fixtures_exist": True, "source_group": spec.source_group_number, "destination_group": spec.destination_group_number, "pair_count": len(spec.pairs), "internal_clone_data": "UNSUPPORTED"})
+            return execution_result + f"\nVerification: PARTIAL — {len(spec.pairs)} native MA2 Clone commands returned without an error; source/destination Group membership is unchanged and destination Fixtures still exist. Internal cloned fixture data has no verified read-back provider."
+        except Exception as exc:
+            self.runtime.log("geometry_clone_verification", {"status": "PARTIAL", "error": str(exc)})
+            return execution_result + f"\nVerification: PARTIAL — Clone commands were sent, but post-Clone read-back failed: {exc}"
 
     def _verify_timecode_offset(self, action: ActionRecord, execution_result: str) -> str:
         raw = action.workflow.task.intent.parameters.get("timecode_offset_spec", {})

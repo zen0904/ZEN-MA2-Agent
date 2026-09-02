@@ -36,6 +36,18 @@ class _PortableSmokeClient:
 
     def execute(self, command: str) -> str:
         self.commands.append(command)
+        match = re.fullmatch(r'Export Group (\d+) "(ZEN_AGENT_G\d+_[A-Za-z0-9_-]+\.xml)" /nc', command)
+        if match:
+            assert self.export_directory is not None
+            group_no, filename = match.groups()
+            members = {"1": ("HYBRID", (101, 102)), "2": ("SPOT", (201, 202))}.get(group_no, ("", ()))
+            name, fixtures = members
+            fixture_xml = "".join(f'<Subfixture fix_id="{fixture}" />' for fixture in fixtures)
+            (self.export_directory / filename).write_text(
+                f'<MA><Group index="{int(group_no) - 1}" name="{name}"><Subfixtures>{fixture_xml}</Subfixtures></Group></MA>',
+                encoding="utf-8",
+            )
+            return "exported"
         match = re.fullmatch(r'Export Layout (\d+) "(ZEN_AGENT_LAYOUT_\d+_[A-Za-z0-9_-]+\.xml)" /nc', command)
         if match:
             assert self.export_directory is not None
@@ -46,7 +58,7 @@ class _PortableSmokeClient:
             )
             return "exported"
         if command == "List Group":
-            return 'Group 1 "HYBRID"\n'
+            return 'Group 1 "HYBRID"\nGroup 2 "SPOT"\n'
         if command == "List Effect":
             return "Effect 1 Base\n"
         if command == "List Effect 2500":
@@ -58,7 +70,9 @@ class _PortableSmokeClient:
             self.effect_label = command.split('"', 2)[1]
         if command.startswith("Assign Timecode 9000/Offset = "):
             self.timecode_offset = command.rsplit("= ", 1)[1]
-        if command in {"List Fixture", "List Layout", "List Preset All", "List Preset Position", "List Sequence", "List Page", "List Executor"}:
+        if command == "List Fixture":
+            return 'Fixture 101 "Hybrid 1"\nFixture 102 "Hybrid 2"\nFixture 201 "Spot 1"\nFixture 202 "Spot 2"\n'
+        if command in {"List Layout", "List Preset All", "List Preset Position", "List Sequence", "List Page", "List Executor"}:
             return ""
         return "Executing : " + command
 

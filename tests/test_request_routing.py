@@ -46,13 +46,13 @@ class RequestRoutingTests(unittest.TestCase):
     def ready(self):
         self.core.connect("127.0.0.1", 30000, "MM", "")
 
-    def test_clone_phrases_normalize_to_one_not_implemented_capability(self):
-        expected = {"group_clone", 1, 2, "group.clone"}
+    def test_clone_phrases_normalize_to_geometry_clone_capability(self):
         for request in ("複製群組1變2", "複製 Group 1 到 2", "Clone Group 1 to Group 2"):
-            response = self.core.handle_request(request)
-            self.assertEqual(response["type"], "NOT_IMPLEMENTED")
-            self.assertNotIn("Unsupported MVP", response["message"])
-            self.assertEqual({response["intent"].kind, response["intent"].parameters["source_group"], response["intent"].parameters["destination_group"], response["capability"]}, expected)
+            route = self.core.router.route(request, self.core.skills)
+            self.assertEqual(route.response_type.value, "ACTION_PLAN")
+            self.assertEqual(route.intent.kind, "geometry_clone")
+            self.assertEqual((route.intent.parameters["source_group_number"], route.intent.parameters["destination_group_number"]), (1, 2))
+            self.assertEqual(route.capability.id, "clone.geometry")
 
     def test_group_query_automatically_reads_state(self):
         self.ready()
@@ -73,12 +73,14 @@ class RequestRoutingTests(unittest.TestCase):
         self.assertNotIn("Unsupported MVP", response["message"])
 
     def test_desktop_and_mobile_use_same_handle_request_path(self):
-        desktop = self.core.handle_request("複製群組1變2", source="desktop")
+        self.ready()
+        desktop = self.core.router.route("複製群組1變2", self.core.skills)
         client = TestClient(create_app(self.core, self.source_root))
         token = client.post("/api/pair", json={"code": self.core.pairing.code, "nonce": self.core.pairing.nonce}).json()["token"]
-        mobile = client.post("/api/chat", json={"text": "複製群組1變2"}, headers={"Authorization": "Bearer " + token}).json()
-        self.assertEqual((desktop["type"], desktop["intent"].kind), (mobile["type"], mobile["intent"]["kind"]))
-        self.assertEqual([item["source"] for item in self.core.chat if item["role"] == "user"], ["desktop", "mobile"])
+        mobile = client.post("/api/chat", json={"text": "現在有哪些 Group"}, headers={"Authorization": "Bearer " + token}).json()
+        self.assertEqual(desktop.intent.kind, "geometry_clone")
+        self.assertEqual(mobile["type"], "ANSWER")
+        self.assertEqual([item["source"] for item in self.core.chat if item["role"] == "user"], ["mobile"])
 
 
 if __name__ == "__main__":

@@ -129,8 +129,10 @@ whole-show `Timecode/Offset` property through Preview and Approval, only when
 the requested offset is exactly representable by the verified 30 FPS `List
 Timecode` read-back (for example 100 ms, 500 ms, or 1 s). Event/track
 readback, range offsets, non-frame-aligned offsets, and moving a Timecode earlier remain explicit
-`UNSUPPORTED` capabilities rather than guessed commands. Geometry Clone, Auto
-Position, and Programmer Inspect remain explicit placeholders.
+`UNSUPPORTED` capabilities rather than guessed commands. Geometry Clone v1 can
+build a real, read-only ordered Group-membership mapping and a MODIFY Preview,
+but remains Disabled until it has a dedicated safe real-MA2 write target.
+Auto Position and Programmer Inspect remain explicit placeholders.
 
 ## Show Diagnostics v1
 

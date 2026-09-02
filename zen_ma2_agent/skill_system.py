@@ -111,6 +111,9 @@ class SkillRegistry:
                     elif manifest.id == "timecode.offset":
                         from .timecode_offset import TimecodeOffsetSkill
                         self._implementations[manifest.id] = TimecodeOffsetSkill(manifest)
+                    elif manifest.id == "clone.geometry":
+                        from .geometry_clone import GeometryCloneSkill
+                        self._implementations[manifest.id] = GeometryCloneSkill(manifest)
                     else:
                         self._implementations[manifest.id] = BuiltinCommandSkill(manifest)
 
@@ -129,6 +132,8 @@ class SkillRegistry:
 
     def set_enabled(self, skill_id: str, enabled: bool) -> SkillManifest:
         manifest = self.get(skill_id)
+        if skill_id == "clone.geometry" and enabled:
+            raise SkillError("Geometry Clone remains disabled until a dedicated safe real-MA2 write target has been verified.")
         path = self.root / "skills" / manifest.source / skill_id / "manifest.json"
         raw = json.loads(path.read_text(encoding="utf-8"))
         raw["enabled"] = bool(enabled)

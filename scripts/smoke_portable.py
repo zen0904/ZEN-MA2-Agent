@@ -73,6 +73,21 @@ def _chat_routing_smoke() -> int:
     if payload.get("routing", {}).get("ROUTER_INTENT") != "offset_timecode" or payload.get("routing", {}).get("PROVIDER") != "TimecodeOffsetSkill" or payload.get("response", {}).get("kind") != "ACTION_PLAN":
         raise SystemExit(f"Portable Timecode Offset preview routing mismatch: {payload}")
     print("PACKAGED_CHAT|offset_timecode|TimecodeOffsetSkill|Timecode Offset Preview")
+    geometry = subprocess.run([str(EXE), "--portable-routing-smoke", "預覽 Group 1 → Group 2 Clone"], cwd=bundle, env=environment, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=25)
+    if geometry.returncode:
+        raise SystemExit(geometry.stdout + geometry.stderr)
+    payload = json.loads(next(line for line in reversed(geometry.stdout.splitlines()) if line.startswith("{")))
+    routing, response = payload.get("routing", {}), payload.get("response", {})
+    if routing.get("ROUTER_INTENT") != "geometry_clone_mapping" or routing.get("PROVIDER") != "GeometryCloneSkill" or response.get("kind") != "ANSWER" or "101 → 201" not in response.get("text", ""):
+        raise SystemExit(f"Portable Geometry Clone mapping smoke mismatch: {payload}")
+    preview = subprocess.run([str(EXE), "--portable-routing-smoke", "Clone Group 1 to Group 2"], cwd=bundle, env=environment, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=25)
+    if preview.returncode:
+        raise SystemExit(preview.stdout + preview.stderr)
+    payload = json.loads(next(line for line in reversed(preview.stdout.splitlines()) if line.startswith("{")))
+    routing, response = payload.get("routing", {}), payload.get("response", {})
+    if routing.get("ROUTER_INTENT") != "geometry_clone" or routing.get("PROVIDER") != "GeometryCloneSkill" or routing.get("ROUTER_HANDLER") != "ACTION_PLAN" or response.get("kind") != "ACTION_PLAN" or "Disabled pending safe real-machine Clone write validation" not in response.get("text", ""):
+        raise SystemExit(f"Portable Geometry Clone preview smoke mismatch: {payload}")
+    print("PACKAGED_CHAT|geometry_clone|GeometryCloneSkill|Preview only")
     print(f"PACKAGED_BUILD|HEAD|{identity['head']}")
     return 0
 

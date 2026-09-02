@@ -1,10 +1,10 @@
 {
   "id": "clone.geometry",
   "name": "Geometry Clone",
-  "version": "0.0",
-  "description": "Workflow placeholder: inspect layouts, calculate mapping, preview clone and verify.",
-  "intents": ["clone_geometry"],
-  "required_state": ["fixtures", "layouts"],
+  "version": "1.0",
+  "description": "Ordered Group-membership Fixture Clone preview with deterministic pair mapping, freshness protection, and native MA2 Clone workflow.",
+  "intents": ["geometry_clone"],
+  "required_state": ["groups", "group_membership"],
   "safety": "MODIFY",
   "enabled": false
 }
