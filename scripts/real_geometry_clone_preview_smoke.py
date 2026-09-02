@@ -96,7 +96,7 @@ def main() -> int:
         mapping, preview = report["queries"]
         if "Geometry Clone Mapping (SAFE)" not in mapping["chat_text"]:
             raise RuntimeError(f"SAFE mapping response was missing: {mapping['chat_text']}")
-        expected_preview = ("Geometry Clone Preview", "Safety:", "MODIFY", "Approval required.", "Disabled pending safe real-machine Clone write validation")
+        expected_preview = ("Geometry Clone Preview", "Safety:", "MODIFY", "COUNT_MISMATCH", "no MA2 Clone commands", "Disabled pending safe real-machine Clone write validation")
         if not all(marker in preview["chat_text"] for marker in expected_preview):
             raise RuntimeError(f"Disabled Clone Preview was incomplete: {preview['chat_text']}")
         records = _new_records(log_path, log_offset)

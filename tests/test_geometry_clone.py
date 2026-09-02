@@ -135,6 +135,8 @@ class GeometryCloneTests(unittest.TestCase):
         self.assertEqual(response["type"], "ACTION_PLAN")
         self.assertIn("Status: COUNT_MISMATCH", response["message"])
         self.assertIn("no MA2 Clone commands", response["message"])
+        self.assertIn("Safety:\nMODIFY", response["message"])
+        self.assertIn("Execution blocked", response["message"])
         self.assertFalse(any(command.startswith("Clone ") for command in self.client.commands))
 
     def test_empty_group_duplicate_name_and_unavailable_membership_are_blocked(self):

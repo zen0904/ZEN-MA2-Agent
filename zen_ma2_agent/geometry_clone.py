@@ -160,6 +160,13 @@ def format_mapping(spec: GeometryCloneSpec, *, preview: bool) -> str:
             "Status: COUNT_MISMATCH",
             "v1 supports Ordered 1:1 mapping only; no MA2 Clone commands will be generated.",
         ))
+        if preview:
+            lines.extend((
+                "",
+                "Safety:",
+                "MODIFY",
+                "Execution blocked until source and destination have equal fixture counts.",
+            ))
         return "\n".join(lines)
     lines.extend(("Mapping:", *(f"{pair.source_fixture} → {pair.destination_fixture}" for pair in spec.pairs[:10])))
     if len(spec.pairs) > 10:
