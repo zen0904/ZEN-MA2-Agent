@@ -137,6 +137,21 @@ class AgentRuntime:
         self.log("state_export", {"command":command,"layout_no":layout_no,"filename":filename})
         return response
 
+    def export_preset_file(self, preset_ref: str, filename: str) -> str:
+        """Export one Preset through the narrow, Agent-owned file boundary."""
+        if not self.ready or not self.client:
+            raise ConnectionError("Connect and reach MA2 READY before exporting show state.")
+        reference = str(preset_ref).strip()
+        if not re.fullmatch(r"[1-9]\d*\.[1-9]\d*", reference):
+            raise ValueError("Export Preset requires a numeric type.id reference.")
+        if not re.fullmatch(r"ZEN_AGENT_PRESET_[1-9]\d*_[1-9]\d*_[A-Za-z0-9_-]{6,64}\.xml", filename):
+            raise PermissionError("Export state only permits Agent-owned temporary XML filenames.")
+        command = f'Export Preset {reference} "{filename}" /nc'
+        with self._export_state_lock:
+            response = self.client.execute(command)
+        self.log("state_export", {"command": command, "preset_ref": reference, "filename": filename})
+        return response
+
     @staticmethod
     def user_var_command(value: str) -> str:
         """Build a single safe SetUserVar command without allowing a new MA line."""
