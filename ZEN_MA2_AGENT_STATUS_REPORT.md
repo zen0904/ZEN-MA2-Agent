@@ -482,3 +482,8 @@ The isolated Show cleanup sent `Clear`, `Off Fixture 9999`, and deleted only
 `Preset 2.900`, `2.901`, and `2.902`; `List Preset 2` afterward listed only
 the pre-existing `Position 2.2 CENTER`.  No production Show object was
 written after returning to `zen templ show`.
+
+The local importexport file `ZEN_AGENT_RESTORE_VERIFY.xml` is the sole
+residual artifact from the restore check.  It is Agent-owned and contains only
+the Group-1 read-only verification export; host safety policy rejected its
+exact-file removal, so it is retained rather than bypassing that policy.
