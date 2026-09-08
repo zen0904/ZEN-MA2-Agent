@@ -1,0 +1,13 @@
+{
+  "schema": "zen.ma2.stage_axis_numeric_verification.v0.1",
+  "fixture": "9999.1",
+  "semantic_labels": "UNVERIFIED_NO_STAGE_VIEW_EVIDENCE",
+  "cases": {
+    "x_positive": {"expected": {"x": 4.0, "y": 0.0, "z": 5.0}, "actual": {"x": 4.0, "y": 0.0, "z": 5.0}, "match": true},
+    "x_negative": {"expected": {"x": -4.0, "y": 0.0, "z": 5.0}, "actual": {"x": -4.0, "y": 0.0, "z": 5.0}, "match": true},
+    "y_positive": {"expected": {"x": 0.0, "y": 4.0, "z": 5.0}, "actual": {"x": 0.0, "y": 4.0, "z": 5.0}, "match": true},
+    "y_negative": {"expected": {"x": 0.0, "y": -4.0, "z": 5.0}, "actual": {"x": 0.0, "y": -4.0, "z": 5.0}, "match": true},
+    "z_positive": {"expected": {"x": 0.0, "y": 0.0, "z": 8.0}, "actual": {"x": 0.0, "y": 0.0, "z": 8.0}, "match": true},
+    "z_negative": {"expected": {"x": 0.0, "y": 0.0, "z": 2.0}, "actual": {"x": 0.0, "y": 0.0, "z": 2.0}, "match": true}
+  }
+}

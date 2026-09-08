@@ -85,13 +85,15 @@ class FixtureGeometryProvider:
             if raw_ref not in expected or match.group("object_ref") not in expected:
                 continue
             tail = prefix.group("tail").split()
+            raw_patch = prefix.group("patch").strip()
             return {
                 "fixture_id": fixture_id,
                 "subfixture_id": instance,
                 "fixture_ref": f"{fixture_id}.{instance}",
                 "name": prefix.group("name").strip(),
                 "fixture_type": prefix.group("fixture_type").strip(),
-                "patch": prefix.group("patch").strip(),
+                "patch": raw_patch,
+                "patch_info": self.parse_patch(raw_patch),
                 "position": {"x": float(match.group("x")), "y": float(match.group("y")), "z": float(match.group("z"))},
                 "rotation": {"x": float(match.group("rx")), "y": float(match.group("ry")), "z": float(match.group("rz"))},
                 "pan_offset": self._tail_float(tail, 5),
@@ -103,6 +105,23 @@ class FixtureGeometryProvider:
                 "confidence": "REAL_MACHINE_VERIFIED",
             }
         return None
+
+    @staticmethod
+    def parse_patch(raw_patch: str | None) -> dict[str, Any]:
+        """Conservatively split the verified grandMA2 ``Universe.Address`` form.
+
+        MA2 3.9 List output gave values such as ``10.001``.  We retain that
+        authoritative string even when its unambiguous numeric components can
+        be read.  Any other representation deliberately stays unparsed.
+        """
+        raw = (raw_patch or "").strip()
+        match = re.fullmatch(r"(?P<universe>\d+)\.(?P<address>\d{3})", raw)
+        return {
+            "raw_patch": raw_patch,
+            "universe": int(match.group("universe")) if match else None,
+            "address": int(match.group("address")) if match else None,
+            "parse_status": "VERIFIED_LIST_FORMAT" if match else "UNPARSED",
+        }
 
     @staticmethod
     def _tail_float(values: list[str], index: int) -> float | None:

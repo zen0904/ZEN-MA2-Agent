@@ -1,0 +1,26 @@
+{
+  "schema": "zen.ma2.stage_axis.v0.1",
+  "ma2_version": "3.9.60",
+  "x": {
+    "positive": "X_POSITIVE_HORIZONTAL_SIDE_A",
+    "negative": "X_NEGATIVE_HORIZONTAL_SIDE_B",
+    "semantic_status": "UNVERIFIED"
+  },
+  "y": {
+    "positive": "Y_POSITIVE_DEPTH_SIDE_A",
+    "negative": "Y_NEGATIVE_DEPTH_SIDE_B",
+    "semantic_status": "UNVERIFIED"
+  },
+  "z": {
+    "positive": "Z_POSITIVE_VERTICAL_SIDE_A",
+    "negative": "Z_NEGATIVE_VERTICAL_SIDE_B",
+    "semantic_status": "UNVERIFIED"
+  },
+  "numeric_readback": "REAL_MACHINE_VERIFIED",
+  "source": [
+    "MA2_TELNET_LIST_SUBFIXTURE",
+    "MA2_FIXTURE_OBJECT_PROPERTY"
+  ],
+  "confidence": "PARTIAL",
+  "note": "Numeric Move3D/Rotate3D read-back is verified. Stage View semantic signs require independent visual evidence and are intentionally not guessed."
+}

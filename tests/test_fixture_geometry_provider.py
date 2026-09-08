@@ -42,6 +42,9 @@ class FixtureGeometryProviderTests(unittest.TestCase):
         profile = ShowScanner().scan(state)
         geometry = profile["fixtures"][0]["stage_geometry"]
         self.assertEqual((geometry["x"], geometry["y"], geometry["z"], geometry["rot_z"]), (-2.0, 1.0, 4.0, 90.0))
+        self.assertEqual(geometry["normalized_geometry"], {"horizontal": 0.0, "depth": 0.0, "height": 0.0})
+        self.assertEqual(profile["geometry_analysis"]["algorithm_version"], "zen.geometry.v0.1")
+        self.assertEqual(profile["stage_axis_profile"]["confidence"], "PARTIAL")
         state.mark_stale("fixture_geometry")
         self.assertEqual(ShowScanner().scan(state)["fixtures"][0]["stage_geometry"]["status"], "STALE")
 

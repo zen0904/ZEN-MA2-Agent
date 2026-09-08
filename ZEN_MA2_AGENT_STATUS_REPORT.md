@@ -530,3 +530,30 @@ POSITION roles (`POS_HOME`, `POS_STAGE_L/C/R/U/D`) with TEMPLATE/ACTIVE/
 PROTECTED/IGNORE permissions. It makes no fuzzy label guesses. The current
 production Position inventory has no resolvable entry, so runtime semantic
 Position resolution remains pending user-created exact labels.
+
+## 24 Stage Axis and Deterministic Geometry Derivation
+
+The numeric coordinate backend was verified again on the isolated Show
+`zen_agent_preset_diff_h`, using only Agent Fixture `9999.1`. Six absolute
+`Move3D At` cases read back exactly from the verified Subfixture provider:
+`X +4/-4`, `Y +4/-4`, and `Z 8/2` (with the other axes held at the test
+baseline). The production Show was then reloaded; Fixture `101.1` returned
+zero geometry and the production file SHA-256 remained
+`55592397CA6ED372A719D72748FCD752ECBACB0ECA9B08BF3A2E3E8496720FA2`.
+
+The host's Windows Stage View capture interface failed before it could provide
+an independent visual axis indicator. Therefore `ZEN_STAGE_AXIS_PROFILE.json`
+records numeric readback as `REAL_MACHINE_VERIFIED`, but deliberately uses
+neutral `X/Y/Z ... SIDE_A/SIDE_B` names and `PARTIAL` confidence. It does not
+claim which sign is Stage Left, Upstage, or Above.
+
+`zen_ma2_agent.geometry.GeometryNormalizer` now produces read-only derived
+data per relevant geometry-bearing Fixture/Subfixture set: zero-safe
+normalization; deterministic numeric X/Y/Z ordering; center detection;
+tolerance-based rows/layers; mirror-pair candidates scored from X reflection,
+Y/Z proximity and Fixture Type compatibility; and inner/outer rank. This is
+labelled `GEOMETRY_INFERRED` and keeps raw Subfixture geometry authoritative.
+`ZEN_SHOW_PROFILE.json` now includes `geometry_analysis`, `stage_axis_profile`,
+and normalized/relationship data for each primary and Subfixture geometry row.
+Raw Patch text is retained; only the verified `Universe.Address` shape such as
+`10.001` is additionally parsed as Universe `10`, Address `1`.

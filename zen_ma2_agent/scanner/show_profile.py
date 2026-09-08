@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from ..geometry import GeometryNormalizer, StageAxisProfile
 from ..state.store import StateStore
 from ..semantic_presets import SemanticPresetRegistry
 
@@ -43,6 +44,11 @@ class ShowScanner:
             fixture_id = item.get("fixture_id")
             if isinstance(fixture_id, int):
                 geometry_by_fixture.setdefault(fixture_id, []).append(item)
+        geometry_analysis = GeometryNormalizer().analyze(values("fixture_geometry")) if geometry_snapshot and not geometry_snapshot.stale else None
+        derived_by_key = {
+            (item.get("fixture_id"), item.get("subfixture_id")): item
+            for item in (geometry_analysis or {}).get("records", [])
+        }
 
         def geometry_for(fixture_id: int) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
             if not geometry_snapshot:
@@ -57,12 +63,28 @@ class ShowScanner:
                 return unavailable, unavailable, unavailable
             primary = next((record for record in records if record.get("subfixture_id") == 1), records[0])
             position, rotation = dict(primary.get("position") or {}), dict(primary.get("rotation") or {})
+            subfixtures = []
+            for record in records:
+                derived = derived_by_key.get((record.get("fixture_id"), record.get("subfixture_id")))
+                subfixtures.append({
+                    "subfixture_id": record.get("subfixture_id"),
+                    "position": record.get("position"),
+                    "rotation": record.get("rotation"),
+                    "patch": record.get("patch"),
+                    "patch_info": record.get("patch_info"),
+                    "normalized_geometry": derived.get("normalized") if derived else _unknown("Geometry derivation requires a fresh relevant fixture set."),
+                    "relationships": derived.get("relationships") if derived else _unknown("Geometry derivation requires a fresh relevant fixture set."),
+                })
+            primary_derived = derived_by_key.get((primary.get("fixture_id"), primary.get("subfixture_id")))
             stage_geometry = {
                 "x": position.get("x"), "y": position.get("y"), "z": position.get("z"),
                 "rot_x": rotation.get("x"), "rot_y": rotation.get("y"), "rot_z": rotation.get("z"),
                 "source": primary.get("source"), "backend": primary.get("backend"),
                 "confidence": primary.get("confidence"),
-                "subfixtures": [{"subfixture_id": record.get("subfixture_id"), "position": record.get("position"), "rotation": record.get("rotation")} for record in records],
+                "patch": primary.get("patch"), "patch_info": primary.get("patch_info"),
+                "normalized_geometry": primary_derived.get("normalized") if primary_derived else _unknown("Geometry derivation requires a fresh relevant fixture set."),
+                "relationships": primary_derived.get("relationships") if primary_derived else _unknown("Geometry derivation requires a fresh relevant fixture set."),
+                "subfixtures": subfixtures,
             }
             return stage_geometry, position, rotation
 
@@ -136,6 +158,8 @@ class ShowScanner:
                 "effect_line_parameters": "UNAVAILABLE",
                 "sequence_cue_values": "UNAVAILABLE",
             },
+            "geometry_analysis": geometry_analysis or _unknown("Fixture geometry requires a fresh read-only Subfixture scan."),
+            "stage_axis_profile": StageAxisProfile().read(),
         }
 
     def write(self, state: StateStore, path: Path) -> dict[str, Any]:
