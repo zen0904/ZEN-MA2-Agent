@@ -374,8 +374,9 @@ used a Fixture that was both unpatched and absent from Groups 1--7.
   It was selected because `List Fixture` showed Patch `(-)`, it was outside all
   verified production Group memberships, and `List Fixture 9999 Attribute
   Pan/Tilt` showed both attributes.
-- Agent-owned Presets: `Preset 2.900 "ZEN_SCAN_TEST_POS_A"` (Pan 15, Tilt 25)
-  and `Preset 2.901 "ZEN_SCAN_TEST_POS_B"` (Pan 35, Tilt 45).  Both slots were
+- Agent-owned Presets: `Preset 2.900 "ZEN_SCAN_TEST_POS_A"` (Pan 15 only),
+  `Preset 2.901 "ZEN_SCAN_TEST_POS_B"` (Tilt 25 only), and
+  `Preset 2.902 "ZEN_SCAN_TEST_POS_C"` (Pan 15 plus Tilt 25).  Every slot was
   verified empty before Store and verified absent after Delete.
 - No production Preset, Fixture Type, Patch, Cue, Sequence, Effect, Group, or
   fixture in Groups 1--7 was changed.
@@ -450,3 +451,34 @@ MA2 Shows directory because the host safety guard declined their filesystem
 deletion after creation; identical research copies are retained under the
 Agent cache.  They contain only the controlled Fixture-9999 test Preset and
 may be removed later as an exact-name cleanup operation.
+
+## 22 Isolated Preset Runtime Research Conclusion
+
+The real-machine follow-up was performed only while the Agent-owned isolated
+Show `zen_agent_preset_diff_h` was loaded.  The original production Show
+`zen templ show` was copied read-only before the work and was restored with
+`LoadShow "zen templ show" /nc` afterward.  A post-restore Group-1 export
+identifies `showfile="zen templ show"`; the production Show file SHA-256
+remains `55592397CA6ED372A719D72748FCD752ECBACB0ECA9B08BF3A2E3E8496720FA2`.
+
+The final bounded Lua probe, `preset_context_probe`, examined a known
+Agent-owned Position Preset and up to three ancestors.  It found:
+
+- root: `CMD_PRESET`, zero children, only No./Name/Symbol/Included Preset
+  Types/Special/Info metadata;
+- ancestor 1: `CMD_PRESET_POOL` (`Position 2`), 902 children, only a pool
+  name property;
+- ancestor 2: `CMD_PRESET_POOL_COLLECT` (`Global`), only a collection name;
+- ancestor 3: `CMD_PRESET_POOL_COLLECT_COLLECT` (`Presets`), no properties.
+
+No Fixture, Subfixture, Attribute, or stored-value node was exposed.  This
+matches the earlier metadata-only Preset XML, metadata-only List CSV, and the
+controlled Extract result whose available Programmer readers exposed no hard
+value.  The runtime Lua/object-tree route is therefore `BLOCKED` for a normal
+read-only Preset Value Scanner; binary Showfile parsing remains
+`RESEARCH_ONLY` and is not a Scanner backend.
+
+The isolated Show cleanup sent `Clear`, `Off Fixture 9999`, and deleted only
+`Preset 2.900`, `2.901`, and `2.902`; `List Preset 2` afterward listed only
+the pre-existing `Position 2.2 CENTER`.  No production Show object was
+written after returning to `zen templ show`.

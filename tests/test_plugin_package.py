@@ -44,6 +44,7 @@ class GrandMA2PluginPackageTests(unittest.TestCase):
         self.assertIn('command == "object_probe"', lua)
         self.assertIn('command == "layout_fixture_probe"', lua)
         self.assertIn('command == "preset_probe"', lua)
+        self.assertIn('command == "preset_context_probe"', lua)
         self.assertIn('ZEN_PRESET_PROBE|', lua)
         self.assertIn('command == "selection_probe"', lua)
         self.assertIn('command == "programmer_probe"', lua)

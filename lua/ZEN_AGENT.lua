@@ -163,6 +163,29 @@ local function preset_probe(request_id, preset_ref)
     feedback(request_id, "END", "preset_probe")
 end
 
+local function preset_context_probe(request_id, preset_ref)
+    local path = "Preset " .. preset_ref
+    local node = handle(path)
+    preset_probe_feedback(request_id, "root", "PATH", path)
+    if not node then
+        feedback(request_id, "ERROR", "PRESET_NOT_FOUND")
+        return
+    end
+    -- A Preset itself has no children in the verified 3.9.60 sample.  Its
+    -- ancestors are inspected as summaries only: no arbitrary handle input,
+    -- child enumeration, or command execution is permitted here.
+    preset_probe_node(request_id, node, "root", 3)
+    for level = 1, 3 do
+        node = safely(gma.show.getobj.parent, node)
+        if not node then
+            preset_probe_feedback(request_id, "ancestor/" .. tostring(level), "HANDLE", "nil")
+            break
+        end
+        preset_probe_node(request_id, node, "ancestor/" .. tostring(level), 3)
+    end
+    feedback(request_id, "END", "preset_context_probe")
+end
+
 local function inspect_probe_feedback(request_id, scope, field, value)
     gma.feedback("ZEN_INSPECT_PROBE|" .. request_id .. "|" .. scope .. "|" .. field .. "|" .. tostring(value))
 end
@@ -246,6 +269,10 @@ local function main()
     elseif command == "preset_probe" and argument:match("^[1-9][0-9]*%.[1-9][0-9]*$") then
         preset_probe(request_id, argument)
     elseif command == "preset_probe" then
+        feedback(request_id, "ERROR", "MALFORMED_ARGUMENT")
+    elseif command == "preset_context_probe" and argument:match("^[1-9][0-9]*%.[1-9][0-9]*$") then
+        preset_context_probe(request_id, argument)
+    elseif command == "preset_context_probe" then
         feedback(request_id, "ERROR", "MALFORMED_ARGUMENT")
     elseif command == "selection_probe" and argument == "" then
         selection_probe(request_id)
