@@ -74,6 +74,52 @@ local function object_probe(request_id, argument)
     feedback(request_id, "END", "object_probe")
 end
 
+local function fixture_probe_feedback(request_id, node_path, field, value)
+    gma.feedback("ZEN_FIXTURE_PROBE|" .. request_id .. "|" .. node_path .. "|" .. field .. "|" .. tostring(value))
+end
+
+local function fixture_property_probe(request_id, fixture_ref)
+    -- The grammar only permits a numeric Fixture ID plus an optional numeric
+    -- instance.  It never accepts an arbitrary MA object path or executes a command.
+    local path = "Fixture " .. fixture_ref
+    local node = handle(path)
+    fixture_probe_feedback(request_id, "root", "PATH", path)
+    if not node then
+        feedback(request_id, "ERROR", "FIXTURE_NOT_FOUND")
+        return
+    end
+    local function inspect(scope, object_handle)
+        local child_count = tonumber(safely(gma.show.getobj.amount, object_handle) or 0) or 0
+        fixture_probe_feedback(request_id, scope, "HANDLE", object_handle)
+        fixture_probe_feedback(request_id, scope, "CLASS", safely(gma.show.getobj.class, object_handle))
+        fixture_probe_feedback(request_id, scope, "NUMBER", safely(gma.show.getobj.number, object_handle))
+        fixture_probe_feedback(request_id, scope, "NAME", safely(gma.show.getobj.name, object_handle))
+        fixture_probe_feedback(request_id, scope, "CHILD_COUNT", child_count)
+        local property_count = math.min(tonumber(safely(gma.show.property.amount, object_handle) or 0) or 0, 64)
+        fixture_probe_feedback(request_id, scope, "PROPERTY_COUNT", property_count)
+        for property_index = 0, property_count - 1 do
+            local property_name = safely(gma.show.property.name, object_handle, property_index)
+            local property_value = safely(gma.show.property.get, object_handle, property_index)
+            fixture_probe_feedback(request_id, scope, "PROPERTY", tostring(property_index) .. "|" .. tostring(property_name) .. "|" .. tostring(property_value))
+        end
+        return child_count
+    end
+    local child_count = inspect("root", node)
+    -- A root Fixture can own multiple Subfixtures.  Inspect only its first
+    -- four direct children; caller-selected instance paths are probed exactly.
+    if not fixture_ref:find("%.") then
+        for child_index = 0, math.min(child_count, 4) - 1 do
+            local child = safely(gma.show.getobj.child, node, child_index)
+            if child then
+                inspect("child/" .. tostring(child_index), child)
+            else
+                fixture_probe_feedback(request_id, "child/" .. tostring(child_index), "HANDLE", "nil")
+            end
+        end
+    end
+    feedback(request_id, "END", "fixture_property_probe")
+end
+
 local function layout_probe_feedback(request_id, node_path, field, value)
     gma.feedback("ZEN_LAYOUT_FIXTURE_PROBE|" .. request_id .. "|" .. node_path .. "|" .. field .. "|" .. tostring(value))
 end
@@ -262,6 +308,10 @@ local function main()
         feedback(request_id, "ERROR", "MALFORMED_ARGUMENT")
     elseif command == "object_probe" then
         object_probe(request_id, argument)
+    elseif command == "fixture_property_probe" and argument:match("^[1-9][0-9]*%.[1-9][0-9]*$") or command == "fixture_property_probe" and argument:match("^[1-9][0-9]*$") then
+        fixture_property_probe(request_id, argument)
+    elseif command == "fixture_property_probe" then
+        feedback(request_id, "ERROR", "MALFORMED_ARGUMENT")
     elseif command == "layout_fixture_probe" and argument:match("^[1-9][0-9]*$") then
         layout_fixture_probe(request_id, tonumber(argument))
     elseif command == "layout_fixture_probe" then

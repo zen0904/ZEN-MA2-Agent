@@ -12,7 +12,7 @@ class StateStore:
     def __init__(self) -> None:
         self._snapshots: dict[str, StateSnapshot] = {}
 
-    RESOURCES = ("groups", "fixtures", "group_membership", "layouts", "layout_items", "selection", "programmer", "sequences", "cues", "presets", "effects", "pages", "executors", "timecodes")
+    RESOURCES = ("groups", "fixtures", "fixture_geometry", "group_membership", "layouts", "layout_items", "selection", "programmer", "sequences", "cues", "presets", "effects", "pages", "executors", "timecodes")
 
     def put(self, resource: str, values: Iterable[Any], *, source: str, capability: dict[str, Any] | None = None) -> StateSnapshot:
         if resource not in self.RESOURCES:

@@ -6,7 +6,7 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 
-RESOURCE_DIRECTORIES = ("web", "lua", "skills", "config", "logs", "cache", "gma2")
+RESOURCE_DIRECTORIES = ("web", "lua", "skills", "config", "logs", "cache", "gma2", "semantic_presets")
 PLUGIN_FILES = ("ZEN_AGENT.xml", "ZEN_AGENT.lua")
 
 

@@ -1,0 +1,17 @@
+{
+  "schema": "zen.semantic_preset_registry.v0.1",
+  "scan_regions": {
+    "TEMPLATE": {"can_read": true, "can_reference": true, "can_modify": false},
+    "ACTIVE": {"can_read": true, "can_reference": true, "can_modify": true},
+    "PROTECTED": {"can_read": true, "can_reference": false, "can_modify": false},
+    "IGNORE": {"can_read": false, "can_reference": false, "can_modify": false}
+  },
+  "entries": [
+    {"preset_type": "POSITION", "label": "POS_HOME", "semantic_role": "HOME", "region": "TEMPLATE", "can_reference": true, "can_modify": false},
+    {"preset_type": "POSITION", "label": "POS_STAGE_L", "semantic_role": "STAGE_LEFT", "region": "TEMPLATE", "can_reference": true, "can_modify": false},
+    {"preset_type": "POSITION", "label": "POS_STAGE_C", "semantic_role": "STAGE_CENTER", "region": "TEMPLATE", "can_reference": true, "can_modify": false},
+    {"preset_type": "POSITION", "label": "POS_STAGE_R", "semantic_role": "STAGE_RIGHT", "region": "TEMPLATE", "can_reference": true, "can_modify": false},
+    {"preset_type": "POSITION", "label": "POS_STAGE_U", "semantic_role": "STAGE_UP", "region": "TEMPLATE", "can_reference": true, "can_modify": false},
+    {"preset_type": "POSITION", "label": "POS_STAGE_D", "semantic_role": "STAGE_DOWN", "region": "TEMPLATE", "can_reference": true, "can_modify": false}
+  ]
+}

@@ -26,6 +26,7 @@ class ScannerDesignerProfilerPocTests(unittest.TestCase):
         self.assertTrue(profile["read_only"])
         self.assertEqual(profile["groups"][0]["fixture_ids_in_selection_order"], [108, 101, 104])
         self.assertEqual(profile["fixtures"][0]["stage_position"]["status"], "UNAVAILABLE")
+        self.assertEqual(profile["semantic_presets"][0]["semantic_role"], "HOME")
         self.assertEqual(profile["presets"][0]["stored_values"]["status"], "UNAVAILABLE")
         self.assertEqual(profile["effects"][0]["effect_lines"]["status"], "UNAVAILABLE")
 

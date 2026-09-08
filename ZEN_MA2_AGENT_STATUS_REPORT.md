@@ -487,3 +487,46 @@ The local importexport file `ZEN_AGENT_RESTORE_VERIFY.xml` is the sole
 residual artifact from the restore check.  It is Agent-owned and contains only
 the Group-1 read-only verification export; host safety policy rejected its
 exact-file removal, so it is retained rather than bypassing that policy.
+
+## 23 Fixture Geometry Scanner Real-Machine PoC
+
+This follow-up supersedes the earlier Stage-XYZ blocker.  It does **not** use
+Layout Export or a Showfile binary parser.  On grandMA2 onPC 3.9.60, `List
+Fixture <id>` exposes root inventory metadata, while `List Fixture <id>.1`
+exposes the actual Subfixture properties: FixID, Fixture Type, Patch, Pan/Tilt
+DMX and encoder inversion, Pan/Tilt offsets, PosX/PosY/PosZ, and
+RotX/RotY/RotZ.
+
+- Production read-only discovery: Fixture `101.1` is `CMD_SUBFIXTURE`, FixID
+  `101`, Patch `10.001`; Fixture `701.1` and `701.2` both exist while
+  `701.3` does not.  The root inventory count `(2)` was thus verified against
+  this two-instance Fixture rather than assumed.
+- Isolated Show: `zen_agent_preset_diff_h` was loaded only for the controlled
+  readback test. `Move3D At -2 1 4` plus `Rotate3D At 0 0 90` for Fixture 101
+  read back from `101.1` as exactly `(-2, 1, 4)` and `RotZ 90`. Fixture 301
+  independently read back `(4, 2, 5)` and `RotZ -45`; static Fixture 601.1
+  read back `(1, -3, 2)`. Root Fixture rows remained zero, proving that the
+  geometry must be scanned from Subfixture rows.
+- A bounded, read-only Lua `fixture_property_probe` corroborated the same
+  Subfixture properties. The normal provider uses the more portable Telnet
+  List path and does not require a Plugin slot.
+- After the test, production `zen templ show` was reloaded and verified:
+  Fixtures 101.1, 301.1, 601.1 and 9999.1 all read zero; no test Preset or
+  production Patch, Cue, Effect, Sequence, or Fixture Type was changed.
+
+`FixtureGeometryProvider` now stores per-Subfixture records under
+`fixture_geometry`, source `MA2_FIXTURE_OBJECT_PROPERTY`, backend
+`MA2_TELNET_LIST_SUBFIXTURE`, confidence `REAL_MACHINE_VERIFIED`. A full
+read-only production scan returned 65 records with no missing Subfixture path.
+`ZEN_SHOW_PROFILE.json` now contains a Fixture-level `stage_geometry` record
+and its explicit Subfixture list when this resource is fresh.
+
+The coordinate-axis semantic convention is still unverified. Numeric geometry
+is supported; left/right, upstage/downstage labels and normalized geometry are
+therefore intentionally not emitted.
+
+`semantic_presets/ZEN_SEMANTIC_PRESET_REGISTRY.json` adds strict exact-label
+POSITION roles (`POS_HOME`, `POS_STAGE_L/C/R/U/D`) with TEMPLATE/ACTIVE/
+PROTECTED/IGNORE permissions. It makes no fuzzy label guesses. The current
+production Position inventory has no resolvable entry, so runtime semantic
+Position resolution remains pending user-created exact labels.

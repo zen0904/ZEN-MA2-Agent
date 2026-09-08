@@ -17,7 +17,7 @@ from .pairing import PairingManager
 from .router import IntentRouter, ResponseType
 from .runtime import AgentRuntime
 from .skill_system import SkillError, SkillRegistry
-from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvider, EffectProvider, ExecutorProvider, ExportFileGroupMembershipProvider, FixtureProvider, GroupMembershipProvider, GroupMembershipProviderError, GroupMembershipProviderUnavailable, GroupProvider, LayoutExportProvider, LayoutInventoryProvider, LayoutObjectResolver, PageProvider, PresetProvider, SequenceProvider, TimecodeProvider, ZenStateAdapter
+from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvider, EffectProvider, ExecutorProvider, ExportFileGroupMembershipProvider, FixtureGeometryProvider, FixtureProvider, GroupMembershipProvider, GroupMembershipProviderError, GroupMembershipProviderUnavailable, GroupProvider, LayoutExportProvider, LayoutInventoryProvider, LayoutObjectResolver, PageProvider, PresetProvider, SequenceProvider, TimecodeProvider, ZenStateAdapter
 from .state.store import StateStore
 from .telnet_client import ConnectionState
 from .workflow import WorkflowPlan
@@ -155,6 +155,12 @@ class AgentCore:
             elif resource == "fixtures":
                 provider = FixtureProvider()
                 snapshot = self.state.put_fixtures(provider.parse(self.runtime.read_state(provider.command)))
+            elif resource == "fixture_geometry":
+                if not self.state.get("fixtures"):
+                    self.refresh_state("fixtures")
+                provider = FixtureGeometryProvider()
+                values, capability = provider.collect(self.runtime)
+                snapshot = self.state.put(resource, values, source=provider.source, capability=capability)
             elif resource == "sequences":
                 provider = SequenceProvider()
                 snapshot = self.state.put("sequences", provider.parse(self.runtime.read_state(provider.command)), source="ma2_telnet_list")

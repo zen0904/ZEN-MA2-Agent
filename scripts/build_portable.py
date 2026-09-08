@@ -51,6 +51,7 @@ def main() -> int:
         "--name", "ZEN_MA2_Agent", "--add-data", data("web", "web"),
         "--add-data", data("config", "config"), "--add-data", data("gma2", "gma2"),
         "--add-data", data("lua", "lua"), "--add-data", data("skills", "skills"),
+        "--add-data", data("semantic_presets", "semantic_presets"),
         "--add-data", f"{identity};.",
         "--runtime-hook", str(ROOT / "scripts" / "pyside6_runtime_hook.py"),
         # PyInstaller's official PySide6 hooks preserve Qt's required layout.
@@ -64,7 +65,7 @@ def main() -> int:
         bundle = ROOT / "dist" / "ZEN_MA2_Agent"
         # app_root() is the folder beside the EXE.  Copy user-facing resources
         # from the authoritative source tree there, then assert the result.
-        for name in ("web", "lua", "config", "gma2", "skills"):
+        for name in ("web", "lua", "config", "gma2", "skills", "semantic_presets"):
             copytree(ROOT / name, bundle / name, dirs_exist_ok=True)
         (bundle / "build_identity.json").write_text(identity.read_text(encoding="utf-8"), encoding="utf-8")
         for name in ("logs", "cache"):

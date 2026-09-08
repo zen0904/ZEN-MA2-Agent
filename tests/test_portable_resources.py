@@ -16,7 +16,7 @@ class PortableResourceTests(unittest.TestCase):
     def test_plugin_files_are_required_nonempty_and_reference_exact_lua_name(self):
         with tempfile.TemporaryDirectory(prefix="zen-portable-") as temporary:
             bundle = Path(temporary)
-            for name in ("web", "lua", "skills", "config", "gma2"):
+            for name in ("web", "lua", "skills", "config", "gma2", "semantic_presets"):
                 copytree(ROOT / name, bundle / name)
             for name in ("logs", "cache"):
                 (bundle / name).mkdir()
