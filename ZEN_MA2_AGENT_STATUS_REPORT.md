@@ -5,8 +5,10 @@ Assessment date: 2026-09-08
 Assessment implementation HEAD: `f51f39f2f668e9271f5edbc346290fc4b41408f1` before the real-machine Preset Value Scanner follow-up.
 
 This report is based on source code, the runnable test suite, packaged EXE
-smokes, Git history, and actual command allow-lists. No grandMA2 Show, Patch,
-Fixture Type, Cue, Group, or Programmer was changed during this assessment.
+smokes, Git history, and actual command allow-lists. The original assessment
+did not alter the Show; the later, explicitly authorized real-machine follow-up
+is recorded separately in section 20, including its limited Agent-owned writes
+and cleanup.
 
 ## 1 Repository State
 
