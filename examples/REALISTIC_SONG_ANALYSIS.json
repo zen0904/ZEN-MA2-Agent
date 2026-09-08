@@ -1,0 +1,27 @@
+{
+  "schema": "zen.song_analysis.v0.1",
+  "song": {
+    "title": "ZEN_REAL_SONG_ANALYSIS_TEST",
+    "duration_seconds": 198.0,
+    "bpm": null
+  },
+  "sections": [
+    {"id": "intro", "name": "INTRO", "start": 0.0, "end": 16.0, "energy": 0.2, "density": 0.2, "accent_level": 0.1, "role": "INTRO", "notes": ["Opening look"], "provenance": {"source": "MANUAL", "confidence": 1.0}},
+    {"id": "verse_1", "name": "VERSE_1", "start": 16.0, "end": 42.0, "energy": 0.4, "density": 0.35, "accent_level": 0.2, "role": "VERSE", "notes": [], "provenance": {"source": "MANUAL", "confidence": 1.0}},
+    {"id": "pre", "name": "PRE_CHORUS", "start": 42.0, "end": 62.0, "energy": 0.65, "density": 0.6, "accent_level": 0.45, "role": "PRE_CHORUS", "notes": [], "provenance": {"source": "MANUAL", "confidence": 1.0}},
+    {"id": "chorus_1", "name": "CHORUS_1", "start": 62.0, "end": 90.0, "energy": 0.88, "density": 0.8, "accent_level": 0.85, "role": "CHORUS", "notes": [], "provenance": {"source": "MANUAL", "confidence": 1.0}},
+    {"id": "verse_2", "name": "VERSE_2", "start": 90.0, "end": 116.0, "energy": 0.48, "density": 0.42, "accent_level": 0.25, "role": "VERSE", "notes": [], "provenance": {"source": "MANUAL", "confidence": 1.0}},
+    {"id": "solo_1", "name": "SAX_SOLO", "start": 116.0, "end": 142.0, "energy": 0.72, "density": 0.65, "accent_level": 0.55, "role": "SOLO", "notes": ["Sax at stage left"], "provenance": {"source": "MANUAL", "confidence": 1.0}},
+    {"id": "chorus_2", "name": "CHORUS_2", "start": 142.0, "end": 170.0, "energy": 0.94, "density": 0.9, "accent_level": 0.9, "role": "CHORUS", "notes": [], "provenance": {"source": "MANUAL", "confidence": 1.0}},
+    {"id": "final_chorus", "name": "FINAL_CHORUS", "start": 170.0, "end": 186.0, "energy": 1.0, "density": 1.0, "accent_level": 1.0, "role": "CHORUS", "notes": [], "provenance": {"source": "MANUAL", "confidence": 1.0}},
+    {"id": "outro", "name": "OUTRO", "start": 186.0, "end": 198.0, "energy": 0.3, "density": 0.2, "accent_level": 0.1, "role": "OUTRO", "notes": [], "provenance": {"source": "MANUAL", "confidence": 1.0}}
+  ],
+  "events": [
+    {"time": 62.0, "type": "ACCENT", "strength": 0.95, "section_id": "chorus_1", "provenance": {"source": "MANUAL", "confidence": 1.0}},
+    {"time": 170.0, "type": "ACCENT", "strength": 1.0, "section_id": "final_chorus", "provenance": {"source": "MANUAL", "confidence": 1.0}}
+  ],
+  "performance": {"live": true, "fixed_timeline": false, "may_extend_solo": true, "may_repeat_chorus": false},
+  "stage_roles": [{"role": "SAX_SOLO", "semantic_position": "POS_STAGE_L"}],
+  "build": {"active_sequence_range": [201, 300], "max_cues_per_section": 2},
+  "source": {"source": "MANUAL", "confidence": 1.0}
+}

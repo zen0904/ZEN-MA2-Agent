@@ -9,10 +9,12 @@ from zen_ma2_agent.builder import FirstSongBuildError, ShowPlanBuilder
 from zen_ma2_agent.designer import FirstSongDesigner
 from zen_ma2_agent.designer.schema import ShowPlanSchemaError, validate_show_plan
 from zen_ma2_agent.runtime import AgentRuntime
+from zen_ma2_agent.song_analysis import SongAnalysisAdapter, SongAnalysisError, ScriptSongParser, validate_song_analysis
 from zen_ma2_agent.telnet_client import ConnectionState
 
 
 INPUT = json.loads((Path(__file__).resolve().parents[1] / "examples" / "FIRST_SONG_INPUT.json").read_text(encoding="utf-8"))
+ANALYSIS = json.loads((Path(__file__).resolve().parents[1] / "examples" / "REALISTIC_SONG_ANALYSIS.json").read_text(encoding="utf-8"))
 
 
 class FirstSongClient:
@@ -111,6 +113,42 @@ class FirstSongBuilderTests(unittest.TestCase):
         self.assertEqual(command, "Delete Sequence 201 /nc")
         with self.assertRaises(FirstSongBuildError):
             ShowPlanBuilder.narrow_rollback_command(201, "ZEN_AI_TEST_ZEN_FIRST_SONG_TEST", {"number": 201, "name": "USER_SEQUENCE"})
+
+    def test_script_parser_manual_override_and_role_vocabulary_are_explicit(self):
+        analysis = ScriptSongParser().parse("00:00 Intro\n00:18 Verse\n00:46 Chorus\n01:15 Sax Solo", title="Script Test", active_sequence_range=[201, 300])
+        self.assertEqual([item["role"] for item in analysis["sections"]], ["INTRO", "VERSE", "CHORUS", "SOLO"])
+        self.assertEqual(analysis["sections"][0]["end"], 18.0)
+        overridden = validate_song_analysis({**analysis, "manual_overrides": [{"section_id": "solo_4", "force_role": "SOLO", "force_energy": 0.75, "lighting_note": "Sax at stage left"}]})
+        self.assertEqual(overridden["sections"][-1]["energy"], 0.75)
+        self.assertIn("Sax at stage left", overridden["sections"][-1]["notes"])
+
+    def test_song_analysis_rejects_overlap_out_of_range_energy_and_transport(self):
+        overlap = json.loads(json.dumps(ANALYSIS)); overlap["sections"][1]["start"] = 1.0
+        with self.assertRaises(SongAnalysisError): validate_song_analysis(overlap)
+        unsafe = json.loads(json.dumps(ANALYSIS)); unsafe["sections"][0]["telnet"] = "Store Cue 1"
+        with self.assertRaises(SongAnalysisError): validate_song_analysis(unsafe)
+        invalid_energy = json.loads(json.dumps(ANALYSIS)); invalid_energy["sections"][0]["energy"] = 1.1
+        with self.assertRaises(SongAnalysisError): validate_song_analysis(invalid_energy)
+
+    def test_song_analysis_adapter_varies_repeated_choruses_and_bounds_accent_density(self):
+        profile = {"groups": [{"group_id": 1, "name": "HYBRID"}], "presets": [{"preset_type": "FOCUS", "reference": "6.2", "name": "normal"}], "effects": [], "semantic_presets": [], "geometry_analysis": {"status": "SUPPORTED"}}
+        designer_input = SongAnalysisAdapter().to_designer_input(ANALYSIS)
+        plan = FirstSongDesigner().design(designer_input, profile)
+        choruses = [cue for cue in plan["cues"] if cue.get("role") == "CHORUS" and "ACCENT" not in cue["label"]]
+        levels = [cue["actions"][1]["level"] for cue in choruses]
+        self.assertGreater(levels[-1], levels[0])
+        self.assertLessEqual(len([cue for cue in plan["cues"] if cue["source_section_id"] == "chorus_1"]), 2)
+        self.assertGreaterEqual(len(plan["cues"]), 10)
+
+    def test_song_analysis_uses_same_core_preview_and_approval_path(self):
+        response = self.core.preview_song_analysis(ANALYSIS)
+        self.assertEqual(response["type"], "ACTION_PLAN")
+        self.assertIn("ZEN_REAL_SONG_ANALYSIS_TEST", response["message"])
+        self.assertNotIn("Store Cue", self.runtime.client.commands)
+        self.assertTrue((Path(self.runtime.root) / "data" / "ZEN_SONG_ANALYSIS.json").is_file())
+        result = self.core.approve_action(response["action"]["id"])
+        self.assertEqual(result["status"], "EXECUTED")
+        self.assertGreaterEqual(len(self.runtime.client.cues), 10)
 
 
 if __name__ == "__main__":

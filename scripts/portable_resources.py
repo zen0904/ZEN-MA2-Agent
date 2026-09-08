@@ -31,7 +31,8 @@ def assert_portable_resources(bundle: Path) -> list[str]:
     plugin = next((element for element in root.iter() if element.tag.rsplit("}", 1)[-1] == "Plugin"), None)
     if plugin is None or plugin.get("luafile") != lua_path.name:
         raise RuntimeError("Portable plugin XML must reference ZEN_AGENT.lua with exact case.")
-    song_input = bundle / "examples" / "FIRST_SONG_INPUT.json"
-    if not song_input.is_file() or song_input.stat().st_size <= 0:
-        raise RuntimeError("Portable resource check failed: examples/FIRST_SONG_INPUT.json")
+    for filename in ("FIRST_SONG_INPUT.json", "REALISTIC_SONG_ANALYSIS.json", "REALISTIC_SONG_SCRIPT.md"):
+        song_input = bundle / "examples" / filename
+        if not song_input.is_file() or song_input.stat().st_size <= 0:
+            raise RuntimeError(f"Portable resource check failed: examples/{filename}")
     return [str(path.relative_to(bundle)) for path in plugin_paths]

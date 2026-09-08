@@ -84,6 +84,7 @@ def _portable_smoke_core() -> tuple[AgentCore, tempfile.TemporaryDirectory[str]]
     temporary = tempfile.TemporaryDirectory(prefix="zen-portable-ui-smoke-")
     root = Path(temporary.name)
     copytree(Path(sys.executable).resolve().parent / "skills", root / "skills")
+    copytree(Path(sys.executable).resolve().parent / "examples", root / "examples")
     export_directory = root / "importexport"
     export_directory.mkdir()
     _PortableSmokeClient.export_directory = export_directory
@@ -102,6 +103,17 @@ def main() -> int:
     smoke_mode = "--portable-routing-smoke" in sys.argv
     effect_approval_smoke = "--portable-effect-approval-smoke" in sys.argv
     timecode_approval_smoke = "--portable-timecode-approval-smoke" in sys.argv
+    song_analysis_smoke = "--portable-song-analysis-smoke" in sys.argv
+    if song_analysis_smoke:
+        core, smoke_temporary = _portable_smoke_core()
+        try:
+            analysis_path = core.runtime.root / "examples" / "REALISTIC_SONG_ANALYSIS.json"
+            response = core.preview_song_analysis(json.loads(analysis_path.read_text(encoding="utf-8")))
+            print(json.dumps({"response": response, "commands": core.runtime.client.commands}, ensure_ascii=False), flush=True)
+            return 0
+        finally:
+            core.disconnect()
+            smoke_temporary.cleanup()
     if "--ui-smoke-request" in sys.argv or smoke_mode or effect_approval_smoke or timecode_approval_smoke:
         option = "--portable-effect-approval-smoke" if effect_approval_smoke else "--portable-timecode-approval-smoke" if timecode_approval_smoke else "--portable-routing-smoke" if smoke_mode else "--ui-smoke-request"
         index = sys.argv.index(option)

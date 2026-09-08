@@ -589,3 +589,28 @@ all seven Part-0 Cue rows through the verified read-only form
 command error; existing Presets, Effects, production Sequences, Patch, and
 Fixture Types were not modified.  The two named test Sequences are retained
 for operator inspection.
+
+## 26 Song Analysis v0.1
+
+`zen_ma2_agent/song_analysis/` provides a portable, command-free input
+boundary for the verified First Song Builder. The `zen.song_analysis.v0.1`
+schema supports a title, optional duration/BPM, typed sections, optional
+accent events, live-performance flags, stage-role metadata, and an explicit
+Sequence allocation range. Every normalized section retains provenance;
+unknown timing, BPM, and energy remain `null` rather than being invented.
+
+JSON is the highest-fidelity input. `ScriptSongParser` deterministically
+parses simple time-stamped TXT/Markdown structure notes and recognizes only
+the fixed typed role vocabulary. `manual_overrides` have priority over parsed
+values. The document rejects overlapping known time ranges, duplicate IDs,
+out-of-range energy values, and all MA2 transport-field names.
+
+`SongAnalysisAdapter` is the sole bridge to the existing FirstSongDesigner.
+The Designer remains typed-intent-only, dynamically resolves live Groups and
+Presets, and still routes through the unchanged Builder, Preview, approval,
+and verification boundary. Repeated roles receive bounded deterministic
+intensity variation; explicit section-bound accents can add a bounded extra
+cue. Effects remain inventory-only and semantic-position absence remains a
+safe warning/fallback. `examples/REALISTIC_SONG_ANALYSIS.json` provides a
+nine-section fixture for the next guarded real-MA2 build; it is distinct from
+`FIRST_SONG_INPUT.json`.

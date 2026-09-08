@@ -128,12 +128,30 @@ def _timecode_approval_smoke() -> int:
     return 0
 
 
+def _song_analysis_smoke() -> int:
+    """Verify the frozen package can load analysis and queue, not write, a plan."""
+    environment = dict(os.environ, QT_QPA_PLATFORM="offscreen")
+    run = subprocess.run([str(EXE), "--portable-song-analysis-smoke"], cwd=EXE.parent, env=environment, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=25)
+    if run.returncode:
+        raise SystemExit(run.stdout + run.stderr)
+    payload = json.loads(next(line for line in reversed(run.stdout.splitlines()) if line.startswith("{")))
+    response = payload.get("response", {})
+    preview = response.get("message", "")
+    if response.get("type") != "ACTION_PLAN" or "ZEN_REAL_SONG_ANALYSIS_TEST" not in preview or "Cues 11" not in preview:
+        raise SystemExit(f"Portable Song Analysis preview mismatch: {payload}")
+    if payload.get("commands"):
+        raise SystemExit(f"Portable Song Analysis preview wrote MA2 commands: {payload}")
+    print("PACKAGED_SONG_ANALYSIS|PASS")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--ui-request", help="Run a request through the packaged PySide6 chat widget.")
     parser.add_argument("--chat-routing", action="store_true", help="Run the three routing checks through the packaged desktop widget.")
     parser.add_argument("--effect-approval", action="store_true", help="Run a fake-transport Effect Builder preview and approval smoke through the packaged Desktop.")
     parser.add_argument("--timecode-approval", action="store_true", help="Run a fake-transport Timecode Offset preview and approval smoke through the packaged Desktop.")
+    parser.add_argument("--song-analysis", action="store_true", help="Run structured Song Analysis through the frozen package without MA2 writes.")
     args = parser.parse_args()
     if not EXE.is_file():
         raise SystemExit(f"Portable EXE not found: {EXE}")
@@ -143,6 +161,8 @@ def main() -> int:
         return _effect_approval_smoke()
     if args.timecode_approval:
         return _timecode_approval_smoke()
+    if args.song_analysis:
+        return _song_analysis_smoke()
     if args.ui_request:
         environment = dict(os.environ)
         environment["QT_QPA_PLATFORM"] = "offscreen"

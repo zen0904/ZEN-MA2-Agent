@@ -98,3 +98,22 @@ inside the explicit input range, and creates a new `ZEN_AI_TEST_*` Sequence.
 Existing resources are reference-only. A rollback proposal is possible only
 after a fresh read-back proves both the precise Sequence number and Agent-owned
 label; it is never executed automatically.
+
+## Song Analysis v0.1
+
+```text
+manual JSON / deterministic cue script / future local audio candidate
+  -> zen.song_analysis.v0.1 (source + confidence retained)
+  -> SongAnalysisAdapter
+  -> existing FirstSongDesigner (typed intent only)
+  -> existing ShowPlanBuilder -> Preview -> shared Approval
+```
+
+`song_analysis` is intentionally transport-free. It validates non-overlap,
+section role vocabulary, bounded energy/density/accent values, explicit manual
+overrides, and optional live-performance metadata. The adapter is the only
+compatibility seam: it does not give a parser or future AI a way to emit MA2
+commands. Repeated sections receive a bounded deterministic occurrence
+variation, while explicit section-bound accents are limited to at most three
+cues per section. No audio role inference or external AI provider is wired in
+this version.

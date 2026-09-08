@@ -39,6 +39,7 @@ from .geometry_test_environment import (
 from .models import Intent
 from .designer import FirstSongDesigner
 from .builder import FirstSongBuildError
+from .song_analysis import SongAnalysisAdapter, validate_song_analysis
 
 
 @dataclass
@@ -124,16 +125,30 @@ class AgentCore:
 
     def preview_first_song(self, song_input: dict[str, Any]) -> dict[str, Any]:
         """Create a typed first-song ActionPlan through the shared Core boundary."""
+        return self._preview_designer_input(song_input, analysis=None)
+
+    def preview_song_analysis(self, analysis: dict[str, Any]) -> dict[str, Any]:
+        """Use structured song analysis as the only new upstream build input.
+
+        The resulting plan deliberately follows the same Designer → Builder →
+        shared approval route as the verified manual first-song PoC.
+        """
+        normalized = validate_song_analysis(analysis)
+        return self._preview_designer_input(SongAnalysisAdapter().to_designer_input(normalized), analysis=normalized)
+
+    def _preview_designer_input(self, song_input: dict[str, Any], *, analysis: dict[str, Any] | None) -> dict[str, Any]:
         for resource, kwargs in (("groups", {}), ("fixtures", {}), ("fixture_geometry", {}), ("presets", {"sequence": "ALL"}), ("effects", {}), ("sequences", {})):
             self.refresh_state(resource, **kwargs)
         data_dir = self.runtime.root / "data"
         data_dir.mkdir(parents=True, exist_ok=True)
         profile = self.scan_show_profile(data_dir / "ZEN_SHOW_PROFILE.json")
+        if analysis is not None:
+            (data_dir / "ZEN_SONG_ANALYSIS.json").write_text(json.dumps(analysis, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         show_plan = FirstSongDesigner().design(song_input, profile)
         (data_dir / "ZEN_SHOW_PLAN.json").write_text(json.dumps(show_plan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         context = {key: profile.get(key, []) for key in ("groups", "presets", "effects", "sequences")}
         workflow = self.skills.plan_intent(Intent("build_first_song", {"first_song_spec": {"show_plan": show_plan, "profile": context}}, "ZEN_SHOW_PLAN"), self.state, self.runtime.preferences)
-        self.runtime.log("first_song_preview", {"song": show_plan["song"], "cue_count": len(show_plan["cues"]), "sequence_range": show_plan["active_sequence_range"]})
+        self.runtime.log("song_analysis_preview" if analysis is not None else "first_song_preview", {"song": show_plan["song"], "cue_count": len(show_plan["cues"]), "sequence_range": show_plan["active_sequence_range"], "analysis_schema": analysis.get("schema") if analysis else None})
         return self._queue_workflow(workflow)
 
     def _queue_workflow(self, workflow: WorkflowPlan) -> dict[str, Any]:

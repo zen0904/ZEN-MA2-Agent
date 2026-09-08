@@ -147,6 +147,18 @@ Sequence. Existing Presets, Effects, and Sequences are never overwritten.
 Verification reads the exact Sequence label plus Cue count, labels, and fades;
 Cue-content readback is explicitly `PARTIAL`.
 
+### Song Analysis Input v0.1
+
+`zen_ma2_agent.song_analysis` is the command-free upstream boundary for a real
+song, cue script, or manual section notes. It accepts a validated
+`zen.song_analysis.v0.1` JSON document, deterministic TXT/Markdown structure
+scripts, and explicit manual overrides. Analysis records source/confidence,
+keeps unknown timing/BPM/energy as `null`, and rejects any `telnet`, `lua`, or
+MA2 command field. It adapts only into the existing Designer input; the
+verified path remains `analysis → typed ZEN_SHOW_PLAN → Builder → Preview →
+Approval`. `examples\REALISTIC_SONG_ANALYSIS.json` and
+`examples\REALISTIC_SONG_SCRIPT.md` are portable, realistic fixtures.
+
 ## Show Diagnostics v1
 
 Ask `檢查 Show`, `Show Diagnostics`, or `幫我檢查目前 Show` for a SAFE,

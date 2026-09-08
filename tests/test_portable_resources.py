@@ -27,13 +27,18 @@ class PortableResourceTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "ZEN_AGENT.lua"):
                 portable_resources.assert_portable_resources(bundle)
 
-    def test_first_song_input_is_a_required_portable_resource(self):
+    def test_song_inputs_are_required_portable_resources(self):
         with tempfile.TemporaryDirectory(prefix="zen-portable-") as temporary:
             bundle = Path(temporary)
             for name in ("web", "lua", "skills", "config", "gma2", "semantic_presets", "geometry", "examples"):
                 copytree(ROOT / name, bundle / name)
             for name in ("logs", "cache"):
                 (bundle / name).mkdir()
-            (bundle / "examples" / "FIRST_SONG_INPUT.json").unlink()
-            with self.assertRaisesRegex(RuntimeError, "FIRST_SONG_INPUT.json"):
-                portable_resources.assert_portable_resources(bundle)
+            for filename in ("FIRST_SONG_INPUT.json", "REALISTIC_SONG_ANALYSIS.json", "REALISTIC_SONG_SCRIPT.md"):
+                with self.subTest(filename=filename):
+                    copied = bundle / "examples" / filename
+                    backup = copied.read_bytes()
+                    copied.unlink()
+                    with self.assertRaisesRegex(RuntimeError, filename):
+                        portable_resources.assert_portable_resources(bundle)
+                    copied.write_bytes(backup)
