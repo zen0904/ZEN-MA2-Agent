@@ -283,7 +283,7 @@ CHATGPT_HANDOFF_BEGIN
 Project: ZEN MA2 Agent
 Branch: main
 HEAD: 0a1a56cf4c2de7d1e2401848afcb59ecff52d7ad (pre-Preset-Scanner baseline; current worktree adds guarded scanner PoC)
-Tests: baseline 124/124 unittest PASS; Preset Export schema-discovery tests added this round. Packaged rebuild remains pending after the new code. Real MA2 hardware scripts were not run because no user-specified Fixture/Preset pair was supplied.
+Tests: 131/131 unittest PASS. Packaged chat-routing and 5-second EXE smoke PASS for build `01aba4332f42ab6913de15e2aa590e1ef3e17522`. Real MA2 hardware scripts were not run because no user-specified Fixture/Preset pair was supplied.
 
 Current working features: PySide6 Desktop; paired mobile PWA; Telnet authentication; shared AgentCore; guarded Preview/Approval; Group/Fixture inventories; local Export XML Group order; partial Layout CObjects; Preset/Effect/Sequence/Cue/Page/Executor inventories; Show Diagnostics; narrow Effect Builder and Timecode Offset; Geometry Clone mapping/preview; new read-only Scanner and draft-only Designer/Builder/FixtureProfiler PoC.
 
@@ -316,3 +316,45 @@ Recommended next implementation: run the guarded verifier once with a user-selec
 Questions requiring MA2 real-hardware verification: Which documented/exported source exposes Preset values per Fixture and Attribute? Can it expose raw 8/16-bit values without selection/programmer mutation? Which Fixture Type export schema safely contains channels/functions/sets/wheels? Does it preserve fixture identity, mode, and coarse/fine relations?
 
 CHATGPT_HANDOFF_END
+
+## 19 Preset Value Scanner PoC Handoff
+
+PRESET_VALUE_SCANNER_HANDOFF_BEGIN
+
+HEAD: 01aba4332f42ab6913de15e2aa590e1ef3e17522 (runtime/scanner implementation build)
+
+Tests: 131/131 unittest PASS; 7 Preset Export discovery tests; packaged chat-routing and EXE smoke PASS.
+
+Backends tested: A. `Export Preset <type.id> "<Agent-owned filename>" /nc` is implemented as a local-onPC transaction and protected by a unique filename, stable-file wait, XML well-formedness gate, audit log, and cleanup. B. Lua object tree was not changed or invoked. C. List Preset remains metadata-only. D. Extract remains excluded because the official MA2 documentation says it places hard values in Programmer.
+
+Export Preset XML result: TRANSPORT_READY_SCHEMA_UNVERIFIED. Unknown XML becomes a structural diagnostic with zero observations; it cannot claim Fixture identity, Attribute identity, raw DMX, decimal16, or physical values.
+
+Real MA2 sample acquired: NO. The onPC process and local settings exist, but no user-specified Fixture/Preset pair was supplied and the verifier deliberately refuses to choose one.
+
+Preset XML contains fixture identity: NO (not yet evidenced).
+
+Preset XML contains attribute identity: NO (not yet evidenced).
+
+Preset XML contains stored value: NO (not yet evidenced).
+
+Raw DMX available: NO (not yet evidenced).
+
+16-bit/fine information available: NO (not yet evidenced).
+
+Physical value available: NO (not yet evidenced).
+
+Position Preset Pan/Tilt: BLOCKED_PENDING_REAL_EXPORT_SAMPLE.
+
+Fixture observation capture: PARTIAL. The draft normalizer is ready for `VERIFIED_PRESET` observations, but automatic MA2 capture is blocked pending the sample/parser proof.
+
+Local onPC status: LOCAL_ONPC_SUPPORTED by design when the active onPC importexport directory resolves; final runtime proof awaits the verifier.
+
+Remote console status: REMOTE_CONSOLE_BLOCKED_BY_FILESYSTEM. No shared-filesystem claim is made.
+
+Files added/changed: `zen_ma2_agent/state/providers/preset_export.py`, `zen_ma2_agent/runtime.py`, `zen_ma2_agent/state/providers/__init__.py`, `scripts/verify_real_preset_export.py`, `tests/test_preset_export_discovery.py`, and this report.
+
+Exact next blocker: acquire exactly one real export using `scripts/verify_real_preset_export.py --real-machine --fixture <id> --preset <type.id> --keep-export`, then inspect its retained agent-cache XML to prove the three required identity/value fields before writing a parser.
+
+Recommended next step: run that one guarded verifier on a controlled Position Preset; do not start any Writer or Extract diagnostic.
+
+PRESET_VALUE_SCANNER_HANDOFF_END
