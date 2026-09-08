@@ -72,7 +72,9 @@ class _PortableSmokeClient:
             self.timecode_offset = command.rsplit("= ", 1)[1]
         if command == "List Fixture":
             return 'Fixture 101 "Hybrid 1"\nFixture 102 "Hybrid 2"\nFixture 201 "Spot 1"\nFixture 202 "Spot 2"\n'
-        if command in {"List Layout", "List Preset All", "List Preset Position", "List Sequence", "List Page", "List Executor"}:
+        if command == "List Preset All":
+            return "Focus 6.2 6.2  normal     Normal\n"
+        if command in {"List Layout", "List Preset Position", "List Sequence", "List Page", "List Executor"}:
             return ""
         return "Executing : " + command
 
