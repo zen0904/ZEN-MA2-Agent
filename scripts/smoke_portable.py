@@ -139,8 +139,9 @@ def _song_analysis_smoke() -> int:
     preview = response.get("message", "")
     if response.get("type") != "ACTION_PLAN" or "ZEN_REAL_SONG_ANALYSIS_TEST" not in preview or "Cues 11" not in preview:
         raise SystemExit(f"Portable Song Analysis preview mismatch: {payload}")
-    if payload.get("commands"):
-        raise SystemExit(f"Portable Song Analysis preview wrote MA2 commands: {payload}")
+    commands = payload.get("commands", [])
+    if not all(isinstance(command, str) and command.startswith("List ") for command in commands):
+        raise SystemExit(f"Portable Song Analysis preview sent a non-read command: {payload}")
     print("PACKAGED_SONG_ANALYSIS|PASS")
     return 0
 
