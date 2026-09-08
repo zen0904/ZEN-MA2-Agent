@@ -62,6 +62,61 @@ def preset_export_discovery(xml: str | bytes, preset_ref: str) -> dict[str, Any]
             walk(child, path)
 
     walk(root, "")
+    preset_type_id, preset_number = (int(part) for part in reference.split("."))
+    presets = [node for node in root if _local_name(node.tag) == "Preset"]
+    ma2_3960 = (
+        _local_name(root.tag) == "MA"
+        and root.get("major_vers") == "3"
+        and root.get("minor_vers") == "9"
+        and root.get("stream_vers") == "60"
+    )
+    if ma2_3960 and len(presets) == 1:
+        preset = presets[0]
+        raw_index = preset.get("index")
+        if raw_index is None or not raw_index.isdecimal() or int(raw_index) != preset_number - 1:
+            raise PresetExportError("EXPORT_PRESET_NUMBER_MISMATCH")
+        # This exact real-MA2 sample contains no Fixture, Attribute, or value
+        # children.  Treat that as a positive capability result, not an empty
+        # preset or an invitation to infer content from an internal index.
+        if list(preset):
+            schema_status = "PRESET_CONTENT_SCHEMA_UNVERIFIED"
+            content_status = "UNPARSED_CHILDREN_PRESENT"
+        else:
+            schema_status = "METADATA_ONLY_REAL_MA2_3_9_60"
+            content_status = "NOT_PRESENT_IN_EXPORT"
+        return {
+            "schema": "zen.preset_observations.v0.1",
+            "read_only": True,
+            "preset": {
+                "id": reference,
+                "name": preset.get("name") or None,
+                "preset_type": None,
+                "preset_type_id": preset_type_id,
+                "xml_index": int(raw_index),
+                "source": "MA2_EXPORT_PRESET_XML",
+                "confidence": "VERIFIED_SOURCE",
+            },
+            "observations": [],
+            "source": "MA2_EXPORT_PRESET_XML",
+            "status": schema_status,
+            "content_status": content_status,
+            "capabilities": {
+                "fixture_identity": "NOT_PRESENT_IN_EXPORT",
+                "subfixture_identity": "NOT_PRESENT_IN_EXPORT",
+                "attribute_identity": "NOT_PRESENT_IN_EXPORT",
+                "stored_value": "NOT_PRESENT_IN_EXPORT",
+                "raw_dmx": "NOT_PRESENT_IN_EXPORT",
+                "decimal16": "NOT_PRESENT_IN_EXPORT",
+                "physical_value": "NOT_PRESENT_IN_EXPORT",
+            },
+            "xml_discovery": {
+                "sha256": hashlib.sha256(raw).hexdigest(),
+                "root": _local_name(root.tag),
+                "element_paths": sorted(paths),
+                "attributes_by_element": {name: sorted(names) for name, names in sorted(attributes.items())},
+                "byte_length": len(raw),
+            },
+        }
     return {
         "schema": "zen.preset_observations.v0.1",
         "read_only": True,

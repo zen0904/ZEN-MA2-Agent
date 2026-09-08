@@ -2,7 +2,7 @@
 
 Assessment date: 2026-09-08
 
-Assessment implementation HEAD: `0a1a56cf4c2de7d1e2401848afcb59ecff52d7ad`
+Assessment implementation HEAD: `f51f39f2f668e9271f5edbc346290fc4b41408f1` before the real-machine Preset Value Scanner follow-up.
 
 This report is based on source code, the runnable test suite, packaged EXE
 smokes, Git history, and actual command allow-lists. No grandMA2 Show, Patch,
@@ -358,3 +358,63 @@ Exact next blocker: acquire exactly one real export using `scripts/verify_real_p
 Recommended next step: run that one guarded verifier on a controlled Position Preset; do not start any Writer or Extract diagnostic.
 
 PRESET_VALUE_SCANNER_HANDOFF_END
+
+## 20 Real-Machine Preset Value Scanner Follow-up
+
+This section supersedes the earlier Preset-value readiness statements.  It was
+run against the local grandMA2 onPC 3.9.60.65 Show on 2026-09-08 with an
+authenticated MM Telnet session.  It created only Agent-owned test Presets and
+used a Fixture that was both unpatched and absent from Groups 1--7.
+
+### Controlled test and preservation record
+
+- Selected Fixture: `9999`, `461 G BSW 1`, Fixture Type `2 ZEN BAW 20R Mode 2`.
+  It was selected because `List Fixture` showed Patch `(-)`, it was outside all
+  verified production Group memberships, and `List Fixture 9999 Attribute
+  Pan/Tilt` showed both attributes.
+- Agent-owned Presets: `Preset 2.900 "ZEN_SCAN_TEST_POS_A"` (Pan 15, Tilt 25)
+  and `Preset 2.901 "ZEN_SCAN_TEST_POS_B"` (Pan 35, Tilt 45).  Both slots were
+  verified empty before Store and verified absent after Delete.
+- No production Preset, Fixture Type, Patch, Cue, Sequence, Effect, Group, or
+  fixture in Groups 1--7 was changed.
+- Existing Programmer and Selection values could not be fingerprinted by the
+  available read APIs.  `Extract Preset` was therefore kept inside the isolated
+  Fixture-9999 test and followed by `Off Fixture 9999` and `Clear`; the original
+  state cannot be positively reconstructed from current MA2 feedback.
+
+### Backend evidence
+
+| Backend | Real result | Capability conclusion |
+| --- | --- | --- |
+| `Export Preset` XML | Both exports are 3.9.60 `<MA>` documents with only `<Info>` and an empty `<Preset index name SpecialUse />`. POS_A and POS_B differ only in timestamp/index/name. | `METADATA_ONLY_REAL_MA2_3_9_60`; no Fixture, Subfixture, Attribute, stored value, raw DMX, Decimal16, or physical value is present. |
+| bounded Lua `preset_probe` | `Preset 2.900` is `CMD_PRESET`, has zero children, and six metadata properties (`No.`, `Name`, `Symbol`, `Included Preset Types`, `Special`, `Info`). | Object-tree probe does not expose Preset content. |
+| controlled `Extract Preset` | MA2 accepted Extract, but current `List Programmer` exposes only `Programmer 21`; Fixture Attribute list still exposes Fixture-Type defaults, not active hard values. | No safe value-reader backend is currently established. |
+
+The real XML schema is now represented by sanitized fixtures under
+`tests/fixtures/ma2_preset_exports/`.  `PresetExportProvider` explicitly
+returns an empty observation set and `NOT_PRESENT_IN_EXPORT` for every value
+field; it will reject an index that cannot prove the requested Preset identity.
+
+### Updated Scanner and Fixture Profiler status
+
+| Capability | Updated status | Evidence |
+| --- | --- | --- |
+| Preset Export transport, local onPC | SUPPORTED | unique Agent filename, stable XML gate, cleanup, two real exports |
+| Preset identity/name from Export | SUPPORTED_METADATA_ONLY | requested numeric reference, XML index (`number - 1`), and label agree |
+| Fixture/Subfixture/Attribute/value from Export | BLOCKED_BY_REAL_SCHEMA | neither real export contained those fields |
+| Position Preset Pan/Tilt scanner | BLOCKED | Export, Lua, and controlled Extract all lacked an identity/value readback path |
+| Automatic Fixture Observation Capture | BLOCKED | no trustworthy `Fixture + Attribute + stored value` record exists |
+| Fixture Profiler end-to-end | BLOCKED | draft normalizer exists, but cannot receive verified MA2 observations |
+| Normal ShowScanner integration | BLOCKED | no value provider was connected, to avoid fabricated data |
+
+Multi-fixture mapping was deliberately **not tested**: Fixture 9999 was the
+only Fixture that could be proven non-production without modifying a production
+fixture or Group.  A second safe Fixture must be established before a future
+mapping test.
+
+### Exact next blocker
+
+Find a documented, read-only grandMA2 3.9 source that exposes stored Preset
+values per Fixture and Attribute, or build an isolated clean-show Extract
+reader that can prove and restore Programmer state.  Do not infer values from
+the metadata-only Export XML.

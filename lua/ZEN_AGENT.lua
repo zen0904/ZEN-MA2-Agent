@@ -120,6 +120,49 @@ local function layout_fixture_probe(request_id, layout_no)
     feedback(request_id, "END", "layout_fixture_probe")
 end
 
+local function preset_probe_feedback(request_id, node_path, field, value)
+    gma.feedback("ZEN_PRESET_PROBE|" .. request_id .. "|" .. node_path .. "|" .. field .. "|" .. tostring(value))
+end
+
+local function preset_probe_node(request_id, node, node_path, depth)
+    local child_count = tonumber(safely(gma.show.getobj.amount, node) or 0) or 0
+    preset_probe_feedback(request_id, node_path, "HANDLE", node)
+    preset_probe_feedback(request_id, node_path, "CLASS", safely(gma.show.getobj.class, node))
+    preset_probe_feedback(request_id, node_path, "NUMBER", safely(gma.show.getobj.number, node))
+    preset_probe_feedback(request_id, node_path, "NAME", safely(gma.show.getobj.name, node))
+    preset_probe_feedback(request_id, node_path, "PARENT", safely(gma.show.getobj.parent, node))
+    preset_probe_feedback(request_id, node_path, "CHILD_COUNT", child_count)
+    local property_count = math.min(tonumber(safely(gma.show.property.amount, node) or 0) or 0, 32)
+    preset_probe_feedback(request_id, node_path, "PROPERTY_COUNT", property_count)
+    for property_index = 0, property_count - 1 do
+        local property_name = safely(gma.show.property.name, node, property_index)
+        preset_probe_feedback(request_id, node_path, "PROPERTY", tostring(property_index) .. "|" .. tostring(property_name) .. "|" .. tostring(safely(gma.show.property.get, node, property_index)))
+    end
+    -- Preset internals can be deeper than a Pool object; the limit protects
+    -- command-line feedback and prevents arbitrary show-tree traversal.
+    if depth >= 3 then return end
+    for child_index = 0, math.min(child_count, 32) - 1 do
+        local child = safely(gma.show.getobj.child, node, child_index)
+        if child then
+            preset_probe_node(request_id, child, node_path .. "/" .. tostring(child_index), depth + 1)
+        else
+            preset_probe_feedback(request_id, node_path .. "/" .. tostring(child_index), "HANDLE", "nil")
+        end
+    end
+end
+
+local function preset_probe(request_id, preset_ref)
+    local path = "Preset " .. preset_ref
+    local preset = handle(path)
+    preset_probe_feedback(request_id, "root", "PATH", path)
+    if not preset then
+        feedback(request_id, "ERROR", "PRESET_NOT_FOUND")
+        return
+    end
+    preset_probe_node(request_id, preset, "root", 0)
+    feedback(request_id, "END", "preset_probe")
+end
+
 local function inspect_probe_feedback(request_id, scope, field, value)
     gma.feedback("ZEN_INSPECT_PROBE|" .. request_id .. "|" .. scope .. "|" .. field .. "|" .. tostring(value))
 end
@@ -199,6 +242,10 @@ local function main()
     elseif command == "layout_fixture_probe" and argument:match("^[1-9][0-9]*$") then
         layout_fixture_probe(request_id, tonumber(argument))
     elseif command == "layout_fixture_probe" then
+        feedback(request_id, "ERROR", "MALFORMED_ARGUMENT")
+    elseif command == "preset_probe" and argument:match("^[1-9][0-9]*%.[1-9][0-9]*$") then
+        preset_probe(request_id, argument)
+    elseif command == "preset_probe" then
         feedback(request_id, "ERROR", "MALFORMED_ARGUMENT")
     elseif command == "selection_probe" and argument == "" then
         selection_probe(request_id)

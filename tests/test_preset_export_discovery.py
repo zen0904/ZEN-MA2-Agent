@@ -47,6 +47,31 @@ class PresetExportDiscoveryTests(unittest.TestCase):
         self.assertEqual(result["status"], "SCHEMA_UNVERIFIED")
         self.assertEqual(result["xml_discovery"]["attributes_by_element"]["Opaque"], ["attribute", "fixture", "value"])
 
+    def test_real_ma2_3960_metadata_only_exports_preserve_identity_and_refuse_value_claims(self):
+        fixture = Path(__file__).parent / "fixtures" / "ma2_preset_exports" / "preset_2_900_metadata_only.xml"
+        result = preset_export_discovery(fixture.read_bytes(), "2.900")
+        self.assertEqual(result["status"], "METADATA_ONLY_REAL_MA2_3_9_60")
+        self.assertEqual(result["preset"], {
+            "id": "2.900", "name": "ZEN_SCAN_TEST_POS_A", "preset_type": None,
+            "preset_type_id": 2, "xml_index": 899, "source": "MA2_EXPORT_PRESET_XML", "confidence": "VERIFIED_SOURCE",
+        })
+        self.assertEqual(result["observations"], [])
+        self.assertEqual(result["content_status"], "NOT_PRESENT_IN_EXPORT")
+        self.assertTrue(all(value == "NOT_PRESENT_IN_EXPORT" for value in result["capabilities"].values()))
+
+    def test_second_real_position_export_has_distinct_metadata_but_same_no_content_capability(self):
+        base = Path(__file__).parent / "fixtures" / "ma2_preset_exports"
+        first = preset_export_discovery((base / "preset_2_900_metadata_only.xml").read_bytes(), "2.900")
+        second = preset_export_discovery((base / "preset_2_901_metadata_only.xml").read_bytes(), "2.901")
+        self.assertNotEqual(first["preset"]["name"], second["preset"]["name"])
+        self.assertNotEqual(first["preset"]["xml_index"], second["preset"]["xml_index"])
+        self.assertEqual((first["observations"], second["observations"]), ([], []))
+
+    def test_real_schema_rejects_a_preset_index_that_cannot_prove_requested_identity(self):
+        xml = '<MA major_vers="3" minor_vers="9" stream_vers="60"><Preset index="900" name="wrong" /></MA>'
+        with self.assertRaisesRegex(PresetExportError, "NUMBER_MISMATCH"):
+            preset_export_discovery(xml, "2.900")
+
     def test_export_uses_unique_agent_filename_and_cleans_importexport_file(self):
         runtime = ExportRuntime(self.directory)
         result = self.provider().export_and_discover(runtime, "2.21", self.settings)
