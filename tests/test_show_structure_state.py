@@ -36,6 +36,16 @@ class ShowStructureProviderTests(unittest.TestCase):
         self.assertEqual(cues[1].number,3.5)
         self.assertEqual(CueProvider().parse('No cues',5),[])
 
+    def test_real_ma2_39_sequence_table_preserves_number_and_label(self):
+        rows = SequenceProvider().parse('Sequ 201 201  ZEN_AI_TEST_ZEN_FIRST_SONG_TEST  On     On                Off')
+        self.assertEqual([(item.number, item.name) for item in rows], [(201, "ZEN_AI_TEST_ZEN_FIRST_SONG_TEST")])
+
+    def test_real_ma2_39_cue_detail_uses_explicit_cue_identity(self):
+        provider = CueProvider()
+        self.assertEqual(provider.detail_command(201, 1), "List Cue 1 Part 0 Sequence 201")
+        cue = provider.parse_detail('Cue 0 INTRO  0      2     InDelay   InFade', 201, 1)
+        self.assertEqual((cue.sequence, cue.number, cue.name, cue.fade, cue.delay), (201, 1, "INTRO", 2.0, 0.0))
+
     def test_preset_effect_page_executor_inventory(self):
         presets=PresetProvider().parse('Preset 4.1 "Front"\nPreset 4.4 "Back"','POSITION')
         self.assertEqual([item["number"] for item in presets],[1,4])

@@ -1,0 +1,13 @@
+{
+  "song_name": "ZEN_FIRST_SONG_TEST",
+  "active_sequence_range": [201, 300],
+  "sections": [
+    {"name": "INTRO", "energy": 0.25},
+    {"name": "VERSE_1", "energy": 0.4},
+    {"name": "PRE", "energy": 0.6},
+    {"name": "CHORUS_1", "energy": 0.9},
+    {"name": "VERSE_2", "energy": 0.45},
+    {"name": "CHORUS_2", "energy": 0.95},
+    {"name": "OUTRO", "energy": 0.3}
+  ]
+}

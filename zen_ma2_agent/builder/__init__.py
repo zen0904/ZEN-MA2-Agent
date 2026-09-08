@@ -1,5 +1,5 @@
 """Draft-only bridge from declarative design intent to existing WorkflowPlan."""
 
-from .draft import ShowPlanBuilder
+from .draft import FirstSongBuildError, ShowPlanBuilder
 
-__all__ = ["ShowPlanBuilder"]
+__all__ = ["ShowPlanBuilder", "FirstSongBuildError"]

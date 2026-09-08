@@ -115,6 +115,7 @@ class ShowScanner:
             {
                 "preset_type": item.get("preset_type"),
                 "pool_id": item.get("number"),
+                "reference": item.get("reference"),
                 "name": item.get("name"),
                 "fixture_applicability": _unknown("Preset membership has no verified provider."),
                 "stored_attributes": _unknown("Preset contents have no verified provider."),

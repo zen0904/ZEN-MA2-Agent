@@ -11,6 +11,15 @@ class PresetProvider:
     def parse(self, output: str, preset_type: str) -> list[dict]:
         rows=[]
         for line in output.splitlines():
+            # Verified grandMA2 3.9 table form, for example:
+            # ``Focus 6.2 6.2  normal     Normal``.  The first token and
+            # pool reference are authoritative; do not collapse it to an
+            # arbitrary ALL-pool number.
+            table = re.match(r"^\s*(?P<kind>[A-Za-z]+)\s+(?P<reference>\d+\.\d+)\s+\d+\.\d+\s+(?P<name>.+?)\s+(?:Normal|Selective|Global)\s*$", line, re.I)
+            if table:
+                kind, reference = table.group("kind").upper(), table.group("reference")
+                rows.append({"preset_type": kind, "number": int(reference.split(".", 1)[1]), "reference": reference, "name": table.group("name").strip()})
+                continue
             match=re.search(r"(?:preset\s+)?(?:[A-Za-z]+\s+)?(?:\d+\.)?(\d+)\s+['\"]?(.+?)['\"]?\s*$", line.strip(), re.I)
             if match and not line.strip().lower().startswith(("executing", "no.")):
                 rows.append({"preset_type":preset_type.upper(),"number":int(match.group(1)),"name":match.group(2).strip().strip("'\"")})

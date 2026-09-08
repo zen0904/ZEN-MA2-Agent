@@ -79,3 +79,22 @@ any write. The verified MA2 `List Timecode` read-back is 30 FPS seconds:frames,
 so v1 accepts only exactly representable whole-show offsets. Individual
 Timecode event/track state has no verified read-only provider, so range and
 negative movement are rejected rather than emulated.
+
+## First Song Builder PoC
+
+The first Show Builder path is intentionally narrow:
+
+```text
+FIRST_SONG_INPUT.json → FirstSongDesigner (typed intent only)
+  → live scanner profile → ShowPlanBuilder → MODIFY preview
+  → shared ActionRecord approval → allow-listed MA2 commands
+  → Sequence/Cue metadata verification
+```
+
+The Designer may only emit typed `CALL_PRESET` and `SET_DIMMER` actions. It
+cannot embed command strings. The Builder resolves their group and preset
+references against the just-scanned profile, allocates an unused Sequence only
+inside the explicit input range, and creates a new `ZEN_AI_TEST_*` Sequence.
+Existing resources are reference-only. A rollback proposal is possible only
+after a fresh read-back proves both the precise Sequence number and Agent-owned
+label; it is never executed automatically.

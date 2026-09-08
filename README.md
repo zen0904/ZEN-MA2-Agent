@@ -134,6 +134,19 @@ build a real, read-only ordered Group-membership mapping and a MODIFY Preview,
 but remains Disabled until it has a dedicated safe real-MA2 write target.
 Auto Position and Programmer Inspect remain explicit placeholders.
 
+### First Song Builder PoC
+
+`examples\FIRST_SONG_INPUT.json` is a manual, portable song-structure input
+for the first Builder proof of concept. Its `active_sequence_range` is an
+explicit user-controlled allocation range; the Builder scans the live Sequence
+pool and chooses only the first unused slot. The deterministic Designer emits
+typed actions, never MA2 command strings. The Builder resolves only scanned
+Groups and Presets, previews every allow-listed command, then requires the
+normal MODIFY approval lifecycle before it can create a new `ZEN_AI_TEST_*`
+Sequence. Existing Presets, Effects, and Sequences are never overwritten.
+Verification reads the exact Sequence label plus Cue count, labels, and fades;
+Cue-content readback is explicitly `PARTIAL`.
+
 ## Show Diagnostics v1
 
 Ask `檢查 Show`, `Show Diagnostics`, or `幫我檢查目前 Show` for a SAFE,

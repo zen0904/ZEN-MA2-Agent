@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 import uuid
 from dataclasses import dataclass
@@ -36,6 +37,8 @@ from .geometry_test_environment import (
     test_mode_enabled,
 )
 from .models import Intent
+from .designer import FirstSongDesigner
+from .builder import FirstSongBuildError
 
 
 @dataclass
@@ -118,6 +121,35 @@ class AgentCore:
         profile = scanner.write(self.state, output_path) if output_path else scanner.scan(self.state)
         self.runtime.log("show_profile_scan", {"read_only": True, "output_path": str(output_path) if output_path else None})
         return profile
+
+    def preview_first_song(self, song_input: dict[str, Any]) -> dict[str, Any]:
+        """Create a typed first-song ActionPlan through the shared Core boundary."""
+        for resource, kwargs in (("groups", {}), ("fixtures", {}), ("fixture_geometry", {}), ("presets", {"sequence": "ALL"}), ("effects", {}), ("sequences", {})):
+            self.refresh_state(resource, **kwargs)
+        data_dir = self.runtime.root / "data"
+        data_dir.mkdir(parents=True, exist_ok=True)
+        profile = self.scan_show_profile(data_dir / "ZEN_SHOW_PROFILE.json")
+        show_plan = FirstSongDesigner().design(song_input, profile)
+        (data_dir / "ZEN_SHOW_PLAN.json").write_text(json.dumps(show_plan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        context = {key: profile.get(key, []) for key in ("groups", "presets", "effects", "sequences")}
+        workflow = self.skills.plan_intent(Intent("build_first_song", {"first_song_spec": {"show_plan": show_plan, "profile": context}}, "ZEN_SHOW_PLAN"), self.state, self.runtime.preferences)
+        self.runtime.log("first_song_preview", {"song": show_plan["song"], "cue_count": len(show_plan["cues"]), "sequence_range": show_plan["active_sequence_range"]})
+        return self._queue_workflow(workflow)
+
+    def _queue_workflow(self, workflow: WorkflowPlan) -> dict[str, Any]:
+        """Store a prepared workflow in the same approval registry as Chat plans."""
+        action_id = uuid.uuid4().hex[:12]
+        if self._active_action_id:
+            previous = self.actions.get(self._active_action_id)
+            if previous and previous.status == "PENDING_APPROVAL":
+                previous.status = "CANCELLED"
+        record = ActionRecord(action_id, workflow)
+        self.actions[action_id] = record
+        self._active_action_id = action_id
+        self.chat.append({"role": "assistant", "kind": ResponseType.ACTION_PLAN.value, "text": workflow.preview_note, "action_id": action_id})
+        self.progress = "Waiting for approval"
+        self.events.emit("plan", self.snapshot())
+        return {"type": ResponseType.ACTION_PLAN.value, "message": workflow.preview_note, "action": {"id": action_id, "status": record.status, **record.plan}}
 
     def tick(self) -> None:
         self.runtime.poll_connection()
@@ -801,6 +833,8 @@ class AgentCore:
                 result = self._verify_timecode_offset(action, result)
             elif action.workflow.task.intent.kind == "geometry_clone":
                 result = self._verify_geometry_clone(action, result)
+            elif action.workflow.task.intent.kind == "build_first_song":
+                result = self._verify_first_song(action, result)
             action.status, action.result = "EXECUTED", result
             self._active_action_id = None
             self.chat.append({"role": "assistant", "kind": "result", "text": action.result, "action_id": action_id})
@@ -813,6 +847,52 @@ class AgentCore:
             raise
         self.events.emit("execution", self.snapshot())
         return {"id": action.id, "status": action.status, "result": action.result}
+
+    def _verify_first_song(self, action: ActionRecord, execution_result: str) -> str:
+        data = action.workflow.task.intent.parameters
+        sequence, label = data.get("sequence"), data.get("sequence_label")
+        expected_labels = data.get("cue_labels")
+        if not isinstance(sequence, int) or not isinstance(label, str) or not isinstance(expected_labels, list):
+            raise FirstSongBuildError("First Song verification metadata is incomplete.")
+        return execution_result + "\n" + self.verify_first_song_metadata(sequence, label, data.get("cues", []), expected_labels)
+
+    def verify_first_song_metadata(self, sequence: int, label: str, expected_cues: list[dict[str, Any]], expected_labels: list[str] | None = None) -> str:
+        """Read only the exact known Cue metadata after an approved build.
+
+        `List Cue <number> Part 0 Sequence <number>` is the verified MA2
+        detail path.  It never changes selection or Programmer state.
+        """
+        if not isinstance(sequence, int) or not isinstance(label, str) or not isinstance(expected_cues, list):
+            raise FirstSongBuildError("First Song verification metadata is incomplete.")
+        labels = expected_labels if isinstance(expected_labels, list) else [cue.get("label") for cue in expected_cues]
+        if len(labels) != len(expected_cues):
+            raise FirstSongBuildError("First Song verification labels are incomplete.")
+        self.refresh_state("sequences")
+        sequences = self.state.get("sequences")
+        found = next((item for item in (sequences.values if sequences else []) if item.get("number") == sequence), None)
+        if not found or found.get("name") != label:
+            raise FirstSongBuildError("Verification failed: Agent-owned Sequence label was not read back exactly.")
+        provider = CueProvider()
+        cues = []
+        for expected in expected_cues:
+            number = expected.get("cue_number")
+            if not isinstance(number, int) or number < 1:
+                raise FirstSongBuildError("Verification failed: approved Cue number is invalid.")
+            response = self.runtime.read_state(provider.detail_command(sequence, number))
+            cue = provider.parse_detail(response, sequence, number)
+            if cue is None:
+                raise FirstSongBuildError(f"Verification failed: Cue {number} detail was not read back.")
+            cues.append(cue)
+        self.state.put("cues", cues, source="ma2_telnet_list_detail")
+        actual_labels = [item.name for item in cues]
+        if len(cues) != len(labels) or actual_labels != labels:
+            raise FirstSongBuildError("Verification failed: Cue count or labels do not match the approved plan.")
+        fades = [item.fade for item in cues]
+        expected_fades = [float(cue.get("fade")) for cue in expected_cues]
+        if any(value is None for value in fades) or fades != expected_fades:
+            raise FirstSongBuildError("Verification failed: Cue Fade values do not match the approved plan.")
+        self.runtime.log("first_song_verification", {"sequence": sequence, "label": label, "cue_count": len(cues), "cue_labels": actual_labels, "fades": fades, "preset_effect_content": "PARTIAL"})
+        return f"Verification: PARTIAL — Sequence {sequence} {label}; {len(cues)} Cue labels and Fades verified. Cue-content Preset read-back is unavailable."
 
     def _verify_geometry_test_groups(self, action: ActionRecord, execution_result: str) -> str:
         raw = action.workflow.task.intent.parameters.get("geometry_test_group_spec")

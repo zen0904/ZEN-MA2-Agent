@@ -102,7 +102,7 @@ class AgentRuntime:
         """Core-owned read-only transport entrypoint for generic state providers."""
         if not self.ready or not self.client:
             raise ConnectionError("Connect and reach MA2 READY before reading show state.")
-        if not re.fullmatch(r'List (?:Group|Layout|Sequence|Cue|Effect|Page|Executor|Preset|Timecode)(?: (?:\d+|Dimmer|Position|Gobo|Color|Beam|Focus|Control|All))?|List Fixture(?: \d+(?:\.\d+)?)?', command, re.I):
+        if not re.fullmatch(r'List (?:Group|Layout|Sequence|Effect|Page|Executor|Preset|Timecode)(?: (?:\d+|Dimmer|Position|Gobo|Color|Beam|Focus|Control|All))?|List Cue \d+(?: Part 0)?(?: Sequence \d+)?|List Fixture(?: \d+(?:\.\d+)?)?', command, re.I):
             raise PermissionError("State transport only accepts allow-listed read-only List commands.")
         response = self.client.execute(command)
         self.log("state_read", {"command": command, "response": response})

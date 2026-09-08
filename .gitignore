@@ -2,6 +2,7 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 logs/*.jsonl
+data/*.json
 config/settings.json
 .venv/
 build/

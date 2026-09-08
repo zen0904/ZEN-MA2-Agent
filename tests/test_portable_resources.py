@@ -16,7 +16,7 @@ class PortableResourceTests(unittest.TestCase):
     def test_plugin_files_are_required_nonempty_and_reference_exact_lua_name(self):
         with tempfile.TemporaryDirectory(prefix="zen-portable-") as temporary:
             bundle = Path(temporary)
-            for name in ("web", "lua", "skills", "config", "gma2", "semantic_presets", "geometry"):
+            for name in ("web", "lua", "skills", "config", "gma2", "semantic_presets", "geometry", "examples"):
                 copytree(ROOT / name, bundle / name)
             for name in ("logs", "cache"):
                 (bundle / name).mkdir()
@@ -25,4 +25,15 @@ class PortableResourceTests(unittest.TestCase):
             self.assertTrue((bundle / "geometry" / "ZEN_STAGE_AXIS_PROFILE.json").is_file())
             (bundle / "gma2" / "plugins" / "ZEN_AGENT.lua").unlink()
             with self.assertRaisesRegex(RuntimeError, "ZEN_AGENT.lua"):
+                portable_resources.assert_portable_resources(bundle)
+
+    def test_first_song_input_is_a_required_portable_resource(self):
+        with tempfile.TemporaryDirectory(prefix="zen-portable-") as temporary:
+            bundle = Path(temporary)
+            for name in ("web", "lua", "skills", "config", "gma2", "semantic_presets", "geometry", "examples"):
+                copytree(ROOT / name, bundle / name)
+            for name in ("logs", "cache"):
+                (bundle / name).mkdir()
+            (bundle / "examples" / "FIRST_SONG_INPUT.json").unlink()
+            with self.assertRaisesRegex(RuntimeError, "FIRST_SONG_INPUT.json"):
                 portable_resources.assert_portable_resources(bundle)

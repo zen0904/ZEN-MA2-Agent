@@ -7,6 +7,7 @@ from typing import Any
 
 SHOW_PLAN_SCHEMA = "zen.show_plan.v0.1"
 _FORBIDDEN_KEYS = {"command", "commands", "telnet", "ma_command", "raw_command"}
+_OPERATIONS = {"CALL_PRESET", "SET_DIMMER", "CALL_EFFECT"}
 
 
 class ShowPlanSchemaError(ValueError):
@@ -34,8 +35,18 @@ def validate_show_plan(plan: dict[str, Any]) -> dict[str, Any]:
     _walk(plan)
     normalized = deepcopy(plan)
     for index, cue in enumerate(normalized["cues"], start=1):
-        if not isinstance(cue, dict) or not str(cue.get("id") or "").strip():
+        if not isinstance(cue, dict) or not str(cue.get("id") or cue.get("label") or "").strip():
             raise ShowPlanSchemaError(f"Cue {index} requires an id.")
-        if not isinstance(cue.get("intent", {}), dict):
+        if "actions" in cue:
+            if not isinstance(cue.get("cue_number"), int) or cue["cue_number"] < 1:
+                raise ShowPlanSchemaError(f"Cue {index} requires a positive cue_number.")
+            if not isinstance(cue.get("fade"), (int, float)) or float(cue["fade"]) < 0:
+                raise ShowPlanSchemaError(f"Cue {index} requires a non-negative fade.")
+            if not isinstance(cue["actions"], list):
+                raise ShowPlanSchemaError(f"Cue {index} actions must be a list.")
+            for action in cue["actions"]:
+                if not isinstance(action, dict) or action.get("operation") not in _OPERATIONS or not isinstance(action.get("target"), dict):
+                    raise ShowPlanSchemaError(f"Cue {index} contains an invalid typed action.")
+        elif not isinstance(cue.get("intent", {}), dict):
             raise ShowPlanSchemaError(f"Cue {index} intent must be an object.")
     return normalized

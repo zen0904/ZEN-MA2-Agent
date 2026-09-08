@@ -117,6 +117,9 @@ class SkillRegistry:
                     elif manifest.id == "geometry.test_environment":
                         from .geometry_test_environment import GeometryTestEnvironmentSkill
                         self._implementations[manifest.id] = GeometryTestEnvironmentSkill(manifest)
+                    elif manifest.id == "show.builder":
+                        from .first_song_builder import FirstSongBuildSkill
+                        self._implementations[manifest.id] = FirstSongBuildSkill(manifest)
                     else:
                         self._implementations[manifest.id] = BuiltinCommandSkill(manifest)
 

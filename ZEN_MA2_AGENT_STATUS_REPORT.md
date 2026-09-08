@@ -557,3 +557,35 @@ labelled `GEOMETRY_INFERRED` and keeps raw Subfixture geometry authoritative.
 and normalized/relationship data for each primary and Subfixture geometry row.
 Raw Patch text is retained; only the verified `Universe.Address` shape such as
 `10.001` is additionally parsed as Universe `10`, Address `1`.
+
+## 25 First Song Builder PoC
+
+The first executable Builder path is deliberately narrow and uses a manual
+portable song-structure input (`examples/FIRST_SONG_INPUT.json`), a fresh
+`ZEN_SHOW_PROFILE.json`, typed `ZEN_SHOW_PLAN.json` actions, and the shared
+MODIFY preview/approval lifecycle. It dynamically resolves only Group and
+Preset references returned by the current scan, uses the explicit input
+Sequence allocation range, and creates only a new `ZEN_AI_TEST_*` Sequence.
+No existing Preset, Effect, Cue, Sequence, Patch, or Fixture Type is modified.
+If an exact semantic Position Preset is absent, it records a warning and skips
+that action rather than inventing a resource. Effect calls remain skipped until
+their production call grammar is independently verified.
+
+The verification contract is intentionally PARTIAL: it reads back the exact
+Sequence label, Cue count, Cue labels, and Cue fades. Preset/Effect content
+inside a Cue has no verified read-only provider. Narrow rollback is a proposal
+only: `Delete Sequence <n> /nc` is available solely after exact read-back of
+the same number plus an `ZEN_AI_TEST_*` label, and still requires a separate
+explicit approval.
+
+Real MA2 3.9 verification on `zen templ show` created two Agent-owned test
+Sequences only: `201 ZEN_AI_TEST_ZEN_FIRST_SONG_TEST` and
+`202 ZEN_AI_TEST_ZEN_FIRST_SONG_TEST_R2`.  The current Builder proof executed
+through the shared ActionRecord approval route for Sequence 202 and read back
+all seven Part-0 Cue rows through the verified read-only form
+`List Cue <cue> Part 0 Sequence <sequence>`.  Exact labels `INTRO`, `VERSE_1`,
+`PRE`, `CHORUS_1`, `VERSE_2`, `CHORUS_2`, `OUTRO` and Fades
+`2, 1.2, 1.2, 0.5, 1.2, 0.5, 2` matched the approved plan.  MA2 returned no
+command error; existing Presets, Effects, production Sequences, Patch, and
+Fixture Types were not modified.  The two named test Sequences are retained
+for operator inspection.

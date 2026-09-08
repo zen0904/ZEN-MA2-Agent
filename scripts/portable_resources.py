@@ -6,7 +6,7 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 
-RESOURCE_DIRECTORIES = ("web", "lua", "skills", "config", "logs", "cache", "gma2", "semantic_presets", "geometry")
+RESOURCE_DIRECTORIES = ("web", "lua", "skills", "config", "logs", "cache", "gma2", "semantic_presets", "geometry", "examples")
 PLUGIN_FILES = ("ZEN_AGENT.xml", "ZEN_AGENT.lua")
 AXIS_PROFILE_FILE = "geometry\\ZEN_STAGE_AXIS_PROFILE.json"
 
@@ -31,4 +31,7 @@ def assert_portable_resources(bundle: Path) -> list[str]:
     plugin = next((element for element in root.iter() if element.tag.rsplit("}", 1)[-1] == "Plugin"), None)
     if plugin is None or plugin.get("luafile") != lua_path.name:
         raise RuntimeError("Portable plugin XML must reference ZEN_AGENT.lua with exact case.")
+    song_input = bundle / "examples" / "FIRST_SONG_INPUT.json"
+    if not song_input.is_file() or song_input.stat().st_size <= 0:
+        raise RuntimeError("Portable resource check failed: examples/FIRST_SONG_INPUT.json")
     return [str(path.relative_to(bundle)) for path in plugin_paths]
