@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import uuid
 from dataclasses import dataclass
+from pathlib import Path
 from time import monotonic
 from typing import Any
 
@@ -103,6 +104,20 @@ class AgentCore:
             "skills": self.skills.list(),
             "proposals": [proposal.summary() for proposal in self.extensions.proposals.values()],
         }
+
+    def scan_show_profile(self, output_path: Path | None = None) -> dict[str, Any]:
+        """Export the current read-only StateStore as a ZEN show-profile draft.
+
+        This method performs no refresh and never talks to the MA2 transport;
+        callers choose explicitly when to collect State through existing
+        allow-listed providers before scanning.
+        """
+        from .scanner import ShowScanner
+
+        scanner = ShowScanner()
+        profile = scanner.write(self.state, output_path) if output_path else scanner.scan(self.state)
+        self.runtime.log("show_profile_scan", {"read_only": True, "output_path": str(output_path) if output_path else None})
+        return profile
 
     def tick(self) -> None:
         self.runtime.poll_connection()

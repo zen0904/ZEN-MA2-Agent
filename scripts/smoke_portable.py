@@ -100,7 +100,11 @@ def _effect_approval_smoke() -> int:
     payload = json.loads(next(line for line in reversed(run.stdout.splitlines()) if line.startswith("{")))
     if payload.get("before") != ["List Group", "List Effect"]:
         raise SystemExit(f"Effect preview sent an unexpected command: {payload}")
-    if payload.get("action_status") != "EXECUTED" or "Verification: VERIFIED" not in str(payload.get("result")):
+    # EffectProvider can attest to the pool object and its label, but it does
+    # not yet expose the Effect-line parameters.  The supported contract is
+    # therefore intentionally PARTIAL, matching the real workflow and unit
+    # coverage; do not falsely promote this smoke to full verification.
+    if payload.get("action_status") != "EXECUTED" or "Verification: PARTIAL" not in str(payload.get("result")) or "label matches" not in str(payload.get("result")):
         raise SystemExit(f"Effect approval did not execute/verify: {payload}")
     if not any(command.startswith("Store Effect 2500") for command in payload.get("commands", [])):
         raise SystemExit(f"Effect approval did not use the planned commands: {payload}")
