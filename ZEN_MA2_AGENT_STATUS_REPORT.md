@@ -420,3 +420,33 @@ Find a documented, read-only grandMA2 3.9 source that exposes stored Preset
 values per Fixture and Attribute, or build an isolated clean-show Extract
 reader that can prove and restore Programmer state.  Do not infer values from
 the metadata-only Export XML.
+
+## 21 Controlled Showfile Differential Follow-up
+
+With explicit real-machine authorization, a second research pass used only
+Fixture `9999` (unpatched and re-verified outside Groups 1--7) and the
+Agent-owned Position Preset `2.900`.
+
+- A baseline copy of `zen templ show.show.gz` was made read-only in
+  `cache/preset_showfile_differential/20260908/` before test writes.
+- The first pair stored Pan/Tilt `(15, 25)` and `(35, 45)`.  A second,
+  orthogonal set then stored the same Preset as E `(15, 25)`, F `(35, 25)`,
+  G `(15, 45)`, and H `(35, 45)`.  Each state was saved to a unique
+  Agent-owned Show copy and immediately copied into the research cache.
+- All live-session test output was removed with `Off Fixture 9999`, `Clear`,
+  and `Delete Preset 2.900 /nc`; a subsequent `List Preset 2.900` returned
+  `NO OBJECTS FOUND`.
+
+The gzip streams and decompressed payloads differ, but their lengths increase
+on every save and the string label moves by 91 bytes per save.  Label-anchored
+comparison found the same 21 bookkeeping changes for Pan-only, Tilt-only, and
+both-axis pairs.  No binary Fixture-9999 reference occurs near the Preset
+label, and no candidate record simultaneously binds Fixture identity,
+Attribute identity, and a value delta.  The experiment therefore does **not**
+meet the evidence threshold for a showfile parser or normal Scanner provider.
+
+The six Agent-owned `ZEN_AGENT_PRESET_DIFF_*.show.gz` copies remain in the
+MA2 Shows directory because the host safety guard declined their filesystem
+deletion after creation; identical research copies are retained under the
+Agent cache.  They contain only the controlled Fixture-9999 test Preset and
+may be removed later as an exact-name cleanup operation.
