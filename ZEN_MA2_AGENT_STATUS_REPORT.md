@@ -627,3 +627,24 @@ CHORUS_2 (0.5), FINAL_CHORUS (0.5), FINAL_CHORUS_ACCENT_1 (0.2), OUTRO (2).
 Preset/effect content readback remains explicitly PARTIAL. Existing production
 objects were reference-only; the three `ZEN_AI_TEST_*` Sequences are retained
 for inspection.
+
+## 27 Industry Reference Pack 001
+
+`ZEN_INDUSTRY_REFERENCE_PACK_001` is a local, read-only evidence pack built
+from six traceable professional sources: two large-concert references, two
+band/live references, and two theatre/narrative references. The source model
+is `zen.industry_reference_source.v0.1`; observations are short,
+copyright-safe derived notes with source URL, context, limitations, evidence
+type, confidence, and a default `HUMAN_REVIEW_REQUIRED` status.
+
+The pack records repeated cross-domain signals such as focus hierarchy,
+resource awareness, color development, spatial depth, and movement usage. It
+also preserves context dependence (for example, an early signature effect can
+be intentional in one show) rather than turning one practice into a global
+rule. Internal principles and anti-patterns are reported in separate
+validation documents; no global promotion occurred.
+
+This round does not wire external evidence into Designer, does not create a
+`ZEN_STYLE_PROFILE`, and performs zero MA2 writes. Industry ingestion status
+is `LOCAL_PACK_READY / HUMAN_REVIEW_REQUIRED`; runtime use remains
+`NOT_IMPLEMENTED` until explicit review and a future context adapter.

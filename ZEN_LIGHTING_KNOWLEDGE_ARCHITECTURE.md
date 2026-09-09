@@ -173,7 +173,8 @@ path.
 
 - Local schema and promotion logic: implemented and unit-tested.
 - Training Case 001 evidence migration: implemented as metadata/provenance.
-- Industry data ingestion: interface only; no external data fetched.
+- Industry Reference Pack 001: six traceable sources and 17 derived observations are stored locally with source/domain/context/evidence/confidence/limitations. All records default to `HUMAN_REVIEW_REQUIRED`; no global promotion has occurred.
+- Industry data ingestion runtime wiring: not implemented; the pack is a review artifact and future context-adapter input only.
 - User Style Profile: deferred.
 - Designer runtime wiring: not run.
 - MA2 write audit: zero writes.
