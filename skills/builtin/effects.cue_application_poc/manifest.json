@@ -1,0 +1,1 @@
+{"id":"effects.cue_application_poc","name":"Cue Effect Application POC","version":"0.1","description":"Isolated, Agent-owned grandMA2 Cue Effect-call grammar verifier. It always requires Preview and Approval.","intents":["verify_cue_effect_application"],"required_state":["groups","group_membership","effects","sequences"],"safety":"MODIFY","enabled":true}

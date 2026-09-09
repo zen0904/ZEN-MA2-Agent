@@ -24,6 +24,7 @@ from .telnet_client import ConnectionState
 from .workflow import WorkflowPlan
 from .effect_builder import EffectBuildError, EffectTargetAmbiguous, resolve_effect_spec
 from .effect_resources import EffectCatalog, EffectRequirement, EffectRequirementError, EffectResourceResolver, apply_effect_references, show_identity
+from .cue_effect_application import CueEffectApplicationCapability, CueEffectApplicationError, CueEffectApplicationSpec, ma2_response_has_error, resolve_spec
 from .geometry_clone import GeometryCloneAmbiguous, GeometryCloneError, GeometryCloneSpec, format_mapping, membership_fingerprint, resolve_geometry_clone_spec
 from .timecode_offset import TimecodeOffsetError, fingerprint_timecode, resolve_timecode_offset_spec
 from .geometry_test_environment import (
@@ -82,6 +83,7 @@ class AgentCore:
         self.diagnostics = ShowDiagnostics()
         self.effect_catalog = EffectCatalog(self.runtime.root)
         self.effect_resources = EffectResourceResolver(self.effect_catalog)
+        self.cue_effect_application_capability = CueEffectApplicationCapability(self.runtime.root)
         self.last_diagnostics: DiagnosticReport | None = None
         self.last_chat_routing: dict[str, Any] | None = None
         self._isolated_geometry_test_loaded = False
@@ -139,6 +141,38 @@ class AgentCore:
         normalized = validate_song_analysis(analysis)
         return self._preview_designer_input(SongAnalysisAdapter().to_designer_input(normalized), analysis=normalized)
 
+    def preview_cue_effect_application_poc(self, effect_id: int = 3520) -> dict[str, Any]:
+        """Prepare the sole isolated real-machine Cue Effect grammar probe.
+
+        This is a Core API for the packaged test bridge/verifier, not a
+        natural-language raw-command escape hatch. Every resource is refreshed
+        before the shared ActionPlan is queued for approval.
+        """
+        if not isinstance(effect_id, int) or effect_id < 1:
+            raise CueEffectApplicationError("Cue Effect POC requires a positive Effect number.")
+        self.refresh_state("effects")
+        effects = self.state.get("effects")
+        raw_effect = next((item for item in (effects.values if effects else []) if item.get("number") == effect_id), None)
+        # StateStore keeps native Pool rows (`number`); the typed POC model
+        # intentionally uses the Designer-facing `effect_id` vocabulary.
+        effect = ({"effect_id": raw_effect.get("number"), "name": raw_effect.get("name")} if raw_effect else None)
+        catalog_entry = next((item for item in self.effect_catalog.load().get("entries", []) if item.get("effect_id") == effect_id), None)
+        target = ((catalog_entry or {}).get("requirement") or {}).get("target_ref")
+        if not isinstance(target, int):
+            raise CueEffectApplicationError("STALE_EFFECT_RESOURCE: Effect catalog target is unavailable.")
+        self.refresh_state("groups")
+        groups = self.state.get("groups")
+        group = next((item for item in (groups.values if groups else []) if item.get("number") == target), None)
+        membership_result = self.refresh_state("group_membership", group_no=target)
+        membership = next((item for item in membership_result.get("values", []) if item.get("group_no") == target), None)
+        self.refresh_state("sequences")
+        sequences = self.state.get("sequences")
+        spec = resolve_spec(effect=effect, catalog_entry=catalog_entry, group=group, membership=membership, sequences=list(sequences.values if sequences else []))
+        intent = Intent("verify_cue_effect_application", {"cue_effect_spec": spec.summary()}, "CUE_EFFECT_APPLICATION_POC")
+        workflow = self.skills.plan_intent(intent, self.state, self.runtime.preferences)
+        self.runtime.log("cue_effect_application_preview", {"effect": effect_id, "target_group": spec.target_group, "sequence": spec.sequence, "cue": spec.cue_number, "grammar": "EFFECT_POOL_CALL"})
+        return self._queue_workflow(workflow)
+
     def _preview_designer_input(self, song_input: dict[str, Any], *, analysis: dict[str, Any] | None) -> dict[str, Any]:
         # A First Song/Effect-resource resolution needs pool identities, not a
         # full Subfixture geometry sweep. Geometry remains available from a
@@ -168,6 +202,12 @@ class AgentCore:
                 details = "; ".join(f"{item.requirement.semantic_label}: {item.status}" for item in unresolved)
                 raise EffectRequirementError("Effect resource resolution is blocked: " + details)
             show_plan = apply_effect_references(show_plan, resolutions)
+            # Only a completed isolated real-machine POC can enable the
+            # compiler-side CALL_EFFECT grammar. Designer remains entirely
+            # declarative and never receives this transport detail.
+            capability = self.cue_effect_application_capability.load_verified()
+            if capability:
+                show_plan["effect_application_capability"] = capability
             self.runtime.log("effect_resource_resolution", {"status": "EXISTING_MATCH", "requirements": [item.summary() for item in resolutions.values()], "show_identity": show_identity(profile)})
         (data_dir / "ZEN_SHOW_PLAN.json").write_text(json.dumps(show_plan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         context = {key: profile.get(key, []) for key in ("groups", "presets", "effects", "sequences")}
@@ -876,10 +916,13 @@ class AgentCore:
         self.progress = "Executing"
         self.events.emit("progress", {"stage": self.progress})
         try:
-            commands = self.skills.approved_commands(action.workflow.task.skill_id, action.workflow)
-            results = self.runtime.execute_approved_commands(commands)
-            result = "\n".join(item for item in results if item) or "Approved MA2 workflow commands sent"
             intent_kind = action.workflow.task.intent.kind
+            if intent_kind == "verify_cue_effect_application":
+                result = self._execute_cue_effect_application_poc(action)
+            else:
+                commands = self.skills.approved_commands(action.workflow.task.skill_id, action.workflow)
+                results = self.runtime.execute_approved_commands(commands)
+                result = "\n".join(item for item in results if item) or "Approved MA2 workflow commands sent"
             if intent_kind.startswith("geometry_test_") and re.search(r"(?:\berror\b|\billegal\b|\bfailed\b)", result, re.I):
                 raise GeometryTestEnvironmentError("MA2 reported an error while executing the approved workflow.")
             if intent_kind == "geometry_test_load_show":
@@ -914,6 +957,48 @@ class AgentCore:
             raise
         self.events.emit("execution", self.snapshot())
         return {"id": action.id, "status": action.status, "result": action.result}
+
+    def _execute_cue_effect_application_poc(self, action: ActionRecord) -> str:
+        """Execute the POC in a guarded two-phase sequence.
+
+        Store/label are unreachable until the Effect call returns without a
+        recognised MA2 error. ClearAll is attempted on every exit path.
+        """
+        raw = action.workflow.task.intent.parameters.get("cue_effect_spec")
+        if not isinstance(raw, dict):
+            raise CueEffectApplicationError("Cue Effect POC verification metadata is incomplete.")
+        try:
+            spec = CueEffectApplicationSpec(**raw)
+        except TypeError as exc:
+            raise CueEffectApplicationError("Cue Effect POC verification metadata is malformed.") from exc
+        commands = self.skills.approved_commands(action.workflow.task.skill_id, action.workflow)
+        if len(commands) != 6:
+            raise CueEffectApplicationError("Cue Effect POC has an invalid approved command count.")
+        responses: list[str] = []
+        try:
+            for command in commands[:3]:
+                response = self.runtime.execute_approved_commands((command,))[0]
+                responses.append(response)
+                if ma2_response_has_error(response):
+                    raise CueEffectApplicationError(f"MA2 rejected Cue Effect application candidate {command!r}: {response or 'no feedback'}")
+            for command in commands[3:5]:
+                response = self.runtime.execute_approved_commands((command,))[0]
+                responses.append(response)
+                if ma2_response_has_error(response):
+                    raise CueEffectApplicationError(f"MA2 rejected approved Cue storage command {command!r}: {response or 'no feedback'}")
+            verification = self.verify_first_song_metadata(spec.sequence, spec.sequence_label, [{"cue_number": spec.cue_number, "label": spec.cue_label, "fade": 0}])
+            capability = self.cue_effect_application_capability.record(spec)
+            self.runtime.log("cue_effect_application_verification", {"status": "REAL_MACHINE_VERIFIED", "grammar": capability["grammar"], "effect": spec.effect_id, "target_group": spec.target_group, "sequence": spec.sequence, "cue": spec.cue_number, "cue_content_effect_readback": "PARTIAL", "responses": responses})
+            return "\n".join(item for item in responses if item) + "\n" + verification + "\nEffect application grammar: REAL_MACHINE_VERIFIED. Cue-content Effect read-back: PARTIAL."
+        except Exception as exc:
+            self.runtime.log("cue_effect_application_verification", {"status": "FAILED", "effect": spec.effect_id, "target_group": spec.target_group, "sequence": spec.sequence, "cue": spec.cue_number, "error": str(exc), "responses": responses})
+            raise
+        finally:
+            try:
+                clear_response = self.runtime.execute_approved_commands((commands[-1],))[0]
+                self.runtime.log("cue_effect_application_clear", {"sequence": spec.sequence, "response": clear_response})
+            except Exception as clear_exc:
+                self.runtime.log("cue_effect_application_clear", {"sequence": spec.sequence, "error": str(clear_exc)})
 
     def _verify_first_song(self, action: ActionRecord, execution_result: str) -> str:
         data = action.workflow.task.intent.parameters

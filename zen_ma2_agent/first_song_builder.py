@@ -36,6 +36,7 @@ class FirstSongBuildSkill:
             allowed = (
                 command == "ClearAll"
                 or re.fullmatch(r"Group [1-9]\d*", command)
+                or re.fullmatch(r"Effect [1-9]\d*", command)
                 or re.fullmatch(r"At Preset [1-9]\d*\.[1-9]\d*", command)
                 or re.fullmatch(r"At (?:100|[1-9]?\d)", command)
                 or re.fullmatch(rf'Store Cue [1-9]\d* Sequence {sequence} "[^"\r\n]+" Fade \d+(?:\.\d+)? /nc', command)

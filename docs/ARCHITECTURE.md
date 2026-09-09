@@ -109,7 +109,7 @@ Designer EffectRequirement (DIMMER_CHASE_V1 only)
       -> strict semantic template label: reference
       -> no proven match: existing Effect Builder v1 Preview/Approval
   -> typed CALL_EFFECT reference in ZEN_SHOW_PLAN
-  -> EFFECT_APPLICATION_UNVERIFIED gate
+  -> isolated Cue Effect POC capability gate
 ```
 
 `EffectResourceResolver` owns matching only; it has no transport access.
@@ -117,7 +117,9 @@ Designer EffectRequirement (DIMMER_CHASE_V1 only)
 `ShowPlanBuilder` remains the only Sequence-command boundary. The catalog is
 bound to a conservative scanned show/profile identity and requires the live
 Effect ID and label to match on every reuse. Cue Effect application is blocked
-until its MA2 grammar receives separate real-machine evidence.
+until its MA2 grammar receives separate real-machine evidence. That evidence is
+now persisted only by the Agent-owned Cue Effect POC after fresh Effect/Group
+verification, conditional Cue storage, and mandatory Programmer clearing.
 
 ## Song Analysis v0.1
 

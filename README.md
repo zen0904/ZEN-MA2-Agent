@@ -162,10 +162,14 @@ Preview and Approval, records a show-bound `data\ZEN_EFFECT_CATALOG.json` row
 only after the Effect object and label are read back, and never overwrites an
 existing Effect. A later Show Plan carries only a typed Effect reference.
 
-Cue Effect application remains `EFFECT_APPLICATION_UNVERIFIED`: no `At Effect`
-or equivalent command is generated until an isolated real-MA2 test proves its
-grammar. This means a resource-only resolver workflow can be verified safely
-without creating or modifying a production Sequence.
+Cue Effect application is now verified on grandMA2 3.9 through one isolated,
+Agent-owned POC: select the fresh verified target Group, then call the existing
+Effect pool object (`Effect <id>`), store a newly allocated Cue, and finally
+clear the Programmer. The evidence record is
+`data\ZEN_CUE_EFFECT_APPLICATION_CAPABILITY.json`. Builder enables the typed
+`CALL_EFFECT` operation only when that record says
+`REAL_MACHINE_VERIFIED`; the Designer still emits no MA2 command text. Cue
+content read-back remains explicitly `PARTIAL`.
 
 ### Song Analysis Input v0.1
 

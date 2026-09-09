@@ -75,9 +75,10 @@ def main() -> int:
         # requires a fresh object/label check before reuse.
         data_directory = bundle / "data"
         data_directory.mkdir(exist_ok=True)
-        catalog = ROOT / "data" / "ZEN_EFFECT_CATALOG.json"
-        if catalog.is_file():
-            copy2(catalog, data_directory / catalog.name)
+        for filename in ("ZEN_EFFECT_CATALOG.json", "ZEN_CUE_EFFECT_APPLICATION_CAPABILITY.json"):
+            source = ROOT / "data" / filename
+            if source.is_file():
+                copy2(source, data_directory / source.name)
         (bundle / "build_identity.json").write_text(identity.read_text(encoding="utf-8"), encoding="utf-8")
         for name in ("logs", "cache"):
             (bundle / name).mkdir(exist_ok=True)
