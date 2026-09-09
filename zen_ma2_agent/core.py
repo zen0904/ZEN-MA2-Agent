@@ -151,8 +151,10 @@ class AgentCore:
         if not isinstance(effect_id, int) or effect_id < 1:
             raise CueEffectApplicationError("Cue Effect POC requires a positive Effect number.")
         self.refresh_state("effects")
-        effects = self.state.get("effects")
-        raw_effect = next((item for item in (effects.values if effects else []) if item.get("number") == effect_id), None)
+        # A full inventory confirms the surrounding pool; this exact List is
+        # the final freshness proof for the one Effect we are about to call.
+        direct_effects = EffectProvider().parse(self.runtime.read_state(f"List Effect {effect_id}"))
+        raw_effect = next((item for item in direct_effects if item.get("number") == effect_id), None)
         # StateStore keeps native Pool rows (`number`); the typed POC model
         # intentionally uses the Designer-facing `effect_id` vocabulary.
         effect = ({"effect_id": raw_effect.get("number"), "name": raw_effect.get("name")} if raw_effect else None)
