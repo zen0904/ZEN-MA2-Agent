@@ -24,8 +24,17 @@
 
 ## Fixtures and Subfixtures
 
-- Unique Fixtures: **57**
+- Root Fixtures: **57**
 - Geometry-bearing Subfixtures: **65**
+- Grouped Fixture union: **56**
+
+### Ungrouped Fixtures
+
+- Fixture 9999 `461 G BSW 1` — type `2 ZEN BAW 20R Mode 2`, patch `(-)`, subfixtures 1; **UNGROUPED_FIXTURE / excluded from Auto Geometry**.
+
+### Group membership overlap
+
+- None detected.
 
 ### Fixture Types
 

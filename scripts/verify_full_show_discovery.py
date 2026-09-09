@@ -130,6 +130,44 @@ def _group_summary(profile: dict[str, Any]) -> list[dict[str, Any]]:
     return result
 
 
+def _fixture_membership_summary(profile: dict[str, Any], groups: list[dict[str, Any]]) -> dict[str, Any]:
+    memberships: dict[int, list[int]] = defaultdict(list)
+    for group in groups:
+        for fixture_id in group["members"]:
+            memberships[int(fixture_id)].append(int(group["id"]))
+    all_fixtures = [item for item in profile.get("fixtures", []) if isinstance(item, dict)]
+    ungrouped = []
+    for fixture in all_fixtures:
+        fixture_id = fixture.get("fixture_id")
+        try:
+            fixture_id = int(fixture_id)
+        except (TypeError, ValueError):
+            continue
+        if fixture_id in memberships:
+            continue
+        geometry = fixture.get("stage_geometry") or {}
+        ungrouped.append(
+            {
+                "fixture_id": fixture_id,
+                "name": fixture.get("name"),
+                "fixture_type": fixture.get("fixture_type"),
+                "patch": geometry.get("patch"),
+                "subfixture_count": len(geometry.get("subfixtures") or []),
+            }
+        )
+    overlaps = [
+        {"fixture_id": fixture_id, "groups": sorted(group_ids)}
+        for fixture_id, group_ids in sorted(memberships.items())
+        if len(group_ids) > 1
+    ]
+    return {
+        "root_fixture_count": len(all_fixtures),
+        "grouped_fixture_count": len(memberships),
+        "ungrouped": ungrouped,
+        "overlap": overlaps,
+    }
+
+
 def _effect_summary(profile: dict[str, Any], catalog: dict[str, Any]) -> dict[str, Any]:
     effects = [item for item in profile.get("effects", []) if isinstance(item, dict)]
     effect_by_id = {item.get("effect_id"): item for item in effects}
@@ -215,7 +253,19 @@ def _markdown(report: dict[str, Any]) -> str:
         members = ", ".join(map(str, item["members"])) or "(empty)"
         types = "; ".join(f"{name} ×{count}" for name, count in item["fixture_types"].items()) or "UNAVAILABLE"
         lines.append(f"| {item['id']} | {item['name']} | {item['fixture_count']} | {members} | {types} | {item['membership_status']} |")
-    lines.extend(["", "## Fixtures and Subfixtures", "", f"- Unique Fixtures: **{report['fixture_count']}**", f"- Geometry-bearing Subfixtures: **{report['geometry']['fixture_subfixture_count']}**", "", "### Fixture Types", ""])
+    lines.extend(["", "## Fixtures and Subfixtures", "", f"- Root Fixtures: **{report['root_fixture_count']}**", f"- Geometry-bearing Subfixtures: **{report['geometry']['fixture_subfixture_count']}**", f"- Grouped Fixture union: **{report['grouped_fixture_count']}**", ""])
+    if report["ungrouped_fixtures"]:
+        lines.extend(["### Ungrouped Fixtures", ""])
+        for item in report["ungrouped_fixtures"]:
+            lines.append(f"- Fixture {item['fixture_id']} `{item.get('name')}` — type `{item.get('fixture_type')}`, patch `{item.get('patch')}`, subfixtures {item.get('subfixture_count')}; **UNGROUPED_FIXTURE / excluded from Auto Geometry**.")
+        lines.append("")
+    lines.extend(["### Group membership overlap", ""])
+    if report["group_membership_overlap"]:
+        for item in report["group_membership_overlap"]:
+            lines.append(f"- Fixture {item['fixture_id']} appears in Groups {', '.join(map(str, item['groups']))}: **GROUP_MEMBERSHIP_OVERLAP**.")
+    else:
+        lines.append("- None detected.")
+    lines.extend(["", "### Fixture Types", ""])
     for name, count in report["fixture_types"].items():
         lines.append(f"- `{name}`: {count} fixture(s)")
     lines.extend(["", "## Presets", ""])
@@ -346,6 +396,7 @@ def main() -> int:
         cue_reader_error = any("NO CUE SOURCE GIVEN" in line.upper() for line in audit["commands"] + list(getattr(core.runtime.client, "audit_entries", []) if core.runtime.client else []))
         cue_discovery_status = "EXPECTED_EMPTY_USER_CONFIRMED" if cue_reader_error and args.expected_empty_cues else "ERROR" if cue_reader_error else "SUPPORTED"
         memberships = [item for item in groups_summary if item["membership_status"] == "SUPPORTED" and item["fixture_count"] > 0]
+        fixture_membership = _fixture_membership_summary(profile, groups_summary)
         useful_presets = sum(len(rows) for rows in presets.values())
         verified_or_template_effects = len(effects["verified_agent_owned"]) + len(effects["strict_semantic_template"])
         designer_without_geometry = "READY" if len(memberships) > 1 and useful_presets > 1 else "PARTIAL" if memberships and useful_presets else "NO"
@@ -384,6 +435,11 @@ def main() -> int:
             "state": _state_status(core),
             "groups": groups_summary,
             "fixture_count": len(profile.get("fixtures", [])),
+            "root_fixture_count": fixture_membership["root_fixture_count"],
+            "grouped_fixture_count": fixture_membership["grouped_fixture_count"],
+            "ungrouped_fixtures": fixture_membership["ungrouped"],
+            "group_membership_overlap": fixture_membership["overlap"],
+            "subfixture_rows": geometry["fixture_subfixture_count"],
             "fixture_types": dict(sorted(fixture_types.items())),
             "presets": presets,
             "semantic_positions": list(profile.get("semantic_presets", [])),
