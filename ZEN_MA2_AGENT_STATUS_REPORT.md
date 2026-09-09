@@ -614,3 +614,16 @@ cue. Effects remain inventory-only and semantic-position absence remains a
 safe warning/fallback. `examples/REALISTIC_SONG_ANALYSIS.json` provides a
 nine-section fixture for the next guarded real-MA2 build; it is distinct from
 `FIRST_SONG_INPUT.json`.
+
+Real grandMA2 3.9 validation then used that distinct `ZEN_SONG_ANALYSIS`
+fixture through `AgentCore.preview_song_analysis()` and the same shared
+ActionRecord approval boundary. It created only Sequence `203`, labelled
+`ZEN_AI_TEST_ZEN_REAL_SONG_ANALYSIS_TEST`. The approved plan used freshly
+scanned Group `1` and Focus Preset `6.2`, created 11 cues, and ended with
+`ClearAll`. Read-only verification confirmed the exact Sequence label plus all
+11 Cue labels and fades: INTRO (2), VERSE_1 (1.2), PRE_CHORUS (0.5),
+CHORUS_1 (0.5), CHORUS_1_ACCENT_1 (0.2), VERSE_2 (1.2), SAX_SOLO (0.5),
+CHORUS_2 (0.5), FINAL_CHORUS (0.5), FINAL_CHORUS_ACCENT_1 (0.2), OUTRO (2).
+Preset/effect content readback remains explicitly PARTIAL. Existing production
+objects were reference-only; the three `ZEN_AI_TEST_*` Sequences are retained
+for inspection.
