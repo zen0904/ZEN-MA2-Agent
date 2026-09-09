@@ -83,7 +83,7 @@ def render_framework(case: dict) -> str:
 
 
 def render_case(case: dict) -> str:
-    lines = [f"# {case['case_id']} — Resource-rich K-pop-oriented Training Case", "", f"Case type: `{case['case_type']}`  ", f"Show profile: `{case['show_profile_ref']}`  ", "", "This document describes a virtual design study; it is not a physical XYZ layout and contains no MA2 commands.", "", "## Resource snapshot", "", f"Groups: {len(case['fixture_groups'])}; Fixtures: {case['verified_resources']['fixture_count']}; Preset references: {case['verified_resources']['preset_count']}; Effects: {case['verified_resources']['effect_count']}; Geometry: `{case['verified_resources']['geometry']}`", "", "## Role assignments"]
+    lines = [f"# {case['case_id']} — Resource-rich K-pop-oriented Training Case", "", f"Case type: `{case['case_type']}`", f"Show profile: `{case['show_profile_ref']}`", "", "This document describes a virtual design study; it is not a physical XYZ layout and contains no MA2 commands.", "", "## Resource snapshot", "", f"Groups: {len(case['fixture_groups'])}; Fixtures: {case['verified_resources']['fixture_count']}; Preset references: {case['verified_resources']['preset_count']}; Effects: {case['verified_resources']['effect_count']}; Geometry: `{case['verified_resources']['geometry']}`", "", "## Role assignments"]
     for group in case["fixture_groups"]:
         lines.extend(_role_block(group))
     lines.extend(["## KPOP_ORIENTED_RIG_ARCHITECTURE_V1", "", "The following is case-specific and intentionally does not become a global Designer rule.", ""])

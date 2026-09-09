@@ -1,7 +1,7 @@
 # TRAINING_CASE_001 — Resource-rich K-pop-oriented Training Case
 
-Case type: `RESOURCE_RICH_KPOP_ORIENTED`  
-Show profile: `data/ZEN_CURRENT_SHOW_PROFILE.json`  
+Case type: `RESOURCE_RICH_KPOP_ORIENTED`
+Show profile: `data/ZEN_CURRENT_SHOW_PROFILE.json`
 
 This document describes a virtual design study; it is not a physical XYZ layout and contains no MA2 commands.
 
