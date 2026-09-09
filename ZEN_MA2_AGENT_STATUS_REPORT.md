@@ -670,3 +670,23 @@ create or promote `ZEN_STYLE_PROFILE`.
 human inspection of each linked production/source page before any lesson can
 be considered for future knowledge. Runtime wiring is `NOT_RUN`, Designer
 behavior is unchanged, and MA2 writes are `ZERO`.
+
+## 29 Human-reviewed User Style Evidence
+
+`zen.user_style_evidence.v0.1` stores Zen's direct visual-review reactions as
+a separate, reversible layer. Raw reactions remain distinct from normalized
+traits; provenance is always `HUMAN_VISUAL_REVIEW`. Positive references include
+BABYMONSTER, Subtronics, Drake and Billie Eilish; Karol G is mixed/lower
+positive, while Billy Strings is retained as case-local negative evidence.
+
+The synthesis records controlled high impact, clean hierarchy, palette
+coherence, musical-form following, rhythmic/dynamic alignment, multi-level
+energy design, intentional restraint and controlled maximalism as candidates.
+`HIGH_IMPACT_ALWAYS` is explicitly rejected by the evidence. `KPOP_YG_LEANING`
+is a direction label only, not a global rule. Industry Pack 001/002 remain
+independent and immutable; alignment is reported for review only.
+
+`ZEN_STYLE_PROFILE` remains `DEFERRED`. No Designer runtime wiring, Scanner
+connection or MA2 write is part of this layer. Permanent promotion would
+require repeated cross-artist, cross-style and cross-scale evidence plus
+explicit human confirmation.
