@@ -6,7 +6,7 @@ from typing import Any
 
 
 SHOW_PLAN_SCHEMA = "zen.show_plan.v0.1"
-_FORBIDDEN_KEYS = {"command", "commands", "telnet", "ma_command", "raw_command"}
+_FORBIDDEN_KEYS = {"command", "commands", "telnet", "ma_command", "raw_command", "lua"}
 _OPERATIONS = {"CALL_PRESET", "SET_DIMMER", "CALL_EFFECT"}
 
 
@@ -47,6 +47,14 @@ def validate_show_plan(plan: dict[str, Any]) -> dict[str, Any]:
             for action in cue["actions"]:
                 if not isinstance(action, dict) or action.get("operation") not in _OPERATIONS or not isinstance(action.get("target"), dict):
                     raise ShowPlanSchemaError(f"Cue {index} contains an invalid typed action.")
+                if action.get("operation") == "CALL_EFFECT":
+                    reference = action.get("effect_ref")
+                    requirement_id = action.get("effect_requirement_id")
+                    if reference is None and not isinstance(requirement_id, str):
+                        raise ShowPlanSchemaError(f"Cue {index} CALL_EFFECT requires an Effect reference or requirement id.")
+                    if reference is not None:
+                        if not isinstance(reference, dict) or not isinstance(reference.get("id"), int) or reference["id"] < 1:
+                            raise ShowPlanSchemaError(f"Cue {index} has an invalid typed Effect reference.")
         elif not isinstance(cue.get("intent", {}), dict):
             raise ShowPlanSchemaError(f"Cue {index} intent must be an object.")
     return normalized

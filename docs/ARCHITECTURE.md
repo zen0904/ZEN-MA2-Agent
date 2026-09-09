@@ -91,13 +91,33 @@ FIRST_SONG_INPUT.json → FirstSongDesigner (typed intent only)
   → Sequence/Cue metadata verification
 ```
 
-The Designer may only emit typed `CALL_PRESET` and `SET_DIMMER` actions. It
+The Designer may only emit typed `CALL_PRESET`, `SET_DIMMER`, and resolved
+`CALL_EFFECT` references. It
 cannot embed command strings. The Builder resolves their group and preset
 references against the just-scanned profile, allocates an unused Sequence only
 inside the explicit input range, and creates a new `ZEN_AI_TEST_*` Sequence.
 Existing resources are reference-only. A rollback proposal is possible only
 after a fresh read-back proves both the precise Sequence number and Agent-owned
 label; it is never executed automatically.
+
+## Effect resource boundary
+
+```text
+Designer EffectRequirement (DIMMER_CHASE_V1 only)
+  -> EffectResourceResolver
+      -> verified Agent-owned catalog + fresh List Effect: reference
+      -> strict semantic template label: reference
+      -> no proven match: existing Effect Builder v1 Preview/Approval
+  -> typed CALL_EFFECT reference in ZEN_SHOW_PLAN
+  -> EFFECT_APPLICATION_UNVERIFIED gate
+```
+
+`EffectResourceResolver` owns matching only; it has no transport access.
+`EffectBuilderSkill` remains the only Effect-creation boundary and
+`ShowPlanBuilder` remains the only Sequence-command boundary. The catalog is
+bound to a conservative scanned show/profile identity and requires the live
+Effect ID and label to match on every reuse. Cue Effect application is blocked
+until its MA2 grammar receives separate real-machine evidence.
 
 ## Song Analysis v0.1
 

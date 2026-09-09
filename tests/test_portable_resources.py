@@ -18,7 +18,7 @@ class PortableResourceTests(unittest.TestCase):
             bundle = Path(temporary)
             for name in ("web", "lua", "skills", "config", "gma2", "semantic_presets", "geometry", "examples"):
                 copytree(ROOT / name, bundle / name)
-            for name in ("logs", "cache"):
+            for name in ("logs", "cache", "data"):
                 (bundle / name).mkdir()
             files = portable_resources.assert_portable_resources(bundle)
             self.assertEqual(files, ["gma2\\plugins\\ZEN_AGENT.xml", "gma2\\plugins\\ZEN_AGENT.lua"])
@@ -32,7 +32,7 @@ class PortableResourceTests(unittest.TestCase):
             bundle = Path(temporary)
             for name in ("web", "lua", "skills", "config", "gma2", "semantic_presets", "geometry", "examples"):
                 copytree(ROOT / name, bundle / name)
-            for name in ("logs", "cache"):
+            for name in ("logs", "cache", "data"):
                 (bundle / name).mkdir()
             for filename in ("FIRST_SONG_INPUT.json", "REALISTIC_SONG_ANALYSIS.json", "REALISTIC_SONG_SCRIPT.md"):
                 with self.subTest(filename=filename):

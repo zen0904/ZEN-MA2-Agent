@@ -4,7 +4,7 @@
   "version": "0.1",
   "description": "Build an Agent-owned MA2 Sequence from a typed, scanner-derived first-song plan.",
   "intents": ["build_first_song"],
-  "required_state": ["groups", "presets", "sequences"],
+  "required_state": ["groups", "presets", "effects", "sequences"],
   "safety": "MODIFY",
   "enabled": true
 }

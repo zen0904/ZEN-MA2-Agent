@@ -153,6 +153,18 @@ class ConnectionSettingsTests(unittest.TestCase):
         self.assertNotEqual(admin.state, ConnectionState.READY)
         guest.close(); admin.close()
 
+    def test_guest_banner_with_explicit_login_prompt_retries_once_for_requested_user(self):
+        fake_socket = FakeSocket([b"Logged in as User 'guest'\r\n[Channel]>Please login !\r\n"])
+        client = MA2TelnetClient("localhost", 30000, auth_timeout_seconds=1, socket_factory=lambda *_args, **_kwargs: fake_socket)
+        client.connect("MM", "")
+        self.poll_until_settled(client, 0.05)
+        self.assertEqual(client.state, ConnectionState.AUTHENTICATING)
+        self.assertEqual(fake_socket.sent, [b"Login MM\r\n", b"Login MM\r\n"])
+        self.poll_until_settled(client, 0.05)
+        self.assertEqual(len(fake_socket.sent), 2)
+        self.assertEqual(client.current_session_user, "guest")
+        client.close()
+
     def test_auth_timeout_crlf_ansi_and_reconnect_uses_new_username(self):
         fake_socket = FakeSocket([b"\x1b[32mLogged in as User 'guest'\x1b[0m\r\n"])
         sockets = [fake_socket, FakeSocket([b"Logged in as User 'administrator'\r\n"])]

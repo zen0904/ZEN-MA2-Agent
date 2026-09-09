@@ -6,7 +6,7 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 
-RESOURCE_DIRECTORIES = ("web", "lua", "skills", "config", "logs", "cache", "gma2", "semantic_presets", "geometry", "examples")
+RESOURCE_DIRECTORIES = ("web", "lua", "skills", "config", "logs", "cache", "data", "gma2", "semantic_presets", "geometry", "examples")
 PLUGIN_FILES = ("ZEN_AGENT.xml", "ZEN_AGENT.lua")
 AXIS_PROFILE_FILE = "geometry\\ZEN_STAGE_AXIS_PROFILE.json"
 

@@ -135,7 +135,7 @@ class ShowScanner:
             for item in values("effects")
         ]
         semantic_presets = SemanticPresetRegistry().resolve(presets)
-        return {
+        profile = {
             "schema": SHOW_PROFILE_SCHEMA,
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "read_only": True,
@@ -162,6 +162,12 @@ class ShowScanner:
             "geometry_analysis": geometry_analysis or _unknown("Fixture geometry requires a fresh read-only Subfixture scan."),
             "stage_axis_profile": StageAxisProfile().read(),
         }
+        # This is a conservative profile/session identity, not a claim that
+        # MA2 exposed a stable Show UUID.  Resource catalogs must refuse reuse
+        # when this scanned identity changes.
+        from ..effect_resources import show_identity
+        profile["show_identity"] = show_identity(profile)
+        return profile
 
     def write(self, state: StateStore, path: Path) -> dict[str, Any]:
         """Write a local JSON artifact only; no MA2 transport is invoked."""

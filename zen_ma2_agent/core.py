@@ -23,6 +23,7 @@ from .state.store import StateStore
 from .telnet_client import ConnectionState
 from .workflow import WorkflowPlan
 from .effect_builder import EffectBuildError, EffectTargetAmbiguous, resolve_effect_spec
+from .effect_resources import EffectCatalog, EffectRequirement, EffectRequirementError, EffectResourceResolver, apply_effect_references, show_identity
 from .geometry_clone import GeometryCloneAmbiguous, GeometryCloneError, GeometryCloneSpec, format_mapping, membership_fingerprint, resolve_geometry_clone_spec
 from .timecode_offset import TimecodeOffsetError, fingerprint_timecode, resolve_timecode_offset_spec
 from .geometry_test_environment import (
@@ -79,6 +80,8 @@ class AgentCore:
         self._internet_checked_at = 0.0
         self._effect_page = 0
         self.diagnostics = ShowDiagnostics()
+        self.effect_catalog = EffectCatalog(self.runtime.root)
+        self.effect_resources = EffectResourceResolver(self.effect_catalog)
         self.last_diagnostics: DiagnosticReport | None = None
         self.last_chat_routing: dict[str, Any] | None = None
         self._isolated_geometry_test_loaded = False
@@ -137,7 +140,11 @@ class AgentCore:
         return self._preview_designer_input(SongAnalysisAdapter().to_designer_input(normalized), analysis=normalized)
 
     def _preview_designer_input(self, song_input: dict[str, Any], *, analysis: dict[str, Any] | None) -> dict[str, Any]:
-        for resource, kwargs in (("groups", {}), ("fixtures", {}), ("fixture_geometry", {}), ("presets", {"sequence": "ALL"}), ("effects", {}), ("sequences", {})):
+        # A First Song/Effect-resource resolution needs pool identities, not a
+        # full Subfixture geometry sweep. Geometry remains available from a
+        # prior scan but must not turn an Effect-only Preview into hundreds of
+        # unrelated List Fixture reads.
+        for resource, kwargs in (("groups", {}), ("fixtures", {}), ("presets", {"sequence": "ALL"}), ("effects", {}), ("sequences", {})):
             self.refresh_state(resource, **kwargs)
         data_dir = self.runtime.root / "data"
         data_dir.mkdir(parents=True, exist_ok=True)
@@ -145,6 +152,23 @@ class AgentCore:
         if analysis is not None:
             (data_dir / "ZEN_SONG_ANALYSIS.json").write_text(json.dumps(analysis, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         show_plan = FirstSongDesigner().design(song_input, profile)
+        effect_requirements = show_plan.get("effect_requirements") or {}
+        if effect_requirements:
+            resolutions = {
+                str(identifier): self.effect_resources.resolve(requirement, profile=profile)
+                for identifier, requirement in effect_requirements.items()
+            }
+            creation = next((item for item in resolutions.values() if item.status == "CREATE_REQUIRED"), None)
+            if creation:
+                workflow = self._plan_effect_requirement(creation, profile, show_plan)
+                self.runtime.log("effect_resource_resolution", {"status": creation.status, "requirement": creation.requirement.summary(), "show_identity": show_identity(profile)})
+                return self._queue_workflow(workflow)
+            unresolved = [item for item in resolutions.values() if item.status != "EXISTING_MATCH"]
+            if unresolved:
+                details = "; ".join(f"{item.requirement.semantic_label}: {item.status}" for item in unresolved)
+                raise EffectRequirementError("Effect resource resolution is blocked: " + details)
+            show_plan = apply_effect_references(show_plan, resolutions)
+            self.runtime.log("effect_resource_resolution", {"status": "EXISTING_MATCH", "requirements": [item.summary() for item in resolutions.values()], "show_identity": show_identity(profile)})
         (data_dir / "ZEN_SHOW_PLAN.json").write_text(json.dumps(show_plan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         context = {key: profile.get(key, []) for key in ("groups", "presets", "effects", "sequences")}
         workflow = self.skills.plan_intent(Intent("build_first_song", {"first_song_spec": {"show_plan": show_plan, "profile": context}}, "ZEN_SHOW_PLAN"), self.state, self.runtime.preferences)
@@ -153,6 +177,12 @@ class AgentCore:
 
     def _queue_workflow(self, workflow: WorkflowPlan) -> dict[str, Any]:
         """Store a prepared workflow in the same approval registry as Chat plans."""
+        if not workflow.executable:
+            message = workflow.preview_note + "\n\nExecution: Disabled — " + workflow.verification_strategy
+            self.chat.append({"role": "assistant", "kind": ResponseType.ACTION_PLAN.value, "text": message})
+            self.progress = "Idle"
+            self.events.emit("plan", self.snapshot())
+            return {"type": ResponseType.ACTION_PLAN.value, "message": message, "action": {"id": None, "status": "PREVIEW_ONLY", **workflow.as_dict()}}
         action_id = uuid.uuid4().hex[:12]
         if self._active_action_id:
             previous = self.actions.get(self._active_action_id)
@@ -214,7 +244,11 @@ class AgentCore:
             elif resource == "presets":
                 provider = PresetProvider(); preset_type = "ALL" if sequence is None else str(sequence).upper()
                 values = provider.parse(self.runtime.read_state(provider.command(preset_type)), preset_type)
-                existing = self.state.get("presets"); retained=[item for item in (existing.values if existing else []) if item.get("preset_type") != preset_type]
+                existing = self.state.get("presets")
+                # `List Preset All` supersedes every cached pool row; retaining
+                # typed rows here duplicates state on each full scan and makes
+                # a session fingerprint depend on refresh count.
+                retained = [] if preset_type == "ALL" else [item for item in (existing.values if existing else []) if item.get("preset_type") != preset_type]
                 snapshot = self.state.put("presets", [*retained,*values], source="ma2_telnet_list", capability={"requires_local_filesystem":False})
             elif resource == "effects":
                 provider=EffectProvider(); values=provider.parse(self.runtime.read_state(provider.command)); diagnostics=provider.diagnostics(values); self.runtime.log("effect_inventory_diagnostic", diagnostics); snapshot=self.state.put("effects", values, source="ma2_telnet_list", capability={"requires_local_filesystem":False,"diagnostics":diagnostics})
@@ -450,6 +484,24 @@ class AgentCore:
         )
         bound = Intent(intent.kind, {**intent.parameters, "effect_spec": spec.summary()}, intent.source_text)
         return self.skills.plan_intent(bound, self.state, self.runtime.preferences)
+
+    def _plan_effect_requirement(self, resolution: Any, profile: dict[str, Any], show_plan: dict[str, Any]) -> WorkflowPlan:
+        """Make Effect creation its own approved phase before a Sequence build.
+
+        The continuation is deliberately explicit: after verification the
+        caller re-previews the typed song plan.  This avoids treating approval
+        for a new Effect as approval for all later Cue writes.
+        """
+        if resolution.status != "CREATE_REQUIRED" or not resolution.effect_spec:
+            raise EffectRequirementError("Effect creation requires a resolved CREATE_REQUIRED specification.")
+        spec = resolution.effect_spec
+        identity = show_identity(profile)
+        intent = Intent("build_dimmer_chase", {
+            "effect_spec": spec.summary(),
+            "effect_requirement": resolution.requirement.summary(),
+            "effect_catalog_context": {"show_identity": identity, "song": show_plan.get("song")},
+        }, "EffectResourceResolver")
+        return self.skills.plan_intent(intent, self.state, self.runtime.preferences)
 
     def _plan_timecode_offset(self, intent: Any) -> WorkflowPlan:
         """Bind only fresh, read-only Timecode inventory into an OffsetSpec."""
@@ -1034,8 +1086,21 @@ class AgentCore:
             label_verified = actual_name == expected_name
             self.state.upsert("effects", "number", found, source="ma2_telnet_list")
             self.runtime.log("effect_builder_verification", {"effect_number": number, "status": "PARTIAL", "exists": True, "expected_name": expected_name, "actual_name": actual_name, "label_verified": label_verified})
+            requirement_raw = action.workflow.task.intent.parameters.get("effect_requirement")
+            context = action.workflow.task.intent.parameters.get("effect_catalog_context")
+            if label_verified and isinstance(requirement_raw, dict) and isinstance(context, dict) and isinstance(context.get("show_identity"), dict):
+                requirement = EffectRequirement.from_dict(requirement_raw)
+                entry = self.effect_catalog.record(
+                    requirement=requirement,
+                    effect_id=number,
+                    label=actual_name,
+                    identity=context["show_identity"],
+                    verification={"object": "VERIFIED", "label": "VERIFIED", "parameters": "PARTIAL"},
+                )
+                self.runtime.log("effect_catalog_recorded", {"effect_id": number, "label": actual_name, "ownership": entry["ownership"], "show_identity": context["show_identity"]})
             label = "label matches" if label_verified else f"label not exposed/matched (returned: {actual_name or 'none'})"
-            return execution_result + f"\nVerification: PARTIAL — Effect {number} exists; {label}. Parameter verification is not exposed by EffectProvider."
+            catalog_note = " Agent-owned catalog metadata saved." if label_verified and isinstance(requirement_raw, dict) and isinstance(context, dict) else ""
+            return execution_result + f"\nVerification: PARTIAL — Effect {number} exists; {label}. Parameter verification is not exposed by EffectProvider." + catalog_note
         except Exception as exc:
             self.runtime.log("effect_builder_verification", {"effect_number": number, "status": "PARTIAL", "error": str(exc)})
             return execution_result + f"\nVerification: PARTIAL — Effect commands were sent, but read-back failed: {exc}"

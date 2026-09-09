@@ -63,6 +63,8 @@ class MA2TelnetClient:
     _stop_receiver: threading.Event = field(default_factory=threading.Event, init=False, repr=False)
     _received: list[str] = field(default_factory=list, init=False, repr=False)
     _received_lock: threading.Lock = field(default_factory=threading.Lock, init=False, repr=False)
+    _pending_password: str = field(default="", init=False, repr=False)
+    _login_retry_sent: bool = field(default=False, init=False, repr=False)
 
     @property
     def connected(self) -> bool:
@@ -87,6 +89,11 @@ class MA2TelnetClient:
         self.authenticated_user = None
         self.current_session_user = None
         self.auth_failure_reason = None
+        # Retained only during this in-memory handshake so MA2's initial guest
+        # banner can request one bounded retry. It is cleared on every terminal
+        # auth path and is never emitted to audit/configuration.
+        self._pending_password = password
+        self._login_retry_sent = False
         self.state = ConnectionState.AUTHENTICATING
         self._auth_started_at = time.monotonic()
         self._send_login(username, password)
@@ -107,6 +114,7 @@ class MA2TelnetClient:
             if re.search(r"\b(login\s+failed|invalid\s+(?:user|password)|denied)\b", clean, re.I):
                 self.auth_failure_reason = clean.strip() or "MA2 rejected login."
                 self.state = ConnectionState.AUTH_FAILED
+                self._pending_password = ""
                 return clean
             users = [match.group(1).strip() for match in LOGIN_USER_RE.finditer(clean)]
             if users:
@@ -114,11 +122,25 @@ class MA2TelnetClient:
                 if self.current_session_user == self.requested_username:
                     self.authenticated_user = self.current_session_user
                     self.state = ConnectionState.READY
+                    self._pending_password = ""
                     return clean
+            # grandMA2 3.9 may first report a default guest session while its
+            # banner is still negotiating. A Login sent before that banner can
+            # be discarded. Retry the exact requested identity once only after
+            # MA2 explicitly asks to log in; never substitute a user or loop.
+            if (
+                self.requested_username
+                and self.current_session_user != self.requested_username
+                and re.search(r"please\s+login", clean, re.I)
+                and not self._login_retry_sent
+            ):
+                self._login_retry_sent = True
+                self._send_login(self.requested_username, self._pending_password)
         if self._auth_started_at is not None and time.monotonic() - self._auth_started_at >= self.auth_timeout_seconds:
             current = self.current_session_user or "unknown"
             self.auth_failure_reason = f"Requested user: {self.requested_username}; Current user: {current}"
             self.state = ConnectionState.AUTH_FAILED
+            self._pending_password = ""
         return received
 
     def execute(self, command: str) -> str:
@@ -191,4 +213,6 @@ class MA2TelnetClient:
         self.requested_username = None
         self.current_session_user = None
         self._auth_started_at = None
+        self._pending_password = ""
+        self._login_retry_sent = False
         self.state = ConnectionState.DISCONNECTED

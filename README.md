@@ -147,6 +147,26 @@ Sequence. Existing Presets, Effects, and Sequences are never overwritten.
 Verification reads the exact Sequence label plus Cue count, labels, and fades;
 Cue-content readback is explicitly `PARTIAL`.
 
+### Typed Effect Resource Resolver
+
+The Designer can opt in to the strictly typed `DIMMER_CHASE_V1` effect policy.
+It emits an `EffectRequirement`, never an MA2 command. `EffectResourceResolver`
+then prefers a freshly listed, catalog-verified Agent-owned Effect; it accepts
+an existing template only when its label exactly follows the strict
+`FX_DIM_CHASE_SLOW|MED|FAST` convention. A name such as `Chase` is only a
+candidate and is never automatically selected.
+
+If no verified resource exists, the resolver converts the requirement to the
+existing Effect Builder v1 `EffectSpec`. Effect creation has its own MODIFY
+Preview and Approval, records a show-bound `data\ZEN_EFFECT_CATALOG.json` row
+only after the Effect object and label are read back, and never overwrites an
+existing Effect. A later Show Plan carries only a typed Effect reference.
+
+Cue Effect application remains `EFFECT_APPLICATION_UNVERIFIED`: no `At Effect`
+or equivalent command is generated until an isolated real-MA2 test proves its
+grammar. This means a resource-only resolver workflow can be verified safely
+without creating or modifying a production Sequence.
+
 ### Song Analysis Input v0.1
 
 `zen_ma2_agent.song_analysis` is the command-free upstream boundary for a real

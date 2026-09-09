@@ -6,7 +6,7 @@ import subprocess
 import sys
 import json
 from datetime import datetime, timezone
-from shutil import copytree, rmtree
+from shutil import copy2, copytree, rmtree
 from pathlib import Path
 
 from portable_resources import assert_portable_resources
@@ -68,6 +68,16 @@ def main() -> int:
         # from the authoritative source tree there, then assert the result.
         for name in ("web", "lua", "config", "gma2", "skills", "semantic_presets", "geometry", "examples"):
             copytree(ROOT / name, bundle / name, dirs_exist_ok=True)
+        # Runtime data normally stays beside the portable executable.  Preserve
+        # the small Agent-owned Effect catalog across a rebuild so a freshly
+        # rebuilt bundle can safely revalidate and reuse its own Effects.  The
+        # catalog is still bound to the scanned Show fingerprint and always
+        # requires a fresh object/label check before reuse.
+        data_directory = bundle / "data"
+        data_directory.mkdir(exist_ok=True)
+        catalog = ROOT / "data" / "ZEN_EFFECT_CATALOG.json"
+        if catalog.is_file():
+            copy2(catalog, data_directory / catalog.name)
         (bundle / "build_identity.json").write_text(identity.read_text(encoding="utf-8"), encoding="utf-8")
         for name in ("logs", "cache"):
             (bundle / name).mkdir(exist_ok=True)

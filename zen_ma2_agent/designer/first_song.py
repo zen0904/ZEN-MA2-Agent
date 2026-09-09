@@ -50,6 +50,10 @@ class FirstSongDesigner:
             warnings.append("No Effect inventory entry found; effect actions were skipped.")
         else:
             warnings.append("Effect call was skipped: no production Effect-call command grammar is verified for this builder.")
+        effect_policy = str(song_input.get("effect_policy") or "").upper()
+        if effect_policy not in {"", "DIMMER_CHASE_V1"}:
+            raise FirstSongDesignError("Only the explicit DIMMER_CHASE_V1 effect policy is supported.")
+        effect_requirements: dict[str, dict[str, Any]] = {}
         cues = []
         occurrences: dict[str, int] = {}
         max_cues = int(song_input.get("max_cues_per_section", 1))
@@ -69,15 +73,21 @@ class FirstSongDesigner:
             level = max(1, min(100, round(15 + energy * 80) + min(occurrence - 1, 3) * 4))
             fade = self._fade_for(role, energy)
             cue_number = len(cues) + 1
+            actions = [
+                {"target": {"type": "group", "ref": group["group_id"]}, "operation": "CALL_PRESET", "preset_ref": preset["reference"], "preset_type": preset.get("preset_type")},
+                {"target": {"type": "group", "ref": group["group_id"]}, "operation": "SET_DIMMER", "level": level},
+            ]
+            effect_requirement_id = self._effect_requirement_id(role, occurrence, effect_policy)
+            if effect_requirement_id:
+                requirement = self._effect_requirement(effect_requirement_id, group, role, occurrence)
+                effect_requirements[effect_requirement_id] = requirement
+                actions.append({"target": {"type": "group", "ref": group["group_id"]}, "operation": "CALL_EFFECT", "effect_requirement_id": effect_requirement_id})
             cues.append({
                 "id": f"cue-{cue_number}", "cue_number": cue_number, "label": label, "fade": fade,
                 "source_section_id": section.get("id"), "role": role,
                 "design_energy": energy, "design_energy_source": "ANALYSIS" if raw_energy is not None else "DESIGN_ROLE_DEFAULT",
                 "occurrence_index": occurrence,
-                "actions": [
-                    {"target": {"type": "group", "ref": group["group_id"]}, "operation": "CALL_PRESET", "preset_ref": preset["reference"], "preset_type": preset.get("preset_type")},
-                    {"target": {"type": "group", "ref": group["group_id"]}, "operation": "SET_DIMMER", "level": level},
-                ],
+                "actions": actions,
             })
             # Events remain a deliberately limited density mechanism.  An
             # ACCENT becomes one extra cue only when it is explicitly bound to
@@ -87,18 +97,21 @@ class FirstSongDesigner:
                 strength = float(event.get("strength") if event.get("strength") is not None else 0.5)
                 accent_level = max(level, min(100, round(20 + max(energy, strength) * 80)))
                 cue_number = len(cues) + 1
+                accent_actions = [
+                    {"target": {"type": "group", "ref": group["group_id"]}, "operation": "CALL_PRESET", "preset_ref": preset["reference"], "preset_type": preset.get("preset_type")},
+                    {"target": {"type": "group", "ref": group["group_id"]}, "operation": "SET_DIMMER", "level": accent_level},
+                ]
+                if effect_requirement_id:
+                    accent_actions.append({"target": {"type": "group", "ref": group["group_id"]}, "operation": "CALL_EFFECT", "effect_requirement_id": effect_requirement_id})
                 cues.append({
                     "id": f"cue-{cue_number}", "cue_number": cue_number, "label": f"{label}_ACCENT_{accent_index}",
                     "fade": 0.2 if strength >= 0.7 else 0.5, "source_section_id": section.get("id"),
                     "role": role, "event_type": event.get("type"), "occurrence_index": occurrence,
-                    "actions": [
-                        {"target": {"type": "group", "ref": group["group_id"]}, "operation": "CALL_PRESET", "preset_ref": preset["reference"], "preset_type": preset.get("preset_type")},
-                        {"target": {"type": "group", "ref": group["group_id"]}, "operation": "SET_DIMMER", "level": accent_level},
-                    ],
+                    "actions": accent_actions,
                 })
         return validate_show_plan({
             "schema": SHOW_PLAN_SCHEMA, "song": song, "target_sequence": None,
-            "active_sequence_range": active_range, "cues": cues, "warnings": warnings,
+            "active_sequence_range": active_range, "cues": cues, "effect_requirements": effect_requirements, "warnings": warnings,
             "designer": {"kind": "DETERMINISTIC_FIRST_SONG", "uses_neutral_geometry": bool(profile.get("geometry_analysis")), "repeated_section_variation": "OCCURRENCE_UPLIFT_V1"},
         })
 
@@ -109,3 +122,23 @@ class FirstSongDesigner:
         if role in {"INTRO", "OUTRO"}:
             return 2.0
         return 2.0 if energy <= 0.3 else 1.2 if energy <= 0.6 else 0.5
+
+    @staticmethod
+    def _effect_requirement_id(role: str, occurrence: int, policy: str) -> str | None:
+        if policy != "DIMMER_CHASE_V1":
+            return None
+        if role == "CHORUS":
+            return "fx-dim-chase-fast" if occurrence >= 2 else "fx-dim-chase-med"
+        if role in {"PRE_CHORUS", "BUILD"}:
+            return "fx-dim-chase-slow"
+        return None
+
+    @staticmethod
+    def _effect_requirement(identifier: str, group: dict[str, Any], role: str, occurrence: int) -> dict[str, Any]:
+        speed = identifier.rsplit("-", 1)[-1].upper()
+        return {
+            "id": identifier, "feature": "DIMMER", "family": "CHASE", "waveform": "PWM", "low": 0, "high": 100,
+            "speed_class": speed, "speed_bpm": {"SLOW": 30, "MED": 60, "FAST": 120}[speed], "phase": "0..360", "direction": "forward", "groups": 1,
+            "target_type": "group", "target_ref": group["group_id"], "target_name": group.get("name"),
+            "designer_reason": f"{role} occurrence {occurrence} deterministic DIMMER_CHASE_V1 variation",
+        }
