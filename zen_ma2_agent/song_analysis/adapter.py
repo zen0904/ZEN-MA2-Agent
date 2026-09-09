@@ -26,5 +26,6 @@ class SongAnalysisAdapter:
             "song_name": analysis["song"]["title"], "active_sequence_range": list(active_range), "sections": sections,
             "events": deepcopy(analysis["events"]), "performance": deepcopy(analysis["performance"]),
             "stage_roles": deepcopy(analysis["stage_roles"]), "max_cues_per_section": analysis["build"]["max_cues_per_section"],
+            "effect_policy": analysis["build"].get("effect_policy", ""),
             "analysis_schema": analysis["schema"],
         }

@@ -106,7 +106,7 @@ def _effect_approval_smoke() -> int:
     # coverage; do not falsely promote this smoke to full verification.
     if payload.get("action_status") != "EXECUTED" or "Verification: PARTIAL" not in str(payload.get("result")) or "label matches" not in str(payload.get("result")):
         raise SystemExit(f"Effect approval did not execute/verify: {payload}")
-    if not any(command.startswith("Store Effect 2500") for command in payload.get("commands", [])):
+    if not any(command.startswith("Store Effect ") for command in payload.get("commands", [])):
         raise SystemExit(f"Effect approval did not use the planned commands: {payload}")
     print("PACKAGED_EFFECT_APPROVAL|PASS")
     return 0
@@ -146,6 +146,24 @@ def _song_analysis_smoke() -> int:
     return 0
 
 
+def _real_song_analysis_smoke() -> int:
+    """Exercise the frozen typed multi-Cue plan without sending a MA2 write."""
+    environment = dict(os.environ, QT_QPA_PLATFORM="offscreen")
+    run = subprocess.run([str(EXE), "--portable-real-song-analysis-smoke"], cwd=EXE.parent, env=environment, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30)
+    if run.returncode:
+        raise SystemExit(run.stdout + run.stderr)
+    payload = json.loads(next(line for line in reversed(run.stdout.splitlines()) if line.startswith("{")))
+    response = payload.get("response", {})
+    preview = response.get("message", "")
+    if response.get("type") != "ACTION_PLAN" or "ZEN AI REAL SONG BUILD PREVIEW" not in preview or "Generated Cues: 10" not in preview or "ZEN_FX_DIM_CHASE_SLOW_GROUP1" not in preview:
+        raise SystemExit(f"Portable real-song preview mismatch: {payload}")
+    commands = payload.get("commands", [])
+    if not all(isinstance(command, str) and command.startswith("List ") for command in commands):
+        raise SystemExit(f"Portable real-song preview sent a non-read command: {payload}")
+    print("PACKAGED_REAL_SONG_ANALYSIS|PASS")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--ui-request", help="Run a request through the packaged PySide6 chat widget.")
@@ -153,6 +171,7 @@ def main() -> int:
     parser.add_argument("--effect-approval", action="store_true", help="Run a fake-transport Effect Builder preview and approval smoke through the packaged Desktop.")
     parser.add_argument("--timecode-approval", action="store_true", help="Run a fake-transport Timecode Offset preview and approval smoke through the packaged Desktop.")
     parser.add_argument("--song-analysis", action="store_true", help="Run structured Song Analysis through the frozen package without MA2 writes.")
+    parser.add_argument("--real-song-analysis", action="store_true", help="Run the bundled 10-section typed real-song Preview through the frozen package without MA2 writes.")
     args = parser.parse_args()
     if not EXE.is_file():
         raise SystemExit(f"Portable EXE not found: {EXE}")
@@ -164,6 +183,8 @@ def main() -> int:
         return _timecode_approval_smoke()
     if args.song_analysis:
         return _song_analysis_smoke()
+    if args.real_song_analysis:
+        return _real_song_analysis_smoke()
     if args.ui_request:
         environment = dict(os.environ)
         environment["QT_QPA_PLATFORM"] = "offscreen"

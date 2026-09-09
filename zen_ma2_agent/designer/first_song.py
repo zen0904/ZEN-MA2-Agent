@@ -46,13 +46,13 @@ class FirstSongDesigner:
         warnings = []
         if not profile.get("semantic_presets"):
             warnings.append("No exact POS_STAGE_* preset found; position actions were skipped.")
+        effect_policy = str(song_input.get("effect_policy") or "").upper()
+        if effect_policy not in {"", "DIMMER_CHASE_V1", "DIMMER_CHASE_REUSE_SLOW_V1"}:
+            raise FirstSongDesignError("Only explicit verified DIMMER_CHASE effect policies are supported.")
         if not profile.get("effects"):
             warnings.append("No Effect inventory entry found; effect actions were skipped.")
-        else:
-            warnings.append("Effect call was skipped: no production Effect-call command grammar is verified for this builder.")
-        effect_policy = str(song_input.get("effect_policy") or "").upper()
-        if effect_policy not in {"", "DIMMER_CHASE_V1"}:
-            raise FirstSongDesignError("Only the explicit DIMMER_CHASE_V1 effect policy is supported.")
+        elif effect_policy:
+            warnings.append("Effect requirements are typed and will be resolved through the verified Effect Resource Resolver.")
         effect_requirements: dict[str, dict[str, Any]] = {}
         cues = []
         occurrences: dict[str, int] = {}
@@ -112,7 +112,12 @@ class FirstSongDesigner:
         return validate_show_plan({
             "schema": SHOW_PLAN_SCHEMA, "song": song, "target_sequence": None,
             "active_sequence_range": active_range, "cues": cues, "effect_requirements": effect_requirements, "warnings": warnings,
-            "designer": {"kind": "DETERMINISTIC_FIRST_SONG", "uses_neutral_geometry": bool(profile.get("geometry_analysis")), "repeated_section_variation": "OCCURRENCE_UPLIFT_V1"},
+            "designer": {
+                "kind": "DETERMINISTIC_FIRST_SONG",
+                "input_kind": "SONG_ANALYSIS" if song_input.get("analysis_schema") else "MANUAL_FIRST_SONG",
+                "uses_neutral_geometry": bool(profile.get("geometry_analysis")),
+                "repeated_section_variation": "OCCURRENCE_UPLIFT_V1",
+            },
         })
 
     @staticmethod
@@ -125,6 +130,8 @@ class FirstSongDesigner:
 
     @staticmethod
     def _effect_requirement_id(role: str, occurrence: int, policy: str) -> str | None:
+        if policy == "DIMMER_CHASE_REUSE_SLOW_V1":
+            return "fx-dim-chase-slow" if role in {"PRE_CHORUS", "CHORUS"} else None
         if policy != "DIMMER_CHASE_V1":
             return None
         if role == "CHORUS":

@@ -14,6 +14,8 @@ from PySide6.QtWidgets import QApplication
 from zen_ma2_agent.core import AgentCore
 from zen_ma2_agent.desktop import ZenDesktop
 from zen_ma2_agent.desktop_automation import DesktopAutomationBridge, automation_enabled, automation_port
+from zen_ma2_agent.effect_resources import EffectRequirement, show_identity
+from zen_ma2_agent.cue_effect_application import CueEffectApplicationCapability, CueEffectApplicationSpec
 from zen_ma2_agent.runtime import AgentRuntime
 from zen_ma2_agent.telnet_client import ConnectionState
 
@@ -35,7 +37,15 @@ class AutomationClient:
         if command == "List Group":
             return 'Group 1 "HYBRID"\n'
         if command == "List Effect":
-            return "Effect 1 Base\n"
+            return 'Effect 1 Base\nEffect 3520 "ZEN_FX_DIM_CHASE_SLOW_GROUP1"\n'
+        if command == "List Effect 3520":
+            return 'Effect 3520 "ZEN_FX_DIM_CHASE_SLOW_GROUP1"\n'
+        if command == "List Fixture":
+            return 'Fixture 101 "Hybrid 1" (Hybrid)\n'
+        if command == "List Preset All":
+            return "Focus 6.2 6.2  normal     Normal\n"
+        if command == "List Sequence":
+            return "WARNING, NO OBJECTS FOUND FOR LIST\n"
         if command == "List Timecode":
             return "Timecode 9000 9000 ZEN Test Offset: 0s (0)\n"
         return ""
@@ -59,6 +69,7 @@ class DesktopAutomationTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix="zen-desktop-automation-")
         root = Path(self.temp.name)
         copytree(Path(__file__).resolve().parents[1] / "skills", root / "skills")
+        copytree(Path(__file__).resolve().parents[1] / "examples", root / "examples")
         self.runtime = AgentRuntime(root, client_factory=AutomationClient)
         self.core = AgentCore(self.runtime)
         self.window = ZenDesktop(self.core, SimpleNamespace(port=8765))
@@ -122,6 +133,27 @@ class DesktopAutomationTests(unittest.TestCase):
         executed = self.bridge_request({"action": "execute_pending"})
         self.assertEqual((executed["ok"], executed["handler"], executed["pending"]), (True, "ZenDesktop.execute_action", False))
         self.assertEqual(self.runtime.client.commands, ['Group "BEAM"; At 30'])
+
+    def test_fixed_real_song_preview_uses_desktop_core_and_accepts_no_raw_payload(self):
+        self.bridge_request({"action": "connect"})
+        for resource, kwargs in (("groups", {}), ("fixtures", {}), ("presets", {"sequence": "ALL"}), ("effects", {}), ("sequences", {})):
+            self.core.refresh_state(resource, **kwargs)
+        profile = self.core.scan_show_profile()
+        requirement = EffectRequirement.from_dict({
+            "feature": "DIMMER", "family": "CHASE", "waveform": "PWM", "low": 0, "high": 100,
+            "speed_class": "SLOW", "speed_bpm": 30, "phase": "0..360", "direction": "forward", "groups": 1,
+            "target_type": "group", "target_ref": 1, "target_name": "HYBRID",
+        })
+        self.core.effect_catalog.record(requirement=requirement, effect_id=3520, label="ZEN_FX_DIM_CHASE_SLOW_GROUP1", identity=show_identity(profile), verification={"object": "VERIFIED", "label": "VERIFIED", "parameters": "PARTIAL"})
+        CueEffectApplicationCapability(self.runtime.root).record(CueEffectApplicationSpec(3520, "ZEN_FX_DIM_CHASE_SLOW_GROUP1", 1, "HYBRID", 299, "ZEN_AI_EFFECT_CALL_TEST_299"))
+        preview = self.bridge_request({"action": "preview_real_song"})
+        self.assertTrue(preview["ok"], preview)
+        self.assertEqual((preview["ok"], preview["handler"]), (True, "ZenDesktop.preview_real_song_test"))
+        rejected = self.bridge_request({"action": "preview_real_song", "text": "Store Cue 1"})
+        self.assertFalse(rejected["ok"])
+        transcript = self.bridge_request({"action": "chat_text"})["chat_text"]
+        self.assertIn("ZEN AI REAL SONG BUILD PREVIEW", transcript)
+        self.assertNotIn("Store Cue", self.runtime.client.commands)
 
     def test_packaged_desktop_path_previews_effect_builder_before_any_modify(self):
         self.bridge_request({"action": "connect"})

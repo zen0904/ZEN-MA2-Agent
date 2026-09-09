@@ -27,7 +27,7 @@ class _PortableSmokeClient:
         self.authenticated_user = None
         self.audit_entries: list[str] = []
         self.commands: list[str] = []
-        self.effect_label = ""
+        self.effect_labels: dict[int, str] = {}
         self.timecode_offset = "0s"
 
     def connect(self, username: str, password: str = "") -> str:
@@ -60,14 +60,20 @@ class _PortableSmokeClient:
         if command == "List Group":
             return 'Group 1 "HYBRID"\nGroup 2 "SPOT"\n'
         if command == "List Effect":
-            return "Effect 1 Base\n"
+            created = "".join(f'Effect {number} "{label}"\n' for number, label in sorted(self.effect_labels.items()))
+            return 'Effect 1 Base\nEffect 3520 "ZEN_FX_DIM_CHASE_SLOW_GROUP1"\n' + created
+        if command == "List Effect 3520":
+            return 'Effect 3520 "ZEN_FX_DIM_CHASE_SLOW_GROUP1"\n'
+        if match := re.fullmatch(r"List Effect (\d+)", command):
+            number = int(match.group(1))
+            return f'Effect {number} "{self.effect_labels[number]}"\n' if number in self.effect_labels else "WARNING, NO OBJECTS FOUND FOR LIST\n"
         if command == "List Effect 2500":
             return f'Effect 2500 "{self.effect_label}"\n' if self.effect_label else "WARNING, NO OBJECTS FOUND FOR LIST\n"
         if command == "List Timecode":
             offset = "0:15" if self.timecode_offset == "0.50s" else "0:00"
             return f"Timecode 9000 ZEN Timecode Test Intern 0:00 {offset} Endless Repeat\n"
-        if command.startswith("Label Effect 2500 "):
-            self.effect_label = command.split('"', 2)[1]
+        if match := re.fullmatch(r'Label Effect (\d+) "([^"]+)" /nc', command):
+            self.effect_labels[int(match.group(1))] = match.group(2)
         if command.startswith("Assign Timecode 9000/Offset = "):
             self.timecode_offset = command.rsplit("= ", 1)[1]
         if command == "List Fixture":
@@ -106,10 +112,34 @@ def main() -> int:
     effect_approval_smoke = "--portable-effect-approval-smoke" in sys.argv
     timecode_approval_smoke = "--portable-timecode-approval-smoke" in sys.argv
     song_analysis_smoke = "--portable-song-analysis-smoke" in sys.argv
+    real_song_analysis_smoke = "--portable-real-song-analysis-smoke" in sys.argv
     if song_analysis_smoke:
         core, smoke_temporary = _portable_smoke_core()
         try:
             analysis_path = core.runtime.root / "examples" / "REALISTIC_SONG_ANALYSIS.json"
+            response = core.preview_song_analysis(json.loads(analysis_path.read_text(encoding="utf-8")))
+            print(json.dumps({"response": response, "commands": core.runtime.client.commands}, ensure_ascii=False), flush=True)
+            return 0
+        finally:
+            core.disconnect()
+            smoke_temporary.cleanup()
+    if real_song_analysis_smoke:
+        from zen_ma2_agent.cue_effect_application import CueEffectApplicationCapability, CueEffectApplicationSpec
+        from zen_ma2_agent.effect_resources import EffectRequirement, show_identity
+
+        core, smoke_temporary = _portable_smoke_core()
+        try:
+            for resource, kwargs in (("groups", {}), ("fixtures", {}), ("presets", {"sequence": "ALL"}), ("effects", {}), ("sequences", {})):
+                core.refresh_state(resource, **kwargs)
+            profile = core.scan_show_profile()
+            requirement = EffectRequirement.from_dict({
+                "feature": "DIMMER", "family": "CHASE", "waveform": "PWM", "low": 0, "high": 100,
+                "speed_class": "SLOW", "speed_bpm": 30, "phase": "0..360", "direction": "forward", "groups": 1,
+                "target_type": "group", "target_ref": 1, "target_name": "HYBRID",
+            })
+            core.effect_catalog.record(requirement=requirement, effect_id=3520, label="ZEN_FX_DIM_CHASE_SLOW_GROUP1", identity=show_identity(profile), verification={"object": "VERIFIED", "label": "VERIFIED", "parameters": "PARTIAL"})
+            CueEffectApplicationCapability(core.runtime.root).record(CueEffectApplicationSpec(3520, "ZEN_FX_DIM_CHASE_SLOW_GROUP1", 1, "HYBRID", 299, "ZEN_AI_EFFECT_CALL_TEST_299"))
+            analysis_path = core.runtime.root / "examples" / "ZEN_REAL_LIGHTING_DESIGN_TEST.json"
             response = core.preview_song_analysis(json.loads(analysis_path.read_text(encoding="utf-8")))
             print(json.dumps({"response": response, "commands": core.runtime.client.commands}, ensure_ascii=False), flush=True)
             return 0

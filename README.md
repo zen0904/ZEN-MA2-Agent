@@ -182,6 +182,11 @@ MA2 command field. It adapts only into the existing Designer input; the
 verified path remains `analysis → typed ZEN_SHOW_PLAN → Builder → Preview →
 Approval`. `examples\REALISTIC_SONG_ANALYSIS.json` and
 `examples\REALISTIC_SONG_SCRIPT.md` are portable, realistic fixtures.
+`examples\ZEN_REAL_LIGHTING_DESIGN_TEST.json` is the isolated 10-section
+integration fixture. Its explicit `DIMMER_CHASE_REUSE_SLOW_V1` policy reuses
+one catalog-verified Agent-owned DIMMER CHASE instead of creating duplicates;
+it produces a local `ZEN_REAL_SONG_DESIGN_REPORT.md` and never embeds MA2
+command text.
 
 ## Show Diagnostics v1
 

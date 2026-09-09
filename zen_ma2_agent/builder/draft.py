@@ -111,11 +111,19 @@ class ShowPlanBuilder:
         effect_line = "Effects: none" if not referenced_effects else (
             "Effects: resolved references " + ", ".join(map(str, sorted(referenced_effects))) + ("; effect-pool call grammar verified by isolated real-MA2 POC." if effect_application_verified else "; EFFECT_APPLICATION_UNVERIFIED — no Cue Effect MA2 commands were generated.")
         )
+        preview_title = "ZEN AI REAL SONG BUILD PREVIEW" if plan.get("designer", {}).get("input_kind") == "SONG_ANALYSIS" else "ZEN AI SHOW BUILD PREVIEW"
+        cue_preview = []
+        for cue in plan["cues"]:
+            effect = next((action.get("effect_ref") for action in cue["actions"] if action.get("operation") == "CALL_EFFECT"), None)
+            effect_text = "NONE" if not isinstance(effect, dict) else f"{effect.get('label') or 'Effect'} (ID: {effect.get('id')})"
+            cue_preview.append(f"Cue {cue['cue_number']} — {cue['label']} | Energy {float(cue.get('design_energy', 0)):.2f} | Fade {float(cue['fade']):g} | Effect: {effect_text}")
         preview = "\n".join([
-            "ZEN AI SHOW BUILD PREVIEW", "", f"Song: {plan['song']}", f"Target Sequence: {sequence}", f"New label: {label}",
-            f"Resources referenced: Groups {', '.join(map(str, sorted(referenced_groups)))}; Presets {', '.join(sorted(referenced_presets))}",
-            effect_line, f"Will create: Sequence {sequence}; Cues {len(plan['cues'])}",
-            "Will modify existing TEMPLATE: NONE", "Will modify production Cue: NONE", "", "Safety: MODIFY", "Approval required.", "", "Generated MA2 commands:", *[f"- {command}" for _, _, command in steps],
+            preview_title, "", f"Song: {plan['song']}", f"Target Sequence: {sequence}", f"New label: {label}", f"Generated Cues: {len(plan['cues'])}", "",
+            "Cue design:", *[f"- {line}" for line in cue_preview], "", "Resources:",
+            f"Groups: {', '.join(map(str, sorted(referenced_groups)))}", f"Presets: {', '.join(sorted(referenced_presets)) or 'NONE'}", effect_line,
+            "New Effects to create: NONE", f"Geometry usage: {'neutral numeric geometry available' if plan.get('designer', {}).get('uses_neutral_geometry') else 'FALLBACK — no fresh geometry profile required for this safe Group build'}",
+            f"Warnings: {'; '.join(plan.get('warnings') or ['None'])}", "Effect application: " + ("REAL_MACHINE_VERIFIED" if effect_application_verified else "EFFECT_APPLICATION_UNVERIFIED"),
+            "Existing production objects modified: NONE", f"Will create: Sequence {sequence}; Cues {len(plan['cues'])}", "", "Safety: MODIFY", "Approval required.", "", "Generated MA2 commands:", *[f"- {command}" for _, _, command in steps],
         ])
         effect_application = "EFFECT_APPLICATION_UNVERIFIED" if effect_application_blocked else "REAL_MACHINE_VERIFIED" if referenced_effects else "NOT_REQUESTED"
         intent = Intent("build_first_song", {"song": plan["song"], "sequence": sequence, "sequence_label": label, "cue_count": len(plan["cues"]), "cue_labels": [cue["label"] for cue in plan["cues"]], "cues": plan["cues"], "referenced_groups": sorted(referenced_groups), "referenced_presets": sorted(referenced_presets), "referenced_effects": sorted(referenced_effects), "effect_application": effect_application, "warnings": plan.get("warnings", [])}, "ZEN_SHOW_PLAN")

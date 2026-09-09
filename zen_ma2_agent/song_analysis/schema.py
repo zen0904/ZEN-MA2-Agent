@@ -151,6 +151,9 @@ def validate_song_analysis(document: dict[str, Any]) -> dict[str, Any]:
     active_range = build.get("active_sequence_range")
     if active_range is not None and (not isinstance(active_range, list) or len(active_range) != 2 or not all(isinstance(value, int) and value > 0 for value in active_range) or active_range[0] > active_range[1]):
         raise SongAnalysisError("build.active_sequence_range must be an increasing two-number list.")
+    effect_policy = str(build.get("effect_policy") or "").strip().upper()
+    if effect_policy not in {"", "DIMMER_CHASE_V1", "DIMMER_CHASE_REUSE_SLOW_V1"}:
+        raise SongAnalysisError("build.effect_policy is unsupported.")
     normalized = {
         "schema": SONG_ANALYSIS_SCHEMA,
         "song": {
@@ -167,7 +170,7 @@ def validate_song_analysis(document: dict[str, Any]) -> dict[str, Any]:
             "may_repeat_chorus": bool(performance.get("may_repeat_chorus", False)),
         },
         "stage_roles": [{"role": str(item.get("role") or "").strip().upper(), "semantic_position": str(item.get("semantic_position") or "").strip() or None} for item in stage_roles],
-        "build": {"active_sequence_range": list(active_range) if active_range is not None else None, "max_cues_per_section": int(build.get("max_cues_per_section", 2))},
+        "build": {"active_sequence_range": list(active_range) if active_range is not None else None, "max_cues_per_section": int(build.get("max_cues_per_section", 2)), "effect_policy": effect_policy},
         "source": _provenance(document.get("source"), default_source="MANUAL"),
     }
     if not 1 <= normalized["build"]["max_cues_per_section"] <= 3:

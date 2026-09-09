@@ -108,6 +108,12 @@ class DesktopAutomationBridge(QObject):
                 # The real Desktop handler owns Chat, AgentCore, and routing.
                 self.desktop.submit()
                 result = {"ok": True, "handler": "ZenDesktop.submit", "connection_state": self.desktop.core.runtime.state.value}
+            elif action == "preview_real_song":
+                # A fixed bundled analysis fixture only. The bridge accepts no
+                # payload or command string, and this still enters through the
+                # shared Desktop → AgentCore preview lifecycle.
+                self.desktop.preview_real_song_test()
+                result = {"ok": True, "handler": "ZenDesktop.preview_real_song_test", "connection_state": self.desktop.core.runtime.state.value}
             elif action == "chat_text":
                 result = {"ok": True, "chat_text": self.desktop.chat.toPlainText()}
             elif action == "state_snapshot":
@@ -178,6 +184,8 @@ class _BridgeServer(threading.Thread):
             payload = json.loads(raw.decode("utf-8"))
             if not isinstance(payload, dict) or set(payload) - {"action", "text"}:
                 raise ValueError("Invalid automation request.")
+            if payload.get("action") != "submit" and "text" in payload:
+                raise ValueError("Only submit accepts text through the automation bridge.")
             reply: queue.Queue[dict[str, Any]] = queue.Queue(maxsize=1)
             QCoreApplication.postEvent(self.bridge, _DispatchEvent(_BridgeRequest(payload, reply)))
             return reply.get(timeout=AUTOMATION_ACTION_TIMEOUT_SECONDS)

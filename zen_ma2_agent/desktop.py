@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import json
 from pathlib import Path
 
 import qrcode
@@ -85,6 +86,18 @@ class ZenDesktop(QMainWindow):
     def submit(self) -> None:
         text = self.request.text().strip()
         if text: self.core.handle_request(text, source="desktop"); self.request.clear(); self.refresh()
+
+    def preview_real_song_test(self) -> None:
+        """Preview the one bundled integration fixture through the Desktop Core.
+
+        This is deliberately not exposed in the operator UI. The localhost
+        automation bridge uses it only for packaged real-machine verification;
+        the fixture is fixed, typed JSON and cannot carry raw MA commands.
+        """
+        source = self.core.runtime.root / "examples" / "ZEN_REAL_LIGHTING_DESIGN_TEST.json"
+        analysis = json.loads(source.read_text(encoding="utf-8"))
+        self.core.preview_song_analysis(analysis)
+        self.refresh()
 
     def execute_action(self) -> None:
         action = next((item for item in self.core.actions.values() if item.status == "PENDING_APPROVAL"), None)

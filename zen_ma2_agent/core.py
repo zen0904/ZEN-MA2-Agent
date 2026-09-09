@@ -40,6 +40,7 @@ from .geometry_test_environment import (
 )
 from .models import Intent
 from .designer import FirstSongDesigner
+from .designer.report import write_real_song_design_report
 from .builder import FirstSongBuildError
 from .song_analysis import SongAnalysisAdapter, validate_song_analysis
 
@@ -204,6 +205,10 @@ class AgentCore:
                 details = "; ".join(f"{item.requirement.semantic_label}: {item.status}" for item in unresolved)
                 raise EffectRequirementError("Effect resource resolution is blocked: " + details)
             show_plan = apply_effect_references(show_plan, resolutions)
+            # The catalog is never sufficient on its own.  A full inventory is
+            # fresh enough for matching, then every chosen resource gets a
+            # direct List proof before it may enter an executable Show Plan.
+            self._fresh_verify_effect_references(show_plan)
             # Only a completed isolated real-machine POC can enable the
             # compiler-side CALL_EFFECT grammar. Designer remains entirely
             # declarative and never receives this transport detail.
@@ -212,6 +217,7 @@ class AgentCore:
                 show_plan["effect_application_capability"] = capability
             self.runtime.log("effect_resource_resolution", {"status": "EXISTING_MATCH", "requirements": [item.summary() for item in resolutions.values()], "show_identity": show_identity(profile)})
         (data_dir / "ZEN_SHOW_PLAN.json").write_text(json.dumps(show_plan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        write_real_song_design_report(show_plan, profile, self.runtime.root / "ZEN_REAL_SONG_DESIGN_REPORT.md")
         context = {key: profile.get(key, []) for key in ("groups", "presets", "effects", "sequences")}
         workflow = self.skills.plan_intent(Intent("build_first_song", {"first_song_spec": {"show_plan": show_plan, "profile": context}}, "ZEN_SHOW_PLAN"), self.state, self.runtime.preferences)
         self.runtime.log("song_analysis_preview" if analysis is not None else "first_song_preview", {"song": show_plan["song"], "cue_count": len(show_plan["cues"]), "sequence_range": show_plan["active_sequence_range"], "analysis_schema": analysis.get("schema") if analysis else None})
@@ -1008,7 +1014,45 @@ class AgentCore:
         expected_labels = data.get("cue_labels")
         if not isinstance(sequence, int) or not isinstance(label, str) or not isinstance(expected_labels, list):
             raise FirstSongBuildError("First Song verification metadata is incomplete.")
-        return execution_result + "\n" + self.verify_first_song_metadata(sequence, label, data.get("cues", []), expected_labels)
+        metadata = self.verify_first_song_metadata(sequence, label, data.get("cues", []), expected_labels)
+        effect_lines = self._fresh_verify_effect_references({"cues": data.get("cues", [])})
+        preset_refs = set(data.get("referenced_presets") or [])
+        if preset_refs:
+            self.refresh_state("presets", sequence="ALL")
+            snapshot = self.state.get("presets")
+            available = {item.get("reference") for item in (snapshot.values if snapshot else [])}
+            missing = sorted(reference for reference in preset_refs if reference not in available)
+            if missing:
+                raise FirstSongBuildError("Verification failed: referenced Preset is no longer present: " + ", ".join(missing))
+        details = []
+        if effect_lines:
+            details.append("Effect references verified: " + "; ".join(effect_lines))
+        if preset_refs:
+            details.append("Preset references verified by fresh List Preset All: " + ", ".join(sorted(preset_refs)))
+        return execution_result + "\n" + metadata + ("\n" + "\n".join(details) if details else "")
+
+    def _fresh_verify_effect_references(self, show_plan: dict[str, Any]) -> list[str]:
+        """Prove every typed Effect reference by exact read-only List lookup."""
+        references: dict[int, str] = {}
+        for cue in show_plan.get("cues", []):
+            for action in cue.get("actions", []):
+                if action.get("operation") != "CALL_EFFECT":
+                    continue
+                reference = action.get("effect_ref")
+                if not isinstance(reference, dict) or not isinstance(reference.get("id"), int) or not isinstance(reference.get("label"), str):
+                    raise EffectRequirementError("Resolved Show Plan Effect reference is incomplete.")
+                effect_id, label = reference["id"], reference["label"]
+                previous = references.setdefault(effect_id, label)
+                if previous != label:
+                    raise EffectRequirementError(f"Resolved Show Plan Effect {effect_id} has conflicting labels.")
+        verified: list[str] = []
+        for effect_id, expected_label in sorted(references.items()):
+            values = EffectProvider().parse(self.runtime.read_state(f"List Effect {effect_id}"))
+            found = next((item for item in values if item.get("number") == effect_id), None)
+            if not found or found.get("name") != expected_label:
+                raise EffectRequirementError(f"STALE_EFFECT_RESOURCE: Effect {effect_id} no longer matches its approved label.")
+            verified.append(f"{effect_id} — {expected_label}")
+        return verified
 
     def verify_first_song_metadata(self, sequence: int, label: str, expected_cues: list[dict[str, Any]], expected_labels: list[str] | None = None) -> str:
         """Read only the exact known Cue metadata after an approved build.

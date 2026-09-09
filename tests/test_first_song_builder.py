@@ -8,6 +8,8 @@ from zen_ma2_agent.core import AgentCore
 from zen_ma2_agent.builder import FirstSongBuildError, ShowPlanBuilder
 from zen_ma2_agent.designer import FirstSongDesigner
 from zen_ma2_agent.designer.schema import ShowPlanSchemaError, validate_show_plan
+from zen_ma2_agent.effect_resources import EffectRequirement, show_identity
+from zen_ma2_agent.cue_effect_application import CueEffectApplicationCapability, CueEffectApplicationSpec
 from zen_ma2_agent.runtime import AgentRuntime
 from zen_ma2_agent.song_analysis import SongAnalysisAdapter, SongAnalysisError, ScriptSongParser, validate_song_analysis
 from zen_ma2_agent.telnet_client import ConnectionState
@@ -15,6 +17,7 @@ from zen_ma2_agent.telnet_client import ConnectionState
 
 INPUT = json.loads((Path(__file__).resolve().parents[1] / "examples" / "FIRST_SONG_INPUT.json").read_text(encoding="utf-8"))
 ANALYSIS = json.loads((Path(__file__).resolve().parents[1] / "examples" / "REALISTIC_SONG_ANALYSIS.json").read_text(encoding="utf-8"))
+REAL_ANALYSIS = json.loads((Path(__file__).resolve().parents[1] / "examples" / "ZEN_REAL_LIGHTING_DESIGN_TEST.json").read_text(encoding="utf-8"))
 
 
 class FirstSongClient:
@@ -23,6 +26,7 @@ class FirstSongClient:
         self.authenticated_user = None
         self.audit_entries, self.commands = [], []
         self.sequence_label = None
+        self.sequence_number = None
         self.cues = []
 
     def connect(self, username, password=""):
@@ -35,13 +39,15 @@ class FirstSongClient:
         if command == "List Fixture": return 'Fixture 101 "Hybrid 1" (Hybrid)\n'
         if command.startswith("List Fixture "): return "WARNING, NO OBJECTS FOUND FOR LIST\n"
         if command == "List Preset All": return "Focus 6.1 6.1  narrow     Normal\nFocus 6.2 6.2  normal     Normal\n"
-        if command == "List Effect": return "Effect 1000 DIM Low 1\n"
-        if command == "List Sequence": return f'Sequence 201 "{self.sequence_label}"\n' if self.sequence_label else "WARNING, NO OBJECTS FOUND FOR LIST\n"
-        if command.startswith("List Cue ") and " Part 0 Sequence 201" in command:
+        if command == "List Effect": return 'Effect 1000 DIM Low 1\nEffect 3520 "ZEN_FX_DIM_CHASE_SLOW_GROUP1"\n'
+        if command == "List Effect 3520": return 'Effect 3520 "ZEN_FX_DIM_CHASE_SLOW_GROUP1"\n'
+        if command == "List Sequence": return f'Sequence {self.sequence_number} "{self.sequence_label}"\n' if self.sequence_label else "WARNING, NO OBJECTS FOUND FOR LIST\n"
+        if command.startswith("List Cue ") and self.sequence_number is not None and f" Part 0 Sequence {self.sequence_number}" in command:
             number = int(command.split()[2])
             label, fade = next((label, fade) for cue, label, fade in self.cues if cue == number)
             return f"Cue 0 {label}  0      {fade:g}     InDelay\n"
-        if command.startswith("Label Sequence 201 "):
+        if command.startswith("Label Sequence "):
+            self.sequence_number = int(command.split()[2])
             self.sequence_label = command.split('"', 2)[1]
         if command.startswith("Store Cue "):
             bits = command.split('"')
@@ -149,6 +155,33 @@ class FirstSongBuilderTests(unittest.TestCase):
         result = self.core.approve_action(response["action"]["id"])
         self.assertEqual(result["status"], "EXECUTED")
         self.assertGreaterEqual(len(self.runtime.client.cues), 10)
+
+    def test_real_song_analysis_reuses_verified_effect_and_builds_multi_cue_plan(self):
+        for resource, kwargs in (("groups", {}), ("fixtures", {}), ("presets", {"sequence": "ALL"}), ("effects", {}), ("sequences", {})):
+            self.core.refresh_state(resource, **kwargs)
+        profile = self.core.scan_show_profile()
+        requirement = EffectRequirement.from_dict({
+            "feature": "DIMMER", "family": "CHASE", "waveform": "PWM", "low": 0, "high": 100,
+            "speed_class": "SLOW", "speed_bpm": 30, "phase": "0..360", "direction": "forward", "groups": 1,
+            "target_type": "group", "target_ref": 1, "target_name": "HYBRID",
+        })
+        self.core.effect_catalog.record(requirement=requirement, effect_id=3520, label="ZEN_FX_DIM_CHASE_SLOW_GROUP1", identity=show_identity(profile), verification={"object": "VERIFIED", "label": "VERIFIED", "parameters": "PARTIAL"})
+        CueEffectApplicationCapability(self.runtime.root).record(CueEffectApplicationSpec(3520, "ZEN_FX_DIM_CHASE_SLOW_GROUP1", 1, "HYBRID", 299, "ZEN_AI_EFFECT_CALL_TEST_299"))
+        preview = self.core.preview_song_analysis(REAL_ANALYSIS)
+        self.assertIn("ZEN AI REAL SONG BUILD PREVIEW", preview["message"])
+        self.assertIn("ZEN_FX_DIM_CHASE_SLOW_GROUP1", preview["message"])
+        self.assertEqual(preview["action"]["task"]["intent"]["parameters"]["cue_count"], 10)
+        cues = preview["action"]["task"]["intent"]["parameters"]["cues"]
+        self.assertEqual(sum(action["operation"] == "CALL_EFFECT" for cue in cues for action in cue["actions"]), 5)
+        self.assertFalse(any(command.startswith("Store Cue") for command in self.runtime.client.commands))
+        result = self.core.approve_action(preview["action"]["id"])
+        self.assertEqual(result["status"], "EXECUTED")
+        self.assertEqual(len(self.runtime.client.cues), 10)
+        self.assertEqual(self.runtime.client.commands.count("Effect 3520"), 5)
+        self.assertEqual(self.runtime.client.commands.count("ClearAll"), 2)
+        report = Path(self.runtime.root) / "ZEN_REAL_SONG_DESIGN_REPORT.md"
+        self.assertTrue(report.is_file())
+        self.assertIn("Repeated-section variation", report.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":
