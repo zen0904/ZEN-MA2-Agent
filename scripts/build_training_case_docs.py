@@ -55,13 +55,13 @@ def render_framework(case: dict) -> str:
         "",
     ]
     for principle in case["design_principles"]:
-        lines.extend([f"### {principle['principle']}", "", f"- Why: {principle['why']}", f"- Useful when: {principle['when_useful']}", f"- Not automatically applicable when: {principle['when_not_applicable']}", f"- Scope: `{principle['scope']}`", ""])
+        lines.extend([f"### {principle['principle']}", "", f"- Why: {principle['why']}", f"- Useful when: {principle['when_useful']}", f"- Not automatically applicable when: {principle['when_not_applicable']}", f"- Scope: `{principle['scope']}`", f"- Provenance: `{principle.get('provenance', 'UNSPECIFIED')}`", ""])
     lines.extend(["## Rig Role vocabulary", "", "A Role describes the design job a Fixture can perform in context. `ROLE != FIXTURE TYPE`; one Fixture family may take different roles in another Case.", "", "`" + "`, `".join(case["rig_roles"]) + "`", "", "## Proposed Rig Zone vocabulary", "", "These are design-language candidates only, not verified MA2 geometry: `" + "`, `".join(case["constraints"]["spatial_zones_status"] for _ in [0]) + "`.", "", "Allowed names: `UPSTAGE`, `MIDSTAGE`, `DOWNSTAGE`, `HIGH`, `MID`, `LOW`, `FLOOR`, `CENTER`, `INNER`, `OUTER`, `SIDE`, `EDGE`.", "", "## Visual Layer model", ""])
     for layer in case["visual_layers"]:
         lines.append(f"- **{layer['name']}** — {layer['purpose']}")
     lines.extend(["", "A Cue may use only a subset of layers. Increased energy can come from adding coverage, contrast, movement, focus, geometry, or an impact layer—not just Dimmer.", "", "## Anti-pattern evidence", ""])
     for item in case["anti_patterns"]:
-        lines.append(f"- **{item['id']}** — {item['description']} ({item['evidence']}; `{item['scope']}`)")
+        lines.append(f"- **{item['id']}** — {item['description']} ({item['evidence']}; `{item['scope']}`; provenance `{item.get('provenance', 'UNSPECIFIED')}`)")
     lines.extend(["", "## Training Case 001", "", f"- Case: `{case['case_id']}` — {case['case_name']}", f"- Type: `{case['case_type']}`", f"- Resource scale: `{case['resource_scale']}`", f"- Style orientation: `{case['style_orientation']}` (case context only)", f"- Show profile: `{case['show_profile_ref']}`", f"- Confidence: `{case['confidence']}`", "", "### Current resource evidence", "", f"- Groups: {case['verified_resources']['group_count']} with fresh ordered membership", f"- Root Fixtures: {case['verified_resources']['fixture_count']}", f"- Preset references: {case['verified_resources']['preset_count']}", f"- Effects: {case['verified_resources']['effect_count']} inventory entries; line parameters `{case['verified_resources']['effect_parameters']}`", f"- Geometry: `{case['verified_resources']['geometry']}`", f"- Semantic position labels: `{case['verified_resources']['semantic_positions']}`", ""])
     lines.extend(["### Current Group role analysis", ""])
     for group in case["fixture_groups"]:

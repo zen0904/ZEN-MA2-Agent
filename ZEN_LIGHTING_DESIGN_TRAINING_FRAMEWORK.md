@@ -18,6 +18,7 @@ Training Cases never contain MA2 commands. Designer remains command-free; Builde
 - Useful when: Openings, verses, and any long-form build.
 - Not automatically applicable when: A deliberately maximal one-shot cue.
 - Scope: `GENERALIZABLE_LESSON`
+- Provenance: `CURRENT_INTERNAL_GENERAL_PRINCIPLE`
 
 ### SECTION_CONTRAST
 
@@ -25,6 +26,7 @@ Training Cases never contain MA2 commands. Designer remains command-free; Builde
 - Useful when: Verse/chorus and pre/final transitions.
 - Not automatically applicable when: A deliberately static ambient passage.
 - Scope: `GENERALIZABLE_LESSON`
+- Provenance: `CURRENT_INTERNAL_GENERAL_PRINCIPLE`
 
 ### REPEATED_SECTION_DEVELOPMENT
 
@@ -32,6 +34,7 @@ Training Cases never contain MA2 commands. Designer remains command-free; Builde
 - Useful when: Repeated verses, choruses, or hooks.
 - Not automatically applicable when: A conscious exact reprise.
 - Scope: `GENERALIZABLE_LESSON`
+- Provenance: `CURRENT_INTERNAL_GENERAL_PRINCIPLE`
 
 ### EFFECT_FATIGUE_AVOIDANCE
 
@@ -39,6 +42,7 @@ Training Cases never contain MA2 commands. Designer remains command-free; Builde
 - Useful when: Chorus/impact planning.
 - Not automatically applicable when: A continuous texture brief that explicitly demands it.
 - Scope: `GENERALIZABLE_LESSON`
+- Provenance: `CURRENT_INTERNAL_GENERAL_PRINCIPLE`
 
 ### LAYER_ESCALATION
 
@@ -46,6 +50,7 @@ Training Cases never contain MA2 commands. Designer remains command-free; Builde
 - Useful when: Builds and finales.
 - Not automatically applicable when: When resources or song structure require restraint.
 - Scope: `GENERALIZABLE_LESSON`
+- Provenance: `CURRENT_INTERNAL_GENERAL_PRINCIPLE`
 
 ### FOCUS_HIERARCHY
 
@@ -53,6 +58,7 @@ Training Cases never contain MA2 commands. Designer remains command-free; Builde
 - Useful when: Solos, verses, and dense choruses.
 - Not automatically applicable when: An intentionally environmental interlude.
 - Scope: `GENERALIZABLE_LESSON`
+- Provenance: `CURRENT_INTERNAL_GENERAL_PRINCIPLE`
 
 ### RESOURCE_AWARENESS
 
@@ -60,6 +66,7 @@ Training Cases never contain MA2 commands. Designer remains command-free; Builde
 - Useful when: Every design decision.
 - Not automatically applicable when: Never; the implementation may vary.
 - Scope: `GENERALIZABLE_LESSON`
+- Provenance: `CURRENT_INTERNAL_GENERAL_PRINCIPLE`
 
 ### ASYMMETRY_TOLERANCE
 
@@ -67,6 +74,7 @@ Training Cases never contain MA2 commands. Designer remains command-free; Builde
 - Useful when: Medium, small, and production shows.
 - Not automatically applicable when: Only when symmetry is actually evidenced.
 - Scope: `GENERALIZABLE_LESSON`
+- Provenance: `CURRENT_INTERNAL_GENERAL_PRINCIPLE`
 
 ## Rig Role vocabulary
 
@@ -94,13 +102,13 @@ A Cue may use only a subset of layers. Increased energy can come from adding cov
 
 ## Anti-pattern evidence
 
-- **INTENSITY_ONLY_PROGRESSION** — Raising Dimmer while keeping every other layer identical. (Current V1 creative review; `GENERALIZABLE_LESSON`)
-- **SAME_GROUP_EVERY_CUE** — Using one Group for all sections despite available alternatives. (Current V1 creative review; `GENERALIZABLE_LESSON`)
-- **SAME_PRESET_EVERY_CUE** — Missing palette/focus development when verified resources exist. (Current V1 creative review; `GENERALIZABLE_LESSON`)
-- **EFFECT_FATIGUE** — Repeating one Effect until it no longer marks a meaningful section. (Current V1 creative review; `GENERALIZABLE_LESSON`)
-- **EFFECT_TOO_EARLY** — Spending a signature motion resource before the first major opening. (Current V1 creative review; `GENERALIZABLE_LESSON`)
-- **FINAL_EQUALS_ONE_HUNDRED** — Treating Final Chorus escalation as Dimmer 100% only. (Current V1 creative review; `GENERALIZABLE_LESSON`)
-- **GEOMETRY_IGNORED** — Failing to use verified numeric geometry when it is available. (Current V1 creative review; `GENERALIZABLE_LESSON`)
+- **INTENSITY_ONLY_PROGRESSION** — Raising Dimmer while keeping every other layer identical. (Current V1 creative review; `GENERALIZABLE_LESSON`; provenance `INTERNAL_CASE_EVIDENCE`)
+- **SAME_GROUP_EVERY_CUE** — Using one Group for all sections despite available alternatives. (Current V1 creative review; `GENERALIZABLE_LESSON`; provenance `INTERNAL_CASE_EVIDENCE`)
+- **SAME_PRESET_EVERY_CUE** — Missing palette/focus development when verified resources exist. (Current V1 creative review; `GENERALIZABLE_LESSON`; provenance `INTERNAL_CASE_EVIDENCE`)
+- **EFFECT_FATIGUE** — Repeating one Effect until it no longer marks a meaningful section. (Current V1 creative review; `GENERALIZABLE_LESSON`; provenance `INTERNAL_CASE_EVIDENCE`)
+- **EFFECT_TOO_EARLY** — Spending a signature motion resource before the first major opening. (Current V1 creative review; `GENERALIZABLE_LESSON`; provenance `INTERNAL_CASE_EVIDENCE`)
+- **FINAL_EQUALS_ONE_HUNDRED** — Treating Final Chorus escalation as Dimmer 100% only. (Current V1 creative review; `GENERALIZABLE_LESSON`; provenance `INTERNAL_CASE_EVIDENCE`)
+- **GEOMETRY_IGNORED** — Failing to use verified numeric geometry when it is available. (Current V1 creative review; `GENERALIZABLE_LESSON`; provenance `INTERNAL_CASE_EVIDENCE`)
 
 ## Training Case 001
 
