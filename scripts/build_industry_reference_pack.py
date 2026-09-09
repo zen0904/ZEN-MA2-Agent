@@ -7,6 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from zen_ma2_agent.industry_references import build_pack, cross_analyze
+from zen_ma2_agent.industry_review import ai_recommendation, antipattern_review_matrix, observation_priority_summary, principle_review_matrix, review_priority
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -92,6 +93,37 @@ def write_reports() -> None:
         anti.append(f"| `{item['name']}` | **{item['status']}** |")
     anti += ["", "All external extractions require human review before teaching use. No Zen style profile is created."]
     (ROOT / "ZEN_TRAINING_CASE_001_INDUSTRY_REVIEW.md").write_text("\n".join(anti) + "\n", encoding="utf-8")
+
+    _write_review_reports(pack)
+
+
+def _write_review_reports(pack: dict) -> None:
+    source_map = {item["source_id"]: item for item in pack["sources"]}
+    priority = observation_priority_summary(pack["observations"])
+    cards = ["# Industry Reference Pack 001 — Human Review", "", "This is a human-readable review packet. It contains no parser contract and no checkbox automation. Each card is a short derived observation; the original source and observation records remain immutable.", "", "## Review guidance", "", "- ACCEPT confirms source interpretation and documented scope; it does not create a global design truth.", "- ACCEPT WITH LIMITATION records a valid observation with an explicit boundary.", "- NEEDS CONTEXT, REJECT and UNSURE keep the observation out of active knowledge candidates.", "- AI recommendations, where shown, are separate suggestions and never human decisions.", ""]
+    for index, obs in enumerate(pack["observations"], start=1):
+        source = source_map[obs["source_id"]]
+        recommendation = ai_recommendation(obs)
+        cards.extend([
+            f"## OBSERVATION {index:02d}", "", f"**Source:** [{source['production']} — {source['title']}]({source['url']})", f"**Domain:** {obs['domain']}", f"**Evidence type:** {obs['evidence_type']}", f"**Observed:** {obs['observation']}", f"**Why this may matter:** {obs['teaching_note'] or 'Review whether this changes how a designer allocates attention, contrast or resources.'}", f"**Possible lesson:** {obs['teaching_note'] or 'None recorded.'}", f"**Current confidence:** {obs['confidence']}", f"**Possible scope:** DOMAIN / GENERAL_CANDIDATE / UNKNOWN", f"**Review priority:** {review_priority(obs)}", f"**AI review recommendation (not a human decision):** {recommendation['recommended_decision']} — {recommendation['recommended_reason']}", "", "**Review:**", "[ ] ACCEPT  [ ] ACCEPT WITH LIMITATION  [ ] NEEDS CONTEXT  [ ] REJECT  [ ] UNSURE", "", f"**Limitations:** {obs['limitations']}", "", "---", ""])
+    (ROOT / "ZEN_INDUSTRY_REFERENCE_PACK_001_HUMAN_REVIEW.md").write_text("\n".join(cards), encoding="utf-8")
+
+    principles = ["RESERVE_HEADROOM", "SECTION_CONTRAST", "REPEATED_SECTION_DEVELOPMENT", "EFFECT_FATIGUE_AVOIDANCE", "LAYER_ESCALATION", "FOCUS_HIERARCHY", "RESOURCE_AWARENESS", "ASYMMETRY_TOLERANCE"]
+    matrix = ["# Industry Principle Review Matrix 001", "", "No principle status is changed by this packet. Human decisions are separate records and remain empty until a reviewer submits them.", "", "| Principle | Supporting observations | Conflicting / context observations | Human accepted | Needs context | Rejected | Current status |", "|---|---|---|---|---|---|---|"]
+    for item in principle_review_matrix(pack, principles):
+        matrix.append(f"| `{item['name']}` | {', '.join(item['supporting_observations']) or 'none'} | {', '.join(item['conflicting_observations']) or 'none'} | none | none | none | **{item['current_status']}** |")
+    matrix.append("\nHuman ACCEPT confirms interpretation and scope only; cross-source and cross-domain promotion remains a separate policy.")
+    (ROOT / "ZEN_INDUSTRY_PRINCIPLE_REVIEW_MATRIX_001.md").write_text("\n".join(matrix), encoding="utf-8")
+
+    anti_names = ["INTENSITY_ONLY_PROGRESSION", "SAME_GROUP_EVERY_CUE", "SAME_PRESET_EVERY_CUE", "EFFECT_FATIGUE", "EFFECT_TOO_EARLY", "FINAL_EQUALS_ONE_HUNDRED", "GEOMETRY_IGNORED"]
+    anti = ["# Industry Anti-pattern Review Matrix 001", "", "External anti-pattern support is pending human review. Training Case evidence is not silently converted into external truth.", "", "| Anti-pattern | Supporting observations | Conflicting / context observations | Human accepted | Needs context | Rejected | Current status |", "|---|---|---|---|---|---|---|"]
+    for item in antipattern_review_matrix(pack, anti_names):
+        anti.append(f"| `{item['name']}` | {', '.join(item['supporting_observations']) or 'none'} | {', '.join(item['conflicting_observations']) or 'none'} | none | none | none | **{item['current_status']}** |")
+    anti.append("\nNo anti-pattern is marked externally accepted in this round.")
+    (ROOT / "ZEN_INDUSTRY_ANTIPATTERN_REVIEW_MATRIX_001.md").write_text("\n".join(anti), encoding="utf-8")
+
+    workflow = ["# ZEN Human Review Workflow", "", "## Lifecycle", "", "`IndustryReferenceSource` → `DerivedObservation` → `HumanReviewRecord`", "", "Sources and observations are immutable. A review is a separate record with `zen.industry_evidence_review.v0.1`, reviewer type, decision, confidence, reason, scope confirmation, notes and timestamp.", "", "## Decisions", "", "- `ACCEPT`: interpretation and documented scope are accurate; not a global rule.", "- `ACCEPT_WITH_LIMITATION`: accepted only with recorded boundary.", "- `NEEDS_CONTEXT`: retain, but do not activate.", "- `REJECT`: interpretation is not reliable enough; retain for audit, do not activate.", "- `DUPLICATE`: retain the source record, exclude duplicate candidate.", "- `UNSURE`: defer without forcing a decision.", "", "## Eligibility", "", "Only `ACCEPT` and `ACCEPT_WITH_LIMITATION` can become future Designer knowledge candidates, and they retain their original domain/scope. Cross-source and cross-domain promotion is separate and remains disabled here.", "", "## AI assistance", "", "`AIReviewRecommendation` uses `zen.industry_evidence_ai_recommendation.v0.1` and is never copied into a human decision. Visual and model interpretations are always HIGH review priority; direct statements from the current pack are MEDIUM priority.", "", "## Bias", "", "All six Pack 001 sources are manufacturer/technical case-study style and carry `MANUFACTURER_CASE_STUDY_BIAS`. This is a review limitation, not an automatic rejection.", "", "## Runtime boundary", "", "No UI, Designer context adapter, MA2 connection or MA2 write is part of this workflow."]
+    (ROOT / "ZEN_HUMAN_REVIEW_WORKFLOW.md").write_text("\n".join(workflow) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
