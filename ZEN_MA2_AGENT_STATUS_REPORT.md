@@ -648,3 +648,25 @@ This round does not wire external evidence into Designer, does not create a
 `ZEN_STYLE_PROFILE`, and performs zero MA2 writes. Industry ingestion status
 is `LOCAL_PACK_READY / HUMAN_REVIEW_REQUIRED`; runtime use remains
 `NOT_IMPLEMENTED` until explicit review and a future context adapter.
+
+## 28 Industry Reference Pack 002 — Contemporary Mainstream Pop / K-pop
+
+`INDUSTRY_REFERENCE_PACK_002` is a second, independent, local and read-only
+evidence pack covering nine named contemporary large-stage productions from
+2022–2025. It adds explicit visual-language tags, visual-reference metadata,
+source-selection bias, and bounded transient-impact, buildup/restraint,
+camera-readability and controlled-maximalism observations. Pack 001 remains
+the broader cross-domain baseline; Pack 002 is a narrower contemporary
+mainstream prior and does not replace it.
+
+The prior uses `zen.contemporary_mainstream_prior.v0.1` with its domain, time
+window, evidence count, visual-language set, confidence and source diversity.
+`DIRECT_SOURCE_STATEMENT`, `VISUAL_INFERENCE` and `MODEL_INTERPRETATION` remain
+separate; no fake cue timing, DMX value or universal K-pop grammar is inferred.
+The YG hypothesis review records partial or mixed evidence only and does not
+create or promote `ZEN_STYLE_PROFILE`.
+
+`ZEN_INDUSTRY_REFERENCE_PACK_002_VISUAL_REVIEW.md` is visual-first and requires
+human inspection of each linked production/source page before any lesson can
+be considered for future knowledge. Runtime wiring is `NOT_RUN`, Designer
+behavior is unchanged, and MA2 writes are `ZERO`.
