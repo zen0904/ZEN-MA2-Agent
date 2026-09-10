@@ -1089,3 +1089,30 @@ rule can explain the export index without weakening fail-closed provenance.
 Production Designer behavior, B3 boundary, ZEN_STYLE_PROFILE, venue validation
 and MA2 object state remain unchanged (`UNCHANGED`/
 `GUIDANCE_ASSISTED_AB_ONLY`/`DEFERRED`/`WAIT_FOR_REAL_CASE`/`ZERO_WRITES`).
+
+## 48 Fixture Type Export Schema / Identity Research 001
+
+`ZEN_FIXTURE_TYPE_EXPORT_SCHEMA_RESEARCH_001.md` records a second controlled,
+read-only current-Show export batch with bounded diagnostics retained before
+temporary-file cleanup. The expected Existing Show fingerprint again matched;
+all six exact `Export FixtureType` requests were accepted, every XML had one
+FixtureType/channel inventory, and the observed serialization was consistently
+`FixtureType@index = requested current-Show pool ID - 1` for IDs 2 through 7.
+
+The strict single-export equality validator remains unchanged. A separate
+compound batch identity validator now requires the Show match, exact requested
+ID/unique filename/accepted command, one XML FixtureType, the observed offset,
+exact List-label reconstruction from requested ID plus XML name/mode, nonempty
+channels, and unique IDs/indices. It has established all six current
+FixtureTypes as `SHOW_BOUND_VERIFIED`, without name-only fallback. Technical
+channel capability is available for future **case-specific** eligibility; it
+does not assign permanent roles. Local profile candidates were compared only
+after that proof and are mixed (three structurally bound, one structural
+mismatch, two local XMLP parsing limits).
+
+No MA2 object write occurred and Fixture 9999 was not addressed. Production
+Designer stays `UNCHANGED`, B3 stays `GUIDANCE_ASSISTED_AB_ONLY`,
+`ZEN_STYLE_PROFILE` stays `DEFERRED`, and venue validation stays
+`WAIT_FOR_REAL_CASE`. The next blocker before a real-song Existing Show A/B is
+an updated human-reviewable capability-to-candidate-role eligibility decision;
+no artistic assignment or action delta is authorized by this evidence alone.

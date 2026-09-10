@@ -31,6 +31,13 @@ from .group_membership import (
 class FixtureTypeExportError(GroupMembershipProviderError):
     """The read-only FixtureType export did not prove a safe binding."""
 
+    def __init__(self, message: str, *, diagnostic: dict[str, Any] | None = None, export: dict[str, Any] | None = None) -> None:
+        super().__init__(message)
+        # Bounded structural evidence from an Agent-owned temporary export.
+        # It is diagnostic only and never channel/capability evidence.
+        self.diagnostic = diagnostic
+        self.export = export
+
 
 _TYPE_LABEL = re.compile(r"^(?P<fixture_type_id>[1-9]\d*)\s+(?P<label>\S(?:.*\S)?)$")
 _TEMPORARY_NAME = re.compile(r"^ZEN_AGENT_FT_[1-9]\d*_[A-Za-z0-9_-]{6,64}\.xml$")
@@ -96,11 +103,164 @@ def _technical_definition_fingerprint(channels: list[dict[str, Any]]) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def _capability_inventory(channels: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+def fixture_type_export_diagnostic(xml: str | bytes, fixture_type_label: object) -> dict[str, Any]:
+    """Capture bounded export structure without asserting a Show binding.
+
+    In particular, this intentionally does not assume that grandMA2's XML
+    ``FixtureType@index`` serializes the current Show FixtureType pool ID.
+    """
+    expected = fixture_type_reference_from_list_label(fixture_type_label)
+    raw = _profile_xml(xml)
+    result: dict[str, Any] = {
+        "schema": "zen.fixture_type_export_diagnostic.v0.1",
+        "read_only": True,
+        "requested_fixture_type": expected,
+        "xml_sha256": hashlib.sha256(raw).hexdigest(),
+        "byte_length": len(raw),
+    }
+    try:
+        root = ET.fromstring(raw)
+    except ET.ParseError:
+        return result | {"parse_status": "MALFORMED", "failure_reason": "EXPORT_FIXTURE_TYPE_XML_MALFORMED"}
+    types = [node for node in root.iter() if _local_name(node.tag) == "FixtureType"]
+    result.update({
+        "parse_status": "PARSED",
+        "xml_root": {
+            "tag": _local_name(root.tag),
+            "attributes": {key: root.attrib[key] for key in sorted(root.attrib)},
+            "schema_version": {"major": root.get("major_vers"), "minor": root.get("minor_vers"), "stream": root.get("stream_vers")},
+        },
+        "fixture_type_node_count": len(types),
+    })
+    nodes: list[dict[str, Any]] = []
+    for ordinal, fixture_type in enumerate(types, start=1):
+        channels = _channel_records(fixture_type)
+        raw_index = fixture_type.get("index")
+        parsed_index = int(raw_index) if raw_index is not None and raw_index.isdecimal() else None
+        nodes.append({
+            "ordinal_in_export": ordinal,
+            "parent_path": "MA",
+            "attributes": {key: fixture_type.attrib[key] for key in sorted(fixture_type.attrib)},
+            "fixture_type_index": parsed_index,
+            "fixture_type_index_raw": raw_index,
+            "name": fixture_type.get("name"),
+            "mode": fixture_type.get("mode"),
+            "channel_count": len(channels),
+            # Bounded parsed inventory; raw XML is still temporary and is
+            # removed by the provider after this diagnostic is retained.
+            "channels": channels,
+            "technical_definition_sha256": _technical_definition_fingerprint(channels) if channels else None,
+        })
+    result["fixture_type_nodes"] = nodes
+    if len(nodes) == 1:
+        node = nodes[0]
+        expected_id = expected["fixture_type_id"]
+        label_with_requested = _display_label(expected_id, node["name"], node["mode"])
+        label_with_index = _display_label(node["fixture_type_index"] or 0, node["name"], node["mode"])
+        result["observed"] = node
+        result["validation_comparisons"] = {
+            "requested_fixture_type_id": expected_id,
+            "exported_fixture_type_index": node["fixture_type_index"],
+            "fixture_type_index_matches_requested_id": node["fixture_type_index"] == expected_id,
+            "list_label": expected["list_label"],
+            "label_reconstructed_using_requested_id": label_with_requested,
+            "label_using_requested_id_matches_list_label": label_with_requested == expected["list_label"],
+            "label_reconstructed_using_exported_index": label_with_index,
+            "label_using_exported_index_matches_list_label": label_with_index == expected["list_label"],
+            "channel_count_nonzero": node["channel_count"] > 0,
+        }
+    return result
+
+
+def fixture_type_export_batch_binding(records: list[dict[str, Any]], *, show_identity_match: str) -> list[dict[str, Any]]:
+    """Promote a controlled export *batch* only through compound identity.
+
+    The single-export validator remains deliberately strict: it accepts only
+    an XML index equal to the current Show pool ID.  MA2 3.9.60 exports from
+    the verified Existing Show instead serialized each requested pool ID ``n``
+    as XML index ``n - 1``.  That alternative can be used only after every
+    current FixtureType has been exported in one Show-identity-matched run and
+    every compound invariant below has passed.
+    """
+    if show_identity_match != "MATCH":
+        raise FixtureTypeExportError("CURRENT_SHOW_IDENTITY_MATCH_REQUIRED")
+    if not records:
+        raise FixtureTypeExportError("EXPORT_FIXTURE_TYPE_BATCH_EMPTY")
+    if len(records) < 2:
+        raise FixtureTypeExportError("EXPORT_FIXTURE_TYPE_BATCH_INSUFFICIENT_SCHEMA_EVIDENCE")
+    expected_ids: set[int] = set()
+    xml_indices: set[int] = set()
+    bound: list[dict[str, Any]] = []
+    for record in records:
+        label = str((record.get("fixture_type") or {}).get("list_label") or "")
+        expected = fixture_type_reference_from_list_label(label)
+        diagnostic = record.get("export_diagnostic") or {}
+        observed = diagnostic.get("observed") or {}
+        comparisons = diagnostic.get("validation_comparisons") or {}
+        export = record.get("export") or {}
+        if diagnostic.get("parse_status") != "PARSED" or diagnostic.get("fixture_type_node_count") != 1:
+            raise FixtureTypeExportError("EXPORT_FIXTURE_TYPE_BATCH_XML_AMBIGUOUS")
+        index = observed.get("fixture_type_index")
+        channels = observed.get("channels") or []
+        expected_command = f'Export FixtureType {expected["fixture_type_id"]} "{export.get("filename", "")}" /nc'
+        if (
+            diagnostic.get("requested_fixture_type") != expected
+            or not isinstance(index, int)
+            or index != expected["fixture_type_id"] - 1
+            or not comparisons.get("label_using_requested_id_matches_list_label")
+            or not channels
+            or export.get("command") != expected_command
+            or not str(export.get("ma2_feedback") or "").startswith(f"Executing : {expected_command}")
+        ):
+            raise FixtureTypeExportError("EXPORT_FIXTURE_TYPE_COMPOUND_IDENTITY_MISMATCH")
+        if expected["fixture_type_id"] in expected_ids or index in xml_indices:
+            raise FixtureTypeExportError("EXPORT_FIXTURE_TYPE_BATCH_IDENTITY_AMBIGUOUS")
+        expected_ids.add(expected["fixture_type_id"])
+        xml_indices.add(index)
+        root = diagnostic.get("xml_root") or {}
+        bound.append({
+            "schema": "zen.fixture_type_channel_profile.v0.1",
+            "read_only": True,
+            "status": "SHOW_BOUND_VERIFIED",
+            "source": "MA2_EXPORT_FIXTURE_TYPE_XML_COMPOUND_IDENTITY",
+            "fixture_type": {
+                **expected,
+                "xml_index": index,
+                "name": observed.get("name"),
+                "mode": observed.get("mode"),
+                "ma_version": (root.get("schema_version") or {}),
+            },
+            "channels": channels,
+            "capabilities": fixture_type_capability_inventory(channels),
+            "technical_definition_sha256": observed.get("technical_definition_sha256"),
+            "xml_sha256": diagnostic.get("xml_sha256"),
+            "byte_length": diagnostic.get("byte_length"),
+            "export": export,
+            "export_diagnostic": diagnostic,
+            "compound_identity": {
+                "status": "SHOW_BOUND_VERIFIED",
+                "rule": "SHOW_IDENTITY_MATCH + EXACT_REQUEST_COMMAND + MA2_ACCEPTED_EXPORT + XML_INDEX_EQUALS_REQUESTED_POOL_ID_MINUS_ONE + EXACT_LIST_LABEL_FROM_REQUESTED_ID_AND_XML_NAME_MODE + SINGLE_XML_FIXTURETYPE + NONEMPTY_CHANNEL_INVENTORY + UNIQUE_BATCH_IDS_AND_XML_INDICES",
+                "strict_single_export_status": record.get("status"),
+            },
+        })
+    return bound
+
+
+def fixture_type_capability_inventory(channels: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Classify attributes from both ChannelType and ChannelFunction evidence."""
+    function_rows = [function for channel in channels for function in (channel.get("functions") or [])]
+
+    def values(field: str) -> set[str]:
+        result = {str(item.get(field) or "").upper() for item in channels + function_rows}
+        if field == "attribute":
+            result.update(str(value).upper() for item in channels for value in (item.get("function_attributes") or []))
+            result.update(str(value).upper() for item in channels for value in (item.get("function_subattributes") or []))
+        return result
+
     tokens = {
-        "attributes": {str(item.get("attribute") or "").upper() for item in channels},
-        "features": {str(item.get("feature") or "").upper() for item in channels},
-        "presets": {str(item.get("preset") or "").upper() for item in channels},
+        "attributes": values("attribute"),
+        "features": values("feature"),
+        "presets": values("preset"),
     }
 
     def any_token(*values: str) -> bool:
@@ -179,7 +339,7 @@ def fixture_type_export_binding(xml: str | bytes, fixture_type_label: object) ->
             },
         },
         "channels": channels,
-        "capabilities": _capability_inventory(channels),
+        "capabilities": fixture_type_capability_inventory(channels),
         "technical_definition_sha256": _technical_definition_fingerprint(channels),
         "xml_sha256": hashlib.sha256(raw).hexdigest(),
         "byte_length": len(raw),
@@ -258,24 +418,34 @@ class FixtureTypeExportProvider:
         path = directory / filename
         started_at_ns = self.wall_clock_ns()
         feedback: str | None = None
+        diagnostic: dict[str, Any] | None = None
         try:
             with _export_transaction(runtime):
                 self._remove_owned_stale(path, directory)
                 started_at_ns = self.wall_clock_ns()
                 feedback = runtime.export_fixture_type_file(identity["fixture_type_id"], filename)
                 raw = self._wait_for_fresh_stable_xml(path, started_at_ns, _timeout_seconds(settings))
+                diagnostic = fixture_type_export_diagnostic(raw, identity["list_label"])
                 result = fixture_type_export_binding(raw, identity["list_label"])
         except (OSError, GroupMembershipProviderError) as exc:
             error = str(exc) if isinstance(exc, GroupMembershipProviderError) else "EXPORT_FILE_ACCESS_ERROR"
-            self._record_diagnostic(runtime, path, identity, filename, started_at_ns, feedback, error)
-            raise FixtureTypeExportError(error) from exc
+            self._record_diagnostic(runtime, path, identity, filename, started_at_ns, feedback, error, diagnostic)
+            raise FixtureTypeExportError(error, diagnostic=diagnostic, export={
+                "filename": filename,
+                "command": f'Export FixtureType {identity["fixture_type_id"]} "{filename}" /nc',
+                "request_started_at_ns": started_at_ns,
+                "ma2_feedback": feedback,
+                "cleanup": "AGENT_OWNED_TEMPORARY_FILE_REMOVED",
+            }) from exc
         finally:
             self._cleanup(path, directory)
         result["export"] = {
             "filename": filename,
+            "command": f'Export FixtureType {identity["fixture_type_id"]} "{filename}" /nc',
             "ma2_feedback": feedback,
             "cleanup": "AGENT_OWNED_TEMPORARY_FILE_REMOVED",
         }
+        result["export_diagnostic"] = diagnostic
         runtime.log("fixture_type_export_binding", {"fixture_type": identity, "status": result["status"], "channel_count": len(result["channels"])})
         return result
 
@@ -322,7 +492,7 @@ class FixtureTypeExportProvider:
             path.unlink()
 
     @staticmethod
-    def _record_diagnostic(runtime: Any, path: Path, identity: dict[str, Any], filename: str, started_at_ns: int, feedback: str | None, error: str) -> None:
+    def _record_diagnostic(runtime: Any, path: Path, identity: dict[str, Any], filename: str, started_at_ns: int, feedback: str | None, error: str, diagnostic: dict[str, Any] | None) -> None:
         log = getattr(runtime, "log", None)
         if callable(log):
             log("fixture_type_export_diagnostic", {
@@ -332,4 +502,5 @@ class FixtureTypeExportProvider:
                 "request_started_at_ns": started_at_ns,
                 "ma2_feedback": feedback,
                 "error": error,
+                "export_diagnostic": diagnostic,
             })

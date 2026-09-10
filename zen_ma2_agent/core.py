@@ -314,6 +314,8 @@ class AgentCore:
                             "source": self.fixture_type_export_provider.source,
                             "fixture_type": identity,
                             "failure_reason": str(exc),
+                            "export_diagnostic": getattr(exc, "diagnostic", None),
+                            "export": getattr(exc, "export", None),
                         })
                 verified_count = sum(item.get("status") == "SHOW_BOUND_VERIFIED" for item in values)
                 capability = self.fixture_type_export_provider.capabilities(self.runtime, self.runtime.preferences.get("state_adapter")) | {

@@ -1,6 +1,6 @@
 {
   "schema": "zen.show_bound_fixture_type_binding_run.v0.1",
-  "generated_at": "2026-09-10T17:10:34.290926+00:00",
+  "generated_at": "2026-09-10T18:02:34.595839+00:00",
   "read_only": true,
   "connection": {
     "ready": true,
@@ -19,127 +19,2836 @@
     "confidence": "PARTIAL"
   },
   "show_identity_match": "MATCH",
-  "export_feedback_summary": {
-    "status": "COMMAND_ACCEPTED_NO_MA2_ERROR",
-    "detail": "Each native Export FixtureType command returned Executing; strict XML identity validation then failed closed."
-  },
   "fixture_type_profiles": [
     {
       "schema": "zen.fixture_type_channel_profile.v0.1",
       "read_only": true,
-      "status": "PARTIAL",
-      "source": "ma2_export_fixture_type_xml",
+      "status": "SHOW_BOUND_VERIFIED",
+      "source": "MA2_EXPORT_FIXTURE_TYPE_XML_COMPOUND_IDENTITY",
       "fixture_type": {
         "fixture_type_id": 2,
-        "list_label": "2 ZEN BAW 20R Mode 2"
+        "list_label": "2 ZEN BAW 20R Mode 2",
+        "xml_index": 1,
+        "name": "ZEN BAW 20R",
+        "mode": "Mode 2",
+        "ma_version": {
+          "major": "3",
+          "minor": "9",
+          "stream": "60"
+        }
       },
-      "failure_reason": "EXPORT_FIXTURE_TYPE_ID_MISMATCH",
+      "channels": [
+        {
+          "index": "0",
+          "attribute": "COLORRGB1",
+          "feature": "COLORRGB",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "COLORRGB1"
+          ],
+          "function_subattributes": [
+            "COLORRGB1"
+          ]
+        },
+        {
+          "index": "1",
+          "attribute": "COLORRGB2",
+          "feature": "COLORRGB",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "COLORRGB2"
+          ],
+          "function_subattributes": [
+            "COLORRGB2"
+          ]
+        },
+        {
+          "index": "10",
+          "attribute": "ANIMATIONINDEXROTATE",
+          "feature": "GOBOANIMATION",
+          "preset": "GOBO",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "ANIMATIONINDEXROTATE"
+          ],
+          "function_subattributes": [
+            "ANIMATIONROTATE"
+          ]
+        },
+        {
+          "index": "11",
+          "attribute": "GOBO2",
+          "feature": "GOBO2",
+          "preset": "GOBO",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "GOBO2"
+          ],
+          "function_subattributes": [
+            "GOBO2"
+          ]
+        },
+        {
+          "index": "12",
+          "attribute": "GOBO2_POS",
+          "feature": "GOBO2",
+          "preset": "GOBO",
+          "channel_function_count": 2,
+          "function_attributes": [
+            "GOBO2_POS"
+          ],
+          "function_subattributes": [
+            "GOBO2_POS",
+            "GOBO2_ROT"
+          ]
+        },
+        {
+          "index": "13",
+          "attribute": "EFFECTWHEEL",
+          "feature": "EFFECT",
+          "preset": "BEAM",
+          "channel_function_count": 4,
+          "function_attributes": [
+            "EFFECTMACROPOSITION",
+            "EFFECTWHEEL",
+            "PRISMA1",
+            "PRISMA2"
+          ],
+          "function_subattributes": [
+            "EFFECTMACROPOSITION",
+            "EFFECTWHEELSELECT",
+            "PRISMA1",
+            "PRISMA2"
+          ]
+        },
+        {
+          "index": "14",
+          "attribute": "EFFECTINDEXROTATE",
+          "feature": "EFFECT",
+          "preset": "BEAM",
+          "channel_function_count": 2,
+          "function_attributes": [
+            "PRISMA1_POS"
+          ],
+          "function_subattributes": [
+            "PRISMA1_POS",
+            "PRISMA1_ROT"
+          ]
+        },
+        {
+          "index": "15",
+          "attribute": "FROST",
+          "feature": "BEAM1",
+          "preset": "BEAM",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "FROST"
+          ],
+          "function_subattributes": [
+            "FROST"
+          ]
+        },
+        {
+          "index": "16",
+          "attribute": "ZOOM",
+          "feature": "FOCUS",
+          "preset": "FOCUS",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "ZOOM"
+          ],
+          "function_subattributes": [
+            "ZOOM"
+          ]
+        },
+        {
+          "index": "17",
+          "attribute": "FOCUS",
+          "feature": "FOCUS",
+          "preset": "FOCUS",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "FOCUS"
+          ],
+          "function_subattributes": [
+            "FOCUS"
+          ]
+        },
+        {
+          "index": "18",
+          "attribute": "ZOOMMODE",
+          "feature": "FOCUS",
+          "preset": "FOCUS",
+          "channel_function_count": 2,
+          "function_attributes": [
+            "ZOOMMODE"
+          ],
+          "function_subattributes": [
+            "ZOOMMODENORMAL",
+            "ZOOMMODESELECT"
+          ]
+        },
+        {
+          "index": "19",
+          "attribute": "PAN",
+          "feature": "POSITION",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "PAN"
+          ],
+          "function_subattributes": [
+            "PAN"
+          ]
+        },
+        {
+          "index": "2",
+          "attribute": "COLORRGB3",
+          "feature": "COLORRGB",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "COLORRGB3"
+          ],
+          "function_subattributes": [
+            "COLORRGB3"
+          ]
+        },
+        {
+          "index": "20",
+          "attribute": "TILT",
+          "feature": "POSITION",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "TILT"
+          ],
+          "function_subattributes": [
+            "TILT"
+          ]
+        },
+        {
+          "index": "21",
+          "attribute": "POSITIONMSPEED",
+          "feature": "MSPEED",
+          "preset": "CONTROL",
+          "channel_function_count": 6,
+          "function_attributes": [
+            "DUMMY",
+            "FOCUSMODE",
+            "MACROS",
+            "POSITIONMSPEED"
+          ],
+          "function_subattributes": [
+            "FOCUSMODESELECT",
+            "MACROSELECT",
+            "NOFEATURE",
+            "POSITIONMSPEEDTRACK"
+          ]
+        },
+        {
+          "index": "22",
+          "attribute": "FIXTUREGLOBALRESET",
+          "feature": "RESET",
+          "preset": "CONTROL",
+          "channel_function_count": 4,
+          "function_attributes": [
+            "DUMMY",
+            "FIXTUREGLOBALRESET",
+            "POSITIONRESET",
+            "ZOOMRESET"
+          ],
+          "function_subattributes": [
+            "FIXTUREGLOBALRESET",
+            "NOFEATURE",
+            "POSITIONRESET",
+            "ZOOMRESET"
+          ]
+        },
+        {
+          "index": "23",
+          "attribute": "LAMPCONTROL",
+          "feature": "LAMP",
+          "preset": "CONTROL",
+          "channel_function_count": 3,
+          "function_attributes": [
+            "DUMMY",
+            "LAMPCONTROL"
+          ],
+          "function_subattributes": [
+            "LAMPOFF",
+            "LAMPON",
+            "NOFEATURE"
+          ]
+        },
+        {
+          "index": "24",
+          "attribute": "EFFECTMACROS",
+          "feature": "EFFECTMACROS",
+          "preset": "BEAM",
+          "channel_function_count": 3,
+          "function_attributes": [
+            "EFFECTMACRORATE",
+            "EFFECTMACROS"
+          ],
+          "function_subattributes": [
+            "EFFECTMACRORATE",
+            "EFFECTMACROSELECT"
+          ]
+        },
+        {
+          "index": "25",
+          "attribute": "VIRTUAL_POSITION_MODE",
+          "feature": "POSITION",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "VIRTUAL_POSITION_MODE"
+          ],
+          "function_subattributes": [
+            "VIRTUAL_POSITION_MODE"
+          ]
+        },
+        {
+          "index": "26",
+          "attribute": "STAGEX",
+          "feature": "STAGE",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "STAGEX"
+          ],
+          "function_subattributes": [
+            "STAGEX"
+          ]
+        },
+        {
+          "index": "27",
+          "attribute": "STAGEY",
+          "feature": "STAGE",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "STAGEY"
+          ],
+          "function_subattributes": [
+            "STAGEY"
+          ]
+        },
+        {
+          "index": "28",
+          "attribute": "STAGEZ",
+          "feature": "STAGE",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "STAGEZ"
+          ],
+          "function_subattributes": [
+            "STAGEZ"
+          ]
+        },
+        {
+          "index": "29",
+          "attribute": "FLIP",
+          "feature": "STAGE",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "FLIP"
+          ],
+          "function_subattributes": [
+            "FLIP"
+          ]
+        },
+        {
+          "index": "3",
+          "attribute": "COLOR1",
+          "feature": "COLOR1",
+          "preset": "COLOR",
+          "channel_function_count": 3,
+          "function_attributes": [
+            "COLOR1",
+            "FROST"
+          ],
+          "function_subattributes": [
+            "COLOR1",
+            "FROST"
+          ]
+        },
+        {
+          "index": "30",
+          "attribute": "MARK",
+          "feature": "STAGE",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "MARK"
+          ],
+          "function_subattributes": [
+            "MARK"
+          ]
+        },
+        {
+          "index": "31",
+          "attribute": "DIST",
+          "feature": "POSITION",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "DIST"
+          ],
+          "function_subattributes": [
+            "DIST"
+          ]
+        },
+        {
+          "index": "4",
+          "attribute": "COLOR2",
+          "feature": "COLOR2",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "COLOR2"
+          ],
+          "function_subattributes": [
+            "COLOR2"
+          ]
+        },
+        {
+          "index": "5",
+          "attribute": "COLOR3",
+          "feature": "COLOR3",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "COLOR3"
+          ],
+          "function_subattributes": [
+            "COLOR3"
+          ]
+        },
+        {
+          "index": "6",
+          "attribute": "SHUTTER",
+          "feature": "SHUTTER",
+          "preset": "BEAM",
+          "channel_function_count": 7,
+          "function_attributes": [
+            "SHUTTER"
+          ],
+          "function_subattributes": [
+            "SHUTTER",
+            "STROBE",
+            "STROBEISOPHASE",
+            "STROBE_RANDOM"
+          ]
+        },
+        {
+          "index": "7",
+          "attribute": "DIM",
+          "feature": "DIMMER",
+          "preset": "DIMMER",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "DIM"
+          ],
+          "function_subattributes": [
+            "DIM"
+          ]
+        },
+        {
+          "index": "8",
+          "attribute": "GOBO1",
+          "feature": "GOBO1",
+          "preset": "GOBO",
+          "channel_function_count": 3,
+          "function_attributes": [
+            "GOBO1"
+          ],
+          "function_subattributes": [
+            "GOBO1",
+            "GOBO1_SPIN"
+          ]
+        },
+        {
+          "index": "9",
+          "attribute": "ANIMATIONWHEEL",
+          "feature": "GOBOANIMATION",
+          "preset": "GOBO",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "ANIMATIONWHEEL"
+          ],
+          "function_subattributes": [
+            "ANIMATIONWHEELSELECT"
+          ]
+        }
+      ],
+      "capabilities": {
+        "DIMMER": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "COLOR": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "PAN": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "TILT": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "POSITION": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "GOBO": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "PRISM": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "ZOOM": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "FOCUS": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "FROST": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "SHUTTER_STROBE": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "PIXEL_SHAPE": {
+          "status": "UNCLASSIFIED_FROM_CHANNEL_INVENTORY",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML",
+          "reason": "Pixel/shape topology requires a separately verified FixtureType schema interpretation."
+        }
+      },
+      "technical_definition_sha256": "4201e4c28154722069b4bdbfb9efcb4a088c62a9e8585e7d4c8eefd2daf19280",
+      "xml_sha256": "09febe05e96a44d310ffbec0aa7e00f245762ba9aa032592598650424f62fc12",
+      "byte_length": 1102605,
+      "export": {
+        "filename": "ZEN_AGENT_FT_2_ee73aeb6fe14a2ed.xml",
+        "command": "Export FixtureType 2 \"ZEN_AGENT_FT_2_ee73aeb6fe14a2ed.xml\" /nc",
+        "request_started_at_ns": 1789063348250474600,
+        "ma2_feedback": "Executing : Export FixtureType 2 \"ZEN_AGENT_FT_2_ee73aeb6fe14a2ed.xml\" /nc\n\r\r [Fixture]>",
+        "cleanup": "AGENT_OWNED_TEMPORARY_FILE_REMOVED"
+      },
+      "export_diagnostic": {
+        "schema": "zen.fixture_type_export_diagnostic.v0.1",
+        "read_only": true,
+        "requested_fixture_type": {
+          "fixture_type_id": 2,
+          "list_label": "2 ZEN BAW 20R Mode 2"
+        },
+        "xml_sha256": "09febe05e96a44d310ffbec0aa7e00f245762ba9aa032592598650424f62fc12",
+        "byte_length": 1102605,
+        "parse_status": "PARSED",
+        "xml_root": {
+          "tag": "MA",
+          "attributes": {
+            "major_vers": "3",
+            "minor_vers": "9",
+            "stream_vers": "60",
+            "{http://www.w3.org/2001/XMLSchema-instance}schemaLocation": "http://schemas.malighting.de/grandma2/xml/MA http://schemas.malighting.de/grandma2/xml/3.9.60/MA.xsd"
+          },
+          "schema_version": {
+            "major": "3",
+            "minor": "9",
+            "stream": "60"
+          }
+        },
+        "fixture_type_node_count": 1,
+        "fixture_type_nodes": [
+          {
+            "ordinal_in_export": 1,
+            "parent_path": "MA",
+            "attributes": {
+              "index": "1",
+              "mode": "Mode 2",
+              "name": "ZEN BAW 20R"
+            },
+            "fixture_type_index": 1,
+            "fixture_type_index_raw": "1",
+            "name": "ZEN BAW 20R",
+            "mode": "Mode 2",
+            "channel_count": 32,
+            "technical_definition_sha256": "4201e4c28154722069b4bdbfb9efcb4a088c62a9e8585e7d4c8eefd2daf19280"
+          }
+        ],
+        "observed": {
+          "ordinal_in_export": 1,
+          "parent_path": "MA",
+          "attributes": {
+            "index": "1",
+            "mode": "Mode 2",
+            "name": "ZEN BAW 20R"
+          },
+          "fixture_type_index": 1,
+          "fixture_type_index_raw": "1",
+          "name": "ZEN BAW 20R",
+          "mode": "Mode 2",
+          "channel_count": 32,
+          "technical_definition_sha256": "4201e4c28154722069b4bdbfb9efcb4a088c62a9e8585e7d4c8eefd2daf19280"
+        },
+        "validation_comparisons": {
+          "requested_fixture_type_id": 2,
+          "exported_fixture_type_index": 1,
+          "fixture_type_index_matches_requested_id": false,
+          "list_label": "2 ZEN BAW 20R Mode 2",
+          "label_reconstructed_using_requested_id": "2 ZEN BAW 20R Mode 2",
+          "label_using_requested_id_matches_list_label": true,
+          "label_reconstructed_using_exported_index": "1 ZEN BAW 20R Mode 2",
+          "label_using_exported_index_matches_list_label": false,
+          "channel_count_nonzero": true
+        }
+      },
+      "compound_identity": {
+        "status": "SHOW_BOUND_VERIFIED",
+        "rule": "SHOW_IDENTITY_MATCH + EXACT_REQUEST_COMMAND + MA2_ACCEPTED_EXPORT + XML_INDEX_EQUALS_REQUESTED_POOL_ID_MINUS_ONE + EXACT_LIST_LABEL_FROM_REQUESTED_ID_AND_XML_NAME_MODE + SINGLE_XML_FIXTURETYPE + NONEMPTY_CHANNEL_INVENTORY + UNIQUE_BATCH_IDS_AND_XML_INDICES",
+        "strict_single_export_status": "PARTIAL"
+      },
       "local_profile_candidate": {
-        "status": "NOT_ATTEMPTED_NO_SHOW_BOUND_EXPORT",
-        "source": "LOCAL_PROFILE_CANDIDATE_REFERENCE",
-        "candidate_relative_path": "zhong_light@zhong_light_xp20rbsw@mode_2.xml"
+        "status": "LOCAL_PROFILE_CANDIDATE_UNBOUND",
+        "source": "STRUCTURAL_CHANNEL_DEFINITION_COMPARISON",
+        "show_bound_technical_definition_sha256": "4201e4c28154722069b4bdbfb9efcb4a088c62a9e8585e7d4c8eefd2daf19280",
+        "local_candidate_technical_definition_sha256": "410eedfd4baa374a0e7a2497afce3286a5b667acd4dbb4259102d2dad745ca36",
+        "local_candidate_xml_sha256": "3b50b547f0638b4b008347d0395c79c9883e67d52ee8b11e32b25c5facb75333",
+        "candidate_relative_path": "zhong_light@zhong_light_xp20rbsw@mode_2.xml",
+        "candidate_file_sha256": "3b50b547f0638b4b008347d0395c79c9883e67d52ee8b11e32b25c5facb75333"
       }
     },
     {
       "schema": "zen.fixture_type_channel_profile.v0.1",
       "read_only": true,
-      "status": "PARTIAL",
-      "source": "ma2_export_fixture_type_xml",
+      "status": "SHOW_BOUND_VERIFIED",
+      "source": "MA2_EXPORT_FIXTURE_TYPE_XML_COMPOUND_IDENTITY",
       "fixture_type": {
         "fixture_type_id": 3,
-        "list_label": "3 ZEN DMH-160 St_Preset"
+        "list_label": "3 ZEN DMH-160 St_Preset",
+        "xml_index": 2,
+        "name": "ZEN DMH-160",
+        "mode": "St_Preset",
+        "ma_version": {
+          "major": "3",
+          "minor": "9",
+          "stream": "60"
+        }
       },
-      "failure_reason": "EXPORT_FIXTURE_TYPE_ID_MISMATCH",
+      "channels": [
+        {
+          "index": "0",
+          "attribute": "PAN",
+          "feature": "POSITION",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "PAN"
+          ],
+          "function_subattributes": [
+            "PAN"
+          ]
+        },
+        {
+          "index": "1",
+          "attribute": "TILT",
+          "feature": "POSITION",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "TILT"
+          ],
+          "function_subattributes": [
+            "TILT"
+          ]
+        },
+        {
+          "index": "10",
+          "attribute": "GOBO1_MODE",
+          "feature": "GOBO1",
+          "preset": "GOBO",
+          "channel_function_count": 4,
+          "function_attributes": [
+            "GOBO1_MODE"
+          ],
+          "function_subattributes": [
+            "GOBO1MODEANIMATE",
+            "GOBO1MODEINDEX",
+            "GOBO1MODEROTATE"
+          ]
+        },
+        {
+          "index": "11",
+          "attribute": "GOBO1_POS",
+          "feature": "GOBO1",
+          "preset": "GOBO",
+          "channel_function_count": 8,
+          "function_attributes": [
+            "DUMMY",
+            "GOBO1_POS"
+          ],
+          "function_subattributes": [
+            "GOBO1ANIMATE",
+            "GOBO1_POS",
+            "GOBO1_ROT",
+            "NOFEATURE"
+          ]
+        },
+        {
+          "index": "12",
+          "attribute": "GOBO2WHEELMODE",
+          "feature": "GOBO2",
+          "preset": "GOBO",
+          "channel_function_count": 6,
+          "function_attributes": [
+            "DUMMY",
+            "GOBO2WHEELMODE",
+            "GOBO2WHEELOFFSETMODE",
+            "GOBO2WHEELSELECTBLINK"
+          ],
+          "function_subattributes": [
+            "GOBO2WHEELMODECONTINUOUS",
+            "GOBO2WHEELMODESPIN",
+            "GOBO2WHEELMODEWHOLEGOBOS",
+            "GOBO2WHEELSELECTBLINK",
+            "GOBO2WHEELSHAKEMODE",
+            "NOFEATURE"
+          ]
+        },
+        {
+          "index": "13",
+          "attribute": "GOBO2",
+          "feature": "GOBO2",
+          "preset": "GOBO",
+          "channel_function_count": 7,
+          "function_attributes": [
+            "DUMMY",
+            "GOBO2"
+          ],
+          "function_subattributes": [
+            "GOBO2",
+            "GOBO2_SPIN",
+            "NOFEATURE"
+          ]
+        },
+        {
+          "index": "14",
+          "attribute": "EFFECTWHEEL",
+          "feature": "EFFECT",
+          "preset": "BEAM",
+          "channel_function_count": 3,
+          "function_attributes": [
+            "EFFECTWHEEL",
+            "PRISMA1"
+          ],
+          "function_subattributes": [
+            "EFFECTWHEELSELECT",
+            "PRISMA1"
+          ]
+        },
+        {
+          "index": "15",
+          "attribute": "EFFECTINDEXROTATE",
+          "feature": "EFFECT",
+          "preset": "BEAM",
+          "channel_function_count": 3,
+          "function_attributes": [
+            "EFFECTINDEXROTATE",
+            "PRISMA1_POS"
+          ],
+          "function_subattributes": [
+            "EFFECTROTATE",
+            "PRISMA1_ROT"
+          ]
+        },
+        {
+          "index": "16",
+          "attribute": "FOCUSMODE",
+          "feature": "FOCUS",
+          "preset": "FOCUS",
+          "channel_function_count": 2,
+          "function_attributes": [
+            "FOCUSMODE",
+            "UNKNOWN"
+          ],
+          "function_subattributes": [
+            "FOCUSMODESELECT",
+            "UNKNOWN"
+          ]
+        },
+        {
+          "index": "17",
+          "attribute": "FOCUS",
+          "feature": "FOCUS",
+          "preset": "FOCUS",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "FOCUS"
+          ],
+          "function_subattributes": [
+            "FOCUS"
+          ]
+        },
+        {
+          "index": "18",
+          "attribute": "IRISMODE",
+          "feature": "BEAM1",
+          "preset": "BEAM",
+          "channel_function_count": 4,
+          "function_attributes": [
+            "DUMMY",
+            "IRISMODE"
+          ],
+          "function_subattributes": [
+            "IRISMODE",
+            "IRISMODESTROBEPULSECLOSE",
+            "IRISMODESTROBEPULSEOPEN",
+            "NOFEATURE"
+          ]
+        },
+        {
+          "index": "19",
+          "attribute": "IRIS",
+          "feature": "BEAM1",
+          "preset": "BEAM",
+          "channel_function_count": 6,
+          "function_attributes": [
+            "DUMMY",
+            "IRIS"
+          ],
+          "function_subattributes": [
+            "IRIS",
+            "IRIS_STROBE_PULSE_CLOSE",
+            "IRIS_STROBE_PULSE_OPEN",
+            "NOFEATURE"
+          ]
+        },
+        {
+          "index": "2",
+          "attribute": "POSITIONMSPEED",
+          "feature": "MSPEED",
+          "preset": "CONTROL",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "POSITIONMSPEED"
+          ],
+          "function_subattributes": [
+            "POSITIONMSPEEDTRACK"
+          ]
+        },
+        {
+          "index": "20",
+          "attribute": "FIXTUREGLOBALRESET",
+          "feature": "RESET",
+          "preset": "CONTROL",
+          "channel_function_count": 11,
+          "function_attributes": [
+            "COLORWHEELRESET",
+            "DUMMY",
+            "EFFECTWHEELRESET",
+            "FIXTUREDISPLAY",
+            "FIXTUREGLOBALRESET",
+            "FIXTURESLEEP",
+            "GOBO1WHEELRESET",
+            "POSITIONRESET"
+          ],
+          "function_subattributes": [
+            "COLORWHEELRESET",
+            "EFFECTWHEELRESET",
+            "FIXTUREDISPLAY",
+            "FIXTUREGLOBALRESET",
+            "FIXTURESHUTDOWN",
+            "GOBO1WHEELRESET",
+            "NOFEATURE",
+            "POSITIONRESET"
+          ]
+        },
+        {
+          "index": "3",
+          "attribute": "STROBEMODE",
+          "feature": "SHUTTER",
+          "preset": "BEAM",
+          "channel_function_count": 4,
+          "function_attributes": [
+            "STROBEMODE",
+            "UNKNOWN"
+          ],
+          "function_subattributes": [
+            "STROBEMODE",
+            "STROBEMODEPULSE",
+            "STROBEMODERANDOM",
+            "UNKNOWN"
+          ]
+        },
+        {
+          "index": "4",
+          "attribute": "SHUTTER",
+          "feature": "SHUTTER",
+          "preset": "BEAM",
+          "channel_function_count": 13,
+          "function_attributes": [
+            "SHUTTER",
+            "UNKNOWN"
+          ],
+          "function_subattributes": [
+            "SHUTTER",
+            "STROBE",
+            "STROBE_PULSE",
+            "STROBE_RANDOM",
+            "UNKNOWN"
+          ]
+        },
+        {
+          "index": "5",
+          "attribute": "DIM",
+          "feature": "DIMMER",
+          "preset": "DIMMER",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "DIM"
+          ],
+          "function_subattributes": [
+            "DIM"
+          ]
+        },
+        {
+          "index": "6",
+          "attribute": "COLOR1_MODE",
+          "feature": "COLOR1",
+          "preset": "COLOR",
+          "channel_function_count": 6,
+          "function_attributes": [
+            "COLOR1WHEELOFFSETMODE",
+            "COLOR1WHEELSELECTBLINK",
+            "COLOR1_MODE",
+            "DUMMY"
+          ],
+          "function_subattributes": [
+            "COLOR1WHEELMODECONTINUOUS",
+            "COLOR1WHEELMODESPIN",
+            "COLOR1WHEELMODEWHOLECOLORS",
+            "COLOR1WHEELSCANMODE",
+            "COLOR1WHEELSELECTBLINK",
+            "NOFEATURE"
+          ]
+        },
+        {
+          "index": "7",
+          "attribute": "COLOR1",
+          "feature": "COLOR1",
+          "preset": "COLOR",
+          "channel_function_count": 7,
+          "function_attributes": [
+            "COLOR1",
+            "DUMMY"
+          ],
+          "function_subattributes": [
+            "COLOR1",
+            "COLOR1_SPIN",
+            "NOFEATURE"
+          ]
+        },
+        {
+          "index": "8",
+          "attribute": "GOBO1WHEELMODE",
+          "feature": "GOBO1",
+          "preset": "GOBO",
+          "channel_function_count": 6,
+          "function_attributes": [
+            "DUMMY",
+            "GOBO1WHEELMODE",
+            "GOBO1WHEELOFFSETMODE",
+            "GOBO1WHEELSELECTBLINK"
+          ],
+          "function_subattributes": [
+            "GOBO1WHEELMODECONTINUOUS",
+            "GOBO1WHEELMODESPIN",
+            "GOBO1WHEELMODEWHOLEGOBOS",
+            "GOBO1WHEELSELECTBLINK",
+            "GOBO1WHEELSHAKEMODE",
+            "NOFEATURE"
+          ]
+        },
+        {
+          "index": "9",
+          "attribute": "GOBO1",
+          "feature": "GOBO1",
+          "preset": "GOBO",
+          "channel_function_count": 7,
+          "function_attributes": [
+            "DUMMY",
+            "GOBO1"
+          ],
+          "function_subattributes": [
+            "GOBO1",
+            "GOBO1_SPIN",
+            "NOFEATURE"
+          ]
+        }
+      ],
+      "capabilities": {
+        "DIMMER": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "COLOR": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "PAN": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "TILT": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "POSITION": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "GOBO": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "PRISM": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "ZOOM": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "FOCUS": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "FROST": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "SHUTTER_STROBE": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "PIXEL_SHAPE": {
+          "status": "UNCLASSIFIED_FROM_CHANNEL_INVENTORY",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML",
+          "reason": "Pixel/shape topology requires a separately verified FixtureType schema interpretation."
+        }
+      },
+      "technical_definition_sha256": "c6c590aa1cfa715847bd737c9a9202d853129d1d3bf3b8bbc4ef5d947eb71e9f",
+      "xml_sha256": "ce2a091b96b6f5b8dd985d6a1f70e513e826d514bebc61b550736fb0aa62cf26",
+      "byte_length": 706964,
+      "export": {
+        "filename": "ZEN_AGENT_FT_3_2ee713e6d5e31053.xml",
+        "command": "Export FixtureType 3 \"ZEN_AGENT_FT_3_2ee713e6d5e31053.xml\" /nc",
+        "request_started_at_ns": 1789063348969425100,
+        "ma2_feedback": "Executing : Export FixtureType 3 \"ZEN_AGENT_FT_3_2ee713e6d5e31053.xml\" /nc\n\r\r [Fixture]>",
+        "cleanup": "AGENT_OWNED_TEMPORARY_FILE_REMOVED"
+      },
+      "export_diagnostic": {
+        "schema": "zen.fixture_type_export_diagnostic.v0.1",
+        "read_only": true,
+        "requested_fixture_type": {
+          "fixture_type_id": 3,
+          "list_label": "3 ZEN DMH-160 St_Preset"
+        },
+        "xml_sha256": "ce2a091b96b6f5b8dd985d6a1f70e513e826d514bebc61b550736fb0aa62cf26",
+        "byte_length": 706964,
+        "parse_status": "PARSED",
+        "xml_root": {
+          "tag": "MA",
+          "attributes": {
+            "major_vers": "3",
+            "minor_vers": "9",
+            "stream_vers": "60",
+            "{http://www.w3.org/2001/XMLSchema-instance}schemaLocation": "http://schemas.malighting.de/grandma2/xml/MA http://schemas.malighting.de/grandma2/xml/3.9.60/MA.xsd"
+          },
+          "schema_version": {
+            "major": "3",
+            "minor": "9",
+            "stream": "60"
+          }
+        },
+        "fixture_type_node_count": 1,
+        "fixture_type_nodes": [
+          {
+            "ordinal_in_export": 1,
+            "parent_path": "MA",
+            "attributes": {
+              "index": "2",
+              "mode": "St_Preset",
+              "name": "ZEN DMH-160"
+            },
+            "fixture_type_index": 2,
+            "fixture_type_index_raw": "2",
+            "name": "ZEN DMH-160",
+            "mode": "St_Preset",
+            "channel_count": 21,
+            "technical_definition_sha256": "c6c590aa1cfa715847bd737c9a9202d853129d1d3bf3b8bbc4ef5d947eb71e9f"
+          }
+        ],
+        "observed": {
+          "ordinal_in_export": 1,
+          "parent_path": "MA",
+          "attributes": {
+            "index": "2",
+            "mode": "St_Preset",
+            "name": "ZEN DMH-160"
+          },
+          "fixture_type_index": 2,
+          "fixture_type_index_raw": "2",
+          "name": "ZEN DMH-160",
+          "mode": "St_Preset",
+          "channel_count": 21,
+          "technical_definition_sha256": "c6c590aa1cfa715847bd737c9a9202d853129d1d3bf3b8bbc4ef5d947eb71e9f"
+        },
+        "validation_comparisons": {
+          "requested_fixture_type_id": 3,
+          "exported_fixture_type_index": 2,
+          "fixture_type_index_matches_requested_id": false,
+          "list_label": "3 ZEN DMH-160 St_Preset",
+          "label_reconstructed_using_requested_id": "3 ZEN DMH-160 St_Preset",
+          "label_using_requested_id_matches_list_label": true,
+          "label_reconstructed_using_exported_index": "2 ZEN DMH-160 St_Preset",
+          "label_using_exported_index_matches_list_label": false,
+          "channel_count_nonzero": true
+        }
+      },
+      "compound_identity": {
+        "status": "SHOW_BOUND_VERIFIED",
+        "rule": "SHOW_IDENTITY_MATCH + EXACT_REQUEST_COMMAND + MA2_ACCEPTED_EXPORT + XML_INDEX_EQUALS_REQUESTED_POOL_ID_MINUS_ONE + EXACT_LIST_LABEL_FROM_REQUESTED_ID_AND_XML_NAME_MODE + SINGLE_XML_FIXTURETYPE + NONEMPTY_CHANNEL_INVENTORY + UNIQUE_BATCH_IDS_AND_XML_INDICES",
+        "strict_single_export_status": "PARTIAL"
+      },
       "local_profile_candidate": {
-        "status": "NOT_ATTEMPTED_NO_SHOW_BOUND_EXPORT",
-        "source": "LOCAL_PROFILE_CANDIDATE_REFERENCE",
-        "candidate_relative_path": "zhong_light@zhong_light_dmh-160@st_preset.xml"
+        "status": "LOCAL_PROFILE_CANDIDATE_BOUND",
+        "source": "STRUCTURAL_CHANNEL_DEFINITION_COMPARISON",
+        "show_bound_technical_definition_sha256": "c6c590aa1cfa715847bd737c9a9202d853129d1d3bf3b8bbc4ef5d947eb71e9f",
+        "local_candidate_technical_definition_sha256": "c6c590aa1cfa715847bd737c9a9202d853129d1d3bf3b8bbc4ef5d947eb71e9f",
+        "local_candidate_xml_sha256": "09aa11e50e7061206fc4b448213641206619aa9fbf7fc295822c8040891af592",
+        "candidate_relative_path": "zhong_light@zhong_light_dmh-160@st_preset.xml",
+        "candidate_file_sha256": "09aa11e50e7061206fc4b448213641206619aa9fbf7fc295822c8040891af592"
       }
     },
     {
       "schema": "zen.fixture_type_channel_profile.v0.1",
       "read_only": true,
-      "status": "PARTIAL",
-      "source": "ma2_export_fixture_type_xml",
+      "status": "SHOW_BOUND_VERIFIED",
+      "source": "MA2_EXPORT_FIXTURE_TYPE_XML_COMPOUND_IDENTITY",
       "fixture_type": {
         "fixture_type_id": 4,
-        "list_label": "4 ZEN K10 Shapes"
+        "list_label": "4 ZEN K10 Shapes",
+        "xml_index": 3,
+        "name": "ZEN K10",
+        "mode": "Shapes",
+        "ma_version": {
+          "major": "3",
+          "minor": "9",
+          "stream": "60"
+        }
       },
-      "failure_reason": "EXPORT_FIXTURE_TYPE_ID_MISMATCH",
+      "channels": [
+        {
+          "index": "0",
+          "attribute": "REDALL",
+          "feature": "COLORDIMALL",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "REDALL"
+          ],
+          "function_subattributes": [
+            "REDALL"
+          ]
+        },
+        {
+          "index": "1",
+          "attribute": "GREENALL",
+          "feature": "COLORDIMALL",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "GREENALL"
+          ],
+          "function_subattributes": [
+            "GREENALL"
+          ]
+        },
+        {
+          "index": "10",
+          "attribute": "DIMMERCURVE",
+          "feature": "DIMMER",
+          "preset": "DIMMER",
+          "channel_function_count": 6,
+          "function_attributes": [
+            "DIMMERCURVE",
+            "DUMMY",
+            "MACROS",
+            "POSITIONMSPEED"
+          ],
+          "function_subattributes": [
+            "DIMMERCURVE",
+            "MACROSELECT",
+            "NOFEATURE",
+            "POSITIONMSPEEDTIME",
+            "RESERVED"
+          ]
+        },
+        {
+          "index": "11",
+          "attribute": "FIXTUREGLOBALRESET",
+          "feature": "RESET",
+          "preset": "CONTROL",
+          "channel_function_count": 4,
+          "function_attributes": [
+            "DUMMY",
+            "FIXTUREGLOBALRESET",
+            "POSITIONRESET",
+            "ZOOMRESET"
+          ],
+          "function_subattributes": [
+            "FIXTUREGLOBALRESET",
+            "NOFEATURE",
+            "POSITIONRESET",
+            "ZOOMRESET"
+          ]
+        },
+        {
+          "index": "12",
+          "attribute": "ZOOM",
+          "feature": "FOCUS",
+          "preset": "FOCUS",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "ZOOM"
+          ],
+          "function_subattributes": [
+            "ZOOM"
+          ]
+        },
+        {
+          "index": "13",
+          "attribute": "COMPOUNDLENSINDEXROTATE",
+          "feature": "BEAM1",
+          "preset": "BEAM",
+          "channel_function_count": 5,
+          "function_attributes": [
+            "COMPOUNDLENSINDEXROTATE",
+            "DUMMY"
+          ],
+          "function_subattributes": [
+            "COMPOUNDLENSINDEX",
+            "COMPOUNDLENSROTATE",
+            "NOFEATURE"
+          ]
+        },
+        {
+          "index": "14",
+          "attribute": "EFFECTMACROS",
+          "feature": "EFFECTMACROS",
+          "preset": "BEAM",
+          "channel_function_count": 15,
+          "function_attributes": [
+            "DUMMY",
+            "EFFECTMACROS"
+          ],
+          "function_subattributes": [
+            "EFFECTMACROSELECT",
+            "NOFEATURE"
+          ]
+        },
+        {
+          "index": "15",
+          "attribute": "EFFECTMACRORATE",
+          "feature": "EFFECTMACROS",
+          "preset": "BEAM",
+          "channel_function_count": 31,
+          "function_attributes": [
+            "DUMMY",
+            "EFFECTMACROPOSITION",
+            "EFFECTMACRORATE",
+            "EFFECTMACROSIZE"
+          ],
+          "function_subattributes": [
+            "EFFECTMACROPOSITION",
+            "EFFECTMACRORATE",
+            "EFFECTMACROSIZE",
+            "NOFEATURE"
+          ]
+        },
+        {
+          "index": "16",
+          "attribute": "EFFECTMACROFADETIME",
+          "feature": "EFFECTMACROS",
+          "preset": "BEAM",
+          "channel_function_count": 18,
+          "function_attributes": [
+            "DUMMY",
+            "EFFECTMACROFADETIME"
+          ],
+          "function_subattributes": [
+            "EFFECTMACROFADETIME",
+            "NOFEATURE"
+          ]
+        },
+        {
+          "index": "17",
+          "attribute": "COLORRGB1",
+          "feature": "COLORRGB",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "COLORRGB1"
+          ],
+          "function_subattributes": [
+            "COLORRGB1"
+          ]
+        },
+        {
+          "index": "18",
+          "attribute": "COLORRGB2",
+          "feature": "COLORRGB",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "COLORRGB2"
+          ],
+          "function_subattributes": [
+            "COLORRGB2"
+          ]
+        },
+        {
+          "index": "19",
+          "attribute": "COLORRGB3",
+          "feature": "COLORRGB",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "COLORRGB3"
+          ],
+          "function_subattributes": [
+            "COLORRGB3"
+          ]
+        },
+        {
+          "index": "2",
+          "attribute": "BLUEALL",
+          "feature": "COLORDIMALL",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "BLUEALL"
+          ],
+          "function_subattributes": [
+            "BLUEALL"
+          ]
+        },
+        {
+          "index": "20",
+          "attribute": "COLORRGB5",
+          "feature": "COLORRGB",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "COLORRGB5"
+          ],
+          "function_subattributes": [
+            "COLORRGB5"
+          ]
+        },
+        {
+          "index": "21",
+          "attribute": "DIM2",
+          "feature": "DIMMER",
+          "preset": "DIMMER",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "DIM"
+          ],
+          "function_subattributes": [
+            "DIM"
+          ]
+        },
+        {
+          "index": "22",
+          "attribute": "BACKGROUNDLEVEL",
+          "feature": "DIMMER",
+          "preset": "DIMMER",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "BACKGROUNDLEVEL"
+          ],
+          "function_subattributes": [
+            "BACKGROUNDLEVEL"
+          ]
+        },
+        {
+          "index": "23",
+          "attribute": "EFFECTMACROTIME",
+          "feature": "EFFECTMACROS",
+          "preset": "BEAM",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "EFFECTMACROTIME"
+          ],
+          "function_subattributes": [
+            "EFFECTMACROTIME"
+          ]
+        },
+        {
+          "index": "24",
+          "attribute": "MACROS2",
+          "feature": "MACRO",
+          "preset": "CONTROL",
+          "channel_function_count": 29,
+          "function_attributes": [
+            "MACROS2"
+          ],
+          "function_subattributes": [
+            "MACROSELECT2"
+          ]
+        },
+        {
+          "index": "25",
+          "attribute": "FOREGROUNDSHUTTERSTROBE",
+          "feature": "SHUTTER",
+          "preset": "BEAM",
+          "channel_function_count": 7,
+          "function_attributes": [
+            "FOREGROUNDSHUTTERSTROBE"
+          ],
+          "function_subattributes": [
+            "FOREGROUNDSHUTTER",
+            "FOREGROUNDSTROBE",
+            "FOREGROUNDSTROBEPULSE",
+            "FOREGROUNDSTROBERANDOM"
+          ]
+        },
+        {
+          "index": "26",
+          "attribute": "BACKGROUNDSHUTTERSTROBE",
+          "feature": "SHUTTER",
+          "preset": "BEAM",
+          "channel_function_count": 7,
+          "function_attributes": [
+            "BACKGROUNDSHUTTERSTROBE"
+          ],
+          "function_subattributes": [
+            "BACKGROUNDSHUTTER",
+            "BACKGROUNDSTROBE",
+            "BACKGROUNDSTROBEPULSE",
+            "BACKGROUNDSTROBERANDOM"
+          ]
+        },
+        {
+          "index": "27",
+          "attribute": "MACROS3",
+          "feature": "MACRO",
+          "preset": "CONTROL",
+          "channel_function_count": 22,
+          "function_attributes": [
+            "MACROS3"
+          ],
+          "function_subattributes": [
+            "MACROSELECT3"
+          ]
+        },
+        {
+          "index": "3",
+          "attribute": "WHITEALL",
+          "feature": "COLORDIMALL",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "WHITEALL"
+          ],
+          "function_subattributes": [
+            "WHITEALL"
+          ]
+        },
+        {
+          "index": "4",
+          "attribute": "COLORTEMPERATURE",
+          "feature": "COLORALL",
+          "preset": "COLOR",
+          "channel_function_count": 2,
+          "function_attributes": [
+            "COLORTEMPERATURE"
+          ],
+          "function_subattributes": [
+            "COLORTEMPERATURESELECT",
+            "COLOURTEMPERATURECONTROLDISABLED"
+          ]
+        },
+        {
+          "index": "5",
+          "attribute": "COLORMIXER",
+          "feature": "COLORMIX",
+          "preset": "COLOR",
+          "channel_function_count": 2,
+          "function_attributes": [
+            "COLORMIXER"
+          ],
+          "function_subattributes": [
+            "COLORMIXCOLOR",
+            "COLORMIXNORMAL"
+          ]
+        },
+        {
+          "index": "6",
+          "attribute": "MASTERSHUTTERSTROBE",
+          "feature": "SHUTTER",
+          "preset": "BEAM",
+          "channel_function_count": 7,
+          "function_attributes": [
+            "MASTERSHUTTERSTROBE"
+          ],
+          "function_subattributes": [
+            "MASTERSHUTTER",
+            "MASTERSTROBE",
+            "MASTERSTROBEISOPHASE",
+            "MASTERSTROBERANDOM"
+          ]
+        },
+        {
+          "index": "7",
+          "attribute": "DIM",
+          "feature": "DIMMER",
+          "preset": "DIMMER",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "DIM"
+          ],
+          "function_subattributes": [
+            "DIM"
+          ]
+        },
+        {
+          "index": "8",
+          "attribute": "PAN",
+          "feature": "POSITION",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "PAN"
+          ],
+          "function_subattributes": [
+            "PAN"
+          ]
+        },
+        {
+          "index": "9",
+          "attribute": "TILT",
+          "feature": "POSITION",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "TILT"
+          ],
+          "function_subattributes": [
+            "TILT"
+          ]
+        }
+      ],
+      "capabilities": {
+        "DIMMER": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "COLOR": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "PAN": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "TILT": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "POSITION": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "GOBO": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "PRISM": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "ZOOM": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "FOCUS": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "FROST": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "SHUTTER_STROBE": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "PIXEL_SHAPE": {
+          "status": "UNCLASSIFIED_FROM_CHANNEL_INVENTORY",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML",
+          "reason": "Pixel/shape topology requires a separately verified FixtureType schema interpretation."
+        }
+      },
+      "technical_definition_sha256": "77b3a0c5a91d0f537879520b5c47a0e570feee288c9b7450068b4084cb5cfce0",
+      "xml_sha256": "edb6fcbb51a63800df53ec81ff109476c081d6fe0648fb284157a59531b7ac1e",
+      "byte_length": 3833679,
+      "export": {
+        "filename": "ZEN_AGENT_FT_4_16ef1527ca0372d2.xml",
+        "command": "Export FixtureType 4 \"ZEN_AGENT_FT_4_16ef1527ca0372d2.xml\" /nc",
+        "request_started_at_ns": 1789063349671378700,
+        "ma2_feedback": "Executing : Export FixtureType 4 \"ZEN_AGENT_FT_4_16ef1527ca0372d2.xml\" /nc\n\r\r [Fixture]>",
+        "cleanup": "AGENT_OWNED_TEMPORARY_FILE_REMOVED"
+      },
+      "export_diagnostic": {
+        "schema": "zen.fixture_type_export_diagnostic.v0.1",
+        "read_only": true,
+        "requested_fixture_type": {
+          "fixture_type_id": 4,
+          "list_label": "4 ZEN K10 Shapes"
+        },
+        "xml_sha256": "edb6fcbb51a63800df53ec81ff109476c081d6fe0648fb284157a59531b7ac1e",
+        "byte_length": 3833679,
+        "parse_status": "PARSED",
+        "xml_root": {
+          "tag": "MA",
+          "attributes": {
+            "major_vers": "3",
+            "minor_vers": "9",
+            "stream_vers": "60",
+            "{http://www.w3.org/2001/XMLSchema-instance}schemaLocation": "http://schemas.malighting.de/grandma2/xml/MA http://schemas.malighting.de/grandma2/xml/3.9.60/MA.xsd"
+          },
+          "schema_version": {
+            "major": "3",
+            "minor": "9",
+            "stream": "60"
+          }
+        },
+        "fixture_type_node_count": 1,
+        "fixture_type_nodes": [
+          {
+            "ordinal_in_export": 1,
+            "parent_path": "MA",
+            "attributes": {
+              "index": "3",
+              "mode": "Shapes",
+              "name": "ZEN K10"
+            },
+            "fixture_type_index": 3,
+            "fixture_type_index_raw": "3",
+            "name": "ZEN K10",
+            "mode": "Shapes",
+            "channel_count": 28,
+            "technical_definition_sha256": "77b3a0c5a91d0f537879520b5c47a0e570feee288c9b7450068b4084cb5cfce0"
+          }
+        ],
+        "observed": {
+          "ordinal_in_export": 1,
+          "parent_path": "MA",
+          "attributes": {
+            "index": "3",
+            "mode": "Shapes",
+            "name": "ZEN K10"
+          },
+          "fixture_type_index": 3,
+          "fixture_type_index_raw": "3",
+          "name": "ZEN K10",
+          "mode": "Shapes",
+          "channel_count": 28,
+          "technical_definition_sha256": "77b3a0c5a91d0f537879520b5c47a0e570feee288c9b7450068b4084cb5cfce0"
+        },
+        "validation_comparisons": {
+          "requested_fixture_type_id": 4,
+          "exported_fixture_type_index": 3,
+          "fixture_type_index_matches_requested_id": false,
+          "list_label": "4 ZEN K10 Shapes",
+          "label_reconstructed_using_requested_id": "4 ZEN K10 Shapes",
+          "label_using_requested_id_matches_list_label": true,
+          "label_reconstructed_using_exported_index": "3 ZEN K10 Shapes",
+          "label_using_exported_index_matches_list_label": false,
+          "channel_count_nonzero": true
+        }
+      },
+      "compound_identity": {
+        "status": "SHOW_BOUND_VERIFIED",
+        "rule": "SHOW_IDENTITY_MATCH + EXACT_REQUEST_COMMAND + MA2_ACCEPTED_EXPORT + XML_INDEX_EQUALS_REQUESTED_POOL_ID_MINUS_ONE + EXACT_LIST_LABEL_FROM_REQUESTED_ID_AND_XML_NAME_MODE + SINGLE_XML_FIXTURETYPE + NONEMPTY_CHANNEL_INVENTORY + UNIQUE_BATCH_IDS_AND_XML_INDICES",
+        "strict_single_export_status": "PARTIAL"
+      },
       "local_profile_candidate": {
-        "status": "NOT_ATTEMPTED_NO_SHOW_BOUND_EXPORT",
-        "source": "LOCAL_PROFILE_CANDIDATE_REFERENCE",
-        "candidate_relative_path": "clay_paky@a.leda_b-eye_k10@shapes.xmlp"
+        "status": "LOCAL_PROFILE_CANDIDATE_UNBOUND",
+        "source": "STRUCTURAL_CHANNEL_DEFINITION_COMPARISON",
+        "reason": "LOCAL_PROFILE_XML_MALFORMED",
+        "candidate_relative_path": "clay_paky@a.leda_b-eye_k10@shapes.xmlp",
+        "candidate_file_sha256": "166f85e00c188d0000fa02b005e1b143598ff5999c0d99684ebb92b2584c8098"
       }
     },
     {
       "schema": "zen.fixture_type_channel_profile.v0.1",
       "read_only": true,
-      "status": "PARTIAL",
-      "source": "ma2_export_fixture_type_xml",
+      "status": "SHOW_BOUND_VERIFIED",
+      "source": "MA2_EXPORT_FIXTURE_TYPE_XML_COMPOUND_IDENTITY",
       "fixture_type": {
         "fixture_type_id": 5,
-        "list_label": "5 ZEN MAC AU XB Standard"
+        "list_label": "5 ZEN MAC AU XB Standard",
+        "xml_index": 4,
+        "name": "ZEN MAC AU XB",
+        "mode": "Standard",
+        "ma_version": {
+          "major": "3",
+          "minor": "9",
+          "stream": "60"
+        }
       },
-      "failure_reason": "EXPORT_FIXTURE_TYPE_ID_MISMATCH",
+      "channels": [
+        {
+          "index": "0",
+          "attribute": "SHUTTER",
+          "feature": "SHUTTER",
+          "preset": "BEAM",
+          "channel_function_count": 21,
+          "function_attributes": [
+            "SHUTTER"
+          ],
+          "function_subattributes": [
+            "SHUTTER",
+            "STROBE",
+            "STROBE_BURST",
+            "STROBE_BURST_ELECTRONIC",
+            "STROBE_BURST_RANDOM",
+            "STROBE_PULSE_CLOSE",
+            "STROBE_PULSE_OPEN",
+            "STROBE_RANDOM",
+            "STROBE_RANDOM_PULSE_CLOSE",
+            "STROBE_RANDOM_PULSE_OPEN",
+            "STROBE_SINE_ELECTRONIC"
+          ]
+        },
+        {
+          "index": "1",
+          "attribute": "DIM",
+          "feature": "DIMMER",
+          "preset": "DIMMER",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "DIM"
+          ],
+          "function_subattributes": [
+            "DIM"
+          ]
+        },
+        {
+          "index": "10",
+          "attribute": "COLORRGB5",
+          "feature": "COLORRGB",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "COLORRGB5"
+          ],
+          "function_subattributes": [
+            "COLORRGB5"
+          ]
+        },
+        {
+          "index": "11",
+          "attribute": "EFFECTMACRORATE",
+          "feature": "EFFECTMACROS",
+          "preset": "BEAM",
+          "channel_function_count": 2,
+          "function_attributes": [
+            "COLORTEMPERATURE"
+          ],
+          "function_subattributes": [
+            "COLORTEMPERATURE",
+            "COLOURTEMPERATURECONTROLDISABLED"
+          ]
+        },
+        {
+          "index": "12",
+          "attribute": "EFFECTMACROS",
+          "feature": "EFFECTMACROS",
+          "preset": "BEAM",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "EFFECTMACROS"
+          ],
+          "function_subattributes": [
+            "EFFECTMACROSELECT"
+          ]
+        },
+        {
+          "index": "13",
+          "attribute": "EFFECTWHEEL",
+          "feature": "EFFECT",
+          "preset": "BEAM",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "EFFECTWHEEL"
+          ],
+          "function_subattributes": [
+            "EFFECTWHEELSELECT"
+          ]
+        },
+        {
+          "index": "14",
+          "attribute": "VIRTUAL_POSITION_MODE",
+          "feature": "POSITION",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "VIRTUAL_POSITION_MODE"
+          ],
+          "function_subattributes": [
+            "VIRTUAL_POSITION_MODE"
+          ]
+        },
+        {
+          "index": "15",
+          "attribute": "STAGEX",
+          "feature": "STAGE",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "STAGEX"
+          ],
+          "function_subattributes": [
+            "STAGEX"
+          ]
+        },
+        {
+          "index": "16",
+          "attribute": "STAGEY",
+          "feature": "STAGE",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "STAGEY"
+          ],
+          "function_subattributes": [
+            "STAGEY"
+          ]
+        },
+        {
+          "index": "17",
+          "attribute": "STAGEZ",
+          "feature": "STAGE",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "STAGEZ"
+          ],
+          "function_subattributes": [
+            "STAGEZ"
+          ]
+        },
+        {
+          "index": "18",
+          "attribute": "FLIP",
+          "feature": "STAGE",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "FLIP"
+          ],
+          "function_subattributes": [
+            "FLIP"
+          ]
+        },
+        {
+          "index": "19",
+          "attribute": "MARK",
+          "feature": "STAGE",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "MARK"
+          ],
+          "function_subattributes": [
+            "MARK"
+          ]
+        },
+        {
+          "index": "2",
+          "attribute": "ZOOM",
+          "feature": "FOCUS",
+          "preset": "FOCUS",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "ZOOM"
+          ],
+          "function_subattributes": [
+            "ZOOM"
+          ]
+        },
+        {
+          "index": "20",
+          "attribute": "DIST",
+          "feature": "POSITION",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "DIST"
+          ],
+          "function_subattributes": [
+            "DIST"
+          ]
+        },
+        {
+          "index": "3",
+          "attribute": "PAN",
+          "feature": "POSITION",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "PAN"
+          ],
+          "function_subattributes": [
+            "PAN"
+          ]
+        },
+        {
+          "index": "4",
+          "attribute": "TILT",
+          "feature": "POSITION",
+          "preset": "POSITION",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "TILT"
+          ],
+          "function_subattributes": [
+            "TILT"
+          ]
+        },
+        {
+          "index": "5",
+          "attribute": "FIXTUREGLOBALRESET",
+          "feature": "RESET",
+          "preset": "CONTROL",
+          "channel_function_count": 18,
+          "function_attributes": [
+            "DIMMERCURVE",
+            "DUMMY",
+            "FANS",
+            "FIXTUREDISPLAY",
+            "FIXTUREGLOBALRESET",
+            "INTENSITYMODE",
+            "POSITIONMSPEED"
+          ],
+          "function_subattributes": [
+            "DIMMERCURVE",
+            "FANSAUTO",
+            "FANSPEED",
+            "FIXTUREDISPLAY",
+            "FIXTUREGLOBALRESET",
+            "INTENSITYMODE",
+            "NOFEATURE",
+            "POSITIONMSPEEDTRACK"
+          ]
+        },
+        {
+          "index": "6",
+          "attribute": "COLORMIXER",
+          "feature": "COLORMIX",
+          "preset": "COLOR",
+          "channel_function_count": 7,
+          "function_attributes": [
+            "COLORMIXER",
+            "COLORMIXPOSITION"
+          ],
+          "function_subattributes": [
+            "COLORMIXCOLOR",
+            "COLORMIXCYCLE",
+            "COLORMIXNORMAL",
+            "COLORMIXPOSITION",
+            "COLORMIXRANDOM"
+          ]
+        },
+        {
+          "index": "7",
+          "attribute": "COLORRGB1",
+          "feature": "COLORRGB",
+          "preset": "COLOR",
+          "channel_function_count": 2,
+          "function_attributes": [
+            "COLORRGB1",
+            "DUMMY"
+          ],
+          "function_subattributes": [
+            "COLORRGB1",
+            "NOFEATURE"
+          ]
+        },
+        {
+          "index": "8",
+          "attribute": "COLORRGB2",
+          "feature": "COLORRGB",
+          "preset": "COLOR",
+          "channel_function_count": 2,
+          "function_attributes": [
+            "COLORRGB2",
+            "DUMMY"
+          ],
+          "function_subattributes": [
+            "COLORRGB2",
+            "NOFEATURE"
+          ]
+        },
+        {
+          "index": "9",
+          "attribute": "COLORRGB3",
+          "feature": "COLORRGB",
+          "preset": "COLOR",
+          "channel_function_count": 2,
+          "function_attributes": [
+            "COLORRGB3",
+            "DUMMY"
+          ],
+          "function_subattributes": [
+            "COLORRGB3",
+            "NOFEATURE"
+          ]
+        }
+      ],
+      "capabilities": {
+        "DIMMER": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "COLOR": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "PAN": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "TILT": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "POSITION": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "GOBO": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "PRISM": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "ZOOM": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "FOCUS": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "FROST": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "SHUTTER_STROBE": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "PIXEL_SHAPE": {
+          "status": "UNCLASSIFIED_FROM_CHANNEL_INVENTORY",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML",
+          "reason": "Pixel/shape topology requires a separately verified FixtureType schema interpretation."
+        }
+      },
+      "technical_definition_sha256": "b17c21b79419160ca8498a76a06919e1fd5ac920f9ff40f7af9a9671257786d4",
+      "xml_sha256": "4c8ef44bf40ac4175eaa115ed1f580afa309df3060813a2172b53858deab6ebe",
+      "byte_length": 46279,
+      "export": {
+        "filename": "ZEN_AGENT_FT_5_eea859932b6ab0ac.xml",
+        "command": "Export FixtureType 5 \"ZEN_AGENT_FT_5_eea859932b6ab0ac.xml\" /nc",
+        "request_started_at_ns": 1789063350884970800,
+        "ma2_feedback": "Executing : Export FixtureType 5 \"ZEN_AGENT_FT_5_eea859932b6ab0ac.xml\" /nc\n\r\r [Fixture]>",
+        "cleanup": "AGENT_OWNED_TEMPORARY_FILE_REMOVED"
+      },
+      "export_diagnostic": {
+        "schema": "zen.fixture_type_export_diagnostic.v0.1",
+        "read_only": true,
+        "requested_fixture_type": {
+          "fixture_type_id": 5,
+          "list_label": "5 ZEN MAC AU XB Standard"
+        },
+        "xml_sha256": "4c8ef44bf40ac4175eaa115ed1f580afa309df3060813a2172b53858deab6ebe",
+        "byte_length": 46279,
+        "parse_status": "PARSED",
+        "xml_root": {
+          "tag": "MA",
+          "attributes": {
+            "major_vers": "3",
+            "minor_vers": "9",
+            "stream_vers": "60",
+            "{http://www.w3.org/2001/XMLSchema-instance}schemaLocation": "http://schemas.malighting.de/grandma2/xml/MA http://schemas.malighting.de/grandma2/xml/3.9.60/MA.xsd"
+          },
+          "schema_version": {
+            "major": "3",
+            "minor": "9",
+            "stream": "60"
+          }
+        },
+        "fixture_type_node_count": 1,
+        "fixture_type_nodes": [
+          {
+            "ordinal_in_export": 1,
+            "parent_path": "MA",
+            "attributes": {
+              "index": "4",
+              "mode": "Standard",
+              "name": "ZEN MAC AU XB"
+            },
+            "fixture_type_index": 4,
+            "fixture_type_index_raw": "4",
+            "name": "ZEN MAC AU XB",
+            "mode": "Standard",
+            "channel_count": 21,
+            "technical_definition_sha256": "b17c21b79419160ca8498a76a06919e1fd5ac920f9ff40f7af9a9671257786d4"
+          }
+        ],
+        "observed": {
+          "ordinal_in_export": 1,
+          "parent_path": "MA",
+          "attributes": {
+            "index": "4",
+            "mode": "Standard",
+            "name": "ZEN MAC AU XB"
+          },
+          "fixture_type_index": 4,
+          "fixture_type_index_raw": "4",
+          "name": "ZEN MAC AU XB",
+          "mode": "Standard",
+          "channel_count": 21,
+          "technical_definition_sha256": "b17c21b79419160ca8498a76a06919e1fd5ac920f9ff40f7af9a9671257786d4"
+        },
+        "validation_comparisons": {
+          "requested_fixture_type_id": 5,
+          "exported_fixture_type_index": 4,
+          "fixture_type_index_matches_requested_id": false,
+          "list_label": "5 ZEN MAC AU XB Standard",
+          "label_reconstructed_using_requested_id": "5 ZEN MAC AU XB Standard",
+          "label_using_requested_id_matches_list_label": true,
+          "label_reconstructed_using_exported_index": "4 ZEN MAC AU XB Standard",
+          "label_using_exported_index_matches_list_label": false,
+          "channel_count_nonzero": true
+        }
+      },
+      "compound_identity": {
+        "status": "SHOW_BOUND_VERIFIED",
+        "rule": "SHOW_IDENTITY_MATCH + EXACT_REQUEST_COMMAND + MA2_ACCEPTED_EXPORT + XML_INDEX_EQUALS_REQUESTED_POOL_ID_MINUS_ONE + EXACT_LIST_LABEL_FROM_REQUESTED_ID_AND_XML_NAME_MODE + SINGLE_XML_FIXTURETYPE + NONEMPTY_CHANNEL_INVENTORY + UNIQUE_BATCH_IDS_AND_XML_INDICES",
+        "strict_single_export_status": "PARTIAL"
+      },
       "local_profile_candidate": {
-        "status": "NOT_ATTEMPTED_NO_SHOW_BOUND_EXPORT",
-        "source": "LOCAL_PROFILE_CANDIDATE_REFERENCE",
-        "candidate_relative_path": "zhong_light@zhong_light_mac_au_xb@standard.xml"
+        "status": "LOCAL_PROFILE_CANDIDATE_BOUND",
+        "source": "STRUCTURAL_CHANNEL_DEFINITION_COMPARISON",
+        "show_bound_technical_definition_sha256": "b17c21b79419160ca8498a76a06919e1fd5ac920f9ff40f7af9a9671257786d4",
+        "local_candidate_technical_definition_sha256": "b17c21b79419160ca8498a76a06919e1fd5ac920f9ff40f7af9a9671257786d4",
+        "local_candidate_xml_sha256": "15c2cd39178c4d73ef460572538da0a345ce1422c5c24db460ae82ca11575817",
+        "candidate_relative_path": "zhong_light@zhong_light_mac_au_xb@standard.xml",
+        "candidate_file_sha256": "15c2cd39178c4d73ef460572538da0a345ce1422c5c24db460ae82ca11575817"
       }
     },
     {
       "schema": "zen.fixture_type_channel_profile.v0.1",
       "read_only": true,
-      "status": "PARTIAL",
-      "source": "ma2_export_fixture_type_xml",
+      "status": "SHOW_BOUND_VERIFIED",
+      "source": "MA2_EXPORT_FIXTURE_TYPE_XML_COMPOUND_IDENTITY",
       "fixture_type": {
         "fixture_type_id": 6,
-        "list_label": "6 ZEN LEDPar 9c 9Ch Mode A"
+        "list_label": "6 ZEN LEDPar 9c 9Ch Mode A",
+        "xml_index": 5,
+        "name": "ZEN LEDPar 9c",
+        "mode": "9Ch Mode A",
+        "ma_version": {
+          "major": "3",
+          "minor": "9",
+          "stream": "60"
+        }
       },
-      "failure_reason": "EXPORT_FIXTURE_TYPE_ID_MISMATCH",
+      "channels": [
+        {
+          "index": "0",
+          "attribute": "DIM",
+          "feature": "DIMMER",
+          "preset": "DIMMER",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "DIM"
+          ],
+          "function_subattributes": [
+            "DIM"
+          ]
+        },
+        {
+          "index": "1",
+          "attribute": "SHUTTER",
+          "feature": "SHUTTER",
+          "preset": "BEAM",
+          "channel_function_count": 2,
+          "function_attributes": [
+            "SHUTTER"
+          ],
+          "function_subattributes": [
+            "SHUTTER",
+            "STROBE"
+          ]
+        },
+        {
+          "index": "2",
+          "attribute": "COLORMIXER",
+          "feature": "COLORMIX",
+          "preset": "COLOR",
+          "channel_function_count": 2,
+          "function_attributes": [
+            "COLORMIXER"
+          ],
+          "function_subattributes": [
+            "COLORMIXMACROSELECT",
+            "COLORMIXNORMAL"
+          ]
+        },
+        {
+          "index": "3",
+          "attribute": "COLORMIXMACRORATE",
+          "feature": "COLORMIX",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "COLORMIXMACRORATE"
+          ],
+          "function_subattributes": [
+            "COLORMIXMACRORATE"
+          ]
+        },
+        {
+          "index": "4",
+          "attribute": "COLORRGB1",
+          "feature": "COLORRGB",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "COLORRGB1"
+          ],
+          "function_subattributes": [
+            "COLORRGB1"
+          ]
+        },
+        {
+          "index": "5",
+          "attribute": "COLORRGB2",
+          "feature": "COLORRGB",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "COLORRGB2"
+          ],
+          "function_subattributes": [
+            "COLORRGB2"
+          ]
+        },
+        {
+          "index": "6",
+          "attribute": "COLORRGB3",
+          "feature": "COLORRGB",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "COLORRGB3"
+          ],
+          "function_subattributes": [
+            "COLORRGB3"
+          ]
+        },
+        {
+          "index": "7",
+          "attribute": "COLORRGB5",
+          "feature": "COLORRGB",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "COLORRGB5"
+          ],
+          "function_subattributes": [
+            "COLORRGB5"
+          ]
+        },
+        {
+          "index": "8",
+          "attribute": "COLORRGB4",
+          "feature": "COLORRGB",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "COLORRGB4"
+          ],
+          "function_subattributes": [
+            "COLORRGB4"
+          ]
+        }
+      ],
+      "capabilities": {
+        "DIMMER": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "COLOR": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "PAN": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "TILT": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "POSITION": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "GOBO": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "PRISM": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "ZOOM": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "FOCUS": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "FROST": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "SHUTTER_STROBE": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "PIXEL_SHAPE": {
+          "status": "UNCLASSIFIED_FROM_CHANNEL_INVENTORY",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML",
+          "reason": "Pixel/shape topology requires a separately verified FixtureType schema interpretation."
+        }
+      },
+      "technical_definition_sha256": "377df06b122685eb9a02c87de9f16b291cbe6b21576d6f09a778465c38d2238e",
+      "xml_sha256": "3065ad6283f5363cb81899f0b22a825a622e838890d742cad2eecc0c6cdf145e",
+      "byte_length": 112470,
+      "export": {
+        "filename": "ZEN_AGENT_FT_6_7a19237580dbf89a.xml",
+        "command": "Export FixtureType 6 \"ZEN_AGENT_FT_6_7a19237580dbf89a.xml\" /nc",
+        "request_started_at_ns": 1789063351571866000,
+        "ma2_feedback": "Executing : Export FixtureType 6 \"ZEN_AGENT_FT_6_7a19237580dbf89a.xml\" /nc\n\r\r [Fixture]>",
+        "cleanup": "AGENT_OWNED_TEMPORARY_FILE_REMOVED"
+      },
+      "export_diagnostic": {
+        "schema": "zen.fixture_type_export_diagnostic.v0.1",
+        "read_only": true,
+        "requested_fixture_type": {
+          "fixture_type_id": 6,
+          "list_label": "6 ZEN LEDPar 9c 9Ch Mode A"
+        },
+        "xml_sha256": "3065ad6283f5363cb81899f0b22a825a622e838890d742cad2eecc0c6cdf145e",
+        "byte_length": 112470,
+        "parse_status": "PARSED",
+        "xml_root": {
+          "tag": "MA",
+          "attributes": {
+            "major_vers": "3",
+            "minor_vers": "9",
+            "stream_vers": "60",
+            "{http://www.w3.org/2001/XMLSchema-instance}schemaLocation": "http://schemas.malighting.de/grandma2/xml/MA http://schemas.malighting.de/grandma2/xml/3.9.60/MA.xsd"
+          },
+          "schema_version": {
+            "major": "3",
+            "minor": "9",
+            "stream": "60"
+          }
+        },
+        "fixture_type_node_count": 1,
+        "fixture_type_nodes": [
+          {
+            "ordinal_in_export": 1,
+            "parent_path": "MA",
+            "attributes": {
+              "index": "5",
+              "mode": "9Ch Mode A",
+              "name": "ZEN LEDPar 9c"
+            },
+            "fixture_type_index": 5,
+            "fixture_type_index_raw": "5",
+            "name": "ZEN LEDPar 9c",
+            "mode": "9Ch Mode A",
+            "channel_count": 9,
+            "technical_definition_sha256": "377df06b122685eb9a02c87de9f16b291cbe6b21576d6f09a778465c38d2238e"
+          }
+        ],
+        "observed": {
+          "ordinal_in_export": 1,
+          "parent_path": "MA",
+          "attributes": {
+            "index": "5",
+            "mode": "9Ch Mode A",
+            "name": "ZEN LEDPar 9c"
+          },
+          "fixture_type_index": 5,
+          "fixture_type_index_raw": "5",
+          "name": "ZEN LEDPar 9c",
+          "mode": "9Ch Mode A",
+          "channel_count": 9,
+          "technical_definition_sha256": "377df06b122685eb9a02c87de9f16b291cbe6b21576d6f09a778465c38d2238e"
+        },
+        "validation_comparisons": {
+          "requested_fixture_type_id": 6,
+          "exported_fixture_type_index": 5,
+          "fixture_type_index_matches_requested_id": false,
+          "list_label": "6 ZEN LEDPar 9c 9Ch Mode A",
+          "label_reconstructed_using_requested_id": "6 ZEN LEDPar 9c 9Ch Mode A",
+          "label_using_requested_id_matches_list_label": true,
+          "label_reconstructed_using_exported_index": "5 ZEN LEDPar 9c 9Ch Mode A",
+          "label_using_exported_index_matches_list_label": false,
+          "channel_count_nonzero": true
+        }
+      },
+      "compound_identity": {
+        "status": "SHOW_BOUND_VERIFIED",
+        "rule": "SHOW_IDENTITY_MATCH + EXACT_REQUEST_COMMAND + MA2_ACCEPTED_EXPORT + XML_INDEX_EQUALS_REQUESTED_POOL_ID_MINUS_ONE + EXACT_LIST_LABEL_FROM_REQUESTED_ID_AND_XML_NAME_MODE + SINGLE_XML_FIXTURETYPE + NONEMPTY_CHANNEL_INVENTORY + UNIQUE_BATCH_IDS_AND_XML_INDICES",
+        "strict_single_export_status": "PARTIAL"
+      },
       "local_profile_candidate": {
-        "status": "NOT_ATTEMPTED_NO_SHOW_BOUND_EXPORT",
-        "source": "LOCAL_PROFILE_CANDIDATE_REFERENCE",
-        "candidate_relative_path": "zhong_light@zhong_light_led_par_9ch@9ch_mode_a.xml"
+        "status": "LOCAL_PROFILE_CANDIDATE_BOUND",
+        "source": "STRUCTURAL_CHANNEL_DEFINITION_COMPARISON",
+        "show_bound_technical_definition_sha256": "377df06b122685eb9a02c87de9f16b291cbe6b21576d6f09a778465c38d2238e",
+        "local_candidate_technical_definition_sha256": "377df06b122685eb9a02c87de9f16b291cbe6b21576d6f09a778465c38d2238e",
+        "local_candidate_xml_sha256": "5e93981387ffa18e4ef124f9e7a5cc75af0f5ceef63673b00ae5a933116d5442",
+        "candidate_relative_path": "zhong_light@zhong_light_led_par_9ch@9ch_mode_a.xml",
+        "candidate_file_sha256": "5e93981387ffa18e4ef124f9e7a5cc75af0f5ceef63673b00ae5a933116d5442"
       }
     },
     {
       "schema": "zen.fixture_type_channel_profile.v0.1",
       "read_only": true,
-      "status": "PARTIAL",
-      "source": "ma2_export_fixture_type_xml",
+      "status": "SHOW_BOUND_VERIFIED",
+      "source": "MA2_EXPORT_FIXTURE_TYPE_XML_COMPOUND_IDENTITY",
       "fixture_type": {
         "fixture_type_id": 7,
-        "list_label": "7 Atomic 3000 LED Extended"
+        "list_label": "7 Atomic 3000 LED Extended",
+        "xml_index": 6,
+        "name": "Atomic 3000 LED",
+        "mode": "Extended",
+        "ma_version": {
+          "major": "3",
+          "minor": "9",
+          "stream": "60"
+        }
       },
-      "failure_reason": "EXPORT_FIXTURE_TYPE_ID_MISMATCH",
+      "channels": [
+        {
+          "index": "0",
+          "attribute": "DIM",
+          "feature": "DIMMER",
+          "preset": "DIMMER",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "DIM"
+          ],
+          "function_subattributes": [
+            "DIM"
+          ]
+        },
+        {
+          "index": "0",
+          "attribute": "SHUTTER",
+          "feature": "SHUTTER",
+          "preset": "BEAM",
+          "channel_function_count": 4,
+          "function_attributes": [
+            "SHUTTER"
+          ],
+          "function_subattributes": [
+            "SHUTTER",
+            "STROBE",
+            "STROBE_RANDOM"
+          ]
+        },
+        {
+          "index": "1",
+          "attribute": "DIM",
+          "feature": "DIMMER",
+          "preset": "DIMMER",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "DIM"
+          ],
+          "function_subattributes": [
+            "DIM"
+          ]
+        },
+        {
+          "index": "1",
+          "attribute": "STROBEDURATION",
+          "feature": "SHUTTER",
+          "preset": "BEAM",
+          "channel_function_count": 7,
+          "function_attributes": [
+            "DUMMY",
+            "STROBEDURATION"
+          ],
+          "function_subattributes": [
+            "NOFEATURE",
+            "STROBEDURATION"
+          ]
+        },
+        {
+          "index": "2",
+          "attribute": "COLORRGB1",
+          "feature": "COLORRGB",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "COLORRGB1"
+          ],
+          "function_subattributes": [
+            "COLORRGB1"
+          ]
+        },
+        {
+          "index": "2",
+          "attribute": "SHUTTER",
+          "feature": "SHUTTER",
+          "preset": "BEAM",
+          "channel_function_count": 7,
+          "function_attributes": [
+            "LIGHTNINGRATE",
+            "SHUTTER"
+          ],
+          "function_subattributes": [
+            "LIGHTNINGRATE",
+            "STROBE",
+            "STROBE_PULSE",
+            "STROBE_PULSE_CLOSE",
+            "STROBE_PULSE_OPEN",
+            "STROBE_RANDOM"
+          ]
+        },
+        {
+          "index": "3",
+          "attribute": "COLORRGB2",
+          "feature": "COLORRGB",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "COLORRGB2"
+          ],
+          "function_subattributes": [
+            "COLORRGB2"
+          ]
+        },
+        {
+          "index": "3",
+          "attribute": "STROBEMODE",
+          "feature": "SHUTTER",
+          "preset": "BEAM",
+          "channel_function_count": 7,
+          "function_attributes": [
+            "STROBEMODE"
+          ],
+          "function_subattributes": [
+            "STROBEMODE",
+            "STROBEMODELIGHTNING",
+            "STROBEMODEPULSE",
+            "STROBEMODEPULSECLOSE",
+            "STROBEMODEPULSEOPEN",
+            "STROBEMODERANDOM"
+          ]
+        },
+        {
+          "index": "4",
+          "attribute": "COLORRGB3",
+          "feature": "COLORRGB",
+          "preset": "COLOR",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "COLORRGB3"
+          ],
+          "function_subattributes": [
+            "COLORRGB3"
+          ]
+        },
+        {
+          "index": "4",
+          "attribute": "FIXTUREGLOBALRESET",
+          "feature": "RESET",
+          "preset": "CONTROL",
+          "channel_function_count": 12,
+          "function_attributes": [
+            "DIMMERCURVE",
+            "DUMMY",
+            "FANS",
+            "FIXTUREDISPLAY",
+            "FIXTUREGLOBALRESET",
+            "MACROS"
+          ],
+          "function_subattributes": [
+            "DIMMERCURVE",
+            "FANSAUTO",
+            "FANSPEED",
+            "FIXTUREDISPLAY",
+            "FIXTUREGLOBALRESET",
+            "MACROSELECT",
+            "NOFEATURE"
+          ]
+        },
+        {
+          "index": "5",
+          "attribute": "COLORMIXER",
+          "feature": "COLORMIX",
+          "preset": "COLOR",
+          "channel_function_count": 3,
+          "function_attributes": [
+            "COLORMIXER"
+          ],
+          "function_subattributes": [
+            "COLORMIXCOLOR",
+            "COLORMIXCYCLE",
+            "COLORMIXRANDOM"
+          ]
+        },
+        {
+          "index": "5",
+          "attribute": "EFFECTMACROS",
+          "feature": "EFFECTMACROS",
+          "preset": "BEAM",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "EFFECTMACROS"
+          ],
+          "function_subattributes": [
+            "EFFECTMACROSELECT"
+          ]
+        },
+        {
+          "index": "6",
+          "attribute": "EFFECTMACRORATE",
+          "feature": "EFFECTMACROS",
+          "preset": "BEAM",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "EFFECTMACRORATE"
+          ],
+          "function_subattributes": [
+            "EFFECTMACRORATE"
+          ]
+        },
+        {
+          "index": "7",
+          "attribute": "EFFECTMACROS2",
+          "feature": "EFFECTMACROS",
+          "preset": "BEAM",
+          "channel_function_count": 1,
+          "function_attributes": [
+            "EFFECTMACROS2"
+          ],
+          "function_subattributes": [
+            "EFFECTMACROSELECT2"
+          ]
+        }
+      ],
+      "capabilities": {
+        "DIMMER": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "COLOR": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "PAN": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "TILT": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "POSITION": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "GOBO": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "PRISM": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "ZOOM": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "FOCUS": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "FROST": {
+          "status": "NOT_PRESENT_IN_EXPORTED_PROFILE",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "SHUTTER_STROBE": {
+          "status": "SHOW_BOUND_VERIFIED",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML"
+        },
+        "PIXEL_SHAPE": {
+          "status": "UNCLASSIFIED_FROM_CHANNEL_INVENTORY",
+          "source": "MA2_EXPORT_FIXTURE_TYPE_XML",
+          "reason": "Pixel/shape topology requires a separately verified FixtureType schema interpretation."
+        }
+      },
+      "technical_definition_sha256": "b43b56b5c114e661a40ce785bc058b9c5e559f83d7fc75529490efada028bd23",
+      "xml_sha256": "1cf9af9c0c31d7a7215da597a8ed5ba3a3136897abf641824dbe74df848bd2cb",
+      "byte_length": 49244,
+      "export": {
+        "filename": "ZEN_AGENT_FT_7_33049e73b694bf84.xml",
+        "command": "Export FixtureType 7 \"ZEN_AGENT_FT_7_33049e73b694bf84.xml\" /nc",
+        "request_started_at_ns": 1789063352254858400,
+        "ma2_feedback": "Executing : Export FixtureType 7 \"ZEN_AGENT_FT_7_33049e73b694bf84.xml\" /nc\n\r\r [Fixture]>",
+        "cleanup": "AGENT_OWNED_TEMPORARY_FILE_REMOVED"
+      },
+      "export_diagnostic": {
+        "schema": "zen.fixture_type_export_diagnostic.v0.1",
+        "read_only": true,
+        "requested_fixture_type": {
+          "fixture_type_id": 7,
+          "list_label": "7 Atomic 3000 LED Extended"
+        },
+        "xml_sha256": "1cf9af9c0c31d7a7215da597a8ed5ba3a3136897abf641824dbe74df848bd2cb",
+        "byte_length": 49244,
+        "parse_status": "PARSED",
+        "xml_root": {
+          "tag": "MA",
+          "attributes": {
+            "major_vers": "3",
+            "minor_vers": "9",
+            "stream_vers": "60",
+            "{http://www.w3.org/2001/XMLSchema-instance}schemaLocation": "http://schemas.malighting.de/grandma2/xml/MA http://schemas.malighting.de/grandma2/xml/3.9.60/MA.xsd"
+          },
+          "schema_version": {
+            "major": "3",
+            "minor": "9",
+            "stream": "60"
+          }
+        },
+        "fixture_type_node_count": 1,
+        "fixture_type_nodes": [
+          {
+            "ordinal_in_export": 1,
+            "parent_path": "MA",
+            "attributes": {
+              "index": "6",
+              "mode": "Extended",
+              "name": "Atomic 3000 LED"
+            },
+            "fixture_type_index": 6,
+            "fixture_type_index_raw": "6",
+            "name": "Atomic 3000 LED",
+            "mode": "Extended",
+            "channel_count": 14,
+            "technical_definition_sha256": "b43b56b5c114e661a40ce785bc058b9c5e559f83d7fc75529490efada028bd23"
+          }
+        ],
+        "observed": {
+          "ordinal_in_export": 1,
+          "parent_path": "MA",
+          "attributes": {
+            "index": "6",
+            "mode": "Extended",
+            "name": "Atomic 3000 LED"
+          },
+          "fixture_type_index": 6,
+          "fixture_type_index_raw": "6",
+          "name": "Atomic 3000 LED",
+          "mode": "Extended",
+          "channel_count": 14,
+          "technical_definition_sha256": "b43b56b5c114e661a40ce785bc058b9c5e559f83d7fc75529490efada028bd23"
+        },
+        "validation_comparisons": {
+          "requested_fixture_type_id": 7,
+          "exported_fixture_type_index": 6,
+          "fixture_type_index_matches_requested_id": false,
+          "list_label": "7 Atomic 3000 LED Extended",
+          "label_reconstructed_using_requested_id": "7 Atomic 3000 LED Extended",
+          "label_using_requested_id_matches_list_label": true,
+          "label_reconstructed_using_exported_index": "6 Atomic 3000 LED Extended",
+          "label_using_exported_index_matches_list_label": false,
+          "channel_count_nonzero": true
+        }
+      },
+      "compound_identity": {
+        "status": "SHOW_BOUND_VERIFIED",
+        "rule": "SHOW_IDENTITY_MATCH + EXACT_REQUEST_COMMAND + MA2_ACCEPTED_EXPORT + XML_INDEX_EQUALS_REQUESTED_POOL_ID_MINUS_ONE + EXACT_LIST_LABEL_FROM_REQUESTED_ID_AND_XML_NAME_MODE + SINGLE_XML_FIXTURETYPE + NONEMPTY_CHANNEL_INVENTORY + UNIQUE_BATCH_IDS_AND_XML_INDICES",
+        "strict_single_export_status": "PARTIAL"
+      },
       "local_profile_candidate": {
-        "status": "NOT_ATTEMPTED_NO_SHOW_BOUND_EXPORT",
-        "source": "LOCAL_PROFILE_CANDIDATE_REFERENCE",
-        "candidate_relative_path": "martin@atomic_3000_led@extended.xmlp"
+        "status": "LOCAL_PROFILE_CANDIDATE_UNBOUND",
+        "source": "STRUCTURAL_CHANNEL_DEFINITION_COMPARISON",
+        "reason": "LOCAL_PROFILE_XML_MALFORMED",
+        "candidate_relative_path": "martin@atomic_3000_led@extended.xmlp",
+        "candidate_file_sha256": "789990fae4f8478a1834b047286e1a9d830bf72e0344029586bb240800a5d6c8"
       }
     }
   ],
-  "binding_status": "PARTIAL",
+  "compound_identity_status": "SHOW_BOUND_VERIFIED",
+  "compound_identity_failure_reason": null,
+  "binding_status": "SHOW_BOUND_VERIFIED",
   "write_audit": {
     "ma2_object_write_audit": "ZERO_WRITES",
     "commands": [
       "Login MM",
-      "List Group",
-      "List Fixture",
-      "List Preset All",
-      "Export FixtureType 2 \"ZEN_AGENT_FT_2_b79ab548eb1e0cbe.xml\" /nc",
-      "Export FixtureType 3 \"ZEN_AGENT_FT_3_0476f4a2f6f1698c.xml\" /nc",
-      "Export FixtureType 4 \"ZEN_AGENT_FT_4_4e6f8f5a57db4448.xml\" /nc",
-      "Export FixtureType 5 \"ZEN_AGENT_FT_5_98d59da6fd377124.xml\" /nc",
-      "Export FixtureType 6 \"ZEN_AGENT_FT_6_173a96c446710b0f.xml\" /nc",
-      "Export FixtureType 7 \"ZEN_AGENT_FT_7_41ca0c0611e9e449.xml\" /nc"
+      "Login MM"
     ],
     "unexpected_commands": [],
-    "fixture_9999_targeted": false,
-    "command_provenance": "Reconstructed from the same-run AgentRuntime state_export log because the pre-existing Telnet audit retained generic RX but not generic TX entries."
+    "fixture_9999_targeted": false
   },
-  "ab_002_readiness": "NOT_READY_FOR_EXPRESSIVE_ACTION_DELTA",
-  "ab_002_reason": "One or more current FixtureTypes did not establish a Show-bound technical definition."
+  "ab_002_readiness": "READY_FOR_CAPABILITY_TO_ROLE_ELIGIBILITY_REVIEW",
+  "ab_002_reason": "All current FixtureType technical definitions are Show-bound; a separate bounded capability-to-role eligibility review remains required before action deltas.",
+  "strict_validation": []
 }

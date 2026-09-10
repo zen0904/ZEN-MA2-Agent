@@ -82,7 +82,7 @@ class StateAndSkillsTests(unittest.TestCase):
             def export_and_bind(self, _runtime, label, _settings):
                 self.labels.append(label)
                 if label == "3 Broken Type":
-                    raise FixtureTypeExportError("EXPORT_FIXTURE_TYPE_LABEL_MISMATCH")
+                    raise FixtureTypeExportError("EXPORT_FIXTURE_TYPE_LABEL_MISMATCH", diagnostic={"observed": {"fixture_type_index": 0}})
                 return {
                     "schema": "zen.fixture_type_channel_profile.v0.1",
                     "status": "SHOW_BOUND_VERIFIED",
@@ -103,6 +103,7 @@ class StateAndSkillsTests(unittest.TestCase):
         self.assertEqual(provider.labels, ["2 Verified Type", "3 Broken Type"])
         self.assertEqual([item["status"] for item in result["values"]], ["SHOW_BOUND_VERIFIED", "PARTIAL"])
         self.assertEqual(result["values"][1]["failure_reason"], "EXPORT_FIXTURE_TYPE_LABEL_MISMATCH")
+        self.assertEqual(result["values"][1]["export_diagnostic"]["observed"]["fixture_type_index"], 0)
         self.assertEqual(self.core.state.get("fixture_type_profiles").capability["binding_status"], "PARTIAL")
         self.assertEqual(self.core.scan_show_profile()["known_limits"]["fixture_type_structure"], "PARTIAL")
 

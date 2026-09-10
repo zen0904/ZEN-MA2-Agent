@@ -8,7 +8,10 @@ from zen_ma2_agent.state.providers.fixture_type_export import (
     FixtureTypeExportError,
     FixtureTypeExportProvider,
     bind_local_profile_candidate,
+    fixture_type_export_batch_binding,
     fixture_type_export_binding,
+    fixture_type_capability_inventory,
+    fixture_type_export_diagnostic,
 )
 from zen_ma2_agent.state.providers.group_membership import GroupMembershipProviderUnavailable
 from zen_ma2_agent.state.store import StateStore
@@ -90,6 +93,63 @@ class FixtureTypeExportBindingTests(unittest.TestCase):
             fixture_type_export_binding(fixture_type_xml(index=3), "2 ZEN BAW 20R Mode 2")
         with self.assertRaisesRegex(FixtureTypeExportError, "LABEL_MISMATCH"):
             fixture_type_export_binding(fixture_type_xml(name="Other"), "2 ZEN BAW 20R Mode 2")
+
+    def test_diagnostic_preserves_index_mismatch_without_promoting_identity(self):
+        diagnostic = fixture_type_export_diagnostic(fixture_type_xml(index=0), "2 ZEN BAW 20R Mode 2")
+        self.assertEqual(diagnostic["parse_status"], "PARSED")
+        self.assertEqual(diagnostic["xml_root"]["schema_version"], {"major": "3", "minor": "9", "stream": "60"})
+        self.assertEqual(diagnostic["observed"]["fixture_type_index"], 0)
+        self.assertEqual(diagnostic["observed"]["channel_count"], 10)
+        self.assertFalse(diagnostic["validation_comparisons"]["fixture_type_index_matches_requested_id"])
+        self.assertTrue(diagnostic["validation_comparisons"]["label_using_requested_id_matches_list_label"])
+        self.assertIsNotNone(diagnostic["observed"]["technical_definition_sha256"])
+
+    def test_capability_inventory_uses_channel_function_attribute_evidence(self):
+        capabilities = fixture_type_capability_inventory([{
+            "attribute": "EFFECTWHEEL", "feature": "EFFECT", "preset": "BEAM",
+            "functions": [{"attribute": "PRISMA1", "feature": "BEAM1", "preset": "BEAM"}],
+        }])
+        self.assertEqual(capabilities["PRISM"]["status"], "SHOW_BOUND_VERIFIED")
+
+    def test_provider_retains_bounded_diagnostic_before_owned_temp_cleanup(self):
+        runtime = ExportRuntime(self.directory, xml=fixture_type_xml(index=0))
+        with self.assertRaisesRegex(FixtureTypeExportError, "ID_MISMATCH") as raised:
+            self.provider(directory=self.directory).export_and_bind(runtime, "2 ZEN BAW 20R Mode 2", self.settings)
+        self.assertEqual(raised.exception.diagnostic["observed"]["fixture_type_index"], 0)
+        self.assertFalse((self.directory / "ZEN_AGENT_FT_2_request0001.xml").exists())
+
+    @staticmethod
+    def batch_record(fixture_type_id, name, mode, xml_index):
+        label = f"{fixture_type_id} {name} {mode}"
+        diagnostic = fixture_type_export_diagnostic(fixture_type_xml(index=xml_index, name=name, mode=mode), label)
+        filename = f"ZEN_AGENT_FT_{fixture_type_id}_request0001.xml"
+        command = f'Export FixtureType {fixture_type_id} "{filename}" /nc'
+        return {
+            "status": "PARTIAL",
+            "fixture_type": {"fixture_type_id": fixture_type_id, "list_label": label},
+            "export_diagnostic": diagnostic,
+            "export": {"filename": filename, "command": command, "ma2_feedback": f"Executing : {command}"},
+        }
+
+    def test_compound_batch_proves_observed_zero_based_export_indices(self):
+        records = [
+            self.batch_record(2, "Same Name", "Mode", 1),
+            self.batch_record(3, "Same Name", "Mode", 2),
+        ]
+        bound = fixture_type_export_batch_binding(records, show_identity_match="MATCH")
+        self.assertEqual([item["status"] for item in bound], ["SHOW_BOUND_VERIFIED", "SHOW_BOUND_VERIFIED"])
+        self.assertEqual([item["fixture_type"]["xml_index"] for item in bound], [1, 2])
+        self.assertEqual(bound[0]["compound_identity"]["strict_single_export_status"], "PARTIAL")
+
+    def test_compound_batch_rejects_wrong_export_duplicate_or_missing_show_match(self):
+        valid = self.batch_record(2, "Same Name", "Mode", 1)
+        wrong = self.batch_record(3, "Same Name", "Mode", 1)
+        with self.assertRaisesRegex(FixtureTypeExportError, "COMPOUND_IDENTITY_MISMATCH|BATCH_IDENTITY_AMBIGUOUS"):
+            fixture_type_export_batch_binding([valid, wrong], show_identity_match="MATCH")
+        with self.assertRaisesRegex(FixtureTypeExportError, "SHOW_IDENTITY_MATCH_REQUIRED"):
+            fixture_type_export_batch_binding([valid], show_identity_match="MISMATCH")
+        with self.assertRaisesRegex(FixtureTypeExportError, "BATCH_INSUFFICIENT_SCHEMA_EVIDENCE"):
+            fixture_type_export_batch_binding([valid], show_identity_match="MATCH")
 
     def test_ambiguous_or_channelless_xml_fails_closed(self):
         with self.assertRaisesRegex(FixtureTypeExportError, "COUNT_MISMATCH"):
