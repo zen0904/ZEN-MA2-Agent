@@ -690,3 +690,26 @@ independent and immutable; alignment is reported for review only.
 connection or MA2 write is part of this layer. Permanent promotion would
 require repeated cross-artist, cross-style and cross-scale evidence plus
 explicit human confirmation.
+
+## 30 Human Style Review Decisions
+
+`zen.user_style_review.v0.1` stores human decisions separately from immutable
+User Style Evidence and Style Candidate records. Review-ready records include
+candidate and evidence references, scope, rationale, limitations, reviewer and
+version metadata. Every generated template has human decision `UNSET`.
+
+AI recommendations are explicitly labelled `AI_RECOMMENDATION`; they are not
+acceptance decisions. Even a later human `ACCEPT` only makes a candidate
+eligible for future knowledge/style consideration. It cannot become a global
+Designer rule, hard constraint, or permanent `ZEN_STYLE_PROFILE` trait.
+
+The revised synthesis treats clean hierarchy, palette coherence, musical
+alignment, multi-level energy design, negative-space acceptance and intentional
+restraint as supported candidates. Controlled maximalism, dominant-theme color,
+transient impact, section delta and between-peak restraint remain partial or
+moderate. Complete-look, musically-justified-impact and geometry/global claims
+remain weak or uncertain. `HIGH_IMPACT_ALWAYS` is rejected by evidence.
+
+This layer remains review-only: Designer runtime wiring is `NOT_RUN`,
+`ZEN_STYLE_PROFILE` is `DEFERRED`, Industry evidence is unchanged, and MA2
+writes are `ZERO`.

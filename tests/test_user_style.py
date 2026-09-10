@@ -7,9 +7,12 @@ from zen_ma2_agent.user_style import (
     CANDIDATE_SCHEMA,
     SCHEMA,
     compare_with_industry,
+    REVIEW_SCHEMA,
+    build_review_records,
     synthesize_candidates,
     validate_candidate,
     validate_evidence,
+    validate_review,
 )
 
 
@@ -98,6 +101,29 @@ class UserStyleEvidenceTests(unittest.TestCase):
         bad["command"] = "Store Cue"
         with self.assertRaises(ValueError):
             validate_evidence(bad)
+
+    def test_review_schema_and_unset_human_decision(self):
+        candidates = synthesize_candidates(self.evidence, ["CLEAN_VISUAL_HIERARCHY", "HIGH_IMPACT_ALWAYS"])
+        records = build_review_records(candidates)
+        self.assertEqual(records[0]["schema"], REVIEW_SCHEMA)
+        self.assertTrue(all(record["decision"] == "UNSET" for record in records))
+        self.assertTrue(all(record["ai_recommendation"] != "UNSET" for record in records))
+        self.assertTrue(all(validate_review(record)["schema"] == REVIEW_SCHEMA for record in records))
+
+    def test_review_acceptance_is_separate_from_promotion(self):
+        candidate = synthesize_candidates(self.evidence, ["CLEAN_VISUAL_HIERARCHY"])[0]
+        record = build_review_records([candidate])[0]
+        accepted = dict(record, decision="ACCEPT", rationale="Human confirms this bounded preference.", reviewer="ZEN", reviewed_at="2026-09-10")
+        normalized = validate_review(accepted)
+        self.assertEqual(normalized["decision"], "ACCEPT")
+        self.assertNotIn("promoted", normalized)
+        self.assertEqual(candidate["promotion_status"], "HUMAN_REVIEWED_CANDIDATE")
+
+    def test_review_rejects_invalid_decision(self):
+        candidate = synthesize_candidates(self.evidence, ["CLEAN_VISUAL_HIERARCHY"])[0]
+        record = dict(build_review_records([candidate])[0], decision="AUTO_ACCEPT")
+        with self.assertRaises(ValueError):
+            validate_review(record)
 
 
 if __name__ == "__main__":

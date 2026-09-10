@@ -4,7 +4,7 @@ Status: `STYLE_CANDIDATE / HUMAN_REVIEWED_EVIDENCE`. No `ZEN_STYLE_PROFILE` is c
 
 ## Current working style description
 
-Zen currently prefers highly controlled contemporary stage design: clear visual hierarchy, coherent dominant palette, strong musical alignment, complete low/medium/high energy states, intentional restraint between peaks, and powerful transient impact when musically justified. High-density looks are welcome when geometry, color, timing and focus remain organized.
+Zen currently prefers highly controlled contemporary stage design with clear visual hierarchy, coherent palette structure, strong musical alignment, meaningful low/medium/high energy progression, and intentional restraint. High-density looks are welcome when geometry, color, timing, and focus remain organized. Controlled high-impact and dominant-theme color are strong but not yet universal preference candidates.
 
 ## Strong candidates
 

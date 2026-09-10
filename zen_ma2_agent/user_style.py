@@ -6,10 +6,12 @@ from typing import Any, Iterable
 
 SCHEMA = "zen.user_style_evidence.v0.1"
 CANDIDATE_SCHEMA = "zen.user_style_candidate.v0.1"
+REVIEW_SCHEMA = "zen.user_style_review.v0.1"
 REFERENCE_TYPES = {"POSITIVE_VISUAL_REFERENCE", "NEGATIVE_VISUAL_REFERENCE", "COMPARATIVE_PREFERENCE", "DIRECT_USER_STATEMENT", "A_B_C_ENERGY_REVIEW"}
 STRENGTHS = {"STRONG_POSITIVE", "POSITIVE", "NEUTRAL", "NEGATIVE", "STRONG_NEGATIVE"}
 SCOPES = {"CASE_LOCAL", "CROSS_CASE_CANDIDATE", "USER_STYLE_CANDIDATE"}
 STATUSES = {"SUPPORTED", "PARTIAL", "UNKNOWN", "REJECTED_BY_EVIDENCE"}
+REVIEW_DECISIONS = {"UNSET", "ACCEPT", "ACCEPT_WITH_LIMITATION", "NEEDS_MORE_EVIDENCE", "REJECT", "UNSURE"}
 _FORBIDDEN = {"command", "commands", "raw_command", "telnet", "lua", "ma_command", "script"}
 
 
@@ -104,6 +106,81 @@ class StyleCandidate:
         value["supporting_references"] = list(self.supporting_references)
         value["contradicting_references"] = list(self.contradicting_references)
         return {"schema": CANDIDATE_SCHEMA, **value}
+
+
+@dataclass(frozen=True)
+class UserStyleReview:
+    candidate_id: str
+    evidence_ids: tuple[str, ...]
+    decision: str = "UNSET"
+    scope: str = "USER_STYLE_CANDIDATE"
+    rationale: str = ""
+    limitations: str = ""
+    reviewer: str = "UNASSIGNED"
+    reviewed_at: str = ""
+    version: str = "v0.1"
+    ai_recommendation: str = "UNSURE"
+
+    def __post_init__(self) -> None:
+        if not self.candidate_id.strip():
+            raise ValueError("Review must reference a candidate.")
+        if self.decision not in REVIEW_DECISIONS or self.scope not in SCOPES:
+            raise ValueError("Invalid user style review decision or scope.")
+        if self.ai_recommendation not in REVIEW_DECISIONS - {"UNSET"}:
+            raise ValueError("Invalid AI recommendation.")
+        _safe(asdict(self))
+
+    def to_dict(self) -> dict[str, Any]:
+        value = asdict(self)
+        value["evidence_ids"] = list(self.evidence_ids)
+        return {"schema": REVIEW_SCHEMA, **value}
+
+
+def validate_review(value: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(value, dict) or value.get("schema") != REVIEW_SCHEMA:
+        raise ValueError(f"Review schema must be {REVIEW_SCHEMA}.")
+    _safe(value)
+    fields = set(UserStyleReview.__dataclass_fields__)
+    missing = fields - {"decision", "scope", "rationale", "limitations", "reviewer", "reviewed_at", "version", "ai_recommendation"} - set(value)
+    if missing:
+        raise ValueError(f"Review is missing: {', '.join(sorted(missing))}")
+    payload = {key: value[key] for key in fields if key in value}
+    payload.setdefault("decision", "UNSET")
+    payload.setdefault("scope", "USER_STYLE_CANDIDATE")
+    payload.setdefault("rationale", "")
+    payload.setdefault("limitations", "")
+    payload.setdefault("reviewer", "UNASSIGNED")
+    payload.setdefault("reviewed_at", "")
+    payload.setdefault("version", "v0.1")
+    payload.setdefault("ai_recommendation", "UNSURE")
+    payload["evidence_ids"] = tuple(payload["evidence_ids"])
+    return UserStyleReview(**payload).to_dict()
+
+
+def _seed_recommendation(candidate: dict[str, Any]) -> str:
+    status = candidate.get("status")
+    if status == "SUPPORTED":
+        return "ACCEPT_WITH_LIMITATION"
+    if status == "PARTIAL":
+        return "NEEDS_MORE_EVIDENCE"
+    if status == "REJECTED_BY_EVIDENCE":
+        return "REJECT"
+    return "UNSURE"
+
+
+def build_review_records(candidates: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Create review-ready records; every human decision remains UNSET."""
+    records = []
+    for candidate in candidates:
+        records.append(UserStyleReview(
+            candidate_id=candidate["candidate_id"],
+            evidence_ids=tuple(candidate.get("supporting_references", ())) + tuple(candidate.get("contradicting_references", ())),
+            decision="UNSET",
+            rationale="",
+            limitations="Human review must confirm scope and context before future knowledge consideration.",
+            ai_recommendation=_seed_recommendation(candidate),
+        ).to_dict())
+    return records
 
 
 def validate_candidate(value: dict[str, Any]) -> dict[str, Any]:
