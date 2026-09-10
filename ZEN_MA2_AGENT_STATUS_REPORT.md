@@ -996,14 +996,15 @@ venue validation remains `WAIT_FOR_REAL_CASE`, and MA2 write audit is ZERO.
 ## 44 Existing Show Resource Mapping Review 001
 
 `ZEN_EXISTING_SHOW_RESOURCE_MAPPING_REVIEW_001.md` is a concise, read-only,
-human-reviewable proposal for translating the exact scanned Existing Show
-Groups to the limited current B3 role vocabulary. It keeps scanned resource
-facts (`CONFIRMED`) separate from all case-derived candidate roles
-(`INFERRED_FROM_GROUP_IDENTITY`) and capability/action gaps (`UNKNOWN`).
+human-reviewable capability/candidate-role proposal for the exact scanned
+Existing Show Groups. It explicitly separates `resource_capabilities`,
+non-ranked `candidate_roles`, and a song/case-specific `case_role_assignment`.
+Fixture labels and past case judgments do not create a fixed ZEN role habit,
+fixture priority, or permanent Group identity.
 
-There are zero confirmed active mappings: HYBRID, SPOT, WASH, B-EYE, LED PAR,
-and STROBE have six inferred candidate proposals, while BEAM deliberately has
-no safe current B3 primary-role translation. Geometry remains uninitialized,
+There are zero confirmed resource-to-role mappings: HYBRID, SPOT, WASH, B-EYE,
+LED PAR, and STROBE have six inferred candidate proposals, while BEAM
+deliberately has no safe current B3 candidate translation. Geometry remains uninitialized,
 semantic positions remain absent, and Effect inventory/labels remain unsafe
 for action-level mapping. Training Case 001 has not been promoted. Every human
 review field is `UNSET`; no role binding or action authorization exists.
@@ -1012,4 +1013,4 @@ Production Designer behavior remains unchanged, B3 remains
 `GUIDANCE_ASSISTED_AB_ONLY`, `ZEN_STYLE_PROFILE` remains deferred, real venue
 validation remains `WAIT_FOR_REAL_CASE`, and the MA2 write audit remains ZERO.
 The next bounded step is explicit human review of these candidates before a
-new Existing Show experimental A/B can express them.
+new Existing Show experimental A/B can express a song/case-specific selection.

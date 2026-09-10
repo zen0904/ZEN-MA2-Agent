@@ -3,10 +3,29 @@
 Status: `READY_FOR_HUMAN_REVIEW` — proposal only; no mapping is active.
 
 This review is the bounded next step after `ZEN_REAL_SONG_EXISTING_SHOW_AB_001.md`.
-It maps the scanned Existing Show's real Groups to the *current limited B3
-abstract role vocabulary for human consideration. It does **not** create
+It records non-ranked candidate relationships between the scanned Existing
+Show's real Groups and the *current limited B3* abstract role vocabulary for
+human consideration. It does **not** create
 `role_bindings`, alter the production Designer, alter the experimental B3
 algorithm, or authorize any MA2 action.
+
+## Mapping model: capability before candidate; Design Intent before selection
+
+This document does **not** assign permanent fixture roles, fixture importance,
+or a ZEN-wide Group ordering. In particular, it does not say that HYBRID must
+be primary, BEAM must be secondary, or WASH must be color. A Group can serve a
+different role in another song or section, or can be intentionally unused.
+
+The terms below are deliberately separate:
+
+1. **`resource_capabilities`** — only what is confirmed or plausibly available
+   from the current resource scan. A Group name is not a capability proof.
+2. **`candidate_roles`** — non-ranked B3 roles the resource *may* suit in a
+   bounded context. These are not assignments and remain inferred unless
+   independently verified.
+3. **`case_role_assignment`** — the actual choice for a particular song,
+   section, and Design Intent. None are made in this review. Design Intent
+   precedes this selection; it may choose no role for an available Group.
 
 ## Read-only source boundary
 
@@ -44,16 +63,17 @@ capability, real programming intent, per-Group preset applicability, color
 behavior, texture behavior, effect behavior, physical placement, or a
 calibrated stage relationship. No candidate below establishes any of those.
 
-## Candidate mapping review
+## Resource capability and candidate-role review
 
 ### GROUP 1 — HYBRID
 
-- **Confirmed resource facts:** Group `1 HYBRID`; fixtures `101–108` in scan
+- **`resource_capabilities` — confirmed inventory facts:** Group `1 HYBRID`; fixtures `101–108` in scan
   order; fixture type label `2 ZEN BAW 20R Mode 2`.
-- **Candidate primary role:** `MOVER_TEXTURE_LAYER`.
-- **Candidate secondary roles:** `PRIMARY_FOCUS` (bounded translation of the
-  Training Case's `KEY_LAYER`); `DENSITY_LAYER` only if later capability and
-  look-composition review support broad coverage.
+- **`candidate_roles` — non-ranked:** `MOVER_TEXTURE_LAYER`,
+  `PRIMARY_FOCUS` (bounded translation of Training Case's `KEY_LAYER`), and
+  conditional `DENSITY_LAYER` if a later capability/look review supports it.
+- **`case_role_assignment`:** `NONE` — must be selected, or intentionally not
+  selected, from a specific Design Intent.
 - **Unsupported / unsafe assumptions:** aerial placement, position/movement
   capability, mirror geometry, beam behavior, effect use, or that availability
   means the Group should be active.
@@ -65,11 +85,12 @@ calibrated stage relationship. No candidate below establishes any of those.
 
 ### GROUP 2 — SPOT
 
-- **Confirmed resource facts:** Group `2 SPOT`; fixtures `301–308` in scan
+- **`resource_capabilities` — confirmed inventory facts:** Group `2 SPOT`; fixtures `301–308` in scan
   order; fixture type label `3 ZEN DMH-160 St_Preset`.
-- **Candidate primary role:** `PRIMARY_FOCUS`.
-- **Candidate secondary roles:** `MOVER_TEXTURE_LAYER` (only as a conditional
-  candidate; it is not a verified movement instruction).
+- **`candidate_roles` — non-ranked:** `PRIMARY_FOCUS`; conditional
+  `MOVER_TEXTURE_LAYER` (not a verified movement instruction).
+- **`case_role_assignment`:** `NONE` — Design Intent may select either,
+  neither, or another safe strategy for the section.
 - **Unsupported / unsafe assumptions:** performer location, focus coverage,
   position semantics, gobo/beam behavior, or automatic use of Focus presets on
   this Group.
@@ -80,27 +101,31 @@ calibrated stage relationship. No candidate below establishes any of those.
 
 ### GROUP 3 — BEAM
 
-- **Confirmed resource facts:** Group `3 BEAM`; fixtures `201–208` in scan
+- **`resource_capabilities` — confirmed inventory facts:** Group `3 BEAM`; fixtures `201–208` in scan
   order; fixture type label `2 ZEN BAW 20R Mode 2`.
-- **Candidate primary role:** `NO_CURRENT_B3_PRIMARY_ROLE_CANDIDATE`.
-- **Candidate secondary roles:** `MOVER_TEXTURE_LAYER` only if a future
+- **`candidate_roles` — non-ranked:** no safe direct B3 translation currently;
+  conditional `MOVER_TEXTURE_LAYER` only if a future
   human/capability review confirms that this is the appropriate abstract
   translation of the case-specific beam/aerial use.
+- **`case_role_assignment`:** `NONE` — no selection can be made until the
+  B3 translation is reviewed rather than collapsed.
 - **Unsupported / unsafe assumptions:** a B3 `BEAM_LAYER` does not exist;
   geometry, aerial placement, beam parameters, impact behavior, and effect use
   must not be inferred from the name.
 - **Evidence:** Existing Show Group identity and fixture-type snapshot;
   Training Case 001's inferred `BEAM_LAYER` / `AERIAL` interpretation.
 - **Confidence:** `UNKNOWN_FOR_CURRENT_B3_MAPPING` — the limited B3 vocabulary
-  cannot safely express the case-specific primary role without collapsing it.
+  cannot safely express the case-specific candidate without collapsing it.
 - **HUMAN REVIEW:** `UNSET`.
 
 ### GROUP 4 — WASH
 
-- **Confirmed resource facts:** Group `4 WASH`; fixtures `501–508` in scan
+- **`resource_capabilities` — confirmed inventory facts:** Group `4 WASH`; fixtures `501–508` in scan
   order; fixture type label `5 ZEN MAC AU XB Standard`.
-- **Candidate primary role:** `COLOR_FIELD`.
-- **Candidate secondary roles:** `DENSITY_LAYER`.
+- **`candidate_roles` — non-ranked:** `COLOR_FIELD`, `DENSITY_LAYER`.
+- **`case_role_assignment`:** `NONE` — `WASH` is not a permanent color role;
+  the song/case decision may select either candidate, neither, or another
+  safe strategy.
 - **Unsupported / unsafe assumptions:** actual color attributes, preset
   compatibility, broad physical coverage, environment/area semantics, or any
   position relationship.
@@ -112,10 +137,11 @@ calibrated stage relationship. No candidate below establishes any of those.
 
 ### GROUP 5 — B-EYE
 
-- **Confirmed resource facts:** Group `5 B-EYE`; fixtures `401–408` in scan
+- **`resource_capabilities` — confirmed inventory facts:** Group `5 B-EYE`; fixtures `401–408` in scan
   order; fixture type label `4 ZEN K10 Shapes`.
-- **Candidate primary role:** `MOVER_TEXTURE_LAYER`.
-- **Candidate secondary roles:** `COLOR_FIELD`.
+- **`candidate_roles` — non-ranked:** `MOVER_TEXTURE_LAYER`, `COLOR_FIELD`.
+- **`case_role_assignment`:** `NONE` — Design Intent determines whether either
+  candidate is useful for the current section.
 - **Unsupported / unsafe assumptions:** pixel/shape behavior, movement,
   texture quality, effect behavior, geometry, and any claim that eye-candy is
   appropriate for a given section.
@@ -126,10 +152,11 @@ calibrated stage relationship. No candidate below establishes any of those.
 
 ### GROUP 6 — LED PAR
 
-- **Confirmed resource facts:** Group `6 LED PAR`; fixtures `601–608` in scan
+- **`resource_capabilities` — confirmed inventory facts:** Group `6 LED PAR`; fixtures `601–608` in scan
   order; fixture type label `6 ZEN LEDPar 9c 9Ch Mode A`.
-- **Candidate primary role:** `COLOR_FIELD`.
-- **Candidate secondary roles:** `DENSITY_LAYER`.
+- **`candidate_roles` — non-ranked:** `COLOR_FIELD`, `DENSITY_LAYER`.
+- **`case_role_assignment`:** `NONE` — availability never requires use, and
+  the Design Intent determines any chosen role.
 - **Unsupported / unsafe assumptions:** actual color mixing/preset support,
   floor or rear placement, directional coverage, timing/effect behavior, or
   any semantic left/right relationship.
@@ -140,10 +167,12 @@ calibrated stage relationship. No candidate below establishes any of those.
 
 ### GROUP 7 — STROBE
 
-- **Confirmed resource facts:** Group `7 STROBE`; fixtures `701–708` in scan
+- **`resource_capabilities` — confirmed inventory facts:** Group `7 STROBE`; fixtures `701–708` in scan
   order; fixture type label `7 Atomic 3000 LED Extended`.
-- **Candidate primary role:** `TIMING_LAYER` — conditional only.
-- **Candidate secondary roles:** `NONE` in the current B3 vocabulary.
+- **`candidate_roles` — non-ranked:** conditional `TIMING_LAYER`; no additional
+  safe current B3 candidate.
+- **`case_role_assignment`:** `NONE` — a high-energy section does not imply
+  use of this Group, and no timing/impact action is authorized here.
 - **Unsupported / unsafe assumptions:** flash, pulse, impact, effect grammar,
   safe intensity/rate, physical placement, or that a high-energy section
   should use this Group. The observed Effect inventory is not action-level
@@ -167,23 +196,25 @@ calibrated stage relationship. No candidate below establishes any of those.
 
 ## Compact review matrix
 
-| Group | Candidate primary role | Candidate secondary role(s) | Mapping state | Evidence confidence | Human review |
+| Group | Non-ranked candidate role(s) | Current case-role assignment | Mapping state | Evidence confidence | Human review |
 | --- | --- | --- | --- | --- | --- |
-| 1 HYBRID | `MOVER_TEXTURE_LAYER` | `PRIMARY_FOCUS`, conditional `DENSITY_LAYER` | proposal only | `INFERRED_FROM_GROUP_IDENTITY` | `UNSET` |
-| 2 SPOT | `PRIMARY_FOCUS` | conditional `MOVER_TEXTURE_LAYER` | proposal only | `INFERRED_FROM_GROUP_IDENTITY` | `UNSET` |
-| 3 BEAM | `NO_CURRENT_B3_PRIMARY_ROLE_CANDIDATE` | conditional `MOVER_TEXTURE_LAYER` | no safe B3 translation | `UNKNOWN_FOR_CURRENT_B3_MAPPING` | `UNSET` |
-| 4 WASH | `COLOR_FIELD` | `DENSITY_LAYER` | proposal only | `INFERRED_FROM_GROUP_IDENTITY` | `UNSET` |
-| 5 B-EYE | `MOVER_TEXTURE_LAYER` | `COLOR_FIELD` | proposal only | `INFERRED_FROM_GROUP_IDENTITY` | `UNSET` |
-| 6 LED PAR | `COLOR_FIELD` | `DENSITY_LAYER` | proposal only | `INFERRED_FROM_GROUP_IDENTITY` | `UNSET` |
+| 1 HYBRID | `MOVER_TEXTURE_LAYER`, `PRIMARY_FOCUS`, conditional `DENSITY_LAYER` | `NONE` | proposal only | `INFERRED_FROM_GROUP_IDENTITY` | `UNSET` |
+| 2 SPOT | `PRIMARY_FOCUS`, conditional `MOVER_TEXTURE_LAYER` | `NONE` | proposal only | `INFERRED_FROM_GROUP_IDENTITY` | `UNSET` |
+| 3 BEAM | no safe direct B3 translation; conditional `MOVER_TEXTURE_LAYER` | `NONE` | no safe B3 translation | `UNKNOWN_FOR_CURRENT_B3_MAPPING` | `UNSET` |
+| 4 WASH | `COLOR_FIELD`, `DENSITY_LAYER` | `NONE` | proposal only | `INFERRED_FROM_GROUP_IDENTITY` | `UNSET` |
+| 5 B-EYE | `MOVER_TEXTURE_LAYER`, `COLOR_FIELD` | `NONE` | proposal only | `INFERRED_FROM_GROUP_IDENTITY` | `UNSET` |
+| 6 LED PAR | `COLOR_FIELD`, `DENSITY_LAYER` | `NONE` | proposal only | `INFERRED_FROM_GROUP_IDENTITY` | `UNSET` |
 | 7 STROBE | conditional `TIMING_LAYER` | `NONE` | proposal only; action unsafe | `INFERRED_FROM_GROUP_IDENTITY` | `UNSET` |
 
-**Count:** confirmed active mappings `0`; inferred candidate mapping proposals
-`6`; current-B3 unmapped/unknown primary-role cases `1`; Groups with
+**Count:** confirmed resource-to-role mappings `0`; inferred candidate-role
+proposals `6`; current-B3 unmapped/unknown candidate-role cases `1`; Groups with
 capability-level unknowns `7`.
 
 ## Next bounded decision
 
 Zen should review each candidate individually. A later accepted mapping must
-remain provenance-bearing and experimental; it can make a future Existing Show
-B3 A/B run expressible, but it must not silently change the production
-Designer, create a `ZEN_STYLE_PROFILE`, or authorize MA2 writes.
+remain provenance-bearing and experimental. It only makes a resource eligible
+for selection by a future song/case Design Intent; it is not a fixture-role
+habit or a priority order. It may make a future Existing Show B3 A/B run
+expressible, but it must not silently change the production Designer, create a
+`ZEN_STYLE_PROFILE`, or authorize MA2 writes.
