@@ -806,3 +806,27 @@ intentionally rather than forcing a mirror. The restrained/minimal re-evaluation
 now records both selected and intentionally inactive roles. This is ready for
 human cross-rig review only; production guidance activation, `ZEN_STYLE_PROFILE`,
 and MA2 writes remain `NOT_RUN`/`DEFERRED`/`ZERO`.
+
+## 36 Single-Entry Rig Intake / Router
+
+`zen.show_intake.v0.1`, `zen.rig_context.v0.1`, and
+`zen.rig_proposal.v0.1` now establish a command-free single-entry boundary in
+front of the existing shadow guidance path. One user-facing ZEN MA2 Agent can
+route a request to `USER_CONFIRMED_LAYOUT`, optional
+`ASSISTED_RIG_PLANNING`, or `EXISTING_SHOW`; users do not need to select
+separate venue, rig, designer, or builder agents.
+
+Confirmed placement bypasses the planner and remains authoritative. Existing
+scanned-show placement is reused rather than redesigned. Sparse information can
+produce a bounded floor-only semantic proposal if `FLOOR_ONLY` and a usable
+floor-zone observation are available; otherwise the router asks only the
+material `CONFIRM_SAFE_FLOOR_ZONE` question. Facts retain
+`CONFIRMED`/`INFERRED`/`UNKNOWN` certainty and source. Visual observations can
+state an inferred visible truss or usable floor zone but never certify hanging,
+load, electrical capacity, or rigging points.
+
+Normalized Rig Context exposes inferred capability roles and advisory-only
+`KEEP`/`REDUCE`/`OMIT`/`SUBSTITUTE` affordances to shadow guidance. Baseline and
+shadow plans remain identical. The production Designer, Resolver, Builder,
+MA2/Telnet/plugin paths, Guidance-Assisted Designer A/B, and `ZEN_STYLE_PROFILE`
+remain `NOT_RUN`/`DEFERRED`; MA2 writes are `ZERO`.

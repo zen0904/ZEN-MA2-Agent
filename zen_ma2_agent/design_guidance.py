@@ -14,6 +14,7 @@ from .training_case import validate_training_case
 from .user_style import validate_evidence, validate_review
 from .song_analysis import validate_song_analysis
 from .shadow_rig_context import SHADOW_RIG_CONTEXT_SCHEMA, validate_shadow_rig_context
+from .rig_intake import RIG_CONTEXT_SCHEMA, validate_rig_context
 
 
 GUIDANCE_CONTEXT_SCHEMA = "zen.design_guidance_context.v0.1"
@@ -142,6 +143,16 @@ def _song_signals(song_analysis: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _case_context(case: dict[str, Any]) -> dict[str, Any]:
+    if case.get("schema") == RIG_CONTEXT_SCHEMA:
+        rig = validate_rig_context(case)
+        return {
+            "case_id": rig["context_id"], "case_type": "NORMALIZED_RIG_CONTEXT", "resource_scale": "LIMITED" if len(rig["fixture_families"]) <= 1 else "MEDIUM",
+            "style_orientation": "GENERAL", "fixture_group_roles": [], "visual_layers": [], "constraints": deepcopy(rig["constraints"]),
+            "verified_resources": {"fixture_families": deepcopy(rig["fixture_families"]), "available_roles": [item["role"] for item in rig["available_roles"]]},
+            "assumptions": deepcopy(rig["assumptions"]), "confidence": "PARTIAL", "geometry_status": rig["geometry_status"],
+            "source": rig["layout_source"], "scope": rig["scope"], "available_roles": [item["role"] for item in rig["available_roles"]],
+            "design_affordances": deepcopy(rig["design_affordances"]), "provenance": {"source_mode": rig["source_mode"], "planning_status": rig["planning_status"], "facts": deepcopy(rig["facts"]), "unknowns": deepcopy(rig["unknowns"])},
+        }
     if case.get("schema") == SHADOW_RIG_CONTEXT_SCHEMA:
         shadow = validate_shadow_rig_context(case)
         return {

@@ -1,0 +1,94 @@
+{
+  "schema": "zen.rig_intake_router_fixture.v0.1",
+  "label": "SYNTHETIC_EVALUATION_ONLY",
+  "intakes": {
+    "user_confirmed": {
+      "schema": "zen.show_intake.v0.1",
+      "intake_id": "CONFIRMED_FLOOR_LAYOUT",
+      "requested_task": "Design a floor-mounted show around my confirmed layout.",
+      "routing_mode": "USER_CONFIRMED_LAYOUT",
+      "fixture_inventory": [
+        {"family": "LED PAR", "count": 8, "certainty": "CONFIRMED", "source": "USER_CONFIRMED"},
+        {"family": "MOVING HEAD", "count": 10, "certainty": "CONFIRMED", "source": "USER_CONFIRMED"}
+      ],
+      "facts": [{"fact_id": "STAGE_DIMENSIONS", "value": "UNKNOWN", "certainty": "UNKNOWN", "source": "NOT_SUPPLIED"}],
+      "visual_observations": [],
+      "constraints": [{"fact_id": "FLOOR_ONLY", "value": true, "certainty": "CONFIRMED", "source": "USER_CONFIRMED"}],
+      "user_confirmed_layout": [
+        {"fixture_family": "LED PAR", "count": 8, "zone": "REAR_FLOOR_LINE", "mounting": "FLOOR", "certainty": "CONFIRMED", "source": "USER_CONFIRMED"},
+        {"fixture_family": "MOVING HEAD", "count": 4, "zone": "FRONT_CORNER_ZONES", "mounting": "FLOOR", "certainty": "CONFIRMED", "source": "USER_CONFIRMED"},
+        {"fixture_family": "MOVING HEAD", "count": 6, "zone": "REAR_FLOOR_POSITIONS", "mounting": "FLOOR", "certainty": "CONFIRMED", "source": "USER_CONFIRMED"}
+      ]
+    },
+    "sparse_floor_only": {
+      "schema": "zen.show_intake.v0.1",
+      "intake_id": "SPARSE_FLOOR_ONLY",
+      "requested_task": "Plan a floor-only rig from photos and this inventory.",
+      "routing_mode": "ASSISTED_RIG_PLANNING",
+      "fixture_inventory": [
+        {"family": "LED PAR", "count": 8, "certainty": "CONFIRMED", "source": "USER_CONFIRMED"},
+        {"family": "MOVING HEAD", "count": 10, "certainty": "CONFIRMED", "source": "USER_CONFIRMED"}
+      ],
+      "facts": [
+        {"fact_id": "STAGE_WIDTH", "value": "UNKNOWN", "certainty": "UNKNOWN", "source": "NOT_SUPPLIED"},
+        {"fact_id": "POWER_CAPACITY", "value": "UNKNOWN", "certainty": "UNKNOWN", "source": "NOT_SUPPLIED"}
+      ],
+      "visual_observations": [
+        {"fact_id": "REAR_FLOOR_ZONE_USABLE", "value": true, "certainty": "INFERRED", "source": "VENUE_PHOTO_OBSERVATION"}
+      ],
+      "constraints": [{"fact_id": "FLOOR_ONLY", "value": true, "certainty": "CONFIRMED", "source": "USER_CONFIRMED"}],
+      "user_confirmed_layout": []
+    },
+    "photo_truss_unknown": {
+      "schema": "zen.show_intake.v0.1",
+      "intake_id": "PHOTO_TRUSS_UNKNOWN",
+      "requested_task": "Plan safely from this venue image and floor inventory.",
+      "routing_mode": "ASSISTED_RIG_PLANNING",
+      "fixture_inventory": [{"family": "LED PAR", "count": 8, "certainty": "CONFIRMED", "source": "USER_CONFIRMED"}],
+      "facts": [{"fact_id": "SAFE_TO_HANG_FIXTURES", "value": "UNKNOWN", "certainty": "UNKNOWN", "source": "NOT_CONFIRMED"}],
+      "visual_observations": [
+        {"fact_id": "VISIBLE_TRUSS", "value": true, "certainty": "INFERRED", "source": "VENUE_PHOTO_OBSERVATION"},
+        {"fact_id": "REAR_FLOOR_ZONE_USABLE", "value": true, "certainty": "INFERRED", "source": "VENUE_PHOTO_OBSERVATION"}
+      ],
+      "constraints": [{"fact_id": "FLOOR_ONLY", "value": true, "certainty": "CONFIRMED", "source": "USER_CONFIRMED"}],
+      "user_confirmed_layout": []
+    },
+    "led_only": {
+      "schema": "zen.show_intake.v0.1",
+      "intake_id": "LED_ONLY_CONTEXT",
+      "requested_task": "Plan an LED-only floor show.",
+      "routing_mode": "ASSISTED_RIG_PLANNING",
+      "fixture_inventory": [{"family": "LED BAR", "count": 12, "certainty": "CONFIRMED", "source": "USER_CONFIRMED"}],
+      "facts": [],
+      "visual_observations": [{"fact_id": "REAR_FLOOR_ZONE_USABLE", "value": true, "certainty": "INFERRED", "source": "VENUE_PHOTO_OBSERVATION"}],
+      "constraints": [{"fact_id": "FLOOR_ONLY", "value": true, "certainty": "CONFIRMED", "source": "USER_CONFIRMED"}],
+      "user_confirmed_layout": []
+    },
+    "critical_unknown": {
+      "schema": "zen.show_intake.v0.1",
+      "intake_id": "NO_SAFE_ZONE",
+      "requested_task": "Plan this unspecified venue.",
+      "routing_mode": "ASSISTED_RIG_PLANNING",
+      "fixture_inventory": [{"family": "LED PAR", "count": 8, "certainty": "CONFIRMED", "source": "USER_CONFIRMED"}],
+      "facts": [{"fact_id": "STAGE_DIMENSIONS", "value": "UNKNOWN", "certainty": "UNKNOWN", "source": "NOT_SUPPLIED"}],
+      "visual_observations": [],
+      "constraints": [{"fact_id": "FLOOR_ONLY", "value": true, "certainty": "CONFIRMED", "source": "USER_CONFIRMED"}],
+      "user_confirmed_layout": []
+    },
+    "existing_show": {
+      "schema": "zen.show_intake.v0.1",
+      "intake_id": "EXISTING_SHOW_CONTEXT",
+      "requested_task": "Use the scanned show rig for this song.",
+      "routing_mode": "EXISTING_SHOW",
+      "fixture_inventory": [{"family": "SCANNED MOVING HEAD", "count": 8, "certainty": "CONFIRMED", "source": "MA2_SHOW_SCAN"}],
+      "facts": [],
+      "visual_observations": [],
+      "constraints": [],
+      "user_confirmed_layout": [],
+      "existing_show": {
+        "show_profile_ref": "data/ZEN_CURRENT_SHOW_PROFILE.json",
+        "placement_semantics": [{"fixture_family": "SCANNED MOVING HEAD", "count": 8, "zone": "SCANNED_LAYOUT_UNKNOWN_SEMANTICS", "mounting": "UNKNOWN", "certainty": "CONFIRMED", "source": "MA2_SHOW_SCAN"}]
+      }
+    }
+  }
+}
