@@ -713,3 +713,23 @@ remain weak or uncertain. `HIGH_IMPACT_ALWAYS` is rejected by evidence.
 This layer remains review-only: Designer runtime wiring is `NOT_RUN`,
 `ZEN_STYLE_PROFILE` is `DEFERRED`, Industry evidence is unchanged, and MA2
 writes are `ZERO`.
+
+## 31 Explicit Human Style Decisions
+
+The first explicit decisions are stored separately using
+`zen.user_style_review.v0.1`. `CLEAN_VISUAL_HIERARCHY`, `PALETTE_COHERENCE`,
+`MUSIC_STRUCTURE_ALIGNMENT`, `RHYTHMIC_ACCENT_SYNC`,
+`DYNAMIC_CONTOUR_TRACKING`, `MULTI_LEVEL_ENERGY_DESIGN` and
+`INTENTIONAL_RESTRAINT` are `ACCEPT`. `CONTROLLED_HIGH_IMPACT` and
+`CONTROLLED_MAXIMALISM` are `ACCEPT_WITH_LIMITATION` with their documented
+context boundaries.
+
+`HIGH_IMPACT_ALWAYS`, `MAXIMALISM_EQUALS_CLUTTER` and
+`MULTICOLOR_EQUALS_BAD` are explicitly `REJECT`. Other candidates remain
+`UNSET` / `NEEDS_MORE_EVIDENCE`; previous AI recommendations were not used as
+human decisions. Acceptance only makes a candidate eligible for future
+knowledge/style consideration and never creates a global Designer rule or
+permanent `ZEN_STYLE_PROFILE` trait.
+
+Designer runtime wiring remains `NOT_RUN`, `ZEN_STYLE_PROFILE` remains
+`DEFERRED`, Industry evidence is unchanged, and MA2 writes remain `ZERO`.

@@ -25,6 +25,7 @@ class UserStyleEvidenceTests(unittest.TestCase):
         raw = json.loads((ROOT / "fixtures" / "user_style_evidence_001.json").read_text(encoding="utf-8"))
         cls.evidence = [validate_evidence(item) for item in raw["evidence"]]
         cls.pack = build_pack_002(json.loads((ROOT / "fixtures" / "industry_reference_pack_002.json").read_text(encoding="utf-8")))
+        cls.decisions = [validate_review(item) for item in json.loads((ROOT / "fixtures" / "user_style_review_decisions_001.json").read_text(encoding="utf-8"))["decisions"]]
 
     def test_schema_and_human_provenance(self):
         self.assertEqual(self.evidence[0]["schema"], SCHEMA)
@@ -124,6 +125,23 @@ class UserStyleEvidenceTests(unittest.TestCase):
         record = dict(build_review_records([candidate])[0], decision="AUTO_ACCEPT")
         with self.assertRaises(ValueError):
             validate_review(record)
+
+    def test_explicit_human_decisions_match_confirmation(self):
+        by_candidate = {item["candidate_id"]: item for item in self.decisions}
+        for name in ("CLEAN_VISUAL_HIERARCHY", "PALETTE_COHERENCE", "MUSIC_STRUCTURE_ALIGNMENT", "RHYTHMIC_ACCENT_SYNC", "DYNAMIC_CONTOUR_TRACKING", "MULTI_LEVEL_ENERGY_DESIGN", "INTENTIONAL_RESTRAINT"):
+            self.assertEqual(by_candidate[f"candidate_{name}"]["decision"], "ACCEPT")
+        self.assertEqual(by_candidate["candidate_CONTROLLED_HIGH_IMPACT"]["decision"], "ACCEPT_WITH_LIMITATION")
+        self.assertEqual(by_candidate["candidate_CONTROLLED_MAXIMALISM"]["decision"], "ACCEPT_WITH_LIMITATION")
+
+    def test_explicit_rejected_interpretations_remain_rejected(self):
+        by_candidate = {item["candidate_id"]: item for item in self.decisions}
+        for name in ("HIGH_IMPACT_ALWAYS", "MAXIMALISM_EQUALS_CLUTTER", "MULTICOLOR_EQUALS_BAD"):
+            self.assertEqual(by_candidate[f"candidate_{name}"]["decision"], "REJECT")
+
+    def test_uncovered_candidates_remain_unset(self):
+        candidates = synthesize_candidates(self.evidence, ["DOMINANT_THEME_COLOR", "STRONG_TRANSIENT_IMPACT", "GEOMETRIC_COMPOSITION"])
+        reviews = {item["candidate_id"]: item for item in build_review_records(candidates)}
+        self.assertTrue(all(reviews[item["candidate_id"]]["decision"] == "UNSET" for item in candidates))
 
 
 if __name__ == "__main__":

@@ -6,12 +6,13 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from zen_ma2_agent.user_style import build_review_records, compare_with_industry, synthesize_candidates, validate_evidence
+from zen_ma2_agent.user_style import build_review_records, compare_with_industry, synthesize_candidates, validate_evidence, validate_review
 from zen_ma2_agent.industry_pack_002 import build_pack_002
 
 ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE_FILE = ROOT / "tests" / "fixtures" / "user_style_evidence_001.json"
 PACK_FILE = ROOT / "tests" / "fixtures" / "industry_reference_pack_002.json"
+DECISION_FILE = ROOT / "tests" / "fixtures" / "user_style_review_decisions_001.json"
 CANDIDATE_NAMES = [
     "CONTROLLED_HIGH_IMPACT", "CLEAN_VISUAL_HIERARCHY", "PALETTE_COHERENCE", "DOMINANT_THEME_COLOR",
     "MUSIC_STRUCTURE_ALIGNMENT", "RHYTHMIC_ACCENT_SYNC", "DYNAMIC_CONTOUR_TRACKING", "STRONG_TRANSIENT_IMPACT",
@@ -22,15 +23,16 @@ CANDIDATE_NAMES = [
 ]
 
 
-def load() -> tuple[list[dict], dict]:
+def load() -> tuple[list[dict], dict, list[dict]]:
     raw = json.loads(EVIDENCE_FILE.read_text(encoding="utf-8"))
     evidence = [validate_evidence(item) for item in raw["evidence"]]
     pack = build_pack_002(json.loads(PACK_FILE.read_text(encoding="utf-8")))
-    return evidence, pack
+    decisions = [validate_review(item) for item in json.loads(DECISION_FILE.read_text(encoding="utf-8"))["decisions"]]
+    return evidence, pack, decisions
 
 
 def write_reports() -> None:
-    evidence, pack = load()
+    evidence, pack, decisions = load()
     candidates = synthesize_candidates(evidence, CANDIDATE_NAMES)
     alignment = compare_with_industry(candidates, pack)
     positives = [e for e in evidence if e["strength"] in {"STRONG_POSITIVE", "POSITIVE"}]
@@ -47,10 +49,15 @@ def write_reports() -> None:
         if item["status"] in {"SUPPORTED", "PARTIAL"} and item["confidence"] in {"HIGH", "MEDIUM"}:
             synthesis.append(f"| `{item['name']}` | **{item['status']}** | {len(item['supporting_references'])} | {', '.join(item['contradicting_references']) or 'none'} | HUMAN_REVIEWED_CANDIDATE |")
     moderate = "".join(f"- `{item['name']}` — {item['status']} / confidence {item['confidence']}.\n" for item in candidates if item["status"] not in {"SUPPORTED"} or item["confidence"] == "LOW")
-    synthesis += ["", "## Candidate correction", "", "`IMPACT_WHEN_MUSICALLY_JUSTIFIED` replaces any simplistic HIGH_IMPACT_ALWAYS rule. A/B/C review supports multi-level energy design: each state is complete, and A → B → C is preferred over constant C.", "", "## Moderate / uncertain candidates", "", moderate, "", "## Industry alignment (bounded Pack 002 window 2022–2025)", "", *[f"- `{item['candidate']}` — **{item['status']}**; no automatic promotion." for item in alignment], "", "## Contradictions preserved", "", "- High impact is valued in high-energy, musically justified contexts, but Drake/Billie show that intentional restraint and negative space can also be strongly positive.", "- Maximalism is acceptable when organized; Karol G/Billy Strings feedback identifies clutter and busy palette as the disliked boundary.", "- KPOP_YG_LEANING remains a direction label only; Subtronics and Drake demonstrate cross-domain preference.", "", "## Future Designer boundary", "", "GENERAL_DESIGN_KNOWLEDGE + CONTEMPORARY_MAINSTREAM_PRIOR + CURRENT_CASE_CONTEXT + USER_STYLE_EVIDENCE → Designer. User style may influence variant ranking, but never overrides safety, resource reality, professional validity or song context.", "", "## Promotion gate", "", "Permanent promotion requires repeated evidence across multiple artists, musical styles and rig scales, no major contradictory feedback, and explicit human confirmation. Until then: `ZEN_STYLE_PROFILE = DEFERRED`."]
+    accepted = [item for item in decisions if item["decision"] == "ACCEPT"]
+    limited = [item for item in decisions if item["decision"] == "ACCEPT_WITH_LIMITATION"]
+    rejected = [item for item in decisions if item["decision"] == "REJECT"]
+    unset = [candidate for candidate in candidates if candidate["candidate_id"] not in {item["candidate_id"] for item in decisions}]
+    synthesis += ["", "## Human review decision state", "", "### HUMAN_CONFIRMED", "", *[f"- `{item['candidate_id']}` — ACCEPT" for item in accepted], "", "### HUMAN_CONFIRMED_WITH_LIMITATION", "", *[f"- `{item['candidate_id']}` — ACCEPT_WITH_LIMITATION: {item['limitations']}" for item in limited], "", "### UNSET / NEEDS_MORE_EVIDENCE", "", *[f"- `{item['candidate_id']}` — UNSET" for item in unset], "", "### REJECTED_INTERPRETATIONS", "", *[f"- `{item['candidate_id']}` — REJECT: {item['limitations']}" for item in rejected], "", "Human acceptance remains eligibility for future consideration only; it does not promote a runtime rule.", "", "## Candidate correction", "", "`IMPACT_WHEN_MUSICALLY_JUSTIFIED` replaces any simplistic HIGH_IMPACT_ALWAYS rule. A/B/C review supports multi-level energy design: each state is complete, and A → B → C is preferred over constant C.", "", "## Moderate / uncertain candidates", "", moderate, "", "## Industry alignment (bounded Pack 002 window 2022–2025)", "", *[f"- `{item['candidate']}` — **{item['status']}**; no automatic promotion." for item in alignment], "", "## Contradictions preserved", "", "- High impact is valued in high-energy, musically justified contexts, but Drake/Billie show that intentional restraint and negative space can also be strongly positive.", "- Maximalism is acceptable when organized; Karol G/Billy Strings feedback identifies clutter and busy palette as the disliked boundary.", "- KPOP_YG_LEANING remains a direction label only; Subtronics and Drake demonstrate cross-domain preference.", "", "## Future Designer boundary", "", "GENERAL_DESIGN_KNOWLEDGE + CONTEMPORARY_MAINSTREAM_PRIOR + CURRENT_CASE_CONTEXT + USER_STYLE_EVIDENCE → Designer. User style may influence variant ranking, but never overrides safety, resource reality, professional validity or song context.", "", "## Promotion gate", "", "Permanent promotion requires repeated evidence across multiple artists, musical styles and rig scales, no major contradictory feedback, and explicit human confirmation. Until then: `ZEN_STYLE_PROFILE = DEFERRED`."]
     (ROOT / "ZEN_STYLE_SYNTHESIS_001.md").write_text("\n".join(synthesis), encoding="utf-8")
 
     reviews = build_review_records(candidates)
+    decision_map = {item["candidate_id"]: item for item in decisions}
     groups = {
         "A. Strong candidate preferences": [c for c in candidates if c["status"] == "SUPPORTED" and c["name"] != "HIGH_IMPACT_ALWAYS"],
         "B. Moderate / bounded candidates": [c for c in candidates if c["status"] == "PARTIAL"],
@@ -63,7 +70,9 @@ def write_reports() -> None:
         review_lines += [f"## {title}", ""]
         for candidate in items:
             review = review_map[candidate["candidate_id"]]
-            review_lines += [f"### `{candidate['name']}`", "", f"- Current evidence status: **{candidate['status']}**", f"- Strongest supporting references: {', '.join(candidate['supporting_references']) or 'none'}", f"- Contradicting evidence: {', '.join(candidate['contradicting_references']) or 'none'}", f"- Current scope: USER_STYLE_CANDIDATE", f"- AI recommendation: `{review['ai_recommendation']}` (not a decision)", "- Human decision: **UNSET**", f"- Meaning: {candidate['meaning']}", ""]
+            reviewed = decision_map.get(candidate["candidate_id"], review)
+            review_lines += [f"### `{candidate['name']}`", "", f"- Current evidence status: **{candidate['status']}**", f"- Strongest supporting references: {', '.join(candidate['supporting_references']) or 'none'}", f"- Contradicting evidence: {', '.join(candidate['contradicting_references']) or 'none'}", f"- Current scope: {reviewed['scope']}", f"- AI recommendation: `{reviewed['ai_recommendation']}` (not a decision)", f"- Human decision: **{reviewed['decision']}**", f"- Rationale: {reviewed['rationale'] or 'Awaiting explicit human review.'}", f"- Limitation: {reviewed['limitations'] or 'Not yet recorded.'}", f"- Meaning: {candidate['meaning']}", ""]
+    review_lines += ["## Decision state summary", "", "### HUMAN_CONFIRMED", "", *[f"- `{item['candidate_id']}` — ACCEPT" for item in decisions if item["decision"] == "ACCEPT"], "", "### HUMAN_CONFIRMED_WITH_LIMITATION", "", *[f"- `{item['candidate_id']}` — ACCEPT_WITH_LIMITATION: {item['limitations']}" for item in decisions if item["decision"] == "ACCEPT_WITH_LIMITATION"], "", "### UNSET / NEEDS_MORE_EVIDENCE", "", *[f"- `{candidate['candidate_id']}` — UNSET" for candidate in candidates if candidate["candidate_id"] not in decision_map], "", "### REJECTED_INTERPRETATIONS", "", *[f"- `{item['candidate_id']}` — REJECT: {item['limitations']}" for item in decisions if item["decision"] == "REJECT"], ""]
     review_lines += ["## Explicitly rejected interpretations", "", "- `HIGH_IMPACT_ALWAYS`", "- `MAXIMALISM_EQUALS_CLUTTER`", "- `MULTICOLOR_EQUALS_BAD`", "- `MINIMALISM_EQUALS_LOW_PREFERENCE`", "- `KPOP_YG_EQUALS_GLOBAL_STYLE_RULE`", "", "## Reversibility", "", "A human ACCEPT only makes a candidate eligible for future knowledge/style consideration. It does not create a global Designer rule, hard constraint or permanent `ZEN_STYLE_PROFILE` trait.", "", "## Runtime boundary", "", "Designer runtime wiring: `NOT_RUN`; MA2 writes: `ZERO`; Industry Pack 001/002: unchanged and independent."]
     (ROOT / "ZEN_USER_STYLE_REVIEW_001.md").write_text("\n".join(review_lines) + "\n", encoding="utf-8")
 

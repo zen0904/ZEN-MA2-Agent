@@ -28,6 +28,44 @@ Zen currently prefers highly controlled contemporary stage design with clear vis
 | `CONTROLLED_MAXIMALISM` | **PARTIAL** | 2 | USE005_KAROLG | HUMAN_REVIEWED_CANDIDATE |
 | `INTENTIONAL_RESTRAINT` | **SUPPORTED** | 2 | none | HUMAN_REVIEWED_CANDIDATE |
 
+## Human review decision state
+
+### HUMAN_CONFIRMED
+
+- `candidate_CLEAN_VISUAL_HIERARCHY` — ACCEPT
+- `candidate_PALETTE_COHERENCE` — ACCEPT
+- `candidate_MUSIC_STRUCTURE_ALIGNMENT` — ACCEPT
+- `candidate_RHYTHMIC_ACCENT_SYNC` — ACCEPT
+- `candidate_DYNAMIC_CONTOUR_TRACKING` — ACCEPT
+- `candidate_MULTI_LEVEL_ENERGY_DESIGN` — ACCEPT
+- `candidate_INTENTIONAL_RESTRAINT` — ACCEPT
+
+### HUMAN_CONFIRMED_WITH_LIMITATION
+
+- `candidate_CONTROLLED_HIGH_IMPACT` — ACCEPT_WITH_LIMITATION: High impact is positive when musically or contextually justified, not continuously.
+- `candidate_CONTROLLED_MAXIMALISM` — ACCEPT_WITH_LIMITATION: High density is welcome only when hierarchy, palette, focus, timing and composition remain organized.
+
+### UNSET / NEEDS_MORE_EVIDENCE
+
+- `candidate_DOMINANT_THEME_COLOR` — UNSET
+- `candidate_STRONG_TRANSIENT_IMPACT` — UNSET
+- `candidate_HIGH_SECTION_DELTA` — UNSET
+- `candidate_CONTROLLED_BUILDUP` — UNSET
+- `candidate_RESTRAINT_BETWEEN_PEAKS` — UNSET
+- `candidate_EACH_ENERGY_STATE_NEEDS_A_COMPLETE_LOOK` — UNSET
+- `candidate_PROGRESSIVE_ENERGY_ARC` — UNSET
+- `candidate_NEGATIVE_SPACE_ACCEPTANCE` — UNSET
+- `candidate_GEOMETRIC_COMPOSITION` — UNSET
+- `candidate_IMPACT_WHEN_MUSICALLY_JUSTIFIED` — UNSET
+
+### REJECTED_INTERPRETATIONS
+
+- `candidate_HIGH_IMPACT_ALWAYS` — REJECT: Use meaningful contrast and context-sensitive impact instead.
+- `candidate_MAXIMALISM_EQUALS_CLUTTER` — REJECT: Clutter is a hierarchy and organization failure, not a synonym for maximalism.
+- `candidate_MULTICOLOR_EQUALS_BAD` — REJECT: The supported preference is coherent palette structure, not single-color exclusivity.
+
+Human acceptance remains eligibility for future consideration only; it does not promote a runtime rule.
+
 ## Candidate correction
 
 `IMPACT_WHEN_MUSICALLY_JUSTIFIED` replaces any simplistic HIGH_IMPACT_ALWAYS rule. A/B/C review supports multi-level energy design: each state is complete, and A → B → C is preferred over constant C.
