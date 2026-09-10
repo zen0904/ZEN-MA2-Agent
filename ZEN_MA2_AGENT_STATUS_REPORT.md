@@ -789,3 +789,20 @@ or other MA2 decision. Rejected interpretations and context-dependent style
 candidates remain inactive. The outcome is `NEEDS_MORE_SHADOW_WORK`: advisory
 reasoning is traceable and non-formulaic, but still broad and only evaluated
 against the Training Case 001 context.
+
+## 35 Shadow Advisory Evaluation 002 — Cross-Rig Robustness
+
+The same synthetic buildup/drop Song Analysis is now evaluated against four
+bounded contexts: Training Case 001 resource-rich control, medium live,
+LED-only, and imperfect/asymmetric. These are `SHADOW_EVALUATION_ONLY` semantic
+contexts, not live MA2 rigs. The new resource advisory records per-section
+`KEEP`, `REDUCE`, `OMIT`, `SUBSTITUTE`, and `REASON` choices with explicit
+resource adaptation versus limitation.
+
+All baseline and shadow `ZEN_SHOW_PLAN` values remain identical. LED-only
+guidance substitutes declared color/density/timing/left-right relationships
+instead of mover/beam language; asymmetric guidance uses declared imbalance
+intentionally rather than forcing a mirror. The restrained/minimal re-evaluation
+now records both selected and intentionally inactive roles. This is ready for
+human cross-rig review only; production guidance activation, `ZEN_STYLE_PROFILE`,
+and MA2 writes remain `NOT_RUN`/`DEFERRED`/`ZERO`.

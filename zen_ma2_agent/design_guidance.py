@@ -13,6 +13,7 @@ from typing import Any, Callable, Iterable
 from .training_case import validate_training_case
 from .user_style import validate_evidence, validate_review
 from .song_analysis import validate_song_analysis
+from .shadow_rig_context import SHADOW_RIG_CONTEXT_SCHEMA, validate_shadow_rig_context
 
 
 GUIDANCE_CONTEXT_SCHEMA = "zen.design_guidance_context.v0.1"
@@ -95,6 +96,7 @@ class DesignAdvisory:
     future_actionability_status: str = "SHADOW_ONLY_REVIEW_REQUIRED"
     schema: str = ADVISORY_SCHEMA
     user_style_signal_names: tuple[str, ...] = ()
+    resource_choices: tuple[dict[str, Any], ...] = ()
 
     def __post_init__(self) -> None:
         if not self.advisory_id or not self.recommendation:
@@ -107,7 +109,7 @@ class DesignAdvisory:
 
     def to_dict(self) -> dict[str, Any]:
         value = asdict(self)
-        for key in ("source_categories", "evidence_references", "song_signal_references", "case_references", "limitations", "conflicts", "unresolved_conditions", "user_style_signal_names"):
+        for key in ("source_categories", "evidence_references", "song_signal_references", "case_references", "limitations", "conflicts", "unresolved_conditions", "user_style_signal_names", "resource_choices"):
             value[key] = list(value[key])
         return value
 
@@ -140,6 +142,15 @@ def _song_signals(song_analysis: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _case_context(case: dict[str, Any]) -> dict[str, Any]:
+    if case.get("schema") == SHADOW_RIG_CONTEXT_SCHEMA:
+        shadow = validate_shadow_rig_context(case)
+        return {
+            "case_id": shadow["case_id"], "case_type": "SHADOW_EVALUATION_RIG", "resource_scale": shadow["resource_scale"],
+            "style_orientation": "GENERAL", "fixture_group_roles": [], "visual_layers": [], "constraints": deepcopy(shadow["constraints"]),
+            "verified_resources": {"available_roles": list(shadow["available_roles"])}, "assumptions": deepcopy(shadow["semantic_relationships"]),
+            "confidence": "SYNTHETIC_CASE_BOUND", "geometry_status": shadow["geometry_status"], "source": "SHADOW_RIG_CONTEXT",
+            "scope": "SHADOW_EVALUATION_ONLY", "available_roles": list(shadow["available_roles"]), "design_affordances": deepcopy(shadow["design_affordances"]),
+        }
     case = validate_training_case(case)
     return {
         "case_id": case["case_id"], "case_type": case["case_type"], "resource_scale": case["resource_scale"],
@@ -150,7 +161,7 @@ def _case_context(case: dict[str, Any]) -> dict[str, Any]:
         "visual_layers": deepcopy(case["visual_layers"]), "constraints": deepcopy(case["constraints"]),
         "verified_resources": deepcopy(case["verified_resources"]), "assumptions": deepcopy(case["assumptions"]),
         "confidence": case["confidence"], "geometry_status": case["verified_resources"].get("geometry"),
-        "source": "TRAINING_CASE", "scope": "BOUNDED_CASE_CONTEXT",
+        "source": "TRAINING_CASE", "scope": "BOUNDED_CASE_CONTEXT", "available_roles": list(case["rig_roles"]), "design_affordances": None,
     }
 
 
@@ -236,6 +247,28 @@ def _conflicts(context: dict[str, Any]) -> list[dict[str, Any]]:
     return conflicts or [{"outcome": "ALIGN", "between": ["SONG", "CASE", "USER_STYLE"], "detail": "No conflict detected in the bounded advisory context."}]
 
 
+def _resource_choices(context: dict[str, Any]) -> tuple[dict[str, Any], ...]:
+    affordances = context["case_context"].get("design_affordances")
+    if not isinstance(affordances, dict):
+        return ()
+    result = []
+    for section in (item for item in context["song_signals"] if item["kind"] == "SECTION_STRUCTURE"):
+        energy = section.get("energy")
+        state = "LOW" if not isinstance(energy, (int, float)) or energy <= 0.35 else "MEDIUM" if energy <= 0.70 else "HIGH"
+        choice = deepcopy(affordances[state])
+        substitutes = choice["SUBSTITUTE"]
+        related = [item for item in context["song_signals"] if item.get("section_id") == section["section_id"] and item["kind"] in {"DYNAMIC_CONTOUR", "RHYTHMIC_ACCENT", "BUILDUP_RELEASE"}]
+        song_reasons = [f"Song evidence: {section['section_id']} is {state} energy ({section['role']})."]
+        song_reasons.extend(f"Song evidence: {item['kind']} is explicitly present for this section." for item in related)
+        result.append({
+            "section_id": section["section_id"], "section_role": section["role"], "energy_state": state,
+            "KEEP": choice["KEEP"], "REDUCE": choice["REDUCE"], "OMIT": choice["OMIT"], "SUBSTITUTE": substitutes,
+            "RESOURCE_OUTCOME": "RESOURCE_ADAPTATION" if substitutes else "RESOURCE_CONFIGURATION",
+            "REASON": choice["REASON"] + song_reasons + ["Human-style evidence: complete energy states and intentional hierarchy remain relevant."],
+        })
+    return tuple(result)
+
+
 def generate_shadow_advisories(context: dict[str, Any]) -> list[dict[str, Any]]:
     """Generate abstract recommendations; no cue/action/resource mutation exists here."""
     _safe(context)
@@ -249,6 +282,7 @@ def generate_shadow_advisories(context: dict[str, Any]) -> list[dict[str, Any]]:
     rhythm_ids = _signal_ids(context, "RHYTHMIC_ACCENT")
     transition_ids = _signal_ids(context, "BUILDUP_RELEASE")
     repeated_ids = _signal_ids(context, "REPEATED_SECTION_DEVELOPMENT")
+    resource_choices = _resource_choices(context)
     complete = _style(context, "EACH_ENERGY_STATE_NEEDS_A_COMPLETE_LOOK")
     if complete:
         low = ", ".join(bands["LOW"]) or "no measured low-energy section"
@@ -308,6 +342,19 @@ def generate_shadow_advisories(context: dict[str, Any]) -> list[dict[str, Any]]:
             repeated_ids, (), "MEDIUM", "CONTEXT_AWARE_ADVISORY", (), (),
             ("HIGH_SECTION_DELTA remains context-dependent and is not required.",),
             user_style_signal_names=("PROGRESSIVE_ENERGY_ARC", "MUSIC_STRUCTURE_ALIGNMENT"),
+        ))
+    if resource_choices:
+        complete_for_resources = _style(context, "EACH_ENERGY_STATE_NEEDS_A_COMPLETE_LOOK")
+        advisories.append(DesignAdvisory(
+            "advisory-resource-adaptation",
+            "Adapt the same musical section intent through the explicitly available rig roles: preserve what carries hierarchy, intentionally omit nonessential layers, and use only declared substitutes for unavailable functions.",
+            "The choices are case-specific resource affordances combined with each section's song energy; they are not a global fixture-role priority list.",
+            ("SONG", "CASE", "USER_STYLE"), tuple(complete_for_resources["evidence_ids"] if complete_for_resources else ()), "ACCEPT" if complete_for_resources else "NOT_APPLICABLE", "NOT_APPLICABLE",
+            structure_ids, (context["case_context"]["case_id"],), "HIGH", "CASE_SPECIFIC_RESOURCE_ADAPTATION",
+            ("Synthetic rig semantics are explicit only for shadow evaluation and do not assert MA2 geometry or fixture identity.",), conflicts,
+            ("Resource choices are advisory design intent, not Group/Preset/Effect selection.",),
+            user_style_signal_names=("EACH_ENERGY_STATE_NEEDS_A_COMPLETE_LOOK", "CLEAN_VISUAL_HIERARCHY", "INTENTIONAL_RESTRAINT"),
+            resource_choices=resource_choices,
         ))
     advisories.append(DesignAdvisory(
         "advisory-professional-evidence-boundary",

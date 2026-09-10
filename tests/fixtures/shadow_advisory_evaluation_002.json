@@ -1,0 +1,13 @@
+{
+  "schema": "zen.shadow_advisory_cross_rig_fixture.v0.1",
+  "label": "SYNTHETIC_EVALUATION_ONLY",
+  "common_song_fixture": "shadow_advisory_evaluation_001.json",
+  "common_song_case_id": "CASE_D_BUILDUP_DROP",
+  "restrained_song_case_id": "CASE_C_RESTRAINED_MINIMAL",
+  "rig_context_ids": [
+    "RIG_A_RESOURCE_RICH_CONTROL",
+    "RIG_B_MEDIUM_LIVE",
+    "RIG_C_LED_ONLY",
+    "RIG_D_IMPERFECT_ASYMMETRIC"
+  ]
+}
