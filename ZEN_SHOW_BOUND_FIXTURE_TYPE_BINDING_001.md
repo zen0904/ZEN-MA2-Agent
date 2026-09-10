@@ -1,178 +1,146 @@
 # Show-Bound Fixture Type / Channel Profile Binding 001
 
-Status: `REAL_CONSOLE_VERIFICATION_REQUIRED` — the read-only binding provider
-is implemented and locally tested, but no grandMA2 onPC process was running for
-this task. No current-Show Fixture Type capability has been promoted yet.
+**Status:** `PARTIAL`
 
-## Objective and evidence rule
+Machine-readable real-console evidence is preserved in
+`data/ZEN_SHOW_BOUND_FIXTURE_TYPE_BINDING_001.json`.
 
-This work establishes the only acceptable path from a scanned current-Show
-Fixture Type to attribute capability:
+## Real-console preflight
 
-```text
-List Fixture exact type label
-  -> Export FixtureType exact numeric id (current Show)
-  -> exported XML exact identity check
-  -> parsed ChannelType / ChannelFunction inventory
-  -> SHOW_BOUND_VERIFIED capability record
-```
+- Telnet loopback READY: `True` as `MM`.
+- Expected Existing Show fingerprint: `497dfae11821c10eebc54a614fa66e81339cb79d789d50c112fcdfc33134f4ea`.
+- Fresh loaded-Show fingerprint: `497dfae11821c10eebc54a614fa66e81339cb79d789d50c112fcdfc33134f4ea`.
+- Existing Show identity/profile match: `MATCH`.
+- Fixture `9999` was not selected, exported, or addressed: `YES`.
+- Native Export feedback: all six `Export FixtureType <id>` commands returned
+  `Executing` without an MA2 error; each external temporary XML was removed
+  after its strict validation failure.
 
-It does not select an artistic role, create a `case_role_assignment`, infer
-placement/geometry, prove Effect behavior, or activate Designer behavior.
-HYBRID and BEAM sharing a technical type remains unrelated to their possible
-song/case use.
+## Binding method and provenance
 
-## Methods investigated
+`List Fixture` exact type label -> native `Export FixtureType <id>` -> exact XML index/name/mode identity -> parsed ChannelType/ChannelFunction inventory -> technical-definition SHA-256.
+No name-only local profile match can establish a Show binding. Local candidates are compared only after `SHOW_BOUND_VERIFIED`.
 
-| Method | Result | Evidence boundary |
-| --- | --- | --- |
-| Existing `List Fixture` / Scanner | `PARTIAL` | Confirms a current Fixture's exact displayed type label, but has no channel inventory. |
-| Existing Group/Layout/Preset exports | `UNSUPPORTED_FOR_BINDING` | These do not expose a current Show FixtureType definition. Preset export is deliberately not reopened. |
-| Existing Lua `gma.show.getobj.*` / property probes | `UNSUPPORTED_FOR_BINDING` | The bundled read-only probes do not have real-console evidence for safe FixtureType/channel tree traversal. They were not broadened by guesswork. |
-| Native `Export FixtureType` | `IMPLEMENTED_LOCAL_TESTED` | Local MA2 3.9.60 help identifies FixtureType as a Show-file object and Export as a Show-to-library operation. The provider exports only an Agent-owned external XML file, then parses and removes it. Real current-Show execution remains required. |
-| Installed library XML/XMLP candidates | `LOCAL_PROFILE_CANDIDATE_UNBOUND` | They remain useful comparison inputs only after a Show export exists; name/model similarity never binds one. |
+## Results by current Show FixtureType
 
-## Implemented read-only provider
+### `2 ZEN BAW 20R Mode 2`
 
-`FixtureTypeExportProvider` is loopback-onPC only. It accepts the exact type
-label already returned by `List Fixture`, extracts only its explicit leading
-FixtureType ID, and requests:
+- FixtureType numeric ID: `2`.
+- Export / provenance state: `PARTIAL` via `ma2_export_fixture_type_xml`.
+- Exact identity verification: `FAIL / NOT_AVAILABLE`.
+- Failure reason: `EXPORT_FIXTURE_TYPE_ID_MISMATCH`.
+- Technical-definition SHA-256: `UNAVAILABLE`.
+- XML SHA-256: `UNAVAILABLE`.
+- Capability classification: UNKNOWN.
+- Local profile candidate comparison: `NOT_ATTEMPTED_NO_SHOW_BOUND_EXPORT`.
 
-```text
-Export FixtureType <exact-id> "ZEN_AGENT_FT_<id>_<request-id>.xml" /nc
-```
+#### Parsed ChannelType / ChannelFunction inventory
 
-MA2 documents `Export` as a transfer from the Show to its library; this command
-does not Store, Update, Delete, Patch, Import, Assign, select fixtures, or
-modify any Show object. The only external write is an owned temporary XML file
-in the selected drive's FixtureType library. The provider waits for a fresh,
-stable, well-formed file, validates it, then deletes only that exact
-Agent-owned filename.
+- `NOT_AVAILABLE` — no verified exported channel inventory.
 
-The parser requires all of the following before it emits a capability:
+### `3 ZEN DMH-160 St_Preset`
 
-1. exactly one `FixtureType` XML element;
-2. exported `FixtureType@index` equals the current List-derived numeric ID;
-3. reconstructed `"<id> <name> <mode>"` equals the complete current `List Fixture`
-   type label exactly; and
-4. at least one parsed `ChannelType` record.
+- FixtureType numeric ID: `3`.
+- Export / provenance state: `PARTIAL` via `ma2_export_fixture_type_xml`.
+- Exact identity verification: `FAIL / NOT_AVAILABLE`.
+- Failure reason: `EXPORT_FIXTURE_TYPE_ID_MISMATCH`.
+- Technical-definition SHA-256: `UNAVAILABLE`.
+- XML SHA-256: `UNAVAILABLE`.
+- Capability classification: UNKNOWN.
+- Local profile candidate comparison: `NOT_ATTEMPTED_NO_SHOW_BOUND_EXPORT`.
 
-Failure gives an explicit error such as
-`EXPORT_FIXTURE_TYPE_ID_MISMATCH`, `EXPORT_FIXTURE_TYPE_LABEL_MISMATCH`,
-`EXPORT_FIXTURE_TYPE_COUNT_MISMATCH`, or
-`EXPORT_FIXTURE_TYPE_CHANNELS_NOT_PRESENT`; it never returns a partial
-capability claim.
+#### Parsed ChannelType / ChannelFunction inventory
 
-## Current-Show result
+- `NOT_AVAILABLE` — no verified exported channel inventory.
 
-The real-console verifier was run on 2026-09-11 with `--real-machine`, but
-the configured loopback endpoint `127.0.0.1:30000` refused TCP connection
-(`WinError 10061`) before authentication. A read-only listener/process check
-also found no local grandMA2 onPC process or listener on the configured port.
-Therefore Telnet never reached `READY`; no `List` and no `Export FixtureType`
-command was sent. This is an unavailable transport boundary, not evidence
-against the loaded Show or its FixtureTypes.
+### `4 ZEN K10 Shapes`
 
-Every current Show type consequently remains `UNKNOWN_FOR_EXISTING_SHOW`:
+- FixtureType numeric ID: `4`.
+- Export / provenance state: `PARTIAL` via `ma2_export_fixture_type_xml`.
+- Exact identity verification: `FAIL / NOT_AVAILABLE`.
+- Failure reason: `EXPORT_FIXTURE_TYPE_ID_MISMATCH`.
+- Technical-definition SHA-256: `UNAVAILABLE`.
+- XML SHA-256: `UNAVAILABLE`.
+- Capability classification: UNKNOWN.
+- Local profile candidate comparison: `NOT_ATTEMPTED_NO_SHOW_BOUND_EXPORT`.
 
-| Current scanned type | Current binding state | Channel / attribute result | Failure reason |
-| --- | --- | --- | --- |
-| `2 ZEN BAW 20R Mode 2` | `REAL_CONSOLE_VERIFICATION_BLOCKED` | `UNKNOWN` | loopback Telnet connection refused before export |
-| `3 ZEN DMH-160 St_Preset` | `REAL_CONSOLE_VERIFICATION_BLOCKED` | `UNKNOWN` | loopback Telnet connection refused before export |
-| `5 ZEN MAC AU XB Standard` | `REAL_CONSOLE_VERIFICATION_BLOCKED` | `UNKNOWN` | loopback Telnet connection refused before export |
-| `4 ZEN K10 Shapes` | `REAL_CONSOLE_VERIFICATION_BLOCKED` | `UNKNOWN` | loopback Telnet connection refused before export |
-| `6 ZEN LEDPar 9c 9Ch Mode A` | `REAL_CONSOLE_VERIFICATION_BLOCKED` | `UNKNOWN` | loopback Telnet connection refused before export |
-| `7 Atomic 3000 LED Extended` | `REAL_CONSOLE_VERIFICATION_BLOCKED` | `UNKNOWN` | loopback Telnet connection refused before export |
+#### Parsed ChannelType / ChannelFunction inventory
 
-Consequently DIMMER, COLOR, PAN, TILT, POSITION, GOBO, PRISM, ZOOM, FOCUS,
-FROST, SHUTTER/STROBE and PIXEL/SHAPE are still unknown for each current Show
-type. Fixture `9999` is not selected, exported, or otherwise touched.
+- `NOT_AVAILABLE` — no verified exported channel inventory.
 
-## What a verified result contains
+### `5 ZEN MAC AU XB Standard`
 
-After a successful exact current-Show export, the record schema is
-`zen.fixture_type_channel_profile.v0.1` with:
+- FixtureType numeric ID: `5`.
+- Export / provenance state: `PARTIAL` via `ma2_export_fixture_type_xml`.
+- Exact identity verification: `FAIL / NOT_AVAILABLE`.
+- Failure reason: `EXPORT_FIXTURE_TYPE_ID_MISMATCH`.
+- Technical-definition SHA-256: `UNAVAILABLE`.
+- XML SHA-256: `UNAVAILABLE`.
+- Capability classification: UNKNOWN.
+- Local profile candidate comparison: `NOT_ATTEMPTED_NO_SHOW_BOUND_EXPORT`.
 
-- exact List label, FixtureType ID, XML index, name, mode and MA version;
-- every parsed `ChannelType` and its `ChannelFunction` fields;
-- a SHA-256 fingerprint of the parsed technical channel definition;
-- typed capability outcomes for DIMMER, COLOR, PAN, TILT, POSITION, GOBO,
-  PRISM, ZOOM, FOCUS, FROST and SHUTTER/STROBE; and
-- explicit `PIXEL_SHAPE: UNCLASSIFIED_FROM_CHANNEL_INVENTORY` until a separate
-  FixtureType topology interpretation is safely verified.
+#### Parsed ChannelType / ChannelFunction inventory
 
-Absence of a deterministically classified channel becomes
-`NOT_PRESENT_IN_EXPORTED_PROFILE`; it is not confused with an unavailable
-export. Raw channel/function inventory remains available for later, bounded
-capability work without inventing artistic semantics.
+- `NOT_AVAILABLE` — no verified exported channel inventory.
 
-## Local profile candidate binding
+### `6 ZEN LEDPar 9c 9Ch Mode A`
 
-Only after a `SHOW_BOUND_VERIFIED` export exists may a local XML/XMLP candidate
-be compared. The comparison fingerprints the complete parsed ChannelType and
-ChannelFunction definition, excluding labels, dates and library pool indices.
-An exact structural match is `LOCAL_PROFILE_CANDIDATE_BOUND`; any difference
-remains `LOCAL_PROFILE_CANDIDATE_UNBOUND`. Candidate filename/name similarity
-alone is never a binding.
+- FixtureType numeric ID: `6`.
+- Export / provenance state: `PARTIAL` via `ma2_export_fixture_type_xml`.
+- Exact identity verification: `FAIL / NOT_AVAILABLE`.
+- Failure reason: `EXPORT_FIXTURE_TYPE_ID_MISMATCH`.
+- Technical-definition SHA-256: `UNAVAILABLE`.
+- XML SHA-256: `UNAVAILABLE`.
+- Capability classification: UNKNOWN.
+- Local profile candidate comparison: `NOT_ATTEMPTED_NO_SHOW_BOUND_EXPORT`.
 
-No installed local candidate is marked bound in this task because the required
-current-Show export is absent.
+#### Parsed ChannelType / ChannelFunction inventory
 
-## Focused test evidence
+- `NOT_AVAILABLE` — no verified exported channel inventory.
 
-Local deterministic tests verify:
+### `7 Atomic 3000 LED Extended`
 
-- exact current label/id/channel identity yields `SHOW_BOUND_VERIFIED`;
-- mismatched ID, mismatched label, multiple FixtureTypes and missing channel
-  inventory fail closed;
-- a local profile binds only with an exact structural channel-definition hash;
-- exports use a unique Agent-owned filename and clean it up;
-- remote consoles are blocked before an export; and
-- Scanner retains optional verified profiles without changing existing Fixture
-  inventory contracts.
+- FixtureType numeric ID: `7`.
+- Export / provenance state: `PARTIAL` via `ma2_export_fixture_type_xml`.
+- Exact identity verification: `FAIL / NOT_AVAILABLE`.
+- Failure reason: `EXPORT_FIXTURE_TYPE_ID_MISMATCH`.
+- Technical-definition SHA-256: `UNAVAILABLE`.
+- XML SHA-256: `UNAVAILABLE`.
+- Capability classification: UNKNOWN.
+- Local profile candidate comparison: `NOT_ATTEMPTED_NO_SHOW_BOUND_EXPORT`.
 
-## Exact real-console verification step
+#### Parsed ChannelType / ChannelFunction inventory
 
-With the Existing Show loaded in grandMA2 onPC, first enable/verify Telnet at
-the configured local endpoint (or explicitly update the connection setting to
-the console's actual loopback port), then rerun:
+- `NOT_AVAILABLE` — no verified exported channel inventory.
 
-```text
-python scripts/verify_show_bound_fixture_type_binding.py --real-machine
-```
+## B3 eligibility and A/B readiness
 
-The verifier first requires Telnet `READY`, refreshes `List Group`, `List
-Fixture`, and `List Preset All`, and compares the fresh scanned fingerprint to
-the committed Existing Show identity. Only after an exact match does it refresh
-`fixture_type_profiles`: each unique current Show type is exported once. The
-refresh now records every per-type success or fail-closed failure rather than
-discarding already captured results when one type fails. For every XML it must
-pass the four identity/channel checks above.
+Show-bound technical capability can support only future case-specific resource eligibility. It does not create a permanent fixture role, case assignment, geometry/position semantics, Effect behavior, or action grammar.
+- `REAL_SONG_EXISTING_SHOW_AB_002`: `NOT_READY_FOR_EXPRESSIVE_ACTION_DELTA`.
+- Reason: One or more current FixtureTypes did not establish a Show-bound technical definition.
 
-If MA2 writes a file to another selected drive, times out, changes the label,
-or returns a different index, preserve that exact failure state and do not use
-the local candidate. A successful export is a read-only Show inspection, but
-its output must still be retained as provenance (identity, export feedback,
-hash and timestamp) before capability-to-role eligibility is considered.
+## Exact current blocker
 
-## B3 and A/B readiness
+The loaded Existing Show is confirmed by the fresh scanned fingerprint, and
+native export accepted every requested FixtureType numeric ID. However, all six
+temporary XML exports presented a `FixtureType@index` that did not equal the
+List-derived current-Show pool ID, so the implementation correctly returned
+`EXPORT_FIXTURE_TYPE_ID_MISMATCH` before channel inventory/capabilities could
+be used. The temporary XML is deliberately removed even on failure; therefore
+no raw channel content, technical fingerprint, or local-profile comparison was
+retained for this run.
 
-No B3 role eligibility is derived in this task. Even a later technical
-capability record only makes a Group eligible for a future case-specific
-Design Intent; it does not establish fixture priority, permanent role, Effect
-behavior, position semantics or an action grammar.
+This is a real-console schema/binding limitation, not a fixture capability
+claim. Do not weaken the ID rule or substitute a similar local profile. A
+future bounded research task must establish whether the export XML index is a
+library-local serialization index and, if so, what additional Show-bound
+identity evidence can safely bind it to the requested current-Show FixtureType
+without treating labels alone as proof.
 
-`REAL_SONG_EXISTING_SHOW_AB_002` remains `NOT_READY_FOR_EXPRESSIVE_ACTION_DELTA`.
-The blocker has narrowed from “no safe method” to one real-console execution
-of the implemented current-Show export path plus evidence review.
+## Safety audit
 
-## Safety
-
-- Production Designer: `UNCHANGED`.
-- Experimental B3: `GUIDANCE_ASSISTED_AB_ONLY`.
-- `ZEN_STYLE_PROFILE`: `DEFERRED`.
-- `REAL_VENUE_VALIDATION`: `WAIT_FOR_REAL_CASE`.
 - MA2 objects modified: `NONE`.
-- MA2 write audit: `ZERO_WRITES`.
-- Real-console transport attempted: `NO_MA2_COMMAND_SENT` — loopback TCP
-  refused before Telnet authentication.
+- MA2 object write audit: `ZERO_WRITES`.
+- Allowed console transport was Login, List Group, List Fixture, List Preset All and native external `Export FixtureType` only.
+- Unexpected commands: `none`.
+- Production Designer: `UNCHANGED`; B3: `GUIDANCE_ASSISTED_AB_ONLY`; `ZEN_STYLE_PROFILE`: `DEFERRED`.

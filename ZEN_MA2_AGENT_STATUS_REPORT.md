@@ -1072,13 +1072,20 @@ Fixture, List Preset All and native external `Export FixtureType`; Fixture
 aggregate binding state from the per-type capability metadata rather than
 mistaking a mixed result for supported structure.
 
-The first real-console attempt on 2026-09-11 was blocked before `READY`:
-`127.0.0.1:30000` refused TCP (`WinError 10061`), and the read-only local
-process/listener check found no grandMA2 onPC listener. No List or Export
-command was sent, no temporary XML was created, and all attributes remain
-unknown. Enable or identify the correct loopback Telnet endpoint, then rerun
-the verifier with the intended Existing Show loaded. `REAL_SONG_EXISTING_SHOW_AB_002`
-remains blocked from expressive action deltas; production Designer behavior,
-B3 boundary, ZEN_STYLE_PROFILE, venue validation and MA2 object state are
-unchanged (`UNCHANGED`/`GUIDANCE_ASSISTED_AB_ONLY`/`DEFERRED`/
-`WAIT_FOR_REAL_CASE`/`ZERO_WRITES`).
+The initial endpoint probe was briefly refused, but the onPC process was then
+verified listening on `0.0.0.0:30000` and `0.0.0.0:30001`; the configured
+loopback `127.0.0.1:30000` reached `READY` as `MM`. Fresh Group/Fixture/Preset
+identity exactly matched the intended Existing Show fingerprint. The verifier
+exported each of the six unique FixtureTypes once; every native Export returned
+without MA2 error, but every exported XML failed the strict
+`FixtureType@index == List-derived pool ID` requirement. No channel inventory,
+fingerprint, capability, or local candidate comparison was promoted; all
+temporary Agent-owned XML files were removed.
+
+This is a real-console export-schema/binding blocker, not a name-match or
+fixture-capability conclusion. `REAL_SONG_EXISTING_SHOW_AB_002` remains blocked
+from expressive action deltas until a separately verified Show-bound identity
+rule can explain the export index without weakening fail-closed provenance.
+Production Designer behavior, B3 boundary, ZEN_STYLE_PROFILE, venue validation
+and MA2 object state remain unchanged (`UNCHANGED`/
+`GUIDANCE_ASSISTED_AB_ONLY`/`DEFERRED`/`WAIT_FOR_REAL_CASE`/`ZERO_WRITES`).

@@ -1,0 +1,145 @@
+{
+  "schema": "zen.show_bound_fixture_type_binding_run.v0.1",
+  "generated_at": "2026-09-10T17:10:34.290926+00:00",
+  "read_only": true,
+  "connection": {
+    "ready": true,
+    "host": "127.0.0.1",
+    "port": 30000,
+    "user": "MM"
+  },
+  "expected_show_identity": {
+    "kind": "SCANNED_SHOW_PROFILE_FINGERPRINT",
+    "value": "497dfae11821c10eebc54a614fa66e81339cb79d789d50c112fcdfc33134f4ea",
+    "confidence": "PARTIAL"
+  },
+  "current_show_identity": {
+    "kind": "SCANNED_SHOW_PROFILE_FINGERPRINT",
+    "value": "497dfae11821c10eebc54a614fa66e81339cb79d789d50c112fcdfc33134f4ea",
+    "confidence": "PARTIAL"
+  },
+  "show_identity_match": "MATCH",
+  "export_feedback_summary": {
+    "status": "COMMAND_ACCEPTED_NO_MA2_ERROR",
+    "detail": "Each native Export FixtureType command returned Executing; strict XML identity validation then failed closed."
+  },
+  "fixture_type_profiles": [
+    {
+      "schema": "zen.fixture_type_channel_profile.v0.1",
+      "read_only": true,
+      "status": "PARTIAL",
+      "source": "ma2_export_fixture_type_xml",
+      "fixture_type": {
+        "fixture_type_id": 2,
+        "list_label": "2 ZEN BAW 20R Mode 2"
+      },
+      "failure_reason": "EXPORT_FIXTURE_TYPE_ID_MISMATCH",
+      "local_profile_candidate": {
+        "status": "NOT_ATTEMPTED_NO_SHOW_BOUND_EXPORT",
+        "source": "LOCAL_PROFILE_CANDIDATE_REFERENCE",
+        "candidate_relative_path": "zhong_light@zhong_light_xp20rbsw@mode_2.xml"
+      }
+    },
+    {
+      "schema": "zen.fixture_type_channel_profile.v0.1",
+      "read_only": true,
+      "status": "PARTIAL",
+      "source": "ma2_export_fixture_type_xml",
+      "fixture_type": {
+        "fixture_type_id": 3,
+        "list_label": "3 ZEN DMH-160 St_Preset"
+      },
+      "failure_reason": "EXPORT_FIXTURE_TYPE_ID_MISMATCH",
+      "local_profile_candidate": {
+        "status": "NOT_ATTEMPTED_NO_SHOW_BOUND_EXPORT",
+        "source": "LOCAL_PROFILE_CANDIDATE_REFERENCE",
+        "candidate_relative_path": "zhong_light@zhong_light_dmh-160@st_preset.xml"
+      }
+    },
+    {
+      "schema": "zen.fixture_type_channel_profile.v0.1",
+      "read_only": true,
+      "status": "PARTIAL",
+      "source": "ma2_export_fixture_type_xml",
+      "fixture_type": {
+        "fixture_type_id": 4,
+        "list_label": "4 ZEN K10 Shapes"
+      },
+      "failure_reason": "EXPORT_FIXTURE_TYPE_ID_MISMATCH",
+      "local_profile_candidate": {
+        "status": "NOT_ATTEMPTED_NO_SHOW_BOUND_EXPORT",
+        "source": "LOCAL_PROFILE_CANDIDATE_REFERENCE",
+        "candidate_relative_path": "clay_paky@a.leda_b-eye_k10@shapes.xmlp"
+      }
+    },
+    {
+      "schema": "zen.fixture_type_channel_profile.v0.1",
+      "read_only": true,
+      "status": "PARTIAL",
+      "source": "ma2_export_fixture_type_xml",
+      "fixture_type": {
+        "fixture_type_id": 5,
+        "list_label": "5 ZEN MAC AU XB Standard"
+      },
+      "failure_reason": "EXPORT_FIXTURE_TYPE_ID_MISMATCH",
+      "local_profile_candidate": {
+        "status": "NOT_ATTEMPTED_NO_SHOW_BOUND_EXPORT",
+        "source": "LOCAL_PROFILE_CANDIDATE_REFERENCE",
+        "candidate_relative_path": "zhong_light@zhong_light_mac_au_xb@standard.xml"
+      }
+    },
+    {
+      "schema": "zen.fixture_type_channel_profile.v0.1",
+      "read_only": true,
+      "status": "PARTIAL",
+      "source": "ma2_export_fixture_type_xml",
+      "fixture_type": {
+        "fixture_type_id": 6,
+        "list_label": "6 ZEN LEDPar 9c 9Ch Mode A"
+      },
+      "failure_reason": "EXPORT_FIXTURE_TYPE_ID_MISMATCH",
+      "local_profile_candidate": {
+        "status": "NOT_ATTEMPTED_NO_SHOW_BOUND_EXPORT",
+        "source": "LOCAL_PROFILE_CANDIDATE_REFERENCE",
+        "candidate_relative_path": "zhong_light@zhong_light_led_par_9ch@9ch_mode_a.xml"
+      }
+    },
+    {
+      "schema": "zen.fixture_type_channel_profile.v0.1",
+      "read_only": true,
+      "status": "PARTIAL",
+      "source": "ma2_export_fixture_type_xml",
+      "fixture_type": {
+        "fixture_type_id": 7,
+        "list_label": "7 Atomic 3000 LED Extended"
+      },
+      "failure_reason": "EXPORT_FIXTURE_TYPE_ID_MISMATCH",
+      "local_profile_candidate": {
+        "status": "NOT_ATTEMPTED_NO_SHOW_BOUND_EXPORT",
+        "source": "LOCAL_PROFILE_CANDIDATE_REFERENCE",
+        "candidate_relative_path": "martin@atomic_3000_led@extended.xmlp"
+      }
+    }
+  ],
+  "binding_status": "PARTIAL",
+  "write_audit": {
+    "ma2_object_write_audit": "ZERO_WRITES",
+    "commands": [
+      "Login MM",
+      "List Group",
+      "List Fixture",
+      "List Preset All",
+      "Export FixtureType 2 \"ZEN_AGENT_FT_2_b79ab548eb1e0cbe.xml\" /nc",
+      "Export FixtureType 3 \"ZEN_AGENT_FT_3_0476f4a2f6f1698c.xml\" /nc",
+      "Export FixtureType 4 \"ZEN_AGENT_FT_4_4e6f8f5a57db4448.xml\" /nc",
+      "Export FixtureType 5 \"ZEN_AGENT_FT_5_98d59da6fd377124.xml\" /nc",
+      "Export FixtureType 6 \"ZEN_AGENT_FT_6_173a96c446710b0f.xml\" /nc",
+      "Export FixtureType 7 \"ZEN_AGENT_FT_7_41ca0c0611e9e449.xml\" /nc"
+    ],
+    "unexpected_commands": [],
+    "fixture_9999_targeted": false,
+    "command_provenance": "Reconstructed from the same-run AgentRuntime state_export log because the pre-existing Telnet audit retained generic RX but not generic TX entries."
+  },
+  "ab_002_readiness": "NOT_READY_FOR_EXPRESSIVE_ACTION_DELTA",
+  "ab_002_reason": "One or more current FixtureTypes did not establish a Show-bound technical definition."
+}
