@@ -65,17 +65,24 @@ capability claim.
 
 ## Current-Show result
 
-The actual onPC application was not running during this task, so no native
-export was sent. Every current Show type remains `UNKNOWN_FOR_EXISTING_SHOW`:
+The real-console verifier was run on 2026-09-11 with `--real-machine`, but
+the configured loopback endpoint `127.0.0.1:30000` refused TCP connection
+(`WinError 10061`) before authentication. A read-only listener/process check
+also found no local grandMA2 onPC process or listener on the configured port.
+Therefore Telnet never reached `READY`; no `List` and no `Export FixtureType`
+command was sent. This is an unavailable transport boundary, not evidence
+against the loaded Show or its FixtureTypes.
+
+Every current Show type consequently remains `UNKNOWN_FOR_EXISTING_SHOW`:
 
 | Current scanned type | Current binding state | Channel / attribute result | Failure reason |
 | --- | --- | --- | --- |
-| `2 ZEN BAW 20R Mode 2` | `REAL_CONSOLE_VERIFICATION_REQUIRED` | `UNKNOWN` | no current-Show export captured |
-| `3 ZEN DMH-160 St_Preset` | `REAL_CONSOLE_VERIFICATION_REQUIRED` | `UNKNOWN` | no current-Show export captured |
-| `5 ZEN MAC AU XB Standard` | `REAL_CONSOLE_VERIFICATION_REQUIRED` | `UNKNOWN` | no current-Show export captured |
-| `4 ZEN K10 Shapes` | `REAL_CONSOLE_VERIFICATION_REQUIRED` | `UNKNOWN` | no current-Show export captured |
-| `6 ZEN LEDPar 9c 9Ch Mode A` | `REAL_CONSOLE_VERIFICATION_REQUIRED` | `UNKNOWN` | no current-Show export captured |
-| `7 Atomic 3000 LED Extended` | `REAL_CONSOLE_VERIFICATION_REQUIRED` | `UNKNOWN` | no current-Show export captured |
+| `2 ZEN BAW 20R Mode 2` | `REAL_CONSOLE_VERIFICATION_BLOCKED` | `UNKNOWN` | loopback Telnet connection refused before export |
+| `3 ZEN DMH-160 St_Preset` | `REAL_CONSOLE_VERIFICATION_BLOCKED` | `UNKNOWN` | loopback Telnet connection refused before export |
+| `5 ZEN MAC AU XB Standard` | `REAL_CONSOLE_VERIFICATION_BLOCKED` | `UNKNOWN` | loopback Telnet connection refused before export |
+| `4 ZEN K10 Shapes` | `REAL_CONSOLE_VERIFICATION_BLOCKED` | `UNKNOWN` | loopback Telnet connection refused before export |
+| `6 ZEN LEDPar 9c 9Ch Mode A` | `REAL_CONSOLE_VERIFICATION_BLOCKED` | `UNKNOWN` | loopback Telnet connection refused before export |
+| `7 Atomic 3000 LED Extended` | `REAL_CONSOLE_VERIFICATION_BLOCKED` | `UNKNOWN` | loopback Telnet connection refused before export |
 
 Consequently DIMMER, COLOR, PAN, TILT, POSITION, GOBO, PRISM, ZOOM, FOCUS,
 FROST, SHUTTER/STROBE and PIXEL/SHAPE are still unknown for each current Show
@@ -126,11 +133,21 @@ Local deterministic tests verify:
 
 ## Exact real-console verification step
 
-With the Existing Show loaded in grandMA2 onPC, Telnet READY on loopback, and
-the selected MA2 drive corresponding to the provider-resolved `library`
-directory, explicitly refresh `fixture_type_profiles`. The provider will first
-refresh fixture inventory if necessary, then export each unique current Show
-type once. For every XML it must pass the four identity/channel checks above.
+With the Existing Show loaded in grandMA2 onPC, first enable/verify Telnet at
+the configured local endpoint (or explicitly update the connection setting to
+the console's actual loopback port), then rerun:
+
+```text
+python scripts/verify_show_bound_fixture_type_binding.py --real-machine
+```
+
+The verifier first requires Telnet `READY`, refreshes `List Group`, `List
+Fixture`, and `List Preset All`, and compares the fresh scanned fingerprint to
+the committed Existing Show identity. Only after an exact match does it refresh
+`fixture_type_profiles`: each unique current Show type is exported once. The
+refresh now records every per-type success or fail-closed failure rather than
+discarding already captured results when one type fails. For every XML it must
+pass the four identity/channel checks above.
 
 If MA2 writes a file to another selected drive, times out, changes the label,
 or returns a different index, preserve that exact failure state and do not use
@@ -157,3 +174,5 @@ of the implemented current-Show export path plus evidence review.
 - `REAL_VENUE_VALIDATION`: `WAIT_FOR_REAL_CASE`.
 - MA2 objects modified: `NONE`.
 - MA2 write audit: `ZERO_WRITES`.
+- Real-console transport attempted: `NO_MA2_COMMAND_SENT` — loopback TCP
+  refused before Telnet authentication.

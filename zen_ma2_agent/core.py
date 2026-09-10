@@ -18,7 +18,7 @@ from .pairing import PairingManager
 from .router import IntentRouter, ResponseType
 from .runtime import AgentRuntime
 from .skill_system import SkillError, SkillRegistry
-from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvider, EffectProvider, ExecutorProvider, ExportFileGroupMembershipProvider, FixtureGeometryProvider, FixtureProvider, FixtureTypeExportError, FixtureTypeExportProvider, GroupMembershipProvider, GroupMembershipProviderError, GroupMembershipProviderUnavailable, GroupProvider, LayoutExportProvider, LayoutInventoryProvider, LayoutObjectResolver, PageProvider, PresetProvider, SequenceProvider, TimecodeProvider, ZenStateAdapter
+from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvider, EffectProvider, ExecutorProvider, ExportFileGroupMembershipProvider, FixtureGeometryProvider, FixtureProvider, FixtureTypeExportError, FixtureTypeExportProvider, GroupMembershipProvider, GroupMembershipProviderError, GroupMembershipProviderUnavailable, GroupProvider, LayoutExportProvider, LayoutInventoryProvider, LayoutObjectResolver, PageProvider, PresetProvider, SequenceProvider, TimecodeProvider, ZenStateAdapter, fixture_type_reference_from_list_label
 from .state.store import StateStore
 from .telnet_client import ConnectionState
 from .workflow import WorkflowPlan
@@ -294,8 +294,33 @@ class AgentCore:
                 labels = sorted({str(item.get("fixture_type") or "").strip() for item in (fixtures.values if fixtures else []) if str(item.get("fixture_type") or "").strip()})
                 if not labels:
                     raise FixtureTypeExportError("FIXTURE_TYPE_LIST_ID_UNAVAILABLE")
-                values = [self.fixture_type_export_provider.export_and_bind(self.runtime, label, self.runtime.preferences.get("state_adapter")) for label in labels]
-                capability = self.fixture_type_export_provider.capabilities(self.runtime, self.runtime.preferences.get("state_adapter"))
+                values = []
+                for label in labels:
+                    try:
+                        values.append(self.fixture_type_export_provider.export_and_bind(self.runtime, label, self.runtime.preferences.get("state_adapter")))
+                    except (FixtureTypeExportError, GroupMembershipProviderUnavailable) as exc:
+                        # A FixtureType failure must not erase already captured
+                        # Show-bound records from the same fresh run.  It is an
+                        # explicit, fail-closed per-type result, never a
+                        # capability inferred from a similar local profile.
+                        try:
+                            identity = fixture_type_reference_from_list_label(label)
+                        except FixtureTypeExportError:
+                            identity = {"list_label": label}
+                        values.append({
+                            "schema": "zen.fixture_type_channel_profile.v0.1",
+                            "read_only": True,
+                            "status": "UNSUPPORTED" if isinstance(exc, GroupMembershipProviderUnavailable) else "PARTIAL",
+                            "source": self.fixture_type_export_provider.source,
+                            "fixture_type": identity,
+                            "failure_reason": str(exc),
+                        })
+                verified_count = sum(item.get("status") == "SHOW_BOUND_VERIFIED" for item in values)
+                capability = self.fixture_type_export_provider.capabilities(self.runtime, self.runtime.preferences.get("state_adapter")) | {
+                    "binding_status": "SHOW_BOUND_VERIFIED" if verified_count == len(values) else "PARTIAL" if verified_count else "UNSUPPORTED",
+                    "verified_fixture_type_count": verified_count,
+                    "unresolved_fixture_type_count": len(values) - verified_count,
+                }
                 snapshot = self.state.put(resource, values, source=self.fixture_type_export_provider.source, capability=capability)
             elif resource == "sequences":
                 provider = SequenceProvider()

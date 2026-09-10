@@ -1060,3 +1060,25 @@ B3 role eligibility, artistic role assignment, action grammar or A/B 002 run
 is authorized yet. Production Designer behavior remains unchanged, B3 remains
 `GUIDANCE_ASSISTED_AB_ONLY`, `ZEN_STYLE_PROFILE` remains deferred, real venue
 validation remains `WAIT_FOR_REAL_CASE`, and MA2 writes remain ZERO.
+
+## 47 Show-Bound Fixture Type Real-Console Attempt
+
+The bounded `scripts/verify_show_bound_fixture_type_binding.py
+--real-machine` verifier now proves the expected Existing Show fingerprint
+before any FixtureType export and preserves a success/failure record for every
+unique FixtureType if one export fails. It allows only Login, List Group, List
+Fixture, List Preset All and native external `Export FixtureType`; Fixture
+`9999` is never selected or addressed. A current Show profile reports the
+aggregate binding state from the per-type capability metadata rather than
+mistaking a mixed result for supported structure.
+
+The first real-console attempt on 2026-09-11 was blocked before `READY`:
+`127.0.0.1:30000` refused TCP (`WinError 10061`), and the read-only local
+process/listener check found no grandMA2 onPC listener. No List or Export
+command was sent, no temporary XML was created, and all attributes remain
+unknown. Enable or identify the correct loopback Telnet endpoint, then rerun
+the verifier with the intended Existing Show loaded. `REAL_SONG_EXISTING_SHOW_AB_002`
+remains blocked from expressive action deltas; production Designer behavior,
+B3 boundary, ZEN_STYLE_PROFILE, venue validation and MA2 object state are
+unchanged (`UNCHANGED`/`GUIDANCE_ASSISTED_AB_ONLY`/`DEFERRED`/
+`WAIT_FOR_REAL_CASE`/`ZERO_WRITES`).

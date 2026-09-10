@@ -11,7 +11,7 @@ from zen_ma2_agent.models import Intent
 from zen_ma2_agent.runtime import AgentRuntime
 from zen_ma2_agent.skill_system import SkillError, SkillRegistry
 from zen_ma2_agent.state.models import Group
-from zen_ma2_agent.state.providers import FixtureProvider, GroupProvider
+from zen_ma2_agent.state.providers import FixtureProvider, FixtureTypeExportError, GroupProvider
 from zen_ma2_agent.state.store import StateStore
 from zen_ma2_agent.telnet_client import ConnectionState
 from zen_ma2_agent.web_server import create_app
@@ -71,6 +71,40 @@ class StateAndSkillsTests(unittest.TestCase):
         self.assertEqual(GroupProvider().parse("No. Name\nGroup  1 1    HYBRID\nGroup 10 10   Clone To\n"), [Group(1, "HYBRID"), Group(10, "Clone To")])
         fixture = FixtureProvider().parse('Fixture 4 "Key" (VL3000)')[0]
         self.assertEqual((fixture.number, fixture.name, fixture.fixture_type), (4, "Key", "VL3000"))
+
+    def test_fixture_type_refresh_preserves_each_type_result_when_one_export_fails(self):
+        class PerTypeProvider:
+            source = "ma2_export_fixture_type_xml"
+
+            def __init__(self):
+                self.labels = []
+
+            def export_and_bind(self, _runtime, label, _settings):
+                self.labels.append(label)
+                if label == "3 Broken Type":
+                    raise FixtureTypeExportError("EXPORT_FIXTURE_TYPE_LABEL_MISMATCH")
+                return {
+                    "schema": "zen.fixture_type_channel_profile.v0.1",
+                    "status": "SHOW_BOUND_VERIFIED",
+                    "fixture_type": {"fixture_type_id": 2, "list_label": label},
+                    "channels": [{"attribute": "DIM"}],
+                }
+
+            def capabilities(self, _runtime, _settings):
+                return {"backend": "native_export_fixture_type_file"}
+
+        provider = PerTypeProvider()
+        self.core.fixture_type_export_provider = provider
+        self.core.state.put("fixtures", [
+            {"number": 101, "fixture_type": "2 Verified Type"},
+            {"number": 102, "fixture_type": "3 Broken Type"},
+        ], source="ma2_telnet_list")
+        result = self.core.refresh_state("fixture_type_profiles")
+        self.assertEqual(provider.labels, ["2 Verified Type", "3 Broken Type"])
+        self.assertEqual([item["status"] for item in result["values"]], ["SHOW_BOUND_VERIFIED", "PARTIAL"])
+        self.assertEqual(result["values"][1]["failure_reason"], "EXPORT_FIXTURE_TYPE_LABEL_MISMATCH")
+        self.assertEqual(self.core.state.get("fixture_type_profiles").capability["binding_status"], "PARTIAL")
+        self.assertEqual(self.core.scan_show_profile()["known_limits"]["fixture_type_structure"], "PARTIAL")
 
     def test_skill_discovery_invalid_duplicate_and_enable_disable(self):
         registry = SkillRegistry(self.root)

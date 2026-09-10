@@ -156,7 +156,7 @@ class ShowScanner:
             "known_limits": {
                 "layout_fixture_geometry": "UNSUPPORTED",
                 "fixture_stage_geometry": metadata["fixture_geometry"]["status"],
-                "fixture_type_structure": metadata["fixture_type_profiles"]["status"],
+                "fixture_type_structure": (metadata["fixture_type_profiles"].get("capability") or {}).get("binding_status", metadata["fixture_type_profiles"]["status"]),
                 "preset_raw_values": "UNAVAILABLE",
                 "effect_line_parameters": "UNAVAILABLE",
                 "sequence_cue_values": "UNAVAILABLE",
