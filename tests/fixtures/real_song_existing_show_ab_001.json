@@ -1,0 +1,56 @@
+{
+  "schema": "zen.real_song_existing_show_ab_fixture.v0.1",
+  "label": "READ_ONLY_EXISTING_SHOW_SNAPSHOT",
+  "song_analysis_ref": "examples/REALISTIC_SONG_ANALYSIS.json",
+  "show_snapshot": {
+    "source_ref": "data/ZEN_CURRENT_SHOW_PROFILE.json",
+    "show_identity": {
+      "kind": "SCANNED_SHOW_PROFILE_FINGERPRINT",
+      "value": "497dfae11821c10eebc54a614fa66e81339cb79d789d50c112fcdfc33134f4ea",
+      "confidence": "PARTIAL"
+    },
+    "read_only_capture": "2026-09-09",
+    "profile": {
+      "schema": "zen.show_profile.v0.1",
+      "groups": [
+        {"group_id": 1, "name": "HYBRID", "fixture_ids_in_selection_order": [101,102,103,104,105,106,107,108]},
+        {"group_id": 2, "name": "SPOT", "fixture_ids_in_selection_order": [301,302,303,304,305,306,307,308]},
+        {"group_id": 3, "name": "BEAM", "fixture_ids_in_selection_order": [201,202,203,204,205,206,207,208]},
+        {"group_id": 4, "name": "WASH", "fixture_ids_in_selection_order": [501,502,503,504,505,506,507,508]},
+        {"group_id": 5, "name": "B-EYE", "fixture_ids_in_selection_order": [401,402,403,404,405,406,407,408]},
+        {"group_id": 6, "name": "LED PAR", "fixture_ids_in_selection_order": [601,602,603,604,605,606,607,608]},
+        {"group_id": 7, "name": "STROBE", "fixture_ids_in_selection_order": [701,702,703,704,705,706,707,708]}
+      ],
+      "fixtures": [{"fixture_id": 101, "fixture_type": "2 ZEN BAW 20R Mode 2"}, {"fixture_id": 201, "fixture_type": "2 ZEN BAW 20R Mode 2"}, {"fixture_id": 301, "fixture_type": "3 ZEN DMH-160 St_Preset"}, {"fixture_id": 401, "fixture_type": "4 ZEN K10 Shapes"}, {"fixture_id": 501, "fixture_type": "5 ZEN MAC AU XB Standard"}, {"fixture_id": 601, "fixture_type": "6 ZEN LEDPar 9c 9Ch Mode A"}, {"fixture_id": 701, "fixture_type": "7 Atomic 3000 LED Extended"}],
+      "presets": [
+        {"preset_type": "FOCUS", "pool_id": 1, "reference": "6.1", "name": "narrow"},
+        {"preset_type": "FOCUS", "pool_id": 2, "reference": "6.2", "name": "normal"},
+        {"preset_type": "FOCUS", "pool_id": 3, "reference": "6.3", "name": "wide"},
+        {"preset_type": "FOCUS", "pool_id": 4, "reference": "6.4", "name": "min Focus"},
+        {"preset_type": "FOCUS", "pool_id": 5, "reference": "6.5", "name": "max Focus"}
+      ],
+      "effects": [],
+      "semantic_presets": [],
+      "geometry_analysis": {"status": "GEOMETRY_UNINITIALIZED"}
+    }
+  },
+  "existing_show_intake": {
+    "schema": "zen.show_intake.v0.1",
+    "intake_id": "REAL_EXISTING_SHOW_AB_001",
+    "requested_task": "Review a real-song A/B candidate against the scanned existing Show without redesigning the rig.",
+    "routing_mode": "EXISTING_SHOW",
+    "fixture_inventory": [{"family": "SCANNED_EXISTING_SHOW", "count": 57, "certainty": "CONFIRMED", "source": "MA2_SHOW_SCAN"}],
+    "facts": [{"fact_id": "GEOMETRY_STATUS", "value": "GEOMETRY_UNINITIALIZED", "certainty": "CONFIRMED", "source": "MA2_SHOW_SCAN"}],
+    "visual_observations": [],
+    "constraints": [],
+    "user_confirmed_layout": [],
+    "existing_show": {
+      "show_profile_ref": "tests/fixtures/real_song_existing_show_ab_001.json#show_snapshot.profile",
+      "placement_semantics": [{"fixture_family": "SCANNED_EXISTING_SHOW", "count": 57, "zone": "UNKNOWN", "mounting": "UNKNOWN", "certainty": "CONFIRMED", "source": "MA2_SHOW_SCAN"}]
+    }
+  },
+  "resource_binding_policy": {
+    "status": "NO_CONFIRMED_ROLE_BINDINGS",
+    "reason": "Training Case group-role assignments are INFERRED_FROM_GROUP_IDENTITY and are not promoted to confirmed MA2 resource bindings for this experimental review."
+  }
+}

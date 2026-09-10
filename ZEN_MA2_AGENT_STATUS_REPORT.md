@@ -975,3 +975,20 @@ realizability and canonical role states in review-facing consumers. Do not
 activate experimental guidance, create `ZEN_STYLE_PROFILE`, infer unavailable
 song/venue facts, or perform MA2 writes. `REAL_VENUE_VALIDATION` remains
 `WAIT_FOR_REAL_CASE`; MA2 write audit remains `ZERO_WRITES`.
+
+## 43 Real Song + Existing Show A/B 001
+
+`ZEN_REAL_SONG_EXISTING_SHOW_AB_001.md` evaluates the existing manual real-song
+analysis against a sanitized read-only snapshot of the resource-rich Existing
+Show. The route is `EXISTING_SHOW` and planner bypass is verified. The snapshot
+contains the exact scanned Groups HYBRID, SPOT, BEAM, WASH, B-EYE, LED PAR and
+STROBE plus Focus presets 6.1–6.5; geometry is uninitialized and semantic
+positions are absent.
+
+The experimental B3 path now exposes current Design Intent even when an
+Existing Show has no confirmed role-to-Group binding, but it makes no action
+change and marks each intent `NOT_EXPRESSIBLE_WITH_CURRENT_CAPABILITIES`.
+Training Case role suggestions remain inferred and are not silently promoted.
+This is a human-review-ready negative A/B result, not a production activation.
+Production behavior is unchanged, `ZEN_STYLE_PROFILE` remains deferred, real
+venue validation remains `WAIT_FOR_REAL_CASE`, and MA2 write audit is ZERO.

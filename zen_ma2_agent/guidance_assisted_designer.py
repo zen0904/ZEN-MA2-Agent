@@ -407,7 +407,15 @@ class GuidanceAssistedExperimentalDesigner:
         advisory = _resource_advisory(guidance_context)
         bindings = _binding_map(guidance_context, profile)
         if not bindings:
-            return self._mark_no_binding_change(baseline, "No confirmed role-to-scanned-Group bindings were supplied; abstract rig roles cannot select resources.")
+            if self._reasoning_version == REASONING_VERSION_B3:
+                choices, _ = _design_intents_b3(song_input, {}, guidance_context)
+                return self._mark_no_binding_change(
+                    baseline,
+                    "No confirmed role-to-scanned-Group bindings were supplied; abstract rig roles cannot select resources.",
+                    choices=choices,
+                    reasoning_version=self._reasoning_version,
+                )
+            return self._mark_no_binding_change(baseline, "No confirmed role-to-scanned-Group bindings were supplied; abstract rig roles cannot select resources.", reasoning_version=self._reasoning_version)
         if self._reasoning_version == REASONING_VERSION_B2:
             choices = _experimental_resource_choices_b2(song_input, bindings, guidance_context)
         else:
@@ -516,12 +524,39 @@ class GuidanceAssistedExperimentalDesigner:
         return validate_show_plan(plan)
 
     @staticmethod
-    def _mark_no_binding_change(plan: dict[str, Any], reason: str) -> dict[str, Any]:
+    def _mark_no_binding_change(
+        plan: dict[str, Any], reason: str, *, choices: dict[str, dict[str, Any]] | None = None,
+        reasoning_version: str | None = None,
+    ) -> dict[str, Any]:
+        """Expose B3 intent without pretending unbound roles are MA2 resources."""
         experimental = deepcopy(plan)
+        for cue in experimental["cues"]:
+            choice = (choices or {}).get(cue.get("source_section_id"))
+            if not choice:
+                continue
+            cue["experimental_design"] = {
+                "schema": EXPERIMENT_SCHEMA, "mode": GUIDANCE_ASSISTED_MODE,
+                "selected_roles": [], "omitted_roles": [], "reduced_roles": [], "substitutions": [],
+                "role_states": [],
+                "role_state_semantics": "ROLE_STATES_AUTHORITATIVE; no role can be active without a confirmed binding.",
+                "resource_outcome": "RESOURCE_LIMITATION", "song_section_id": choice["section_id"],
+                "evidence_references": [], "development": deepcopy(choice["development"]),
+                "selection_basis": deepcopy(choice["selection_basis"]),
+                "role_level_multipliers": {},
+                "design_intent": deepcopy(choice.get("design_intent")) if choice.get("design_intent") else None,
+                "intent_realizability": {
+                    "status": "NOT_EXPRESSIBLE_WITH_CURRENT_CAPABILITIES",
+                    "desired_development": choice.get("development", {}).get("status"),
+                    "actual_action_delta": "UNCHANGED",
+                    "reason": reason,
+                },
+                "human_review": "UNSET", "scope": "EXPERIMENTAL_TYPED_INTENT_ONLY",
+            }
         experimental["warnings"] = list(experimental.get("warnings", [])) + [f"GUIDANCE_ASSISTED_AB_ONLY: {reason}"]
         experimental["designer"] = {
             **deepcopy(experimental.get("designer", {})), "kind": "GUIDANCE_ASSISTED_AB_EXPERIMENTAL", "mode": GUIDANCE_ASSISTED_MODE,
             "production_designer_modified": False, "role_binding_policy": "NO_CONFIRMED_BINDING_NO_ACTION_CHANGE", "changed_typed_actions": False,
             "formulaic_interpretations_rejected": sorted(PROHIBITED_FORMULAIC_INTERPRETATIONS),
+            "reasoning_version": reasoning_version,
         }
         return validate_show_plan(experimental)
