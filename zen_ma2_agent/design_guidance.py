@@ -151,7 +151,7 @@ def _case_context(case: dict[str, Any]) -> dict[str, Any]:
             "verified_resources": {"fixture_families": deepcopy(rig["fixture_families"]), "available_roles": [item["role"] for item in rig["available_roles"]]},
             "assumptions": deepcopy(rig["assumptions"]), "confidence": "PARTIAL", "geometry_status": rig["geometry_status"],
             "source": rig["layout_source"], "scope": rig["scope"], "available_roles": [item["role"] for item in rig["available_roles"]],
-            "design_affordances": deepcopy(rig["design_affordances"]), "provenance": {"source_mode": rig["source_mode"], "planning_status": rig["planning_status"], "facts": deepcopy(rig["facts"]), "unknowns": deepcopy(rig["unknowns"])},
+            "design_affordances": deepcopy(rig["design_affordances"]), "role_bindings": deepcopy(rig.get("role_bindings", [])), "provenance": {"source_mode": rig["source_mode"], "planning_status": rig["planning_status"], "facts": deepcopy(rig["facts"]), "unknowns": deepcopy(rig["unknowns"])},
         }
     if case.get("schema") == SHADOW_RIG_CONTEXT_SCHEMA:
         shadow = validate_shadow_rig_context(case)

@@ -143,8 +143,9 @@ def _affordances(roles: list[str]) -> dict[str, dict[str, Any]]:
     timing = "TIMING_LAYER" if "TIMING_LAYER" in roles else None
     texture = "MOVER_TEXTURE_LAYER" if "MOVER_TEXTURE_LAYER" in roles else None
     environment = "BROAD_ENVIRONMENT" if "BROAD_ENVIRONMENT" in roles else None
+    density = "DENSITY_LAYER" if "DENSITY_LAYER" in roles else None
     low_keep = [item for item in (focus, color, environment) if item][:2] or roles[:1]
-    medium_keep = list(dict.fromkeys(low_keep + [item for item in (texture, environment) if item]))
+    medium_keep = list(dict.fromkeys(low_keep + [item for item in (density, texture, environment) if item]))
     high_keep = list(dict.fromkeys(medium_keep + [item for item in (timing, color) if item]))
     def choice(keep: list[str], *, reduce: list[str], omit: list[str], substitute: list[dict[str, str]], reason: str) -> dict[str, Any]:
         return {"KEEP": keep, "REDUCE": reduce, "OMIT": omit, "SUBSTITUTE": substitute, "REASON": [reason]}
@@ -173,7 +174,7 @@ def _rig_context(*, intake: dict[str, Any], source_mode: str, placement: list[di
         "planning_status": planning_status, "fixture_families": intake["fixture_inventory"], "available_roles": roles,
         "placement_semantics": placement, "facts": facts, "assumptions": assumptions, "unknowns": [item for item in facts if item["certainty"] == "UNKNOWN"],
         "constraints": intake["constraints"], "geometry_status": "USER_SEMANTIC_ONLY" if placement else "UNKNOWN", "asymmetry": {"detected": asymmetry, "source": "USER_CONFIRMED" if asymmetry else "NOT_ASSERTED"},
-        "design_affordances": _affordances(available_roles), "proposal_ref": proposal_ref,
+        "design_affordances": _affordances(available_roles), "role_bindings": [], "proposal_ref": proposal_ref,
         "clarification_requirements": clarification_requirements, "scope": "BOUNDED_RIG_CONTEXT", "runtime_mode": "SHADOW_ONLY",
     })
 
@@ -194,9 +195,22 @@ def validate_rig_context(value: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("Rig-context unknowns must remain explicit UNKNOWN facts.")
     if not isinstance(normalized["available_roles"], list) or not all(isinstance(item, dict) and item.get("certainty") in FACT_STATES for item in normalized["available_roles"]):
         raise ValueError("Rig roles must carry certainty.")
+    bindings = normalized.get("role_bindings") or []
+    if not isinstance(bindings, list):
+        raise ValueError("Rig role_bindings must be a list when supplied.")
+    declared = {item["role"] for item in normalized["available_roles"]}
+    normalized["role_bindings"] = []
+    for item in bindings:
+        if not isinstance(item, dict) or {"role", "target", "certainty", "source"} - set(item):
+            raise ValueError("Each role binding needs role/target/certainty/source.")
+        binding = deepcopy(item)
+        if binding["role"] not in declared or binding["certainty"] not in FACT_STATES or not isinstance(binding["target"], dict):
+            raise ValueError("Role binding must reference a declared role with explicit provenance.")
+        if binding["target"].get("type") != "group" or not isinstance(binding["target"].get("ref"), int) or binding["target"]["ref"] < 1:
+            raise ValueError("Role bindings may only reference a positive typed Group target.")
+        normalized["role_bindings"].append(binding)
     if not isinstance(normalized["design_affordances"], dict) or set(normalized["design_affordances"]) != {"LOW", "MEDIUM", "HIGH"}:
         raise ValueError("Rig context needs bounded LOW/MEDIUM/HIGH shadow affordances.")
-    declared = {item["role"] for item in normalized["available_roles"]}
     for choice in normalized["design_affordances"].values():
         if not {"KEEP", "REDUCE", "OMIT", "SUBSTITUTE", "REASON"} <= set(choice):
             raise ValueError("Rig affordances need keep/reduce/omit/substitute/reason.")

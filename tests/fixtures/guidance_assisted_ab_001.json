@@ -1,0 +1,10 @@
+{
+  "schema": "zen.guidance_assisted_ab_fixture.v0.1",
+  "label": "SYNTHETIC_EVALUATION_ONLY",
+  "cases": [
+    {"case_id": "AB_CASE_1_BUILDUP_DROP", "song_case_id": "CASE_D_BUILDUP_DROP", "rig_context": "RESOURCE_RICH_USER_CONFIRMED"},
+    {"case_id": "AB_CASE_2_RESTRAINED_MINIMAL", "song_case_id": "CASE_C_RESTRAINED_MINIMAL", "rig_context": "MEDIUM_ASSISTED_FLOOR_ONLY"},
+    {"case_id": "AB_CASE_3_LED_ONLY", "song_case_id": "CASE_D_BUILDUP_DROP", "rig_context": "LED_ONLY_ASSISTED"},
+    {"case_id": "AB_CASE_4_ASYMMETRIC", "song_case_id": "CASE_D_BUILDUP_DROP", "rig_context": "ASYMMETRIC_USER_CONFIRMED"}
+  ]
+}

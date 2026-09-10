@@ -830,3 +830,28 @@ Normalized Rig Context exposes inferred capability roles and advisory-only
 shadow plans remain identical. The production Designer, Resolver, Builder,
 MA2/Telnet/plugin paths, Guidance-Assisted Designer A/B, and `ZEN_STYLE_PROFILE`
 remain `NOT_RUN`/`DEFERRED`; MA2 writes are `ZERO`.
+
+## 37 Guidance-Assisted Designer A/B Experiment 001
+
+`GuidanceAssistedExperimentalDesigner` is an explicit
+`GUIDANCE_ASSISTED_AB_ONLY` adapter, not a modification of the production
+`FirstSongDesigner`. It first obtains the ordinary typed show plan and may
+change only existing typed actions when a normalized Rig Context supplies a
+`CONFIRMED` role-to-Group binding that matches a scanned Group in the supplied
+profile. Absent a binding, it returns a clearly marked no-action-change
+candidate rather than treating an abstract role as an MA2 resource.
+
+Four deterministic synthetic comparisons cover resource-rich buildup/drop,
+restrained/minimal medium rig, LED-only, and user-confirmed asymmetric rig
+contexts. B creates role-aware typed Group/preset/dimmer action composition and
+intentional omissions where justified. LED-only selects only color, density,
+and timing roles; asymmetric mode never moves/rebalances or forces a mirror.
+The asymmetric result is honestly `MIXED`, because its physical/aesthetic value
+cannot be assessed without a real venue/lighting-designer review.
+
+The production default is regression-tested unchanged; A and B both validate as
+canonical typed plans and no live build path is invoked. Context-dependent and
+rejected style candidates remain inactive. This is
+`READY_FOR_HUMAN_AB_REVIEW` only; `ZEN_STYLE_PROFILE`, production
+guidance-assisted activation, and real venue validation remain
+`DEFERRED`/`NOT_RUN`/`WAIT_FOR_REAL_CASE`, and MA2 writes remain `ZERO`.
