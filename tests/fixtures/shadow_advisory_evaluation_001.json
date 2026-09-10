@@ -1,0 +1,101 @@
+{
+  "schema": "zen.shadow_advisory_evaluation_fixture.v0.1",
+  "label": "SYNTHETIC_EVALUATION_ONLY",
+  "cases": [
+    {
+      "case_id": "CASE_A_HIGH_ENERGY_CONTEMPORARY_POP",
+      "name": "High-energy contemporary pop",
+      "synthetic_label": "SYNTHETIC_EVALUATION_ONLY",
+      "expectations": ["HEADROOM", "REPEATED_DEVELOPMENT", "NO_CONSTANT_MAXIMUM"],
+      "analysis": {
+        "schema": "zen.song_analysis.v0.1", "song": {"title": "SYNTHETIC_HIGH_ENERGY_POP", "duration_seconds": 214.0},
+        "sections": [
+          {"id":"intro","name":"INTRO","start":0,"end":16,"energy":0.22,"density":0.2,"accent_level":0.1,"role":"INTRO","notes":[]},
+          {"id":"verse_1","name":"VERSE_1","start":16,"end":43,"energy":0.42,"density":0.35,"accent_level":0.2,"role":"VERSE","notes":[]},
+          {"id":"pre_1","name":"PRE_1","start":43,"end":60,"energy":0.66,"density":0.55,"accent_level":0.45,"role":"PRE_CHORUS","notes":[]},
+          {"id":"chorus_1","name":"CHORUS_1","start":60,"end":89,"energy":0.9,"density":0.85,"accent_level":0.9,"role":"CHORUS","notes":[]},
+          {"id":"verse_2","name":"VERSE_2","start":89,"end":116,"energy":0.48,"density":0.4,"accent_level":0.25,"role":"VERSE","notes":[]},
+          {"id":"chorus_2","name":"CHORUS_2","start":116,"end":145,"energy":0.94,"density":0.9,"accent_level":0.95,"role":"CHORUS","notes":[]},
+          {"id":"break","name":"BREAK","start":145,"end":162,"energy":0.3,"density":0.25,"accent_level":0.15,"role":"BREAK","notes":[]},
+          {"id":"final","name":"FINAL_CHORUS","start":162,"end":199,"energy":1.0,"density":1.0,"accent_level":1.0,"role":"CHORUS","notes":[]},
+          {"id":"outro","name":"OUTRO","start":199,"end":214,"energy":0.28,"density":0.2,"accent_level":0.1,"role":"OUTRO","notes":[]}
+        ],
+        "events":[{"time":60,"type":"ACCENT","strength":0.95,"section_id":"chorus_1"},{"time":162,"type":"HIT","strength":1.0,"section_id":"final"}],
+        "performance":{},"stage_roles":[],"build":{"active_sequence_range":[201,300],"max_cues_per_section":2}
+      }
+    },
+    {
+      "case_id": "CASE_B_MEDIUM_VERSE_CHORUS",
+      "name": "Medium-energy Verse / Chorus",
+      "synthetic_label": "SYNTHETIC_EVALUATION_ONLY",
+      "expectations": ["MODERATE_CONTRAST", "NO_FORCED_EXPLOSION", "REPEATED_DEVELOPMENT"],
+      "analysis": {
+        "schema":"zen.song_analysis.v0.1","song":{"title":"SYNTHETIC_MEDIUM_VERSE_CHORUS","duration_seconds":190.0},
+        "sections":[
+          {"id":"intro","name":"INTRO","start":0,"end":18,"energy":0.3,"density":0.25,"accent_level":0.1,"role":"INTRO","notes":[]},
+          {"id":"verse_1","name":"VERSE_1","start":18,"end":49,"energy":0.46,"density":0.4,"accent_level":0.2,"role":"VERSE","notes":[]},
+          {"id":"chorus_1","name":"CHORUS_1","start":49,"end":77,"energy":0.68,"density":0.6,"accent_level":0.5,"role":"CHORUS","notes":[]},
+          {"id":"verse_2","name":"VERSE_2","start":77,"end":108,"energy":0.48,"density":0.42,"accent_level":0.22,"role":"VERSE","notes":[]},
+          {"id":"chorus_2","name":"CHORUS_2","start":108,"end":136,"energy":0.72,"density":0.65,"accent_level":0.55,"role":"CHORUS","notes":[]},
+          {"id":"bridge","name":"BRIDGE","start":136,"end":158,"energy":0.52,"density":0.45,"accent_level":0.25,"role":"BRIDGE","notes":[]},
+          {"id":"outro","name":"OUTRO","start":158,"end":190,"energy":0.34,"density":0.25,"accent_level":0.1,"role":"OUTRO","notes":[]}
+        ],"events":[],"performance":{},"stage_roles":[],"build":{"active_sequence_range":[201,300],"max_cues_per_section":1}
+      }
+    },
+    {
+      "case_id": "CASE_C_RESTRAINED_MINIMAL",
+      "name": "Restrained / minimal",
+      "synthetic_label": "SYNTHETIC_EVALUATION_ONLY",
+      "expectations": ["NEGATIVE_SPACE", "NO_UNNECESSARY_EFFECT", "COMPLETE_LOW_LOOK"],
+      "analysis": {
+        "schema":"zen.song_analysis.v0.1","song":{"title":"SYNTHETIC_RESTRAINED_MINIMAL","duration_seconds":232.0},
+        "sections":[
+          {"id":"intro","name":"INTRO","start":0,"end":30,"energy":0.16,"density":0.12,"accent_level":0.05,"role":"INTRO","notes":["Long negative-space opening"]},
+          {"id":"verse_1","name":"VERSE_1","start":30,"end":68,"energy":0.26,"density":0.2,"accent_level":0.1,"role":"VERSE","notes":[]},
+          {"id":"refrain_1","name":"REFRAIN_1","start":68,"end":96,"energy":0.43,"density":0.3,"accent_level":0.2,"role":"CHORUS","notes":[]},
+          {"id":"verse_2","name":"VERSE_2","start":96,"end":134,"energy":0.24,"density":0.18,"accent_level":0.08,"role":"VERSE","notes":[]},
+          {"id":"refrain_2","name":"REFRAIN_2","start":134,"end":162,"energy":0.46,"density":0.34,"accent_level":0.22,"role":"CHORUS","notes":[]},
+          {"id":"instrumental","name":"INSTRUMENTAL","start":162,"end":194,"energy":0.3,"density":0.2,"accent_level":0.08,"role":"INSTRUMENTAL","notes":[]},
+          {"id":"outro","name":"OUTRO","start":194,"end":232,"energy":0.14,"density":0.1,"accent_level":0.04,"role":"OUTRO","notes":[]}
+        ],"events":[],"performance":{},"stage_roles":[],"build":{"active_sequence_range":[201,300],"max_cues_per_section":1}
+      }
+    },
+    {
+      "case_id": "CASE_D_BUILDUP_DROP",
+      "name": "Buildup / Drop",
+      "synthetic_label": "SYNTHETIC_EVALUATION_ONLY",
+      "expectations": ["BUILD_RELEASE", "DISTINCT_TRANSIENTS", "NO_MANDATORY_LAYER_ADD"],
+      "analysis": {
+        "schema":"zen.song_analysis.v0.1","song":{"title":"SYNTHETIC_BUILDUP_DROP","duration_seconds":204.0},
+        "sections":[
+          {"id":"intro","name":"INTRO","start":0,"end":20,"energy":0.25,"density":0.2,"accent_level":0.1,"role":"INTRO","notes":[]},
+          {"id":"build_1","name":"BUILD_1","start":20,"end":52,"energy":0.56,"density":0.48,"accent_level":0.35,"role":"BUILD","notes":[]},
+          {"id":"drop_1","name":"DROP_1","start":52,"end":76,"energy":0.94,"density":0.9,"accent_level":1.0,"role":"DROP","notes":[]},
+          {"id":"reset","name":"RESET","start":76,"end":103,"energy":0.34,"density":0.28,"accent_level":0.12,"role":"BREAK","notes":[]},
+          {"id":"build_2","name":"BUILD_2","start":103,"end":139,"energy":0.68,"density":0.6,"accent_level":0.5,"role":"BUILD","notes":[]},
+          {"id":"drop_2","name":"DROP_2","start":139,"end":170,"energy":0.98,"density":0.95,"accent_level":1.0,"role":"DROP","notes":[]},
+          {"id":"outro","name":"OUTRO","start":170,"end":204,"energy":0.3,"density":0.2,"accent_level":0.08,"role":"OUTRO","notes":[]}
+        ],"events":[{"time":52,"type":"HIT","strength":1.0,"section_id":"drop_1"},{"time":139,"type":"HIT","strength":1.0,"section_id":"drop_2"}],"performance":{},"stage_roles":[],"build":{"active_sequence_range":[201,300],"max_cues_per_section":2}
+      }
+    },
+    {
+      "case_id": "CASE_E_IRREGULAR_NON_LINEAR",
+      "name": "Irregular / non-linear",
+      "synthetic_label": "SYNTHETIC_EVALUATION_ONLY",
+      "expectations": ["NON_MONOTONIC_ARC", "RESET", "MULTIPLE_PEAKS"],
+      "analysis": {
+        "schema":"zen.song_analysis.v0.1","song":{"title":"SYNTHETIC_IRREGULAR_NON_LINEAR","duration_seconds":218.0},
+        "sections":[
+          {"id":"opening","name":"OPENING","start":0,"end":24,"energy":0.55,"density":0.45,"accent_level":0.25,"role":"INTRO","notes":[]},
+          {"id":"peak_a","name":"PEAK_A","start":24,"end":48,"energy":0.9,"density":0.8,"accent_level":0.85,"role":"CHORUS","notes":[]},
+          {"id":"fall","name":"FALL","start":48,"end":76,"energy":0.38,"density":0.3,"accent_level":0.12,"role":"BREAK","notes":[]},
+          {"id":"plateau","name":"PLATEAU","start":76,"end":110,"energy":0.56,"density":0.48,"accent_level":0.3,"role":"INSTRUMENTAL","notes":[]},
+          {"id":"delayed_build","name":"DELAYED_BUILD","start":110,"end":148,"energy":0.62,"density":0.55,"accent_level":0.4,"role":"BUILD","notes":[]},
+          {"id":"peak_b","name":"PEAK_B","start":148,"end":176,"energy":0.96,"density":0.9,"accent_level":0.95,"role":"DROP","notes":[]},
+          {"id":"afterglow","name":"AFTERGLOW","start":176,"end":198,"energy":0.5,"density":0.4,"accent_level":0.2,"role":"BRIDGE","notes":[]},
+          {"id":"outro","name":"OUTRO","start":198,"end":218,"energy":0.22,"density":0.15,"accent_level":0.08,"role":"OUTRO","notes":[]}
+        ],"events":[{"time":24,"type":"ACCENT","strength":0.85,"section_id":"peak_a"},{"time":148,"type":"HIT","strength":0.95,"section_id":"peak_b"}],"performance":{},"stage_roles":[],"build":{"active_sequence_range":[201,300],"max_cues_per_section":2}
+      }
+    }
+  ]
+}

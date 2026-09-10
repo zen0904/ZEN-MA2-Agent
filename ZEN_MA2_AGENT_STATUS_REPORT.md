@@ -773,3 +773,19 @@ test. Baseline and shadow `ZEN_SHOW_PLAN` outputs are structurally identical;
 only a separate advisory envelope is added. Designer production guidance
 activation is `NOT_RUN`, `ZEN_STYLE_PROFILE` is `DEFERRED`, and this local test
 work produced no MA2/Telnet/plugin execution or MA2 writes.
+
+## 34 Shadow Advisory Evaluation 001
+
+Five explicitly `SYNTHETIC_EVALUATION_ONLY` song-structure cases now evaluate
+the shadow guidance across high-energy pop, medium verse/chorus, restrained
+minimal, buildup/drop, and irregular non-linear forms. The existing realistic
+song-analysis fixture is retained as a baseline-preservation control. Every
+baseline and shadow `ZEN_SHOW_PLAN` remains structurally identical.
+
+The evaluation keeps section/form, rhythmic accent, dynamic contour,
+buildup/release, and repeated-section development distinct. It confirms that
+complete low/medium/high energy states can be advised without emitting a dimmer
+or other MA2 decision. Rejected interpretations and context-dependent style
+candidates remain inactive. The outcome is `NEEDS_MORE_SHADOW_WORK`: advisory
+reasoning is traceable and non-formulaic, but still broad and only evaluated
+against the Training Case 001 context.

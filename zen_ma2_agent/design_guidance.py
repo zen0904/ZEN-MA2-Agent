@@ -94,6 +94,7 @@ class DesignAdvisory:
     unresolved_conditions: tuple[str, ...]
     future_actionability_status: str = "SHADOW_ONLY_REVIEW_REQUIRED"
     schema: str = ADVISORY_SCHEMA
+    user_style_signal_names: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.advisory_id or not self.recommendation:
@@ -106,7 +107,7 @@ class DesignAdvisory:
 
     def to_dict(self) -> dict[str, Any]:
         value = asdict(self)
-        for key in ("source_categories", "evidence_references", "song_signal_references", "case_references", "limitations", "conflicts", "unresolved_conditions"):
+        for key in ("source_categories", "evidence_references", "song_signal_references", "case_references", "limitations", "conflicts", "unresolved_conditions", "user_style_signal_names"):
             value[key] = list(value[key])
         return value
 
@@ -210,6 +211,20 @@ def _style(context: dict[str, Any], name: str) -> dict[str, Any] | None:
     return next((item for item in context["active_user_style"] if item["name"] == name), None)
 
 
+def _energy_bands(context: dict[str, Any]) -> dict[str, list[str]]:
+    bands = {"LOW": [], "MEDIUM": [], "HIGH": []}
+    for item in context["song_signals"]:
+        if item["kind"] != "SECTION_STRUCTURE" or not isinstance(item.get("energy"), (int, float)):
+            continue
+        label = f"{item['section_id']} ({item['role']})"
+        bands["LOW" if item["energy"] <= 0.35 else "MEDIUM" if item["energy"] <= 0.70 else "HIGH"].append(label)
+    return bands
+
+
+def _signal_ids(context: dict[str, Any], *kinds: str) -> tuple[str, ...]:
+    return tuple(item["signal_id"] for item in context["song_signals"] if item["kind"] in set(kinds))
+
+
 def _conflicts(context: dict[str, Any]) -> list[dict[str, Any]]:
     conflicts: list[dict[str, Any]] = []
     if context["case_context"]["resource_scale"] in {"LIMITED", "SMALL"}:
@@ -228,16 +243,25 @@ def generate_shadow_advisories(context: dict[str, Any]) -> list[dict[str, Any]]:
         raise ValueError("Only a shadow guidance context can produce advisory output.")
     conflicts = tuple(_conflicts(context))
     advisories: list[DesignAdvisory] = []
+    bands = _energy_bands(context)
+    structure_ids = _signal_ids(context, "SECTION_STRUCTURE")
+    dynamic_ids = _signal_ids(context, "DYNAMIC_CONTOUR")
+    rhythm_ids = _signal_ids(context, "RHYTHMIC_ACCENT")
+    transition_ids = _signal_ids(context, "BUILDUP_RELEASE")
+    repeated_ids = _signal_ids(context, "REPEATED_SECTION_DEVELOPMENT")
     complete = _style(context, "EACH_ENERGY_STATE_NEEDS_A_COMPLETE_LOOK")
     if complete:
+        low = ", ".join(bands["LOW"]) or "no measured low-energy section"
+        high = ", ".join(bands["HIGH"]) or "no measured high-energy section"
         advisories.append(DesignAdvisory(
             "advisory-complete-energy-states",
-            "Preserve intentionally designed low-, medium-, and high-energy visual states; do not reduce a high-energy look only by dimming it.",
-            "The human-confirmed high-priority preference calls for distinct, complete visual states while the song context supplies section and dynamic evidence.",
+            f"Treat low-energy sections [{low}] and high-energy sections [{high}] as distinct complete visual states, not one look at different Dimmer levels.",
+            "The human-confirmed high-priority preference calls for distinct complete visual states; the specific section and dynamic evidence identifies where those states are needed.",
             ("SONG", "CASE", "USER_STYLE"), tuple(complete["evidence_ids"]), "ACCEPT", "HUMAN_REVIEW_REQUIRED",
-            tuple(item["signal_id"] for item in context["song_signals"] if item["kind"] in {"SECTION_STRUCTURE", "DYNAMIC_CONTOUR"}),
+            structure_ids + dynamic_ids,
             (context["case_context"]["case_id"],), "HIGH", "CONTEXT_AWARE_ADVISORY", tuple([complete["limitations"]] if complete["limitations"] else []), conflicts,
             ("No typed action, fixture selection, preset, effect, level, fade, or timing is generated.",),
+            user_style_signal_names=("EACH_ENERGY_STATE_NEEDS_A_COMPLETE_LOOK", "MULTI_LEVEL_ENERGY_DESIGN", "INTENTIONAL_RESTRAINT"),
         ))
     arc = _style(context, "PROGRESSIVE_ENERGY_ARC")
     if arc:
@@ -246,8 +270,44 @@ def generate_shadow_advisories(context: dict[str, Any]) -> list[dict[str, Any]]:
             "Review the whole-song energy journey for coherent development, while allowing rise, reset, plateau, delayed peak, or multiple peaks.",
             "Human review confirms a coherent arc but explicitly rejects a fixed A-to-B-to-C formula.",
             ("SONG", "USER_STYLE"), tuple(arc["evidence_ids"]), "ACCEPT", "NOT_APPLICABLE",
-            tuple(item["signal_id"] for item in context["song_signals"] if item["kind"] in {"DYNAMIC_CONTOUR", "REPEATED_SECTION_DEVELOPMENT", "BUILDUP_RELEASE"}), (), "HIGH", "CONTEXT_AWARE_ADVISORY", tuple([arc["limitations"]] if arc["limitations"] else []), (),
+            dynamic_ids + repeated_ids + transition_ids, (), "HIGH", "CONTEXT_AWARE_ADVISORY", tuple([arc["limitations"]] if arc["limitations"] else []), (),
             ("This is not a prescribed energy curve.",),
+            user_style_signal_names=("PROGRESSIVE_ENERGY_ARC", "MUSIC_STRUCTURE_ALIGNMENT", "DYNAMIC_CONTOUR_TRACKING"),
+        ))
+    hierarchy = _style(context, "CLEAN_VISUAL_HIERARCHY")
+    palette = _style(context, "PALETTE_COHERENCE")
+    if hierarchy and palette:
+        advisories.append(DesignAdvisory(
+            "advisory-section-identity-and-hierarchy",
+            "For the identified section map, preserve a readable focal hierarchy and coherent palette logic while varying the visual composition only where song and case context justify it.",
+            "Human-confirmed hierarchy and palette preferences apply across the song, but neither requires monochrome-only color nor a forced large section delta.",
+            ("SONG", "CASE", "USER_STYLE"), tuple(hierarchy["evidence_ids"] + palette["evidence_ids"]), "ACCEPT", "HUMAN_REVIEW_REQUIRED",
+            structure_ids, (context["case_context"]["case_id"],), "HIGH", "CONTEXT_AWARE_ADVISORY",
+            tuple(filter(None, (palette["limitations"], "Dominant-theme color remains context-dependent and is not a requirement."))), (),
+            ("No palette values or fixture resources are selected by this advisory.",),
+            user_style_signal_names=("CLEAN_VISUAL_HIERARCHY", "PALETTE_COHERENCE", "MUSIC_STRUCTURE_ALIGNMENT"),
+        ))
+    if rhythm_ids:
+        impact = _style(context, "CONTROLLED_HIGH_IMPACT")
+        if impact:
+            advisories.append(DesignAdvisory(
+                "advisory-rhythmic-punctuation",
+                "Use the identified accent/hit events as candidates for intentional punctuation; do not treat every event as a mandatory maximum-impact moment.",
+                "Rhythmic alignment is human-confirmed, while high impact remains explicitly bounded by musical and resource context.",
+                ("SONG", "USER_STYLE"), tuple(impact["evidence_ids"]), "ACCEPT_WITH_LIMITATION", "NOT_APPLICABLE",
+                rhythm_ids, (), "MEDIUM", "EVENT_CONTEXT_ADVISORY", tuple([impact["limitations"]]), (),
+                ("STRONG_TRANSIENT_IMPACT remains context-dependent and is not promoted.",),
+                user_style_signal_names=("RHYTHMIC_ACCENT_SYNC", "CONTROLLED_HIGH_IMPACT"),
+            ))
+    if repeated_ids:
+        advisories.append(DesignAdvisory(
+            "advisory-repeated-section-development",
+            "Develop repeated sections through an intentional relationship to their earlier occurrence; do not assume either an exact copy or automatic escalation.",
+            "Repeated-section identity is preserved as a song fact, while the accepted whole-song arc remains non-formulaic.",
+            ("SONG", "USER_STYLE"), tuple(arc["evidence_ids"] if arc else ()), "ACCEPT" if arc else "NOT_APPLICABLE", "NOT_APPLICABLE",
+            repeated_ids, (), "MEDIUM", "CONTEXT_AWARE_ADVISORY", (), (),
+            ("HIGH_SECTION_DELTA remains context-dependent and is not required.",),
+            user_style_signal_names=("PROGRESSIVE_ENERGY_ARC", "MUSIC_STRUCTURE_ALIGNMENT"),
         ))
     advisories.append(DesignAdvisory(
         "advisory-professional-evidence-boundary",
@@ -256,6 +316,7 @@ def generate_shadow_advisories(context: dict[str, Any]) -> list[dict[str, Any]]:
         ("INDUSTRY", "USER_STYLE"), tuple(item["evidence_id"] for item in context["industry_evidence"]), "MIXED", "HUMAN_REVIEW_REQUIRED", (), (context["case_context"]["case_id"],), "MEDIUM", "EVIDENCE_TRACE", (),
         tuple(item for item in conflicts if item["outcome"] == "PROFESSIONAL_VALID_USER_STYLE_DIVERGENCE"),
         ("Professional validity and user preference remain independently represented.",),
+        user_style_signal_names=(),
     ))
     return [item.to_dict() for item in advisories]
 
