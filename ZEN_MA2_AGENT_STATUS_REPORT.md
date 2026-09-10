@@ -1038,3 +1038,25 @@ smallest blocker is a Show-bound read-only channel/profile binding source (or
 reviewed exact binding). Production Designer behavior remains unchanged, B3
 remains `GUIDANCE_ASSISTED_AB_ONLY`, `ZEN_STYLE_PROFILE` remains deferred,
 real venue validation remains `WAIT_FOR_REAL_CASE`, and MA2 writes remain ZERO.
+
+## 46 Show-Bound Fixture Type / Channel Profile Binding 001
+
+`FixtureTypeExportProvider` implements the narrow native read-only path:
+current `List Fixture` label -> exact `Export FixtureType <id>` -> strict XML
+identity check -> ChannelType/ChannelFunction inventory -> provenance-bearing
+technical capability profile. It is loopback-onPC only, creates and removes
+only an Agent-owned external XML file, and rejects ambiguous XML, mismatched
+ID/label, empty channel inventory, remote filesystem access and structurally
+different local candidates. Scanner support for optional
+`fixture_type_profiles` is additive and does not alter fixture inventory
+contracts.
+
+No grandMA2 onPC process was running for this implementation round, so no
+current-Show XML was exported and every Existing Show type remains
+`UNKNOWN_FOR_EXISTING_SHOW`. Local candidates remain unbound. The exact next
+technical step is real-console execution of the provider with the Existing
+Show loaded, followed by review of identity/export hash/channel evidence. No
+B3 role eligibility, artistic role assignment, action grammar or A/B 002 run
+is authorized yet. Production Designer behavior remains unchanged, B3 remains
+`GUIDANCE_ASSISTED_AB_ONLY`, `ZEN_STYLE_PROFILE` remains deferred, real venue
+validation remains `WAIT_FOR_REAL_CASE`, and MA2 writes remain ZERO.

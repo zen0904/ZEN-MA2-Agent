@@ -75,6 +75,13 @@ class ImportExportPathResolver:
                 return candidates[version]
         return candidates[max(candidates)]
 
+    def resolve_library(self, configured_path: object = "auto") -> Path:
+        """Resolve the paired FixtureType library for a verified onPC version."""
+        library = self.resolve(configured_path).parent / "library"
+        if not library.is_dir():
+            raise GroupMembershipProviderUnavailable("FIXTURE_TYPE_LIBRARY_PATH_UNAVAILABLE")
+        return library.resolve()
+
     def _candidates(self) -> dict[tuple[int, int, int], Path]:
         if not self.grandma_root.is_dir():
             return {}

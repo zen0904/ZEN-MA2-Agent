@@ -152,6 +152,24 @@ class AgentRuntime:
         self.log("state_export", {"command": command, "preset_ref": reference, "filename": filename})
         return response
 
+    def export_fixture_type_file(self, fixture_type_id: int, filename: str) -> str:
+        """Export one current-Show FixtureType to its native library folder.
+
+        This is a read-only Show operation: it creates only an Agent-owned
+        external XML file and never mutates the loaded Show object.
+        """
+        if not self.ready or not self.client:
+            raise ConnectionError("Connect and reach MA2 READY before exporting show state.")
+        if isinstance(fixture_type_id, bool) or not isinstance(fixture_type_id, int) or fixture_type_id < 1:
+            raise ValueError("Export FixtureType requires a positive numeric Fixture Type ID.")
+        if not re.fullmatch(r"ZEN_AGENT_FT_[1-9]\d*_[A-Za-z0-9_-]{6,64}\.xml", filename):
+            raise PermissionError("Export state only permits Agent-owned temporary FixtureType XML filenames.")
+        command = f'Export FixtureType {fixture_type_id} "{filename}" /nc'
+        with self._export_state_lock:
+            response = self.client.execute(command)
+        self.log("state_export", {"command": command, "fixture_type_id": fixture_type_id, "filename": filename})
+        return response
+
     @staticmethod
     def user_var_command(value: str) -> str:
         """Build a single safe SetUserVar command without allowing a new MA line."""

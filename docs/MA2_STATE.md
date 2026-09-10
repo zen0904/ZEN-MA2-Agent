@@ -39,6 +39,23 @@ Agent-owned temporary XML file; it does not modify Show content. An unknown
 adapter response is not parsed optimistically; it becomes `UNSUPPORTED` or
 `ERROR` in the cache.
 
+## FixtureType channel-profile export
+
+`fixture_type_profiles` is an explicit, loopback-onPC-only read-only resource.
+It uses native `Export FixtureType <id> "ZEN_AGENT_FT_<id>_<request-id>.xml"
+/nc`, which exports the current Show's FixtureType object to the selected
+drive's library and never changes the loaded Show. The provider accepts an XML
+profile only when its numeric FixtureType index and reconstructed `id name
+mode` label exactly match the current `List Fixture` label. It then exposes
+the actual `ChannelType` inventory and derived technical capabilities with
+source, hash and identity provenance.
+
+Installed library profiles are not a substitute for this export. They may be
+classified `LOCAL_PROFILE_CANDIDATE_BOUND` only after exact structural
+comparison with a `SHOW_BOUND_VERIFIED` current-Show export. Pixel/shape
+topology, Effect behavior, preset applicability and artistic role are outside
+this provider's boundary.
+
 ## Timecode boundary
 
 `List Timecode` is allow-listed as a read-only inventory source. The grandMA2

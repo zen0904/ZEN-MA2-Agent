@@ -134,6 +134,7 @@ class ShowScanner:
             }
             for item in values("effects")
         ]
+        fixture_type_profiles = values("fixture_type_profiles")
         semantic_presets = SemanticPresetRegistry().resolve(presets)
         profile = {
             "schema": SHOW_PROFILE_SCHEMA,
@@ -145,6 +146,7 @@ class ShowScanner:
             "presets": presets,
             "semantic_presets": semantic_presets,
             "effects": effects,
+            "fixture_type_profiles": fixture_type_profiles,
             "sequences": values("sequences"),
             "cues": values("cues"),
             "pages": values("pages"),
@@ -154,7 +156,7 @@ class ShowScanner:
             "known_limits": {
                 "layout_fixture_geometry": "UNSUPPORTED",
                 "fixture_stage_geometry": metadata["fixture_geometry"]["status"],
-                "fixture_type_structure": "UNAVAILABLE",
+                "fixture_type_structure": metadata["fixture_type_profiles"]["status"],
                 "preset_raw_values": "UNAVAILABLE",
                 "effect_line_parameters": "UNAVAILABLE",
                 "sequence_cue_values": "UNAVAILABLE",

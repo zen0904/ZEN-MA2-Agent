@@ -18,7 +18,7 @@ from .pairing import PairingManager
 from .router import IntentRouter, ResponseType
 from .runtime import AgentRuntime
 from .skill_system import SkillError, SkillRegistry
-from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvider, EffectProvider, ExecutorProvider, ExportFileGroupMembershipProvider, FixtureGeometryProvider, FixtureProvider, GroupMembershipProvider, GroupMembershipProviderError, GroupMembershipProviderUnavailable, GroupProvider, LayoutExportProvider, LayoutInventoryProvider, LayoutObjectResolver, PageProvider, PresetProvider, SequenceProvider, TimecodeProvider, ZenStateAdapter
+from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvider, EffectProvider, ExecutorProvider, ExportFileGroupMembershipProvider, FixtureGeometryProvider, FixtureProvider, FixtureTypeExportError, FixtureTypeExportProvider, GroupMembershipProvider, GroupMembershipProviderError, GroupMembershipProviderUnavailable, GroupProvider, LayoutExportProvider, LayoutInventoryProvider, LayoutObjectResolver, PageProvider, PresetProvider, SequenceProvider, TimecodeProvider, ZenStateAdapter
 from .state.store import StateStore
 from .telnet_client import ConnectionState
 from .workflow import WorkflowPlan
@@ -70,6 +70,7 @@ class AgentCore:
         self.actions: dict[str, ActionRecord] = {}
         self.state = StateStore()
         self.group_membership_provider = group_membership_provider or ExportFileGroupMembershipProvider()
+        self.fixture_type_export_provider = FixtureTypeExportProvider()
         self.layout_export_provider = LayoutExportProvider()
         self.skills = SkillRegistry(self.runtime.root)
         self.skills.discover()
@@ -286,6 +287,16 @@ class AgentCore:
                 provider = FixtureGeometryProvider()
                 values, capability = provider.collect(self.runtime)
                 snapshot = self.state.put(resource, values, source=provider.source, capability=capability)
+            elif resource == "fixture_type_profiles":
+                if not self.state.get("fixtures"):
+                    self.refresh_state("fixtures")
+                fixtures = self.state.get("fixtures")
+                labels = sorted({str(item.get("fixture_type") or "").strip() for item in (fixtures.values if fixtures else []) if str(item.get("fixture_type") or "").strip()})
+                if not labels:
+                    raise FixtureTypeExportError("FIXTURE_TYPE_LIST_ID_UNAVAILABLE")
+                values = [self.fixture_type_export_provider.export_and_bind(self.runtime, label, self.runtime.preferences.get("state_adapter")) for label in labels]
+                capability = self.fixture_type_export_provider.capabilities(self.runtime, self.runtime.preferences.get("state_adapter"))
+                snapshot = self.state.put(resource, values, source=self.fixture_type_export_provider.source, capability=capability)
             elif resource == "sequences":
                 provider = SequenceProvider()
                 snapshot = self.state.put("sequences", provider.parse(self.runtime.read_state(provider.command)), source="ma2_telnet_list")
@@ -355,12 +366,14 @@ class AgentCore:
             self.events.emit("state", self.snapshot())
             return {"resource": resource, "count": len(snapshot.values), "values": snapshot.values, "status": "ERROR", "error": snapshot.error}
         except GroupMembershipProviderUnavailable as exc:
-            snapshot = self.state.record_error(resource, f"UNSUPPORTED {exc}", source=self.group_membership_provider.source)
+            source = self.fixture_type_export_provider.source if resource == "fixture_type_profiles" else self.group_membership_provider.source
+            snapshot = self.state.record_error(resource, f"UNSUPPORTED {exc}", source=source)
             self.progress = "Idle"
             self.events.emit("state", self.snapshot())
             return {"resource": resource, "count": len(snapshot.values), "values": snapshot.values, "status": "UNSUPPORTED", "error": snapshot.error}
         except GroupMembershipProviderError as exc:
-            snapshot = self.state.record_error(resource, str(exc), source=self.group_membership_provider.source)
+            source = self.fixture_type_export_provider.source if resource == "fixture_type_profiles" else self.group_membership_provider.source
+            snapshot = self.state.record_error(resource, str(exc), source=source)
             self.progress = "Idle"
             self.events.emit("state", self.snapshot())
             return {"resource": resource, "count": len(snapshot.values), "values": snapshot.values, "status": "ERROR", "error": snapshot.error}
