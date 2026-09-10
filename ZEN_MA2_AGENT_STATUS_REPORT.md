@@ -1014,3 +1014,27 @@ Production Designer behavior remains unchanged, B3 remains
 validation remains `WAIT_FOR_REAL_CASE`, and the MA2 write audit remains ZERO.
 The next bounded step is explicit human review of these candidates before a
 new Existing Show experimental A/B can express a song/case-specific selection.
+
+## 45 Existing Show Resource Capability Verification 001
+
+`ZEN_EXISTING_SHOW_RESOURCE_CAPABILITY_VERIFICATION_001.md` separates the
+current Show's verified resource identity from channel-capability evidence. A
+read-only local MA2 library inspection found closely matching XML/XMLP profile
+candidates and parsed their channel definitions, but the current scanner has
+no Show-bound Fixture Type-to-library-profile binding. Consequently all
+requested attributes remain `UNKNOWN_FOR_EXISTING_SHOW`, and no B3 role is
+eligible from verified current-Show capability.
+
+The local profiles are retained as `LOCAL_PROFILE_CANDIDATE_UNBOUND` evidence
+only. The practical human decision is to confirm/reject an exact profile
+binding or preserve the unknown state; it is not a request to establish a
+fixture priority, permanent role, or artistic preference. Existing mapping
+hypotheses are now capability-eligibility pending. BEAM is not collapsed into
+`MOVER_TEXTURE_LAYER`; B3 vocabulary/capability gaps remain explicit.
+
+`REAL_SONG_EXISTING_SHOW_AB_002` is not ready for an expressive action-delta
+run: proceeding now would either repeat the no-action result or guess. The
+smallest blocker is a Show-bound read-only channel/profile binding source (or
+reviewed exact binding). Production Designer behavior remains unchanged, B3
+remains `GUIDANCE_ASSISTED_AB_ONLY`, `ZEN_STYLE_PROFILE` remains deferred,
+real venue validation remains `WAIT_FOR_REAL_CASE`, and MA2 writes remain ZERO.

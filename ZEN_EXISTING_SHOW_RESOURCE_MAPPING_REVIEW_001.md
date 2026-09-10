@@ -1,6 +1,7 @@
 # Existing Show Resource Mapping Review 001
 
-Status: `READY_FOR_HUMAN_REVIEW` — proposal only; no mapping is active.
+Status: `CAPABILITY_ELIGIBILITY_PENDING` — proposal only; no mapping is active
+or ready for role-eligibility approval.
 
 This review is the bounded next step after `ZEN_REAL_SONG_EXISTING_SHOW_AB_001.md`.
 It records non-ranked candidate relationships between the scanned Existing
@@ -38,6 +39,11 @@ Focus preset inventory, absent semantic position presets, and geometry state.
 `data/ZEN_TRAINING_CASE_001.json` is used only as a provenance-bearing
 case-specific interpretation of those same labels. Its role assignments are
 already `INFERRED_FROM_GROUP_IDENTITY`; this review does not promote them.
+
+`ZEN_EXISTING_SHOW_RESOURCE_CAPABILITY_VERIFICATION_001.md` supersedes these
+identity-origin role hypotheses as human-review inputs. Until a Show-bound
+technical capability source or an exact profile binding is confirmed, no
+candidate below is eligible for Zen to approve as a B3 role capability.
 
 ### Confirmed facts
 
@@ -81,7 +87,7 @@ calibrated stage relationship. No candidate below establishes any of those.
   Training Case 001 calls this a case-specific `AERIAL` / `KEY_LAYER` /
   `TEXTURE` candidate.
 - **Confidence:** `INFERRED_FROM_GROUP_IDENTITY`.
-- **HUMAN REVIEW:** `UNSET`.
+- **HUMAN ROLE ELIGIBILITY REVIEW:** `DEFERRED_PENDING_CAPABILITY_BINDING`.
 
 ### GROUP 2 — SPOT
 
@@ -97,7 +103,7 @@ calibrated stage relationship. No candidate below establishes any of those.
 - **Evidence:** Existing Show Group identity and fixture-type snapshot;
   Training Case 001's case-specific `KEY_LAYER` / `PERFORMER_FOCUS` reading.
 - **Confidence:** `INFERRED_FROM_GROUP_IDENTITY`.
-- **HUMAN REVIEW:** `UNSET`.
+- **HUMAN ROLE ELIGIBILITY REVIEW:** `DEFERRED_PENDING_CAPABILITY_BINDING`.
 
 ### GROUP 3 — BEAM
 
@@ -116,7 +122,7 @@ calibrated stage relationship. No candidate below establishes any of those.
   Training Case 001's inferred `BEAM_LAYER` / `AERIAL` interpretation.
 - **Confidence:** `UNKNOWN_FOR_CURRENT_B3_MAPPING` — the limited B3 vocabulary
   cannot safely express the case-specific candidate without collapsing it.
-- **HUMAN REVIEW:** `UNSET`.
+- **HUMAN ROLE ELIGIBILITY REVIEW:** `DEFERRED_PENDING_CAPABILITY_BINDING`.
 
 ### GROUP 4 — WASH
 
@@ -133,7 +139,7 @@ calibrated stage relationship. No candidate below establishes any of those.
   Training Case 001's inferred `WASH_LAYER` / `COLOR_LAYER` /
   `ENVIRONMENT` interpretation.
 - **Confidence:** `INFERRED_FROM_GROUP_IDENTITY`.
-- **HUMAN REVIEW:** `UNSET`.
+- **HUMAN ROLE ELIGIBILITY REVIEW:** `DEFERRED_PENDING_CAPABILITY_BINDING`.
 
 ### GROUP 5 — B-EYE
 
@@ -148,7 +154,7 @@ calibrated stage relationship. No candidate below establishes any of those.
 - **Evidence:** Existing Show Group identity and fixture-type snapshot;
   Training Case 001's case-specific `TEXTURE` / `COLOR_LAYER` interpretation.
 - **Confidence:** `INFERRED_FROM_GROUP_IDENTITY`.
-- **HUMAN REVIEW:** `UNSET`.
+- **HUMAN ROLE ELIGIBILITY REVIEW:** `DEFERRED_PENDING_CAPABILITY_BINDING`.
 
 ### GROUP 6 — LED PAR
 
@@ -163,7 +169,7 @@ calibrated stage relationship. No candidate below establishes any of those.
 - **Evidence:** Existing Show Group identity and fixture-type snapshot;
   Training Case 001's inferred `COLOR_LAYER` / `WASH_LAYER` reading.
 - **Confidence:** `INFERRED_FROM_GROUP_IDENTITY`.
-- **HUMAN REVIEW:** `UNSET`.
+- **HUMAN ROLE ELIGIBILITY REVIEW:** `DEFERRED_PENDING_CAPABILITY_BINDING`.
 
 ### GROUP 7 — STROBE
 
@@ -181,7 +187,7 @@ calibrated stage relationship. No candidate below establishes any of those.
   Training Case 001's inferred `IMPACT` / `ACCENT` reading.
 - **Confidence:** `INFERRED_FROM_GROUP_IDENTITY`; `UNSAFE_FOR_ACTION` until
   behavior is independently verified and reviewed.
-- **HUMAN REVIEW:** `UNSET`.
+- **HUMAN ROLE ELIGIBILITY REVIEW:** `DEFERRED_PENDING_CAPABILITY_BINDING`.
 
 ## Explicitly excluded mappings
 
@@ -196,15 +202,15 @@ calibrated stage relationship. No candidate below establishes any of those.
 
 ## Compact review matrix
 
-| Group | Non-ranked candidate role(s) | Current case-role assignment | Mapping state | Evidence confidence | Human review |
+| Group | Non-ranked identity-origin hypothesis | Current case-role assignment | Mapping state | Evidence confidence | Role eligibility review |
 | --- | --- | --- | --- | --- | --- |
-| 1 HYBRID | `MOVER_TEXTURE_LAYER`, `PRIMARY_FOCUS`, conditional `DENSITY_LAYER` | `NONE` | proposal only | `INFERRED_FROM_GROUP_IDENTITY` | `UNSET` |
-| 2 SPOT | `PRIMARY_FOCUS`, conditional `MOVER_TEXTURE_LAYER` | `NONE` | proposal only | `INFERRED_FROM_GROUP_IDENTITY` | `UNSET` |
-| 3 BEAM | no safe direct B3 translation; conditional `MOVER_TEXTURE_LAYER` | `NONE` | no safe B3 translation | `UNKNOWN_FOR_CURRENT_B3_MAPPING` | `UNSET` |
-| 4 WASH | `COLOR_FIELD`, `DENSITY_LAYER` | `NONE` | proposal only | `INFERRED_FROM_GROUP_IDENTITY` | `UNSET` |
-| 5 B-EYE | `MOVER_TEXTURE_LAYER`, `COLOR_FIELD` | `NONE` | proposal only | `INFERRED_FROM_GROUP_IDENTITY` | `UNSET` |
-| 6 LED PAR | `COLOR_FIELD`, `DENSITY_LAYER` | `NONE` | proposal only | `INFERRED_FROM_GROUP_IDENTITY` | `UNSET` |
-| 7 STROBE | conditional `TIMING_LAYER` | `NONE` | proposal only; action unsafe | `INFERRED_FROM_GROUP_IDENTITY` | `UNSET` |
+| 1 HYBRID | `MOVER_TEXTURE_LAYER`, `PRIMARY_FOCUS`, conditional `DENSITY_LAYER` | `NONE` | capability eligibility pending | `INFERRED_FROM_GROUP_IDENTITY` | `DEFERRED_PENDING_CAPABILITY_BINDING` |
+| 2 SPOT | `PRIMARY_FOCUS`, conditional `MOVER_TEXTURE_LAYER` | `NONE` | capability eligibility pending | `INFERRED_FROM_GROUP_IDENTITY` | `DEFERRED_PENDING_CAPABILITY_BINDING` |
+| 3 BEAM | no safe direct B3 translation; conditional `MOVER_TEXTURE_LAYER` | `NONE` | no safe B3 translation | `UNKNOWN_FOR_CURRENT_B3_MAPPING` | `DEFERRED_PENDING_CAPABILITY_BINDING` |
+| 4 WASH | `COLOR_FIELD`, `DENSITY_LAYER` | `NONE` | capability eligibility pending | `INFERRED_FROM_GROUP_IDENTITY` | `DEFERRED_PENDING_CAPABILITY_BINDING` |
+| 5 B-EYE | `MOVER_TEXTURE_LAYER`, `COLOR_FIELD` | `NONE` | capability eligibility pending | `INFERRED_FROM_GROUP_IDENTITY` | `DEFERRED_PENDING_CAPABILITY_BINDING` |
+| 6 LED PAR | `COLOR_FIELD`, `DENSITY_LAYER` | `NONE` | capability eligibility pending | `INFERRED_FROM_GROUP_IDENTITY` | `DEFERRED_PENDING_CAPABILITY_BINDING` |
+| 7 STROBE | conditional `TIMING_LAYER` | `NONE` | capability eligibility pending; action unsafe | `INFERRED_FROM_GROUP_IDENTITY` | `DEFERRED_PENDING_CAPABILITY_BINDING` |
 
 **Count:** confirmed resource-to-role mappings `0`; inferred candidate-role
 proposals `6`; current-B3 unmapped/unknown candidate-role cases `1`; Groups with
@@ -212,7 +218,10 @@ capability-level unknowns `7`.
 
 ## Next bounded decision
 
-Zen should review each candidate individually. A later accepted mapping must
+First review the technical profile binding in
+`ZEN_EXISTING_SHOW_RESOURCE_CAPABILITY_VERIFICATION_001.md`; do not approve
+role eligibility from this document's identity-origin hypotheses. After a
+Show-bound capability is confirmed, a later accepted eligibility mapping must
 remain provenance-bearing and experimental. It only makes a resource eligible
 for selection by a future song/case Design Intent; it is not a fixture-role
 habit or a priority order. It may make a future Existing Show B3 A/B run
