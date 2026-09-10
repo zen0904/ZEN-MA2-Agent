@@ -9,6 +9,7 @@ from zen_ma2_agent.guidance_assisted_ab_003_evaluation import (
     cue_design_intent_trace,
     evaluate_ab003_case,
 )
+from zen_ma2_agent.human_design_review import extract_human_review_case
 from zen_ma2_agent.guidance_assisted_designer import (
     PROHIBITED_FORMULAIC_INTERPRETATIONS,
     REASONING_VERSION_B2,
@@ -142,6 +143,16 @@ class GuidanceAssistedDesignerAB003Tests(unittest.TestCase):
         self.assertTrue(all("INSTRUMENTATION_CHANGE:NOT_AVAILABLE" in item["design_intent"]["unknown_context"] for item in records))
         self.assertEqual(set(result["b3_plan"]["designer"]["formulaic_interpretations_rejected"]), PROHIBITED_FORMULAIC_INTERPRETATIONS)
         self.assertTrue(all(item["selection_basis"]["energy_is_not_a_layer_count"] for item in records))
+
+    def test_human_review_extraction_uses_actual_b3_trace_and_leaves_decisions_unset(self):
+        result = self._evaluate(deepcopy(self.seed))
+        package = extract_human_review_case(result, case_id="CASE_A", section_ids=["drop_2"])
+        card = package["cards"][0]
+        self.assertEqual(package["schema"], "zen.human_design_review.v0.1")
+        self.assertEqual(len(package["cards"]), 2)  # Both actual Drop 2 cue occurrences are retained.
+        self.assertEqual(card["HUMAN_REVIEW"], "UNSET")
+        self.assertEqual(card["B3_AB003"], [{"operation": item.get("operation"), "target": deepcopy(item.get("target")), "preset_ref": item.get("preset_ref"), "preset_type": item.get("preset_type"), "effect_requirement_id": item.get("effect_requirement_id"), "level": item.get("level")} for item in next(item for item in result["b3_plan"]["cues"] if item["source_section_id"] == "drop_2")["actions"]])
+        self.assertEqual(card["ENERGY"], next(item for item in self.seed["sections"] if item["id"] == "drop_2")["energy"])
 
 
 if __name__ == "__main__":

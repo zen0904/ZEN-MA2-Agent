@@ -82,6 +82,7 @@ def evaluate_ab003_case(analysis: dict[str, Any], *, profile: dict[str, Any], ri
     b3 = GuidanceAssistedExperimentalDesigner(baseline_designer, reasoning_version=REASONING_VERSION_B3).design(song, profile, guidance)
     return {
         "schema": AB003_EVALUATION_SCHEMA,
+        "analysis": deepcopy(analysis),
         "baseline_plan": baseline, "b2_plan": b2, "b3_plan": b3,
         "b3_trace": cue_design_intent_trace(b3), "quality": _quality(b3),
         "production_default_unchanged": baseline == baseline_designer.design(deepcopy(song), deepcopy(profile)),

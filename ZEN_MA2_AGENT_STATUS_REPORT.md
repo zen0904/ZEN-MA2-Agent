@@ -912,3 +912,22 @@ deterministic synthetic cases and retain B2 as an explicit comparison-only
 reference. This is `READY_FOR_HUMAN_REVIEW`, never production activation:
 `ZEN_STYLE_PROFILE` remains `DEFERRED`, real venue validation is
 `WAIT_FOR_REAL_CASE`, and MA2 writes remain `ZERO`.
+
+## 40 Human Design Review 001 — Ready for Human Input
+
+`ZEN_HUMAN_DESIGN_REVIEW_001.md` is a presentation-only extraction of the
+existing deterministic A/B-003 outputs. It preserves the actual B3 Design
+Intent, previous/upcoming context, typed actions, provenance and all eight
+bounded review cases (A–H); it does not alter the production Designer or the
+experimental B3 algorithm. Duplicate cue occurrences are retained rather than
+collapsed, and unavailable Song Analysis signals are labelled explicitly.
+
+Every review card leaves `HUMAN REVIEW: UNSET`. Audience-perception language is
+classified as supported by supplied input or bounded inference, not presented
+as an artistic verdict. The package is ready for a real lighting designer to
+judge intent, continuity, repeat logic, resource choices and human-like
+reasoning. Human approval has not been recorded. Production activation,
+`ZEN_STYLE_PROFILE`, live Builder/MA2 work and venue validation remain
+`NOT_RUN`/`DEFERRED`/`WAIT_FOR_REAL_CASE`; MA2 writes remain `ZERO`.
+
+`HUMAN_DESIGN_REVIEW_001 = READY_FOR_HUMAN_INPUT`
