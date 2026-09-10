@@ -752,3 +752,24 @@ permanent `ZEN_STYLE_PROFILE` trait.
 
 Designer runtime wiring remains `NOT_RUN`, `ZEN_STYLE_PROFILE` remains
 `DEFERRED`, Industry evidence is unchanged, and MA2 writes remain `ZERO`.
+
+## 33 Shadow-Mode Design Guidance Integration
+
+`zen.design_guidance_context.v0.1` and `zen.design_advisory.v0.1` now provide a
+typed, command-free shadow layer around the deterministic Designer. It retains
+separate song signals (`SECTION_STRUCTURE`, `RHYTHMIC_ACCENT`,
+`DYNAMIC_CONTOUR`, `BUILDUP_RELEASE`, and repeated-section development), bounded
+Training Case context, evidence-provenanced Industry Pack observations, and only
+explicitly human-reviewed User Style decisions.
+
+The active human signals are accepted preferences plus bounded
+`ACCEPT_WITH_LIMITATION` preferences. Context-dependent candidates remain
+non-fixed, while rejected/non-global interpretations remain explicit. Advisory
+conflicts are structured rather than reduced to a global weighted score; case
+resource limits and professionally-valid/user-style divergence remain visible.
+
+The existing `FirstSongDesigner` is run unchanged in the shadow-preservation
+test. Baseline and shadow `ZEN_SHOW_PLAN` outputs are structurally identical;
+only a separate advisory envelope is added. Designer production guidance
+activation is `NOT_RUN`, `ZEN_STYLE_PROFILE` is `DEFERRED`, and this local test
+work produced no MA2/Telnet/plugin execution or MA2 writes.

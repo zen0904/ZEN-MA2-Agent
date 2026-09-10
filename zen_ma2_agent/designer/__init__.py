@@ -2,5 +2,16 @@
 
 from .schema import SHOW_PLAN_SCHEMA, validate_show_plan
 from .first_song import FirstSongDesigner
+from ..design_guidance import (
+    ADVISORY_SCHEMA,
+    GUIDANCE_CONTEXT_SCHEMA,
+    build_design_guidance_context,
+    generate_shadow_advisories,
+    run_shadow_designer,
+)
 
-__all__ = ["SHOW_PLAN_SCHEMA", "validate_show_plan", "FirstSongDesigner"]
+__all__ = [
+    "SHOW_PLAN_SCHEMA", "validate_show_plan", "FirstSongDesigner",
+    "GUIDANCE_CONTEXT_SCHEMA", "ADVISORY_SCHEMA", "build_design_guidance_context",
+    "generate_shadow_advisories", "run_shadow_designer",
+]
