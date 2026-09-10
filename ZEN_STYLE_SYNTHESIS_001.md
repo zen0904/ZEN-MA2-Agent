@@ -39,23 +39,26 @@ Zen currently prefers highly controlled contemporary stage design with clear vis
 - `candidate_DYNAMIC_CONTOUR_TRACKING` — ACCEPT
 - `candidate_MULTI_LEVEL_ENERGY_DESIGN` — ACCEPT
 - `candidate_INTENTIONAL_RESTRAINT` — ACCEPT
+- `candidate_PROGRESSIVE_ENERGY_ARC` — ACCEPT
+- `candidate_EACH_ENERGY_STATE_NEEDS_A_COMPLETE_LOOK` — ACCEPT
 
 ### HUMAN_CONFIRMED_WITH_LIMITATION
 
 - `candidate_CONTROLLED_HIGH_IMPACT` — ACCEPT_WITH_LIMITATION: High impact is positive when musically or contextually justified, not continuously.
 - `candidate_CONTROLLED_MAXIMALISM` — ACCEPT_WITH_LIMITATION: High density is welcome only when hierarchy, palette, focus, timing and composition remain organized.
 
+### CONTEXT_DEPENDENT / NEEDS_MORE_EVIDENCE
+
+- `candidate_DOMINANT_THEME_COLOR` — NEEDS_MORE_EVIDENCE: A dominant color may be appropriate in some designs, but a dominant or single theme color is not a general personal preference rule.
+- `candidate_STRONG_TRANSIENT_IMPACT` — NEEDS_MORE_EVIDENCE: Controlled high impact can be good when appropriate, but unusually strong transient impact is not itself a required preference.
+- `candidate_HIGH_SECTION_DELTA` — NEEDS_MORE_EVIDENCE: Do not require large Verse/Chorus/Drop differences in every song.
+- `candidate_RESTRAINT_BETWEEN_PEAKS` — NEEDS_MORE_EVIDENCE: Restraint between peaks is useful in some contexts, not a universal pattern.
+- `candidate_CONTROLLED_BUILDUP` — NEEDS_MORE_EVIDENCE: This is both song-context-dependent and resource-dependent; not every buildup must add layers.
+- `candidate_GEOMETRIC_COMPOSITION` — NEEDS_MORE_EVIDENCE: Do not require symmetry, beam geometry or spatial patterns in every look.
+
 ### UNSET / NEEDS_MORE_EVIDENCE
 
-- `candidate_DOMINANT_THEME_COLOR` — UNSET
-- `candidate_STRONG_TRANSIENT_IMPACT` — UNSET
-- `candidate_HIGH_SECTION_DELTA` — UNSET
-- `candidate_CONTROLLED_BUILDUP` — UNSET
-- `candidate_RESTRAINT_BETWEEN_PEAKS` — UNSET
-- `candidate_EACH_ENERGY_STATE_NEEDS_A_COMPLETE_LOOK` — UNSET
-- `candidate_PROGRESSIVE_ENERGY_ARC` — UNSET
 - `candidate_NEGATIVE_SPACE_ACCEPTANCE` — UNSET
-- `candidate_GEOMETRIC_COMPOSITION` — UNSET
 - `candidate_IMPACT_WHEN_MUSICALLY_JUSTIFIED` — UNSET
 
 ### REJECTED_INTERPRETATIONS
@@ -69,6 +72,10 @@ Human acceptance remains eligibility for future consideration only; it does not 
 ## Candidate correction
 
 `IMPACT_WHEN_MUSICALLY_JUSTIFIED` replaces any simplistic HIGH_IMPACT_ALWAYS rule. A/B/C review supports multi-level energy design: each state is complete, and A → B → C is preferred over constant C.
+
+## Emerging synthesis observation
+
+ZEN STYLE IS NOT A LARGE COLLECTION OF FIXED LOOK RULES. The stronger transferable preference appears to be design coherence and context-aware energy design; dominant color, transient impact, section delta, restraint, buildup and geometry remain situation-dependent.
 
 ## Moderate / uncertain candidates
 

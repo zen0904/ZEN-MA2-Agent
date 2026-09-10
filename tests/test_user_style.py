@@ -25,7 +25,9 @@ class UserStyleEvidenceTests(unittest.TestCase):
         raw = json.loads((ROOT / "fixtures" / "user_style_evidence_001.json").read_text(encoding="utf-8"))
         cls.evidence = [validate_evidence(item) for item in raw["evidence"]]
         cls.pack = build_pack_002(json.loads((ROOT / "fixtures" / "industry_reference_pack_002.json").read_text(encoding="utf-8")))
-        cls.decisions = [validate_review(item) for item in json.loads((ROOT / "fixtures" / "user_style_review_decisions_001.json").read_text(encoding="utf-8"))["decisions"]]
+        cls.decisions = []
+        for filename in ("user_style_review_decisions_001.json", "user_style_review_decisions_002.json"):
+            cls.decisions.extend(validate_review(item) for item in json.loads((ROOT / "fixtures" / filename).read_text(encoding="utf-8"))["decisions"])
 
     def test_schema_and_human_provenance(self):
         self.assertEqual(self.evidence[0]["schema"], SCHEMA)
@@ -142,6 +144,18 @@ class UserStyleEvidenceTests(unittest.TestCase):
         candidates = synthesize_candidates(self.evidence, ["DOMINANT_THEME_COLOR", "STRONG_TRANSIENT_IMPACT", "GEOMETRIC_COMPOSITION"])
         reviews = {item["candidate_id"]: item for item in build_review_records(candidates)}
         self.assertTrue(all(reviews[item["candidate_id"]]["decision"] == "UNSET" for item in candidates))
+
+    def test_second_batch_context_decisions_are_explicit(self):
+        by_candidate = {item["candidate_id"]: item for item in self.decisions}
+        for name in ("DOMINANT_THEME_COLOR", "STRONG_TRANSIENT_IMPACT", "HIGH_SECTION_DELTA", "RESTRAINT_BETWEEN_PEAKS", "CONTROLLED_BUILDUP", "GEOMETRIC_COMPOSITION"):
+            self.assertEqual(by_candidate[f"candidate_{name}"]["decision"], "NEEDS_MORE_EVIDENCE")
+        self.assertEqual(by_candidate["candidate_PROGRESSIVE_ENERGY_ARC"]["decision"], "ACCEPT")
+        self.assertEqual(by_candidate["candidate_EACH_ENERGY_STATE_NEEDS_A_COMPLETE_LOOK"]["decision"], "ACCEPT")
+
+    def test_complete_energy_look_has_high_priority(self):
+        item = next(item for item in self.decisions if item["candidate_id"] == "candidate_EACH_ENERGY_STATE_NEEDS_A_COMPLETE_LOOK")
+        self.assertEqual(item["priority"], "HIGH")
+        self.assertIn("not merely", item["limitations"])
 
 
 if __name__ == "__main__":

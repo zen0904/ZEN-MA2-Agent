@@ -714,6 +714,25 @@ This layer remains review-only: Designer runtime wiring is `NOT_RUN`,
 `ZEN_STYLE_PROFILE` is `DEFERRED`, Industry evidence is unchanged, and MA2
 writes are `ZERO`.
 
+## 32 Second Human Style Decision Batch
+
+The second explicit review batch is stored in
+`tests/fixtures/user_style_review_decisions_002.json` using
+`zen.user_style_review.v0.1`. `PROGRESSIVE_ENERGY_ARC` and
+`EACH_ENERGY_STATE_NEEDS_A_COMPLETE_LOOK` are `ACCEPT`; the latter carries
+`priority: HIGH`. Six properties are explicitly context-dependent and remain
+`NEEDS_MORE_EVIDENCE`: dominant theme color, strong transient impact, section
+delta, restraint between peaks, controlled buildup and geometric composition.
+
+The synthesis now records the emerging observation that Zen style is not a
+large collection of fixed look rules. The stronger transferable preference is
+design coherence and context-aware energy design. This is a synthesis
+observation only, not a runtime rule. All previous decisions and the three
+rejected interpretations remain preserved.
+
+Designer runtime wiring is `NOT_RUN`, `ZEN_STYLE_PROFILE` is `DEFERRED`,
+Industry evidence is unchanged, and MA2 writes remain `ZERO`.
+
 ## 31 Explicit Human Style Decisions
 
 The first explicit decisions are stored separately using

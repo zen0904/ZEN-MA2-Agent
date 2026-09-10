@@ -12,6 +12,7 @@ STRENGTHS = {"STRONG_POSITIVE", "POSITIVE", "NEUTRAL", "NEGATIVE", "STRONG_NEGAT
 SCOPES = {"CASE_LOCAL", "CROSS_CASE_CANDIDATE", "USER_STYLE_CANDIDATE"}
 STATUSES = {"SUPPORTED", "PARTIAL", "UNKNOWN", "REJECTED_BY_EVIDENCE"}
 REVIEW_DECISIONS = {"UNSET", "ACCEPT", "ACCEPT_WITH_LIMITATION", "NEEDS_MORE_EVIDENCE", "REJECT", "UNSURE"}
+REVIEW_PRIORITIES = {"HIGH", "NORMAL", "LOW"}
 _FORBIDDEN = {"command", "commands", "raw_command", "telnet", "lua", "ma_command", "script"}
 
 
@@ -120,6 +121,7 @@ class UserStyleReview:
     reviewed_at: str = ""
     version: str = "v0.1"
     ai_recommendation: str = "UNSURE"
+    priority: str = "NORMAL"
 
     def __post_init__(self) -> None:
         if not self.candidate_id.strip():
@@ -128,6 +130,8 @@ class UserStyleReview:
             raise ValueError("Invalid user style review decision or scope.")
         if self.ai_recommendation not in REVIEW_DECISIONS - {"UNSET"}:
             raise ValueError("Invalid AI recommendation.")
+        if self.priority not in REVIEW_PRIORITIES:
+            raise ValueError("Invalid review priority.")
         _safe(asdict(self))
 
     def to_dict(self) -> dict[str, Any]:
@@ -141,7 +145,7 @@ def validate_review(value: dict[str, Any]) -> dict[str, Any]:
         raise ValueError(f"Review schema must be {REVIEW_SCHEMA}.")
     _safe(value)
     fields = set(UserStyleReview.__dataclass_fields__)
-    missing = fields - {"decision", "scope", "rationale", "limitations", "reviewer", "reviewed_at", "version", "ai_recommendation"} - set(value)
+    missing = fields - {"decision", "scope", "rationale", "limitations", "reviewer", "reviewed_at", "version", "ai_recommendation", "priority"} - set(value)
     if missing:
         raise ValueError(f"Review is missing: {', '.join(sorted(missing))}")
     payload = {key: value[key] for key in fields if key in value}
@@ -153,6 +157,7 @@ def validate_review(value: dict[str, Any]) -> dict[str, Any]:
     payload.setdefault("reviewed_at", "")
     payload.setdefault("version", "v0.1")
     payload.setdefault("ai_recommendation", "UNSURE")
+    payload.setdefault("priority", "NORMAL")
     payload["evidence_ids"] = tuple(payload["evidence_ids"])
     return UserStyleReview(**payload).to_dict()
 
