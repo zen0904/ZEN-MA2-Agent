@@ -76,7 +76,7 @@ class GuidanceAssistedDesignerAB002Tests(unittest.TestCase):
         case["analysis"]["events"].append({"time": 150, "type": "ACCENT", "strength": 0.9, "section_id": "drop_2"})
         _, candidate = self._design(case, self._rig("user_confirmed", {"PRIMARY_FOCUS": 1, "COLOR_FIELD": 2, "MOVER_TEXTURE_LAYER": 3, "DENSITY_LAYER": 4, "TIMING_LAYER": 5}))
         first, second = self._cue(candidate, "drop_1"), self._cue(candidate, "drop_2")
-        self.assertEqual(first["experimental_design"]["development"]["status"], "INTENTIONAL_SIMILARITY")
+        self.assertEqual(first["experimental_design"]["development"]["status"], "FIRST_OCCURRENCE")
         self.assertEqual(second["experimental_design"]["development"]["status"], "MUSICALLY_JUSTIFIED_DELTA")
         self.assertIn("MORE_EXPLICIT_RHYTHMIC_EVENTS", second["experimental_design"]["development"]["basis"])
         self.assertNotEqual(first["actions"], second["actions"])

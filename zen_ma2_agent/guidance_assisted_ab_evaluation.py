@@ -5,7 +5,7 @@ from copy import deepcopy
 from typing import Any, Iterable
 
 from .design_guidance import build_design_guidance_context
-from .guidance_assisted_designer import GuidanceAssistedExperimentalDesigner, GUIDANCE_ASSISTED_MODE
+from .guidance_assisted_designer import GuidanceAssistedExperimentalDesigner, GUIDANCE_ASSISTED_MODE, REASONING_VERSION_B2
 from .song_analysis import SongAnalysisAdapter, validate_song_analysis
 
 
@@ -101,7 +101,7 @@ def evaluate_ab_case(case: dict[str, Any], *, profile: dict[str, Any], rig_conte
     song_input = SongAnalysisAdapter().to_designer_input(analysis)
     baseline = baseline_designer.design(deepcopy(song_input), deepcopy(profile))
     guidance = build_design_guidance_context(analysis, rig_context, industry_packs, user_evidence, user_reviews)
-    assisted = (experimental_designer or GuidanceAssistedExperimentalDesigner(baseline_designer)).design(song_input, profile, guidance)
+    assisted = (experimental_designer or GuidanceAssistedExperimentalDesigner(baseline_designer, reasoning_version=REASONING_VERSION_B2)).design(song_input, profile, guidance)
     baseline_rubric, assisted_rubric = _rubric(baseline, analysis, experimental=False), _rubric(assisted, analysis, experimental=True)
     return {
         "case_id": case["case_id"], "name": case["name"], "schema": AB_EVALUATION_SCHEMA,

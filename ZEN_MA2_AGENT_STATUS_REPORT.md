@@ -883,3 +883,32 @@ does not route experimental output to production, create `ZEN_STYLE_PROFILE`,
 or touch MA2/Telnet/plugins; MA2 writes remain `ZERO` and real venue validation
 remains `WAIT_FOR_REAL_CASE`. A/B 002 needs a new human cue-level review before
 any future production decision.
+
+## 39 Guidance-Assisted Designer A/B Experiment 003 — Design Intent First
+
+The experimental path now has `zen.design_intent.v0.1`, a bounded command-free
+record that sits between known Song/Rig context and B3 resource choice. For each
+experimental cue it records the audience goal, continuity/change relation,
+previous visual roles, measured upcoming context/headroom, visual-dimension
+intent, intentional omissions, provenance and explicit unavailable signals.
+The production Designer remains unmodified.
+
+Repeated-section reasoning now compares available event, density, accent,
+section-note, transition and known-future-peak evidence. It can produce a
+meaningful delta with unchanged energy, or an explicit `INTENTIONAL_SIMILARITY`
+when continuity is the supported design decision. Texture is no longer gated on
+a hit or dynamic rise: supplied atmospheric/sustained section context can
+justify it in a quiet section, while a high section can omit it. Likewise,
+low-energy timing and high-energy timing omission are verified experimental
+possibilities rather than recipes.
+
+The B3 trace exposes known song context, previous visual state, upcoming
+context, Design Intent, keep/change/omit/substitute choices, unknown data,
+typed-action boundary and `HUMAN_REVIEW: UNSET`. It rejects expanded formulaic
+interpretations including more-rhythm/more-lighting, texture-requires-accent,
+every-repeat-different, final-always-biggest, high-always-complex,
+low-always-simple and available-role-must-be-used. Tests cover eight
+deterministic synthetic cases and retain B2 as an explicit comparison-only
+reference. This is `READY_FOR_HUMAN_REVIEW`, never production activation:
+`ZEN_STYLE_PROFILE` remains `DEFERRED`, real venue validation is
+`WAIT_FOR_REAL_CASE`, and MA2 writes remain `ZERO`.
