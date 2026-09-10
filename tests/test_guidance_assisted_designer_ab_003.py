@@ -154,6 +154,38 @@ class GuidanceAssistedDesignerAB003Tests(unittest.TestCase):
         self.assertEqual(card["B3_AB003"], [{"operation": item.get("operation"), "target": deepcopy(item.get("target")), "preset_ref": item.get("preset_ref"), "preset_type": item.get("preset_type"), "effect_requirement_id": item.get("effect_requirement_id"), "level": item.get("level")} for item in next(item for item in result["b3_plan"]["cues"] if item["source_section_id"] == "drop_2")["actions"]])
         self.assertEqual(card["ENERGY"], next(item for item in self.seed["sections"] if item["id"] == "drop_2")["energy"])
 
+    def test_section_occurrence_and_cue_identity_are_explicit_and_traceable(self):
+        analysis = deepcopy(self.seed)
+        analysis["events"].append({"time": 150, "type": "ACCENT", "strength": 0.9, "section_id": "drop_2"})
+        result = self._evaluate(analysis)
+        cues = result["b3_plan"]["cues"]
+        base_instances = [cue["section_instance_id"] for cue in cues if cue.get("cue_occurrence_index", 0) == 0]
+        self.assertEqual(len(base_instances), len(set(base_instances)))
+        self.assertTrue(all(cue.get("section_instance_id") and cue.get("id") for cue in cues))
+        trace = cue_design_intent_trace(result["b3_plan"])
+        self.assertTrue(all(item["CUE_ID"] == cues[index]["id"] for index, item in enumerate(trace)))
+
+    def test_repeat_delta_reports_unrealized_composition_when_only_levels_change(self):
+        analysis = deepcopy(self.seed)
+        self._section(analysis, "drop_2")["notes"] = ["Sustained textural opening"]
+        result = self._evaluate(analysis)
+        repeat = self._cue(result, "drop_2")["experimental_design"]
+        self.assertEqual(repeat["development"]["status"], "MUSICALLY_JUSTIFIED_DELTA")
+        self.assertEqual(repeat["intent_realizability"]["status"], "PARTIALLY_REALIZED")
+        self.assertEqual(repeat["intent_realizability"]["actual_action_delta"], "CHANGED")
+
+    def test_role_states_are_canonical_and_selected_roles_are_documented_projection(self):
+        analysis = deepcopy(self.seed)
+        self._section(analysis, "drop_1").update({"energy": 0.80, "density": 0.85})
+        self._section(analysis, "drop_2").update({"energy": 0.98, "density": 0.98})
+        result = self._evaluate(analysis)
+        design = self._cue(result, "drop_1")["experimental_design"]
+        states = {item["role"]: item["state"] for item in design["role_states"]}
+        self.assertEqual(len(states), len(design["role_states"]))
+        self.assertEqual(states["DENSITY_LAYER"], "REDUCE")
+        self.assertIn("DENSITY_LAYER", design["selected_roles"])
+        self.assertIn("selected_roles_INCLUDES_KEEP_AND_REDUCE_ACTIVE", design["role_state_semantics"])
+
 
 if __name__ == "__main__":
     unittest.main()

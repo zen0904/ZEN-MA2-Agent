@@ -20,6 +20,16 @@ def _action_summary(cue: dict[str, Any]) -> list[dict[str, Any]]:
 def _card_for_trace(trace: dict[str, Any], *, baseline: dict[str, Any], b2: dict[str, Any], b3: dict[str, Any], audience_class: str, energy: Any = "NOT_AVAILABLE") -> dict[str, Any]:
     section_id = trace["SECTION"]
     def cue(plan: dict[str, Any]) -> dict[str, Any]:
+        cue_id = trace.get("CUE_ID")
+        if cue_id:
+            match = next((item for item in plan.get("cues", []) if item.get("id") == cue_id), None)
+            if match is not None:
+                return match
+        instance_id = trace.get("SECTION_INSTANCE_ID")
+        if instance_id:
+            match = next((item for item in plan.get("cues", []) if item.get("section_instance_id") == instance_id and item.get("cue_occurrence_index", 0) == trace.get("CUE_OCCURRENCE_INDEX", 0)), None)
+            if match is not None:
+                return match
         return next(item for item in plan.get("cues", []) if item.get("source_section_id") == section_id)
     if audience_class not in AUDIENCE_PERCEPTION_CLASSES:
         raise ValueError("Unknown audience-perception review class.")

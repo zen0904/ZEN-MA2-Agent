@@ -63,6 +63,10 @@ class FirstSongDesigner:
             role = str(section.get("role") or "UNKNOWN").strip().upper()
             occurrence = occurrences.get(role, 0) + 1
             occurrences[role] = occurrence
+            # A role occurrence is the stable identity for repeated material;
+            # cue labels/source section ids alone are not sufficient because
+            # one section may intentionally produce a base cue plus accents.
+            section_instance_id = f"{role.lower()}_{occurrence}"
             raw_energy = section.get("energy")
             energy = self._ROLE_ENERGY.get(role, 0.50) if raw_energy is None else float(raw_energy)
             if not 0.0 <= energy <= 1.0:
@@ -84,9 +88,9 @@ class FirstSongDesigner:
                 actions.append({"target": {"type": "group", "ref": group["group_id"]}, "operation": "CALL_EFFECT", "effect_requirement_id": effect_requirement_id})
             cues.append({
                 "id": f"cue-{cue_number}", "cue_number": cue_number, "label": label, "fade": fade,
-                "source_section_id": section.get("id"), "role": role,
+                "source_section_id": section.get("id"), "section_instance_id": section_instance_id,
+                "section_role": role, "role": role, "occurrence_index": occurrence, "cue_occurrence_index": 0,
                 "design_energy": energy, "design_energy_source": "ANALYSIS" if raw_energy is not None else "DESIGN_ROLE_DEFAULT",
-                "occurrence_index": occurrence,
                 "actions": actions,
             })
             # Events remain a deliberately limited density mechanism.  An
@@ -106,7 +110,8 @@ class FirstSongDesigner:
                 cues.append({
                     "id": f"cue-{cue_number}", "cue_number": cue_number, "label": f"{label}_ACCENT_{accent_index}",
                     "fade": 0.2 if strength >= 0.7 else 0.5, "source_section_id": section.get("id"),
-                    "role": role, "event_type": event.get("type"), "occurrence_index": occurrence,
+                    "section_instance_id": section_instance_id, "section_role": role, "role": role,
+                    "event_type": event.get("type"), "occurrence_index": occurrence, "cue_occurrence_index": accent_index,
                     "actions": accent_actions,
                 })
         return validate_show_plan({

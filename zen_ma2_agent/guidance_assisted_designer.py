@@ -19,6 +19,10 @@ from .designer.schema import validate_show_plan
 
 GUIDANCE_ASSISTED_MODE = "GUIDANCE_ASSISTED_AB_ONLY"
 EXPERIMENT_SCHEMA = "zen.guidance_assisted_designer_experiment.v0.1"
+ROLE_STATE_SCHEMA = "zen.role_state.v0.1"
+INTENT_REALIZABILITY_STATUSES = {
+    "REALIZED", "PARTIALLY_REALIZED", "NOT_EXPRESSIBLE_WITH_CURRENT_CAPABILITIES", "INTENTIONAL_SIMILARITY",
+}
 REASONING_VERSION_B2 = "AB_002_RESOURCE_CHOICE_REFERENCE"
 REASONING_VERSION_B3 = "AB_003_DESIGN_INTENT_FIRST"
 PROHIBITED_FORMULAIC_INTERPRETATIONS = {
@@ -72,6 +76,46 @@ def _action(target: dict[str, Any], role: str, level: int, focus: dict[str, Any]
         actions.append({"target": deepcopy(target), "operation": "CALL_PRESET", "preset_ref": preset["reference"], "preset_type": preset.get("preset_type")})
     actions.append({"target": deepcopy(target), "operation": "SET_DIMMER", "level": level})
     return actions
+
+
+def _action_signature(actions: list[dict[str, Any]]) -> tuple[Any, ...]:
+    """Stable comparison of typed actions, excluding incidental dict ordering."""
+    return tuple(
+        (
+            action.get("operation"), repr(action.get("target")), action.get("preset_ref"),
+            action.get("preset_type"), action.get("effect_requirement_id"), action.get("level"),
+        )
+        for action in actions
+    )
+
+
+def _action_shape_signature(actions: list[dict[str, Any]]) -> tuple[Any, ...]:
+    """Compare composition/references without mistaking level-only change for a new look."""
+    return tuple(
+        (
+            action.get("operation"), repr(action.get("target")), action.get("preset_ref"),
+            action.get("preset_type"), action.get("effect_requirement_id"),
+        )
+        for action in actions
+    )
+
+
+def _role_states(choice: dict[str, Any]) -> list[dict[str, str]]:
+    """Canonical role state; legacy selected/reduced lists remain projections."""
+    states: list[dict[str, str]] = []
+    for role in choice["KEEP"]:
+        states.append({"schema": ROLE_STATE_SCHEMA, "role": role, "state": "KEEP"})
+    for role in choice["REDUCE"]:
+        states.append({"schema": ROLE_STATE_SCHEMA, "role": role, "state": "REDUCE"})
+    for role in choice["OMIT"]:
+        states.append({"schema": ROLE_STATE_SCHEMA, "role": role, "state": "OMIT"})
+    for substitution in choice["SUBSTITUTE"]:
+        if isinstance(substitution, dict):
+            role = substitution.get("role") or substitution.get("from") or "UNKNOWN"
+        else:
+            role = str(substitution)
+        states.append({"schema": ROLE_STATE_SCHEMA, "role": role, "state": "SUBSTITUTE"})
+    return states
 
 
 def _energy_state(value: Any) -> str:
@@ -371,6 +415,8 @@ class GuidanceAssistedExperimentalDesigner:
         focus, color = _preset(profile, "FOCUS"), _preset(profile, "COLOR", "COLOR1")
         plan = deepcopy(baseline)
         changed = False
+        realized_signatures: dict[str, tuple[tuple[Any, ...], tuple[Any, ...]]] = {}
+        realizability_by_section: dict[str, dict[str, Any]] = {}
         for cue in plan["cues"]:
             choice = choices.get(cue.get("source_section_id"))
             if not choice:
@@ -406,17 +452,57 @@ class GuidanceAssistedExperimentalDesigner:
                 continue
             changed = changed or actions != cue.get("actions", [])
             cue["actions"] = actions
+            section_instance_id = str(cue.get("section_instance_id") or cue.get("source_section_id") or choice["section_id"])
+            if cue.get("cue_occurrence_index", 0) == 0 and section_instance_id not in realizability_by_section:
+                previous_section_id = choice.get("development", {}).get("previous_same_role_section_id")
+                current_signature = _action_signature(actions)
+                current_shape = _action_shape_signature(actions)
+                previous_pair = realized_signatures.get(str(previous_section_id)) if previous_section_id else None
+                previous_signature = previous_pair[0] if previous_pair else None
+                previous_shape = previous_pair[1] if previous_pair else None
+                requested = choice.get("development", {}).get("status")
+                if requested == "INTENTIONAL_SIMILARITY":
+                    realization_status = "INTENTIONAL_SIMILARITY"
+                    reason = "The repeated section intentionally preserves the prior typed action composition."
+                elif requested == "MUSICALLY_JUSTIFIED_DELTA" and previous_signature is not None:
+                    if current_signature != previous_signature and current_shape != previous_shape:
+                        realization_status = "REALIZED"
+                        reason = "The requested repeat delta is expressed by a changed typed action signature."
+                    elif current_signature != previous_signature:
+                        realization_status = "PARTIALLY_REALIZED"
+                        reason = "Only typed levels changed; the requested visual composition delta is not fully expressible with current capabilities."
+                    else:
+                        realization_status = "NOT_EXPRESSIBLE_WITH_CURRENT_CAPABILITIES"
+                        reason = "The intent requested a delta, but current bindings/presets/actions produce the same typed composition."
+                else:
+                    realization_status = "REALIZED"
+                    reason = "No prior same-role composition required a realized delta."
+                realizability_by_section[section_instance_id] = {
+                    "status": realization_status, "desired_development": requested,
+                    "actual_action_delta": "CHANGED" if previous_signature is not None and current_signature != previous_signature else "UNCHANGED" if previous_signature is not None else "NOT_APPLICABLE",
+                    "reason": reason,
+                }
+                realized_signatures[str(choice["section_id"])] = (current_signature, current_shape)
+            realization = deepcopy(realizability_by_section.get(section_instance_id, {
+                "status": "PARTIALLY_REALIZED", "desired_development": choice.get("development", {}).get("status"),
+                "actual_action_delta": "NOT_AVAILABLE", "reason": "The cue is an additional occurrence within the same section instance; section-level realization is recorded on the base cue.",
+            }))
             cue["experimental_design"] = {
                 "schema": EXPERIMENT_SCHEMA, "mode": GUIDANCE_ASSISTED_MODE,
                 "selected_roles": selected_roles, "omitted_roles": list(choice["OMIT"]),
                 "reduced_roles": list(choice["REDUCE"]), "substitutions": deepcopy(choice["SUBSTITUTE"]),
+                "role_states": _role_states(choice),
+                "role_state_semantics": "ROLE_STATES_AUTHORITATIVE; selected_roles_INCLUDES_KEEP_AND_REDUCE_ACTIVE",
                 "resource_outcome": choice["RESOURCE_OUTCOME"], "song_section_id": choice["section_id"],
                 "evidence_references": list(advisory["evidence_references"]) if advisory else [],
                 "development": deepcopy(choice["development"]), "selection_basis": deepcopy(choice["selection_basis"]),
                 "role_level_multipliers": deepcopy(choice["role_level_multipliers"]),
                 "design_intent": deepcopy(choice.get("design_intent")) if choice.get("design_intent") else None,
+                "intent_realizability": realization,
                 "human_review": "UNSET", "scope": "EXPERIMENTAL_TYPED_INTENT_ONLY",
             }
+            if cue.get("cue_occurrence_index", 0) == 0:
+                realized_signatures.setdefault(str(choice["section_id"]), (_action_signature(actions), _action_shape_signature(actions)))
         used_requirements = {action.get("effect_requirement_id") for cue in plan["cues"] for action in cue.get("actions", []) if action.get("operation") == "CALL_EFFECT"}
         plan["effect_requirements"] = {key: value for key, value in plan.get("effect_requirements", {}).items() if key in used_requirements}
         plan["warnings"] = list(plan.get("warnings", [])) + ["GUIDANCE_ASSISTED_AB_ONLY: experimental candidate; not routed to production Builder."]

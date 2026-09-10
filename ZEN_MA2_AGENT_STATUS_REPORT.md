@@ -931,3 +931,47 @@ reasoning. Human approval has not been recorded. Production activation,
 `NOT_RUN`/`DEFERRED`/`WAIT_FOR_REAL_CASE`; MA2 writes remain `ZERO`.
 
 `HUMAN_DESIGN_REVIEW_001 = READY_FOR_HUMAN_INPUT`
+
+## 41 Repository Context and Design Pipeline Integrity 001
+
+The durable startup/navigation contract is recorded in `AGENTS.md` and the
+living documents under `docs/`: Product Constitution, Workflow Contract, MA2
+Programming Intelligence, Continuous Learning Policy, Console Platform
+Architecture, and Repository Policy. Future sessions should read the concise
+navigation plus current state and only the reports relevant to their task.
+
+The current integrity work preserves the production Designer and the
+GUIDANCE_ASSISTED_AB_ONLY boundary while making repeated cue identity explicit:
+each cue now carries deterministic `section_instance_id`, `section_role`,
+`occurrence_index`, and `cue_occurrence_index`; review traces carry the cue id
+and resolve the exact occurrence. Experimental designs also expose canonical
+`zen.role_state.v0.1` entries; legacy `selected_roles` remains a documented
+active-role projection, while role states are authoritative.
+
+Design Intent is separate from realization. Experimental output records whether
+a requested repeat delta is `REALIZED`, `PARTIALLY_REALIZED`,
+`NOT_EXPRESSIBLE_WITH_CURRENT_CAPABILITIES`, or
+`INTENTIONAL_SIMILARITY`, with the actual typed action delta and reason. No
+artistic rule was added or activated; Case C's unsupported composition delta is
+reported honestly. Production behavior, B3 reasoning, ZEN_STYLE_PROFILE and
+real venue validation remain unchanged/deferred, and MA2 writes remain ZERO.
+
+`HUMAN_DESIGN_REVIEW_001` remains ready for human input. Before a Real Song +
+Existing Show A/B, the remaining integrity requirement is to carry the new
+occurrence and realization metadata through any future review/plan consumers
+without introducing a second schema or changing artistic behavior.
+
+## 42 Current continuation state
+
+The committed repository on `main` is the source of truth for exact HEAD and
+test state. Production Designer artistic behavior is `UNCHANGED`; the
+experimental path remains `GUIDANCE_ASSISTED_AB_ONLY`. Fixture geometry, typed
+plans, resolvers, Builder and prior real-machine capabilities remain as
+previously verified. The current integrity report is
+`ZEN_DESIGN_PIPELINE_INTEGRITY_001.md`.
+
+Before the next real-song/existing-show A/B, consume occurrence identity,
+realizability and canonical role states in review-facing consumers. Do not
+activate experimental guidance, create `ZEN_STYLE_PROFILE`, infer unavailable
+song/venue facts, or perform MA2 writes. `REAL_VENUE_VALIDATION` remains
+`WAIT_FOR_REAL_CASE`; MA2 write audit remains `ZERO_WRITES`.
