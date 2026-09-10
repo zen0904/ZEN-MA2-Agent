@@ -17,3 +17,9 @@ Current evidence remains capability-scoped. Real-console verification outranks
 memory or documentation hypotheses, and unverified Programmer access,
 Preset-internal values, binary show parsing and unsupported grammar remain
 separate blockers.
+
+Professional native-console choices must also satisfy `FOCUS_EXECUTE`: a
+competent programmer should be able to rehearse, edit, recover and continue
+the delivered Show with ordinary MA workflows. The operator-facing acceptance
+test is maintained in `ZEN_WORKFLOW_CONTRACT.md`, rather than duplicated in
+console capability research.
