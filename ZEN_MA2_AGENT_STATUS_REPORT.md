@@ -855,3 +855,31 @@ rejected style candidates remain inactive. This is
 `READY_FOR_HUMAN_AB_REVIEW` only; `ZEN_STYLE_PROFILE`, production
 guidance-assisted activation, and real venue validation remain
 `DEFERRED`/`NOT_RUN`/`WAIT_FOR_REAL_CASE`, and MA2 writes remain `ZERO`.
+
+## 38 Guidance-Assisted Designer A/B Experiment 002 — Human Review Refinement
+
+Human A/B Review 001 is now preserved independently as
+`zen.guidance_ab_human_review.v0.1`; it does not mutate the original A/B
+fixture, its baseline, or the prior experimental output. The reviewed direction
+accepted bounded headroom/buildup design but required a musically justified
+second-Drop delta, rejected the LED energy/layer ladder as formulaic, and kept
+restrained/minimal and asymmetric aesthetic treatment explicitly context
+dependent.
+
+The explicit experimental adapter now selects role composition from section
+structure, measured density, explicit rhythmic events, occurrence comparison,
+and confirmed role-to-scanned-Group bindings. It no longer maps energy alone to
+an LED role count: low energy can use timing when an accent warrants it, high
+energy can omit timing when it does not, and medium energy need not include
+density. Repeated sections are marked `MUSICALLY_JUSTIFIED_DELTA` only when
+their comparative song evidence warrants it; otherwise they retain
+`INTENTIONAL_SIMILARITY`. Complete-look composition is tracked as independent
+from energy and layer count.
+
+The experimental plan records an explicit deny-list for repeat-always-bigger,
+LED energy-ladder, forced-asymmetry, and fixed Verse/Refrain interpretations.
+Production `FirstSongDesigner` regression tests remain unchanged. This work
+does not route experimental output to production, create `ZEN_STYLE_PROFILE`,
+or touch MA2/Telnet/plugins; MA2 writes remain `ZERO` and real venue validation
+remains `WAIT_FOR_REAL_CASE`. A/B 002 needs a new human cue-level review before
+any future production decision.
