@@ -1197,3 +1197,22 @@ a substitute for location, coverage, audience viewpoint, action grammar, or
 case-specific human design judgment. Production stays `UNCHANGED`, B3 stays
 `GUIDANCE_ASSISTED_AB_ONLY`, `ZEN_STYLE_PROFILE` stays `DEFERRED`, and MA2
 writes stay `ZERO_WRITES`.
+
+## 52 Current Show Visual Relationship Intake 001
+
+`CURRENT_SHOW_VISUAL_RELATIONSHIP_INTAKE_001` is a compact, Show-fingerprint
+bound, human-reviewable data layer for the actual Existing Show Groups 1–7.
+All five visual descriptors (presence, coverage, visual weight, symmetry, and
+visual domain) deliberately begin `UNKNOWN`; Group labels, FixtureTypes,
+numeric IDs, raw origin-overlap XYZ, external knowledge, and Training Case
+material cannot fill them. Optional pairwise visual relationships require
+explicit `HUMAN_CONFIRMED` provenance; no relationship is inferred.
+
+Current Group inventory, uninitialized geometry, absent semantic positions,
+and unapplied virtual auto-geometry proposals are retained separately as
+`PREEXISTING_EVIDENCE`, never human confirmation. The intake is role-free and
+unwired: it cannot select B3 roles, change A/B 002, write geometry, or modify
+MA2. It is `READY_FOR_HUMAN_INPUT`; the next action is a one-pass Zen review of
+only known visual facts. Production remains `UNCHANGED`, B3 remains
+`GUIDANCE_ASSISTED_AB_ONLY`, `ZEN_STYLE_PROFILE` remains `DEFERRED`, and MA2
+writes remain `ZERO_WRITES`.

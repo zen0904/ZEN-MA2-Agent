@@ -1,0 +1,126 @@
+{
+  "schema": "zen.current_show_visual_relationships.v0.1",
+  "intake_id": "CURRENT_SHOW_VISUAL_RELATIONSHIP_INTAKE_001",
+  "show_identity": {
+    "kind": "SCANNED_SHOW_PROFILE_FINGERPRINT",
+    "value": "497dfae11821c10eebc54a614fa66e81339cb79d789d50c112fcdfc33134f4ea",
+    "confidence": "PARTIAL",
+    "source": "data/ZEN_CURRENT_SHOW_PROFILE.json"
+  },
+  "groups": [
+    {
+      "schema": "zen.current_show_group_visual_evidence.v0.1",
+      "group_id": 1,
+      "group_label": "HYBRID",
+      "fixture_count": 8,
+      "physical_presence": {"value": ["UNKNOWN"], "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "coverage_scope": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "visual_weight_relative": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "symmetry": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "primary_visual_domain": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "human_review": "UNSET"
+    },
+    {
+      "schema": "zen.current_show_group_visual_evidence.v0.1",
+      "group_id": 2,
+      "group_label": "SPOT",
+      "fixture_count": 8,
+      "physical_presence": {"value": ["UNKNOWN"], "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "coverage_scope": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "visual_weight_relative": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "symmetry": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "primary_visual_domain": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "human_review": "UNSET"
+    },
+    {
+      "schema": "zen.current_show_group_visual_evidence.v0.1",
+      "group_id": 3,
+      "group_label": "BEAM",
+      "fixture_count": 8,
+      "physical_presence": {"value": ["UNKNOWN"], "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "coverage_scope": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "visual_weight_relative": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "symmetry": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "primary_visual_domain": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "human_review": "UNSET"
+    },
+    {
+      "schema": "zen.current_show_group_visual_evidence.v0.1",
+      "group_id": 4,
+      "group_label": "WASH",
+      "fixture_count": 8,
+      "physical_presence": {"value": ["UNKNOWN"], "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "coverage_scope": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "visual_weight_relative": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "symmetry": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "primary_visual_domain": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "human_review": "UNSET"
+    },
+    {
+      "schema": "zen.current_show_group_visual_evidence.v0.1",
+      "group_id": 5,
+      "group_label": "B-EYE",
+      "fixture_count": 8,
+      "physical_presence": {"value": ["UNKNOWN"], "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "coverage_scope": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "visual_weight_relative": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "symmetry": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "primary_visual_domain": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "human_review": "UNSET"
+    },
+    {
+      "schema": "zen.current_show_group_visual_evidence.v0.1",
+      "group_id": 6,
+      "group_label": "LED PAR",
+      "fixture_count": 8,
+      "physical_presence": {"value": ["UNKNOWN"], "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "coverage_scope": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "visual_weight_relative": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "symmetry": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "primary_visual_domain": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "human_review": "UNSET"
+    },
+    {
+      "schema": "zen.current_show_group_visual_evidence.v0.1",
+      "group_id": 7,
+      "group_label": "STROBE",
+      "fixture_count": 8,
+      "physical_presence": {"value": ["UNKNOWN"], "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "coverage_scope": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "visual_weight_relative": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "symmetry": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "primary_visual_domain": {"value": "UNKNOWN", "confirmation_state": "UNKNOWN", "provenance": "INITIALIZED_FROM_SHOW_INVENTORY_NO_VISUAL_EVIDENCE"},
+      "human_review": "UNSET"
+    }
+  ],
+  "relationships": [],
+  "preexisting_evidence": [
+    {
+      "evidence_id": "CURRENT_SHOW_GROUP_INVENTORY",
+      "state": "PREEXISTING_EVIDENCE",
+      "source": "data/ZEN_CURRENT_SHOW_PROFILE.json",
+      "limitations": "Confirms Group IDs, labels, and eight-fixture membership only; it does not confirm physical placement, coverage, visual weight, symmetry, domain, or role."
+    },
+    {
+      "evidence_id": "CURRENT_SHOW_GEOMETRY",
+      "state": "PREEXISTING_EVIDENCE",
+      "source": "data/ZEN_CURRENT_SHOW_PROFILE.json#geometry_analysis",
+      "limitations": "GEOMETRY_UNINITIALIZED: all current XYZ values overlap at origin. Do not infer stage axes, rows, center, sides, depth, height, or visual relationships."
+    },
+    {
+      "evidence_id": "CURRENT_SHOW_SEMANTIC_POSITIONS",
+      "state": "PREEXISTING_EVIDENCE",
+      "source": "data/ZEN_CURRENT_SHOW_PROFILE.json#semantic_presets",
+      "limitations": "NONE: no verified semantic Position presets or target semantics exist."
+    },
+    {
+      "evidence_id": "AUTO_GEOMETRY_PROPOSALS",
+      "state": "PREEXISTING_EVIDENCE",
+      "source": "data/ZEN_AUTO_GEOMETRY_PROPOSAL.json",
+      "limitations": "A/B/C are virtual, unapplied proposals only; they are not current Show geometry or human-confirmed visual evidence."
+    }
+  ],
+  "scope": "CURRENT_SHOW_VISUAL_RELATIONSHIPS_ONLY",
+  "runtime_wiring": "NOT_RUN",
+  "human_review_status": "READY_FOR_HUMAN_INPUT"
+}
