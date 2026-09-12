@@ -1,7 +1,9 @@
 # Existing Show Resource Capability Verification 001
 
-Status: `PROFILE_BINDING_REQUIRED` — no Show-bound fixture attribute capability
-is verified by this review.
+> **Superseded capability conclusion:** `ZEN_FIXTURE_TYPE_EXPORT_SCHEMA_RESEARCH_001.md` now establishes Show-bound channel profiles for all six current FixtureTypes through a real-console compound identity proof. The historical local-profile analysis below remains evidence of the pre-binding state; it must not be read as the current capability state. Current capability-to-role review: `ZEN_EXISTING_SHOW_CAPABILITY_CANDIDATE_ROLE_ELIGIBILITY_REVIEW_001.md`.
+
+Historical status: `PROFILE_BINDING_REQUIRED` — no Show-bound fixture attribute capability
+was verified at the time of this review.
 
 This is a local/read-only technical evidence review. It occurs before human
 review of B3 role eligibility and does not select any role for a song, section,

@@ -1116,3 +1116,29 @@ Designer stays `UNCHANGED`, B3 stays `GUIDANCE_ASSISTED_AB_ONLY`,
 `WAIT_FOR_REAL_CASE`. The next blocker before a real-song Existing Show A/B is
 an updated human-reviewable capability-to-candidate-role eligibility decision;
 no artistic assignment or action delta is authorized by this evidence alone.
+
+## 49 Existing Show Capability → Candidate Role Eligibility Review 001
+
+`ZEN_EXISTING_SHOW_CAPABILITY_CANDIDATE_ROLE_ELIGIBILITY_REVIEW_001.md`
+supersedes the historical identity-origin mapping hypotheses for current
+eligibility review. It applies the six real-console `SHOW_BOUND_VERIFIED`
+FixtureType channel profiles to the exact scanned Groups while preserving the
+essential separation: technical capability is not candidate-role eligibility,
+case role assignment, a fixture priority, or permanent artistic identity.
+
+Every current Group is technically eligible to be considered for
+`DENSITY_LAYER` because DIMMER is Show-bound verified and B3 already has a
+typed `SET_DIMMER` route. Every Group can be considered for `COLOR_FIELD` at a
+technical level because COLOR is verified, but the current B3 Color action
+resource is not verified. Pan/Tilt/Focus Groups remain blocked from
+performer/area `PRIMARY_FOCUS` by missing semantic targets/geometry/Position
+meaning and preset applicability; movable texture and all timing candidates
+remain blocked by current safe action grammar. BEAM aerial/impact and possible
+B-EYE pixel/shape use are explicit role-vocabulary gaps, not forced mappings.
+
+All `case_role_assignment` values and Human Review fields remain `NONE`/
+`UNSET`. The repository is `READY_FOR_HUMAN_ELIGIBILITY_APPROVAL`, not yet
+authorized to run `REAL_SONG_EXISTING_SHOW_AB_002`. Production Designer stays
+`UNCHANGED`, B3 stays `GUIDANCE_ASSISTED_AB_ONLY`, `ZEN_STYLE_PROFILE` stays
+`DEFERRED`, venue validation stays `WAIT_FOR_REAL_CASE`, Fixture 9999 remains
+untouched, and MA2 writes remain `ZERO_WRITES`.

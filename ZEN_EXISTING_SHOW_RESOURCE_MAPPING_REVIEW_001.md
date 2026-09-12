@@ -1,7 +1,9 @@
 # Existing Show Resource Mapping Review 001
 
-Status: `CAPABILITY_ELIGIBILITY_PENDING` — proposal only; no mapping is active
-or ready for role-eligibility approval.
+> **Superseded candidate-role state:** the identity-origin proposals in this document predate the real-console Show-bound channel binding. They are not current eligibility evidence. The durable current review is `ZEN_EXISTING_SHOW_CAPABILITY_CANDIDATE_ROLE_ELIGIBILITY_REVIEW_001.md`; it preserves no active mappings and no case role assignments.
+
+Historical status: `CAPABILITY_ELIGIBILITY_PENDING` — proposal only; no mapping was active
+or ready for role-eligibility approval at the time of this review.
 
 This review is the bounded next step after `ZEN_REAL_SONG_EXISTING_SHOW_AB_001.md`.
 It records non-ranked candidate relationships between the scanned Existing
