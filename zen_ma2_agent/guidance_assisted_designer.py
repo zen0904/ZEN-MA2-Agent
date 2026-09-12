@@ -25,6 +25,7 @@ INTENT_REALIZABILITY_STATUSES = {
 }
 REASONING_VERSION_B2 = "AB_002_RESOURCE_CHOICE_REFERENCE"
 REASONING_VERSION_B3 = "AB_003_DESIGN_INTENT_FIRST"
+CASE_SPECIFIC_DENSITY_COHORT_MODE = "CASE_SPECIFIC_DENSITY_COHORT"
 PROHIBITED_FORMULAIC_INTERPRETATIONS = {
     "REPEAT_ALWAYS_BIGGER", "SECOND_DROP_ALWAYS_BIGGER", "LED_LOW_COLOR_ONLY",
     "LED_MEDIUM_ADDS_DENSITY", "LED_HIGH_ADDS_TIMING", "ENERGY_EQUALS_LAYER_COUNT",
@@ -54,14 +55,118 @@ def _resource_advisory(context: dict[str, Any]) -> dict[str, Any] | None:
     return next((item for item in generate_shadow_advisories(context) if item["advisory_id"] == "advisory-resource-adaptation"), None)
 
 
-def _binding_map(context: dict[str, Any], profile: dict[str, Any]) -> dict[str, dict[str, Any]]:
+def _binding_map(context: dict[str, Any], profile: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
+    """Keep every explicitly confirmed case binding; never infer one from a label.
+
+    Most current roles have one Group target.  A multi-target DENSITY binding is
+    accepted only through the separately validated case-scoped cohort path in
+    ``_density_cohort_bindings`` below.
+    """
     profile_groups = {item.get("group_id") for item in profile.get("groups", []) if isinstance(item.get("group_id"), int)}
-    bindings: dict[str, dict[str, Any]] = {}
+    bindings: dict[str, list[dict[str, Any]]] = {}
     for item in context.get("case_context", {}).get("role_bindings", []):
         target = item.get("target") or {}
         if item.get("certainty") == "CONFIRMED" and target.get("type") == "group" and target.get("ref") in profile_groups:
-            bindings.setdefault(str(item.get("role")), deepcopy(item))
+            bindings.setdefault(str(item.get("role")), []).append(deepcopy(item))
     return bindings
+
+
+def _one_binding(bindings: dict[str, list[dict[str, Any]]], role: str) -> dict[str, Any] | None:
+    candidates = bindings.get(role, [])
+    if len(candidates) > 1:
+        raise ValueError(f"Role {role} has multiple bindings without an approved multi-target action path.")
+    return candidates[0] if candidates else None
+
+
+def _density_cohort_bindings(bindings: dict[str, list[dict[str, Any]]]) -> list[dict[str, Any]]:
+    """Return a strict, human-approved density cohort or fail closed.
+
+    Multiple targets must not silently turn a generic role into an all-Groups
+    action.  This narrow path is only for a supplied case approval and uses
+    Group numeric identity solely as deterministic tie-breaking, never as a
+    fixture role, ranking, or artistic priority.
+    """
+    candidates = bindings.get("DENSITY_LAYER", [])
+    if len(candidates) < 2:
+        return []
+    for item in candidates:
+        if item.get("resource_selection_mode") != CASE_SPECIFIC_DENSITY_COHORT_MODE:
+            raise ValueError("Multiple DENSITY_LAYER targets require an explicit case-specific cohort mode.")
+        if item.get("approval_scope") != "CASE_SPECIFIC_ELIGIBILITY_ONLY" or not str(item.get("approval_case_id") or "").strip():
+            raise ValueError("A density cohort requires explicit case-scoped human approval provenance.")
+    targets = [item.get("target", {}).get("ref") for item in candidates]
+    if len(set(targets)) != len(targets):
+        raise ValueError("A density cohort may not contain duplicate Group targets.")
+    return sorted(candidates, key=lambda item: int(item["target"]["ref"]))
+
+
+def _density_participant_count(choice: dict[str, Any], cohort_size: int) -> tuple[int, str]:
+    """Choose density cohort size from existing B3 density/headroom intent.
+
+    This is deliberately based on supplied density and an already-derived
+    headroom state, not section labels, fixture labels, or a raw energy-to-
+    group-count ladder.  It says nothing about a Group's artistic importance.
+    """
+    known = choice.get("selection_basis", {}).get("known_song_context", {})
+    density = float(known.get("density", 0.0))
+    dimension = str((choice.get("design_intent") or {}).get("design_dimensions", {}).get("density", ""))
+    if dimension == "REDUCED_FOR_HEADROOM":
+        return max(1, min(cohort_size, round(max(0.25, density) * cohort_size * 0.55))), "REDUCE_FOR_KNOWN_HEADROOM"
+    if dimension == "ACTIVE_BY_MEASURED_DENSITY":
+        return max(1, min(cohort_size, round(max(0.25, density) * cohort_size))), "ACTIVE_MEASURED_DENSITY"
+    return max(1, min(cohort_size, round(max(0.25, density) * cohort_size))), "RESTRAINED_COMPLETE_LOOK"
+
+
+def _cyclic_targets(cohort: list[dict[str, Any]], start: int, count: int) -> list[dict[str, Any]]:
+    return [cohort[(start + offset) % len(cohort)] for offset in range(count)]
+
+
+def _select_density_cohort(
+    *, choice: dict[str, Any], cue: dict[str, Any], cohort: list[dict[str, Any]],
+    section_cohorts: dict[str, list[dict[str, Any]]], role_cohorts: dict[str, list[dict[str, Any]]],
+    previous_section_cohort: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    """Make case-scoped density participation inspectable and non-label-driven."""
+    section_id = str(choice["section_id"])
+    if section_id in section_cohorts:
+        selected = section_cohorts[section_id]
+        strategy = "REUSE_SECTION_COHORT_FOR_ADDITIONAL_CUE_OCCURRENCE"
+    else:
+        count, strategy = _density_participant_count(choice, len(cohort))
+        role = str(choice["section_role"])
+        repeat = role_cohorts.get(role)
+        development = str(choice.get("development", {}).get("status", ""))
+        if repeat and development == "INTENTIONAL_SIMILARITY":
+            start = next((index for index, item in enumerate(cohort) if item["target"]["ref"] == repeat[0]["target"]["ref"]), 0)
+            strategy = f"{strategy}; PRESERVE_REPEAT_COHORT"
+        elif repeat and development == "MUSICALLY_JUSTIFIED_DELTA":
+            start = (next((index for index, item in enumerate(cohort) if item["target"]["ref"] == repeat[0]["target"]["ref"]), 0) + 1) % len(cohort)
+            strategy = f"{strategy}; REDISTRIBUTE_FOR_JUSTIFIED_REPEAT_DELTA"
+        elif previous_section_cohort:
+            start = next((index for index, item in enumerate(cohort) if item["target"]["ref"] == previous_section_cohort[0]["target"]["ref"]), 0)
+            strategy = f"{strategy}; CONTINUE_PREVIOUS_COHORT_WHERE_POSSIBLE"
+        else:
+            start = 0
+            strategy = f"{strategy}; INITIAL_NEUTRAL_NUMERIC_TIE_BREAK"
+        selected = _cyclic_targets(cohort, start, count)
+        section_cohorts[section_id] = selected
+        role_cohorts[role] = selected
+    selected_ids = {item["target"]["ref"] for item in selected}
+    state = "REDUCE" if "DENSITY_LAYER" in choice.get("REDUCE", []) else "KEEP"
+    resources = [
+        {
+            "schema": ROLE_STATE_SCHEMA, "role": "DENSITY_LAYER", "target": deepcopy(item["target"]),
+            "state": state if item["target"]["ref"] in selected_ids else "OMIT",
+            "approval_scope": item["approval_scope"], "approval_case_id": item["approval_case_id"],
+            "source": item["source"],
+        }
+        for item in cohort
+    ]
+    return {
+        "selected": sorted(selected, key=lambda item: int(item["target"]["ref"])),
+        "unused": [item for item in cohort if item["target"]["ref"] not in selected_ids],
+        "resource_role_states": resources, "density_strategy": strategy,
+    }
 
 
 def _preset(profile: dict[str, Any], *types: str) -> dict[str, Any] | None:
@@ -131,7 +236,7 @@ def _event_summary(events: list[dict[str, Any]]) -> tuple[int, float]:
     return len(relevant), max((float(item.get("strength", 0.0)) for item in relevant), default=0.0)
 
 
-def _experimental_resource_choices_b2(song_input: dict[str, Any], bindings: dict[str, dict[str, Any]], guidance_context: dict[str, Any]) -> dict[str, dict[str, Any]]:
+def _experimental_resource_choices_b2(song_input: dict[str, Any], bindings: dict[str, list[dict[str, Any]]], guidance_context: dict[str, Any]) -> dict[str, dict[str, Any]]:
     """Select experimental role composition from song signals, never an energy ladder.
 
     Energy remains an inspectable input, but timing comes from actual accents,
@@ -271,7 +376,7 @@ def _audience_goal(section: dict[str, Any], *, repeated: bool, later_peak: dict[
     return f"Establish a coherent visual identity for this {role} in the whole-song journey."
 
 
-def _design_intents_b3(song_input: dict[str, Any], bindings: dict[str, dict[str, Any]], guidance_context: dict[str, Any]) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
+def _design_intents_b3(song_input: dict[str, Any], bindings: dict[str, list[dict[str, Any]]], guidance_context: dict[str, Any]) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
     """Create reviewable intent before deriving experimental resource choices.
 
     This intentionally consumes only the normalized song fields already in the
@@ -334,6 +439,7 @@ def _design_intents_b3(song_input: dict[str, Any], bindings: dict[str, dict[str,
             "scope": "GUIDANCE_ASSISTED_AB_ONLY",
         })
         selected: list[str] = []
+        reduced: list[str] = []
         # Every retained role corresponds to an explicit design dimension.
         if "PRIMARY_FOCUS" in bindings and dimensions["focus"] != "UNAVAILABLE":
             selected.append("PRIMARY_FOCUS")
@@ -341,6 +447,11 @@ def _design_intents_b3(song_input: dict[str, Any], bindings: dict[str, dict[str,
             selected.append("COLOR_FIELD")
         if "DENSITY_LAYER" in bindings and dimensions["density"] == "ACTIVE_BY_MEASURED_DENSITY":
             selected.append("DENSITY_LAYER")
+        elif "DENSITY_LAYER" in bindings and dimensions["density"] == "REDUCED_FOR_HEADROOM":
+            # A density-only rig still needs an explicit reduced active state;
+            # otherwise the complete-look fallback would silently turn a
+            # headroom decision into KEEP.
+            reduced.append("DENSITY_LAYER")
         if "MOVER_TEXTURE_LAYER" in bindings and dimensions["texture"] == "CONTEXTUALLY_JUSTIFIED_BY_SECTION_NOTES_OR_ACCENT":
             selected.append("MOVER_TEXTURE_LAYER")
         if "TIMING_LAYER" in bindings and dimensions["timing"] == "RHYTHMIC_PUNCTUATION_CONTEXT":
@@ -349,10 +460,10 @@ def _design_intents_b3(song_input: dict[str, Any], bindings: dict[str, dict[str,
             selected.append("BROAD_ENVIRONMENT")
         if "LEFT_RIGHT_RELATIONSHIP" in bindings and timing_context and event_count > 1:
             selected.append("LEFT_RIGHT_RELATIONSHIP")
-        if not selected and available:
+        if not selected and not reduced and available:
             selected.append(available[0])
         selected = list(dict.fromkeys(selected))
-        reduced = [item for item in available if item not in selected and item == "DENSITY_LAYER" and dimensions["density"] == "REDUCED_FOR_HEADROOM"]
+        reduced = list(dict.fromkeys(reduced + [item for item in available if item not in selected and item == "DENSITY_LAYER" and dimensions["density"] == "REDUCED_FOR_HEADROOM"]))
         omitted = [item for item in available if item not in selected and item not in reduced]
         intention["intentional_omissions"] = [f"{item}: not selected because availability alone is not a reason to use it." for item in omitted]
         intention = validate_design_intent(intention)
@@ -406,6 +517,9 @@ class GuidanceAssistedExperimentalDesigner:
         baseline = self._baseline.design(deepcopy(song_input), deepcopy(profile))
         advisory = _resource_advisory(guidance_context)
         bindings = _binding_map(guidance_context, profile)
+        density_cohort = _density_cohort_bindings(bindings)
+        if any(len(items) > 1 for role, items in bindings.items() if role != "DENSITY_LAYER"):
+            raise ValueError("Only the explicit case-specific DENSITY_LAYER cohort supports multiple Group targets.")
         if not bindings:
             if self._reasoning_version == REASONING_VERSION_B3:
                 choices, _ = _design_intents_b3(song_input, {}, guidance_context)
@@ -425,6 +539,9 @@ class GuidanceAssistedExperimentalDesigner:
         changed = False
         realized_signatures: dict[str, tuple[tuple[Any, ...], tuple[Any, ...]]] = {}
         realizability_by_section: dict[str, dict[str, Any]] = {}
+        section_density_cohorts: dict[str, list[dict[str, Any]]] = {}
+        role_density_cohorts: dict[str, list[dict[str, Any]]] = {}
+        previous_density_cohort: list[dict[str, Any]] | None = None
         for cue in plan["cues"]:
             choice = choices.get(cue.get("source_section_id"))
             if not choice:
@@ -434,24 +551,37 @@ class GuidanceAssistedExperimentalDesigner:
                 continue
             actions: list[dict[str, Any]] = []
             selected_roles: list[str] = []
+            density_selection: dict[str, Any] | None = None
+            if density_cohort and ("DENSITY_LAYER" in choice["KEEP"] or "DENSITY_LAYER" in choice["REDUCE"]):
+                density_selection = _select_density_cohort(
+                    choice=choice, cue=cue, cohort=density_cohort,
+                    section_cohorts=section_density_cohorts, role_cohorts=role_density_cohorts,
+                    previous_section_cohort=previous_density_cohort,
+                )
+                if cue.get("cue_occurrence_index", 0) == 0:
+                    previous_density_cohort = density_selection["selected"]
             for role in choice["KEEP"]:
-                binding = bindings.get(role)
-                if binding:
-                    level = max(1, round(base_level * float(choice["role_level_multipliers"].get(role, 1.0))))
-                    actions.extend(_action(binding["target"], role, level, focus, color))
+                role_bindings = density_selection["selected"] if role == "DENSITY_LAYER" and density_selection else [_one_binding(bindings, role)]
+                for binding in role_bindings:
+                    if binding:
+                        level = max(1, round(base_level * float(choice["role_level_multipliers"].get(role, 1.0))))
+                        actions.extend(_action(binding["target"], role, level, focus, color))
+                if any(role_bindings):
                     selected_roles.append(role)
             for role in choice["REDUCE"]:
-                binding = bindings.get(role)
-                if binding:
-                    level = max(1, round(base_level * float(choice["role_level_multipliers"].get(role, 0.45))))
-                    actions.extend(_action(binding["target"], role, level, focus, color))
+                role_bindings = density_selection["selected"] if role == "DENSITY_LAYER" and density_selection else [_one_binding(bindings, role)]
+                for binding in role_bindings:
+                    if binding:
+                        level = max(1, round(base_level * float(choice["role_level_multipliers"].get(role, 0.45))))
+                        actions.extend(_action(binding["target"], role, level, focus, color))
+                if any(role_bindings):
                     selected_roles.append(role)
             # Existing effect actions are retained only where a declared timing
             # role is actively kept/reduced.  No new Effect is created or named.
             if "TIMING_LAYER" in selected_roles:
                 for action in cue.get("actions", []):
                     if action.get("operation") == "CALL_EFFECT":
-                        timing_binding = bindings.get("TIMING_LAYER")
+                        timing_binding = _one_binding(bindings, "TIMING_LAYER")
                         retained = deepcopy(action)
                         if timing_binding:
                             retained["target"] = deepcopy(timing_binding["target"])
@@ -505,6 +635,7 @@ class GuidanceAssistedExperimentalDesigner:
                 "evidence_references": list(advisory["evidence_references"]) if advisory else [],
                 "development": deepcopy(choice["development"]), "selection_basis": deepcopy(choice["selection_basis"]),
                 "role_level_multipliers": deepcopy(choice["role_level_multipliers"]),
+                "density_resource_selection": deepcopy(density_selection) if density_selection else None,
                 "design_intent": deepcopy(choice.get("design_intent")) if choice.get("design_intent") else None,
                 "intent_realizability": realization,
                 "human_review": "UNSET", "scope": "EXPERIMENTAL_TYPED_INTENT_ONLY",

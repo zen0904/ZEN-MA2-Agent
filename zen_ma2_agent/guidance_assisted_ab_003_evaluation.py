@@ -43,6 +43,7 @@ def cue_design_intent_trace(candidate: dict[str, Any]) -> list[dict[str, Any]]:
             "CHANGE": deepcopy(experimental.get("development", {})),
             "ROLE_STATES": deepcopy(experimental.get("role_states", [])),
             "ROLE_STATE_SEMANTICS": experimental.get("role_state_semantics", "NOT_AVAILABLE"),
+            "DENSITY_RESOURCE_SELECTION": deepcopy(experimental.get("density_resource_selection")),
             "OMIT": list(experimental.get("omitted_roles", [])),
             "SUBSTITUTE": list(experimental.get("substitutions", [])),
             "INTENT_REALIZABILITY": deepcopy(experimental.get("intent_realizability", {})),

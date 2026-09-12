@@ -1142,3 +1142,32 @@ authorized to run `REAL_SONG_EXISTING_SHOW_AB_002`. Production Designer stays
 `UNCHANGED`, B3 stays `GUIDANCE_ASSISTED_AB_ONLY`, `ZEN_STYLE_PROFILE` stays
 `DEFERRED`, venue validation stays `WAIT_FOR_REAL_CASE`, Fixture 9999 remains
 untouched, and MA2 writes remain `ZERO_WRITES`.
+
+## 50 Real Song + Existing Show A/B 002
+
+`ZEN_REAL_SONG_EXISTING_SHOW_AB_002.md` records the first real Existing Show
+action-delta experiment. Zen explicitly approved Groups 1–7 as
+`DENSITY_LAYER` candidates for this case only. The approval is represented as
+a provenance-bearing, case-scoped multi-Group density cohort; it creates no
+permanent Group mapping, priority, role identity, or production behavior.
+
+B3 uses the existing Design Intent density/headroom/repeat trace to select and
+omit members of that cohort, then emits only typed `SET_DIMMER` actions. It
+preserves cue/section occurrence identity, canonical aggregate role states,
+per-resource KEEP/REDUCE/OMIT state, desired-versus-realized status, and the
+exact human approval source. No focus, color, texture, timing, effect,
+movement, beam, pixel, or position behavior is inferred.
+
+The experiment produces real target-composition deltas: `verse_2` and later
+choruses change only where B3 has recorded contextual basis, while earlier
+high material can reduce for a measured later peak. It is intentionally not a
+production recommendation: the current final cue saturates the equal density
+cohort and all selected Groups use equal dimmer values because no verified
+spatial/coverage hierarchy exists. These are reported as
+`FINAL_COHORT_SATURATION_RISK` and `GROUP_LEVEL_HOMOGENEITY_UNRESOLVED`;
+the case recommendation is `NEEDS_REVISION` and human review remains unset.
+
+Production Designer remains `UNCHANGED`, B3 remains
+`GUIDANCE_ASSISTED_AB_ONLY`, `ZEN_STYLE_PROFILE` remains `DEFERRED`, real
+venue validation remains `WAIT_FOR_REAL_CASE`, Fixture 9999 is untouched, and
+MA2 writes remain `ZERO_WRITES`.

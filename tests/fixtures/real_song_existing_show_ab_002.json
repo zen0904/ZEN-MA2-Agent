@@ -1,0 +1,9 @@
+{
+  "schema": "zen.real_song_existing_show_ab_002_fixture.v0.1",
+  "case_id": "REAL_SONG_EXISTING_SHOW_AB_002",
+  "base_existing_show_fixture_ref": "tests/fixtures/real_song_existing_show_ab_001.json",
+  "approval_scope": "CASE_SPECIFIC_ELIGIBILITY_ONLY",
+  "approval_source": "ZEN_HUMAN_CASE_SPECIFIC_DENSITY_ELIGIBILITY_AB002",
+  "approved_density_group_ids": [1, 2, 3, 4, 5, 6, 7],
+  "approval_statement": "Groups 1–7 are approved as DENSITY_LAYER candidate resources for REAL_SONG_EXISTING_SHOW_AB_002 only."
+}
