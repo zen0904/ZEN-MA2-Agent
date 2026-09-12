@@ -19,3 +19,11 @@ experience remain provenance-bearing and reversible. If a learned method would
 change operator interaction, propose it for approval rather than adopting it
 silently. Research must not guess undocumented protocols or bypass safety
 boundaries.
+
+External knowledge packs retain source metadata, concise derived extracts,
+classification, scope, confidence, conflicts, and promotion state. They begin
+as `INGESTED_UNREVIEWED` or `SHADOW_ONLY`, not as Designer rules. Keep
+descriptive knowledge distinct from a prescriptive requirement; source text,
+bulk archives, media, and datasets do not belong in the repository. A pack can
+inform review or case trial only after the applicable evidence boundary is
+visible; it never replaces Current Show spatial/visual evidence.

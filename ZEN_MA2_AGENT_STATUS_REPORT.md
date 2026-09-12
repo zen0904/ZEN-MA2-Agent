@@ -1171,3 +1171,29 @@ Production Designer remains `UNCHANGED`, B3 remains
 `GUIDANCE_ASSISTED_AB_ONLY`, `ZEN_STYLE_PROFILE` remains `DEFERRED`, real
 venue validation remains `WAIT_FOR_REAL_CASE`, Fixture 9999 is untouched, and
 MA2 writes remain `ZERO_WRITES`.
+
+## 51 External Lighting Knowledge Ingestion 001
+
+`EXTERNAL_LIGHTING_KNOWLEDGE_PACK_001` provides 25 compact,
+provenance-bearing `DESCRIPTIVE` records from seven diverse official,
+educational, structured-fixture, professional-practice, and scoped case
+sources. It is stored as a compact source registry plus normalized pack, never
+as scraped pages or a bulk research archive. The ingestion validator rejects
+commands, copied-text fields, unregistered sources, overly long extracts, and
+production promotion. No Git LFS, CI, cache, or external media was added.
+
+The optional `zen.external_lighting_knowledge_context.v0.1` is
+`SHADOW_ONLY`. It is not connected to the Production Designer or B3. Its one
+demonstration attaches source-linked review questions to the existing A/B 002
+`FINAL_COHORT_SATURATION_RISK` and
+`GROUP_LEVEL_HOMOGENEITY_UNRESOLVED` findings, returns zero action changes, and
+explicitly requires Current Show visual/spatial evidence rather than inventing
+a Group hierarchy.
+
+The next high-leverage task is a bounded Current Show visual/spatial
+relationship survey or user-confirmed rig layout, followed by shadow critique
+of the real A/B 002 density cohort. Do not treat external general knowledge as
+a substitute for location, coverage, audience viewpoint, action grammar, or
+case-specific human design judgment. Production stays `UNCHANGED`, B3 stays
+`GUIDANCE_ASSISTED_AB_ONLY`, `ZEN_STYLE_PROFILE` stays `DEFERRED`, and MA2
+writes stay `ZERO_WRITES`.

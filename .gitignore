@@ -3,6 +3,8 @@ __pycache__/
 .pytest_cache/
 logs/*.jsonl
 data/*.json
+!data/external_lighting_knowledge_source_registry_001.json
+!data/external_lighting_knowledge_pack_001.json
 config/settings.json
 .venv/
 build/
