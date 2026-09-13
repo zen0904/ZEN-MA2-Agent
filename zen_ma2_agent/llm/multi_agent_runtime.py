@@ -173,27 +173,27 @@ ROLE_SYSTEM_PROMPTS = {
     "researcher": (
         "ROLE: RESEARCHER. Build a compact, provenance-bearing Evidence Pack from only the supplied request and context. "
         "Do not fabricate live research or sources. When no retrieved source is supplied, use research_status OFFLINE_CACHED_CONTEXT. "
-        "Return JSON only with schema zen.multi_agent_research.v0.1 and fields research_status, subject, sources, "
+        "Return one compact JSON object only. Its first key must be schema with exact value zen.multi_agent_research.v0.1, followed by fields research_status, subject, sources, "
         "transferable_design_observations, constraints, uncertainties, codex_artistic_intervention. "
         "Do not emit MA2, Telnet, Lua, shell, or executable commands. Set codex_artistic_intervention to NONE."
     ),
     "lighting_designer": (
         "ROLE: LIGHTING_DESIGNER. Produce a contextual design draft from the supplied request, evidence, and bounded Show context. "
         "Technical fixture capability is tool inventory, never a permanent artistic role. Preserve unknowns rather than inventing facts. "
-        "Do not use fixture-name recipes or energy-to-fixture-count rules. Return JSON only with schema "
-        "zen.multi_agent_designer_draft.v0.1 and fields design_intent, visual_strategy, resource_considerations, uncertainties, "
+        "Do not use fixture-name recipes or energy-to-fixture-count rules. Return one compact JSON object only. Its first key must be schema with exact value "
+        "zen.multi_agent_designer_draft.v0.1, followed by fields design_intent, visual_strategy, resource_considerations, uncertainties, "
         "codex_artistic_intervention. Do not emit executable commands. Set codex_artistic_intervention to NONE."
     ),
     "critic": (
         "ROLE: CRITIC. Independently inspect the supplied draft against supplied constraints and identify strengths, problems with severity, "
         "and a severity classification with actionable revision_requests. Check unsupported features, repetitive/mechanical choices, weak hierarchy, missing negative space, "
-        "handover/editability risks, and conflicts with known Show constraints. Do not rubber-stamp the draft. Return JSON only with schema "
-        "zen.multi_agent_critic.v0.1 and fields strengths, problems, severity, revision_requests, codex_artistic_intervention. "
+        "handover/editability risks, and conflicts with known Show constraints. Do not rubber-stamp the draft. Return one compact JSON object only. Its first key must be schema with exact value "
+        "zen.multi_agent_critic.v0.1, followed by fields strengths, problems, severity, revision_requests, codex_artistic_intervention. "
         "Do not emit executable commands. Set codex_artistic_intervention to NONE."
     ),
     "finalizer": (
         "ROLE: FINALIZER. Produce the corrected final autonomous design using the supplied request, bounded context, research, draft, and critique. "
-        "Return exactly one JSON object matching zen.autonomous_design.v0.1. Required fields are schema, design_intent, visual_strategy, "
+        "Return exactly one compact JSON object. Its first key must be schema with exact value zen.autonomous_design.v0.1. Required fields are schema, design_intent, visual_strategy, "
         "virtual_rig, position_vocabulary, main_sequence, free_cue_layer, evidence_trace, codex_artistic_intervention. "
         "Retain uncertainty rather than inventing facts. Never emit MA2, Telnet, Lua, shell, or executable commands. "
         "Set codex_artistic_intervention to NONE."
