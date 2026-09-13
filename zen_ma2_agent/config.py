@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from .portable import app_root, ensure_runtime_dirs
+from .portable import app_root, ensure_runtime_dirs, portable_state_path, zen_home
 
 
 DEFAULTS: dict[str, Any] = {
@@ -27,6 +27,11 @@ class SettingsError(ValueError):
 
 
 def settings_path(root: Path | None = None) -> Path:
+    # A launcher-owned ZEN_HOME wins even when callers pass app_root(), so
+    # existing runtime callers cannot accidentally persist settings in the
+    # versioned USB repository.
+    if zen_home():
+        return portable_state_path("config") / "settings.json"
     return (root or app_root()) / "config" / "settings.json"
 
 

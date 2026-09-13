@@ -10,6 +10,9 @@ data/*.json
 !data/zen_show_bound_color_preset_applicability_001.json
 !data/zen_real_ma2_test_show_sheesh_001_plan.json
 config/settings.json
+config/providers.private.env
+*.private.env
+.zen-provider-*.json
 .venv/
 build/
 dist/
