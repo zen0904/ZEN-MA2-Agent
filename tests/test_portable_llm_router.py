@@ -10,7 +10,7 @@ from unittest.mock import patch
 from zen_ma2_agent.llm.autonomous_designer import SCHEMA, DesignValidationError, validate_design_output
 from zen_ma2_agent.llm.router import ProviderRouter, ProviderSlot, ProviderUnavailable, load_provider_slots
 from zen_ma2_agent.config import settings_path
-from launcher.zen_portable_launcher import ma2_connectivity
+from launcher.zen_portable_launcher import ma2_connectivity, provider_self_test
 
 
 class _Adapter:
@@ -79,6 +79,36 @@ class LocalProviderNoApiKeyTests(unittest.TestCase):
             base_url="https://api.example.com/v1", api_key="", roles=(), timeout_seconds=45,
         )
         self.assertFalse(slot.configured)
+
+
+class PortableProviderSelfTestTests(unittest.TestCase):
+    def test_scoped_multi_agent_slot_uses_an_eligible_probe_role(self):
+        class ProbeAdapter:
+            def __init__(self): self.calls = []
+            def complete(self, slot, *, system, user):
+                self.calls.append(slot.number)
+                return '{"schema":"zen.provider_probe.v0.1","ready":true}'
+
+        adapter = ProbeAdapter()
+        slot = ProviderSlot(
+            number=1, provider_type="OPENAI_COMPATIBLE_LOCAL", model="local-model",
+            base_url="http://127.0.0.1:8080/v1", api_key="",
+            roles=("RESEARCHER", "LIGHTING_DESIGNER", "CRITIC", "FINALIZER"), timeout_seconds=45,
+        )
+        router = ProviderRouter("PRIMARY_ONLY", (slot,), adapter)
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "repo" / "ZEN-MA2-Agent" / ".git").mkdir(parents=True)
+            with (
+                patch("launcher.zen_portable_launcher.home", return_value=root),
+                patch("launcher.zen_portable_launcher.repo", return_value=root / "repo" / "ZEN-MA2-Agent"),
+                patch.object(ProviderRouter, "from_portable_config", return_value=router),
+                patch("launcher.zen_portable_launcher._log"),
+            ):
+                result = provider_self_test()
+        self.assertEqual(result["AUTONOMOUS_DESIGNER_AVAILABLE"], "YES")
+        self.assertEqual(result["probe_role"], "RESEARCHER")
+        self.assertEqual(adapter.calls, [1])
 
 
 class ProviderRoleEligibilityTests(unittest.TestCase):

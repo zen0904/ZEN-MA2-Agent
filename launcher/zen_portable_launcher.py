@@ -92,9 +92,24 @@ def provider_self_test() -> dict[str, object]:
 
     router = ProviderRouter.from_portable_config()
     payload: dict[str, object] = {"ZEN_HOME": str(home()), "provider_mode": router.mode, "slots": [slot.safe_identity() for slot in router.slots]}
+    # The portable self-test is a transport/schema probe, not a request for a
+    # particular artistic role.  Prefer the legacy/general DESIGNER role when
+    # it is eligible, but probe a configured role when a deliberately scoped
+    # local slot only exposes the multi-agent role names.
+    probe_role = "DESIGNER"
+    if not any(slot.supports(probe_role) for slot in router.configured_slots()):
+        probe_role = next(
+            (
+                role
+                for slot in router.configured_slots()
+                for role in slot.roles
+            ),
+            probe_role,
+        )
+    payload["probe_role"] = probe_role
     try:
         content, slot = router.complete(
-            role="DESIGNER",
+            role=probe_role,
             system="Return exactly one JSON object: {\"schema\":\"zen.provider_probe.v0.1\",\"ready\":true}.",
             user="Perform the portable ZEN provider connectivity probe.",
         )
