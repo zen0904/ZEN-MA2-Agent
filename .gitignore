@@ -18,3 +18,5 @@ build/
 dist/
 *.spec
 build_identity.json
+*.gguf
+models/

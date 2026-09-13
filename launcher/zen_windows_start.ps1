@@ -84,13 +84,18 @@ function Open-ProviderSetup {
     if (-not (Test-Path $privateProviderFile)) {
         @(
             '# USB-local private provider configuration. Never commit this file.',
-            'ZEN_PROVIDER_MODE=FALLBACK',
+            '# Default here is a CPU-only local llama.cpp server (no discrete GPU',
+            '# required). See config/providers.private.env.example in the repo for',
+            '# the full setup walkthrough. Edit ZEN_PROVIDER_1_MODEL below to match',
+            '# the exact GGUF filename you downloaded.',
+            'ZEN_PROVIDER_MODE=PRIMARY_ONLY',
             '',
-            'ZEN_PROVIDER_1_TYPE=OPENAI_COMPATIBLE',
-            'ZEN_PROVIDER_1_MODEL=',
-            'ZEN_PROVIDER_1_BASE_URL=',
+            'ZEN_PROVIDER_1_TYPE=OPENAI_COMPATIBLE_LOCAL',
+            'ZEN_PROVIDER_1_MODEL=Qwen2.5-7B-Instruct-Q4_K_M',
+            'ZEN_PROVIDER_1_BASE_URL=http://127.0.0.1:8080/v1',
             'ZEN_PROVIDER_1_API_KEY=',
-            'ZEN_PROVIDER_1_ROLES=DESIGNER,RESEARCHER,CRITIC',
+            'ZEN_PROVIDER_1_ROLES=',
+            'ZEN_PROVIDER_1_TIMEOUT_SECONDS=180',
             '',
             'ZEN_PROVIDER_2_TYPE=', 'ZEN_PROVIDER_2_MODEL=', 'ZEN_PROVIDER_2_BASE_URL=', 'ZEN_PROVIDER_2_API_KEY=',
             'ZEN_PROVIDER_3_TYPE=', 'ZEN_PROVIDER_3_MODEL=', 'ZEN_PROVIDER_3_BASE_URL=', 'ZEN_PROVIDER_3_API_KEY='

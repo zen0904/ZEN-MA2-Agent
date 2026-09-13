@@ -48,7 +48,7 @@ def ensure_runtime_dirs(root: Path | None = None) -> tuple[Path, Path]:
 
 def portable_state_path(name: str) -> Path:
     """Return an Agent-owned mutable directory; never a host-global path."""
-    allowed = {"config", "providers", "knowledge", "show_context", "projects", "runtime", "logs", "cache", "temp", "secrets"}
+    allowed = {"config", "providers", "knowledge", "show_context", "projects", "runtime", "logs", "cache", "temp", "secrets", "models"}
     if name not in allowed:
         raise ValueError(f"Unsupported portable state directory: {name}")
     base = zen_home() or app_root()
