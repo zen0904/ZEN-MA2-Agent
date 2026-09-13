@@ -9,7 +9,7 @@ from typing import Any
 
 from ..designer.schema import validate_show_plan
 from ..models import Intent
-from ..protected_objects import assert_sequence_allowed
+from .. import protected_objects
 from ..workflow import ActionStep, SkillGraphNode, Subtask, Task, WorkflowPlan
 
 
@@ -141,9 +141,12 @@ class ShowPlanBuilder:
             raise FirstSongBuildError("Plan has no explicit active Sequence range.")
         used = {item.get("number") for item in profile.get("sequences", [])}
         for number in range(int(limits[0]), int(limits[1]) + 1):
-            if number in used:
+            # A protected candidate is unavailable just like a scanned used
+            # number; keep looking rather than turning one protected slot into
+            # a false "no sequence available" block for the whole range.
+            if number in used or number in protected_objects.PROTECTED_SEQUENCES:
                 continue
-            assert_sequence_allowed(number)
+            protected_objects.assert_sequence_allowed(number)
             return number
         raise FirstSongBuildError("BLOCKED: no unused Sequence is available in the active range.")
 

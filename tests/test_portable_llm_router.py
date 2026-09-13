@@ -79,3 +79,19 @@ class LocalProviderNoApiKeyTests(unittest.TestCase):
             base_url="https://api.example.com/v1", api_key="", roles=(), timeout_seconds=45,
         )
         self.assertFalse(slot.configured)
+
+
+class ProviderRoleEligibilityTests(unittest.TestCase):
+    def test_configured_role_is_case_insensitive_at_lookup(self):
+        slot = ProviderSlot(
+            number=1, provider_type="OPENAI_COMPATIBLE_LOCAL", model="local-model",
+            base_url="http://127.0.0.1:8080/v1", api_key="", roles=("DESIGNER",), timeout_seconds=45,
+        )
+        self.assertTrue(slot.supports("designer"))
+
+    def test_empty_roles_accept_any_role(self):
+        slot = ProviderSlot(
+            number=1, provider_type="OPENAI_COMPATIBLE_LOCAL", model="local-model",
+            base_url="http://127.0.0.1:8080/v1", api_key="", roles=(), timeout_seconds=45,
+        )
+        self.assertTrue(slot.supports("CRITIC"))

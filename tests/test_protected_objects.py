@@ -1,5 +1,8 @@
 import unittest
+from unittest.mock import patch
 
+from zen_ma2_agent.builder.draft import ShowPlanBuilder
+import zen_ma2_agent.protected_objects as protected_objects
 from zen_ma2_agent.protected_objects import (
     PROTECTED_FIXTURE_IDS,
     PROTECTED_SEQUENCES,
@@ -28,6 +31,12 @@ class ProtectedObjectsTests(unittest.TestCase):
 
     def test_assert_fixture_allowed_accepts_ordinary_fixture(self):
         assert_fixture_allowed(101)  # must not raise
+
+    def test_sequence_allocator_skips_monkeypatched_protected_number(self):
+        plan = {"active_sequence_range": [301, 303]}
+        profile = {"sequences": []}
+        with patch.object(protected_objects, "PROTECTED_SEQUENCES", frozenset({301})):
+            self.assertEqual(ShowPlanBuilder._allocate_sequence(plan, profile), 302)
 
 
 if __name__ == "__main__":
