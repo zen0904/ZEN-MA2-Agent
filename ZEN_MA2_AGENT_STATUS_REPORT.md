@@ -1,3 +1,5 @@
+> **SUPERSEDED (2026-09-08):** This report is historical evidence only; for the current state, read `ZEN_AUDIT_AND_FIXES_STATUS_002.md`.
+
 # ZEN MA2 Agent Status Report
 
 Assessment date: 2026-09-08
