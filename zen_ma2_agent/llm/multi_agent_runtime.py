@@ -21,7 +21,7 @@ from uuid import uuid4
 
 from ..portable import portable_state_path
 from ..run_checkpoints import find_resume_point, read_step_artifact, write_step_artifact
-from ..knowledge_store import project_records, retrieve_records
+from ..knowledge_store import project_records, resolve_research_sources, retrieve_records, validate_evidence_refs
 from .autonomous_designer import (
     FORBIDDEN_KEYS,
     SCHEMA as FINAL_DESIGN_SCHEMA,
@@ -156,11 +156,19 @@ ROLE_ROUTER_NAMES = {
     "finalizer": "FINALIZER",
 }
 
+RETRY_SAFETY_CONTRACT = (
+    " Preserve valid UNKNOWN and uncertainty states. Do not invent facts to satisfy validation."
+    " Do not invent color, position, intensity, fixture role, performer position, stage geometry, or source metadata."
+    " Shorten prose before removing evidence or uncertainty. Preserve evidence_refs when still valid."
+    " Validation repair must be structural, not artistic invention."
+)
+
 
 ROLE_SYSTEM_PROMPTS = {
     "researcher": (
         "ROLE: RESEARCHER. Build a compact, provenance-bearing Evidence Pack from only the supplied request and context. "
         "Do not fabricate live research or sources. When no retrieved source is supplied, use research_status OFFLINE_CACHED_CONTEXT. "
+        "If evidence_refs or sources are included, use only identities present in the supplied evidence_ledger; never author canonical source metadata. "
         "Return one compact JSON object only. Its first key must be schema with exact value zen.multi_agent_research.v0.1, followed by fields research_status, subject, sources, "
         "transferable_design_observations, constraints, uncertainties, codex_artistic_intervention. "
         "Do not emit MA2, Telnet, Lua, shell, or executable commands. Set codex_artistic_intervention to NONE."
@@ -168,6 +176,7 @@ ROLE_SYSTEM_PROMPTS = {
     "lighting_designer": (
         "ROLE: LIGHTING_DESIGNER. Produce a contextual design draft from the supplied request, evidence, and bounded Show context. "
         "Technical fixture capability is tool inventory, never a permanent artistic role. Preserve unknowns rather than inventing facts. "
+        "Use evidence_refs only when they exist in the supplied evidence_ledger. "
         "Do not use fixture-name recipes or energy-to-fixture-count rules. Return one compact JSON object only. Its first key must be schema with exact value "
         "zen.multi_agent_designer_draft.v0.1, followed by fields design_intent, visual_strategy, resource_considerations, uncertainties, "
         "codex_artistic_intervention. Do not emit executable commands. Set codex_artistic_intervention to NONE."
@@ -175,6 +184,7 @@ ROLE_SYSTEM_PROMPTS = {
     "critic": (
         "ROLE: CRITIC. Independently inspect the supplied draft against supplied constraints and identify strengths, problems with severity, "
         "and a severity classification with actionable revision_requests. Check unsupported features, repetitive/mechanical choices, weak hierarchy, missing negative space, "
+        "Use evidence_refs only when they exist in the supplied evidence_ledger. "
         "handover/editability risks, and conflicts with known Show constraints. Do not rubber-stamp the draft. Return one compact JSON object only. Its first key must be schema with exact value "
         "zen.multi_agent_critic.v0.1, followed by fields strengths, problems, severity, revision_requests, codex_artistic_intervention. "
         "Do not emit executable commands. Set codex_artistic_intervention to NONE."
@@ -184,6 +194,7 @@ ROLE_SYSTEM_PROMPTS = {
         "Return exactly one compact JSON object. Its first key must be schema with exact value zen.autonomous_design.v0.1. Required fields are schema, design_intent, visual_strategy, "
         "virtual_rig, position_vocabulary, main_sequence, free_cue_layer, evidence_trace, codex_artistic_intervention. "
         "Retain uncertainty rather than inventing facts. Never emit MA2, Telnet, Lua, shell, or executable commands. "
+        "Use evidence_refs only when they exist in the supplied evidence_ledger. "
         "Set codex_artistic_intervention to NONE."
     ),
 }
@@ -204,6 +215,7 @@ def _role_context(role_name: str, *, request: str, context: dict[str, object], c
         "user_request": request,
         "hard_constraints": context.get("hard_constraints", []),
         "evidence_boundary": context.get("evidence_boundary", {}),
+        "evidence_ledger": context.get("evidence_ledger", {"schema": "zen.evidence_ledger.v0.1", "entries": [], "available_verified_facts": []}),
         "professional_lighting_design_knowledge": knowledge_context,
     }
     if role_name == "researcher":
@@ -253,6 +265,30 @@ def _read_completed_artifacts(run_id: str) -> dict[str, dict[str, object]]:
         if isinstance(artifact, dict):
             completed[role_name] = artifact
     return completed
+
+
+def _validate_artifact_evidence(role_name: str, artifact: dict[str, object], context: dict[str, object]) -> dict[str, object]:
+    """Bind every role's optional evidence refs to the canonical runtime ledger."""
+    ledger = context.get("evidence_ledger", {})
+    refs = artifact.get("evidence_refs", [])
+    if refs is None:
+        refs = []
+    if not isinstance(refs, list) or any(not isinstance(ref, str) for ref in refs):
+        raise MultiAgentRunError(f"{role_name} evidence_refs must be a list of strings.")
+    try:
+        validate_evidence_refs(refs, ledger)
+    except ValueError as exc:
+        raise MultiAgentRunError(str(exc)) from exc
+    if role_name == "researcher":
+        try:
+            artifact["resolved_sources"] = resolve_research_sources(
+                sources=artifact.get("sources", []),
+                source_registry=context.get("categories", {}).get("source_provenance", {}),
+                records=context.get("canonical_knowledge_records", []),
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise MultiAgentRunError(str(exc)) from exc
+    return artifact
 
 
 def _write_json(path: Path, value: object) -> None:
@@ -333,7 +369,7 @@ def _run_role(
         content = ""
         system = ROLE_SYSTEM_PROMPTS[role_name]
         if last_error is not None:
-            system += f" Previous attempt failed validation: {last_error}. Correct it and return JSON only."
+            system += f" Previous attempt failed validation: {last_error}. Correct only the structural issue and return JSON only." + RETRY_SAFETY_CONTRACT
         try:
             content, slot = router.complete(
                 role=ROLE_ROUTER_NAMES[role_name],
@@ -429,6 +465,7 @@ def run_multi_agent_design(
                 max_attempts=max_role_attempts,
                 run_path=path,
             )
+            artifact = _validate_artifact_evidence(role_name, artifact, context)
             if slot.api_key and slot.api_key in _canonical_json(artifact):
                 raise MultiAgentRunError("Role artifact contained a provider secret and was rejected.")
             envelope = {

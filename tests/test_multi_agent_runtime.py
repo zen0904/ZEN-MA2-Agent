@@ -199,6 +199,35 @@ class MultiAgentRuntimeTests(unittest.TestCase):
         self.assertEqual(diagnostic["schema"], "zen.multi_agent_attempt_diagnostic.v0.1")
         self.assertEqual(diagnostic["response_characters"], len("not json"))
 
+    def test_retry_prompt_preserves_uncertainty_and_avoids_artistic_invention(self):
+        router, adapter = self._router(["not json", _research(), _draft(), _critic(), _final()])
+        run_multi_agent_design(router, request="synthetic request", repo_root=self.repo_root, run_id="retry-contract")
+        retry_system = adapter.calls[1][1]
+        self.assertIn("Preserve valid UNKNOWN", retry_system)
+        self.assertIn("Do not invent color", retry_system)
+        self.assertIn("Shorten prose before removing evidence or uncertainty", retry_system)
+        self.assertIn("structural, not artistic invention", retry_system)
+
+    def test_unknown_runtime_evidence_reference_fails_closed(self):
+        invalid_research = _research() | {"evidence_refs": ["UNKNOWN_REF"]}
+        router, _ = self._router([invalid_research, invalid_research, invalid_research])
+        with self.assertRaises(MultiAgentRunError):
+            run_multi_agent_design(router, request="synthetic request", repo_root=self.repo_root, run_id="unknown-evidence")
+
+    def test_valid_research_source_and_knowledge_reference_are_resolved_by_runtime(self):
+        import pathlib
+        pack = json.loads((pathlib.Path(__file__).resolve().parents[1] / "data/external_lighting_knowledge_pack_001.json").read_text(encoding="utf-8"))
+        record = pack["records"][0]
+        research = _research() | {
+            "sources": [{"source_id": record["source_id"], "record_id": record["record_id"]}],
+            "evidence_refs": [record["record_id"]],
+        }
+        router, _ = self._router([research, _draft(), _critic(), _final()])
+        run = run_multi_agent_design(router, request="synthetic request", repo_root=self.repo_root, run_id="valid-evidence")
+        stored = read_step_artifact("valid-evidence", "researcher")["artifact"]
+        self.assertEqual(stored["resolved_sources"][0]["source_id"], record["source_id"])
+        self.assertEqual(run.final_design["schema"], "zen.autonomous_design.v0.1")
+
     def test_role_context_uses_deterministic_knowledge_projection_without_blind_truncation(self):
         router, adapter = self._router([_research(), _draft(), _critic(), _final()])
 

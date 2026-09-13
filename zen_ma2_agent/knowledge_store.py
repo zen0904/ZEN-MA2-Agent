@@ -21,7 +21,9 @@ CATEGORIES = {
     "GLOBAL_LIGHTING_DESIGN_KNOWLEDGE", "MA2_TECHNICAL_KNOWLEDGE",
     "FIXTURE_TECHNICAL_KNOWLEDGE", "SHOW_FACTS", "ZEN_STYLE_AND_WORKFLOW_KNOWLEDGE",
 }
-PROMOTABLE_STATES = {"SHADOW_ONLY", "CASE_TRIAL", "CONTEXT_DEPENDENT", "PROMOTED"}
+# Retrieval is an experimental/shadow read, so review-required evidence may be
+# surfaced with its boundary intact.  This set never grants production status.
+PROMOTABLE_STATES = {"SHADOW_ONLY", "HUMAN_REVIEW_REQUIRED", "CASE_TRIAL", "CONTEXT_DEPENDENT", "PROMOTED"}
 ROLE_TOPICS = {
     "RESEARCHER": {"VISUAL_HIERARCHY", "CONTRAST", "NEGATIVE_SPACE_RESTRAINT", "DENSITY", "COLOR_RELATIONSHIPS", "LAYERING_DEPTH", "ENERGY_PROGRESSION", "REPEATED_SECTION_DEVELOPMENT", "RESOURCE_HEADROOM"},
     "LIGHTING_DESIGNER": {"VISUAL_HIERARCHY", "NEGATIVE_SPACE_RESTRAINT", "DENSITY", "CONTRAST", "COLOR_RELATIONSHIPS", "LAYERING_DEPTH", "MOVEMENT_COMPOSITION", "FOCUS_VISUAL_ATTENTION", "ENERGY_PROGRESSION", "REPEATED_SECTION_DEVELOPMENT", "RESOURCE_HEADROOM"},
@@ -146,6 +148,45 @@ def validate_evidence_refs(refs: Iterable[str], ledger: dict[str, Any]) -> list[
     if any(ref not in known for ref in refs):
         raise ValueError("Evidence reference is not present in the canonical ledger.")
     return refs
+
+
+def resolve_research_sources(*, sources: Iterable[Any], source_registry: dict[str, Any], records: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Resolve researcher references against canonical registry/record identity.
+
+    A model may suggest references, but it cannot author canonical title, URL,
+    publisher, or provenance.  Any supplied metadata is checked exactly and
+    then discarded in favor of registry-owned values.
+    """
+    registry = validate_source_registry(source_registry)
+    by_source = {item["source_id"]: item for item in registry["sources"]}
+    by_record = {item["record_id"]: item for item in records}
+    resolved: list[dict[str, Any]] = []
+    for item in sources:
+        if isinstance(item, str):
+            source_id, record_id, metadata = item, None, {}
+        elif isinstance(item, dict):
+            source_id = str(item.get("source_id") or "")
+            record_id = item.get("record_id")
+            metadata = item
+        else:
+            raise ValueError("Research source references must be strings or objects.")
+        if source_id not in by_source:
+            raise ValueError("Researcher referenced an unknown source_id.")
+        record = None
+        if record_id is not None:
+            if str(record_id) not in by_record:
+                raise ValueError("Researcher referenced an unknown record_id.")
+            record = by_record[str(record_id)]
+            if record.get("source_id") != source_id:
+                raise ValueError("Research record/source identity mismatch.")
+        canonical = by_source[source_id]
+        for field in ("title", "url", "publisher", "source_provenance"):
+            if field in metadata:
+                expected = canonical.get(field) if field != "source_provenance" else (record or {}).get(field)
+                if expected is None or metadata[field] != expected:
+                    raise ValueError("Researcher supplied canonical metadata that conflicts with the registry.")
+        resolved.append({"source_id": source_id, "record_id": str(record_id) if record_id is not None else None, "canonical_source": {"title": canonical["title"], "url": canonical["url"], "publisher": canonical["publisher"]}})
+    return resolved
 
 
 def verified_fact(*, fact_id: str, claim: str, source: str, evidence: object) -> dict[str, Any]:
