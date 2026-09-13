@@ -128,7 +128,7 @@ class EffectResourceResolverTests(unittest.TestCase):
             validate_show_plan({"schema": "zen.show_plan.v0.1", "cues": [{"id": "x", "actions": [{"command": "At Effect 2500"}]}]})
 
     def test_first_song_effect_references_have_a_clear_cue_grammar_gate(self):
-        song = {"song_name": "EFFECT_PLAN", "active_sequence_range": [201, 300], "effect_policy": "DIMMER_CHASE_V1", "sections": [{"name": name, "role": role, "energy": energy} for name, role, energy in (("INTRO", "INTRO", .2), ("VERSE", "VERSE", .4), ("PRE", "PRE_CHORUS", .6), ("CHORUS1", "CHORUS", .9), ("CHORUS2", "CHORUS", .95), ("OUTRO", "OUTRO", .2))]}
+        song = {"song_name": "EFFECT_PLAN", "active_sequence_range": [301, 400], "effect_policy": "DIMMER_CHASE_V1", "sections": [{"name": name, "role": role, "energy": energy} for name, role, energy in (("INTRO", "INTRO", .2), ("VERSE", "VERSE", .4), ("PRE", "PRE_CHORUS", .6), ("CHORUS1", "CHORUS", .9), ("CHORUS2", "CHORUS", .95), ("OUTRO", "OUTRO", .2))]}
         designed = FirstSongDesigner().design(song, profile())
         self.assertIn("fx-dim-chase-med", designed["effect_requirements"])
         self.assertIn("fx-dim-chase-fast", designed["effect_requirements"])
@@ -149,7 +149,7 @@ class EffectResourceResolverTests(unittest.TestCase):
         runtime = AgentRuntime(self.root, client_factory=EffectResourceClient)
         core = AgentCore(runtime)
         core.connect("127.0.0.1", 30000, "MM", "")
-        song = {"song_name": "EFFECT_PHASES", "active_sequence_range": [201, 300], "effect_policy": "DIMMER_CHASE_V1", "sections": [{"name": name, "role": role, "energy": energy} for name, role, energy in (("INTRO", "INTRO", .2), ("VERSE", "VERSE", .4), ("PRE", "PRE_CHORUS", .6), ("CHORUS1", "CHORUS", .9), ("CHORUS2", "CHORUS", .95), ("OUTRO", "OUTRO", .2))]}
+        song = {"song_name": "EFFECT_PHASES", "active_sequence_range": [301, 400], "effect_policy": "DIMMER_CHASE_V1", "sections": [{"name": name, "role": role, "energy": energy} for name, role, energy in (("INTRO", "INTRO", .2), ("VERSE", "VERSE", .4), ("PRE", "PRE_CHORUS", .6), ("CHORUS1", "CHORUS", .9), ("CHORUS2", "CHORUS", .95), ("OUTRO", "OUTRO", .2))]}
         phase_a = core.preview_first_song(song)
         self.assertEqual(phase_a["action"]["task"]["skill_id"], "effects.builder")
         self.assertIn("Effect Builder Preview", phase_a["message"])

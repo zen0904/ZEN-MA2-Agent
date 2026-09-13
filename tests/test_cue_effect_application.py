@@ -80,7 +80,7 @@ class CueEffectApplicationTests(unittest.TestCase):
             self.assertEqual(capability.load_verified()["grammar"], "EFFECT_POOL_CALL")
 
     def test_builder_keeps_call_effect_blocked_without_verified_capability(self):
-        plan = {"schema": "zen.show_plan.v0.1", "song": "FX", "active_sequence_range": [201, 300], "cues": [{"id": "c1", "cue_number": 1, "label": "FX", "fade": 0, "actions": [{"operation": "CALL_EFFECT", "target": {"type": "group", "ref": 1}, "effect_ref": {"id": 3520}}]}]}
+        plan = {"schema": "zen.show_plan.v0.1", "song": "FX", "active_sequence_range": [301, 400], "cues": [{"id": "c1", "cue_number": 1, "label": "FX", "fade": 0, "actions": [{"operation": "CALL_EFFECT", "target": {"type": "group", "ref": 1}, "effect_ref": {"id": 3520}}]}]}
         profile = {"groups": [{"group_id": 1, "name": "HYBRID"}], "presets": [], "effects": [{"effect_id": 3520, "name": "ZEN_FX_DIM_CHASE_SLOW_GROUP1"}], "sequences": []}
         workflow = ShowPlanBuilder().build_first_song(plan, profile)
         self.assertFalse(workflow.executable)
@@ -88,7 +88,7 @@ class CueEffectApplicationTests(unittest.TestCase):
         self.assertNotIn("Effect 3520", workflow.commands)
 
     def test_builder_enables_only_explicit_real_machine_capability(self):
-        plan = {"schema": "zen.show_plan.v0.1", "song": "FX", "active_sequence_range": [201, 300], "effect_application_capability": {"status": "REAL_MACHINE_VERIFIED", "grammar": "EFFECT_POOL_CALL", "ma2_version_family": "grandMA2_3.9"}, "cues": [{"id": "c1", "cue_number": 1, "label": "FX", "fade": 0, "actions": [{"operation": "CALL_EFFECT", "target": {"type": "group", "ref": 1}, "effect_ref": {"id": 3520}}]}]}
+        plan = {"schema": "zen.show_plan.v0.1", "song": "FX", "active_sequence_range": [301, 400], "effect_application_capability": {"status": "REAL_MACHINE_VERIFIED", "grammar": "EFFECT_POOL_CALL", "ma2_version_family": "grandMA2_3.9"}, "cues": [{"id": "c1", "cue_number": 1, "label": "FX", "fade": 0, "actions": [{"operation": "CALL_EFFECT", "target": {"type": "group", "ref": 1}, "effect_ref": {"id": 3520}}]}]}
         profile = {"groups": [{"group_id": 1, "name": "HYBRID"}], "presets": [], "effects": [{"effect_id": 3520, "name": "ZEN_FX_DIM_CHASE_SLOW_GROUP1"}], "sequences": []}
         workflow = ShowPlanBuilder().build_first_song(plan, profile)
         self.assertTrue(workflow.executable)

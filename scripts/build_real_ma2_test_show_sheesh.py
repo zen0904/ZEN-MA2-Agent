@@ -28,6 +28,7 @@ if str(ROOT) not in sys.path:
 
 from zen_ma2_agent.core import AgentCore
 from zen_ma2_agent.designer.schema import validate_show_plan
+from zen_ma2_agent.protected_objects import PROTECTED_SEQUENCES
 from zen_ma2_agent.runtime import AgentRuntime
 from zen_ma2_agent.state.providers.fixture_geometry import FixtureGeometryProvider
 from zen_ma2_agent.telnet_client import ConnectionState
@@ -39,7 +40,6 @@ EXPECTED_GROUPS = {
     1: "HYBRID", 2: "SPOT", 3: "BEAM", 4: "WASH", 5: "B-EYE", 6: "LED PAR", 7: "STROBE"
 }
 FIXTURE_IDS = tuple(list(range(101, 109)) + list(range(201, 209)) + list(range(301, 309)) + list(range(401, 409)) + list(range(501, 509)) + list(range(601, 609)) + list(range(701, 709)))
-PROTECTED_SEQUENCES = {201, 202, 204, 205}
 SEQUENCE = 901
 # MA2's assignment grammar uses the local executor number.  The verified
 # read-back prints that allocation as Page 1 Executor 1.201.

@@ -63,3 +63,19 @@ class PortableLLMRouterTests(unittest.TestCase):
             result = ma2_connectivity(path, lambda address, timeout: Connection())
         self.assertEqual(result["MA2_CONNECTIVITY"], "TCP_REACHABLE")
         self.assertTrue(closed)
+
+
+class LocalProviderNoApiKeyTests(unittest.TestCase):
+    def test_local_type_is_configured_without_api_key(self):
+        slot = ProviderSlot(
+            number=1, provider_type="OPENAI_COMPATIBLE_LOCAL", model="local-model",
+            base_url="http://127.0.0.1:1234/v1", api_key="", roles=(), timeout_seconds=45,
+        )
+        self.assertTrue(slot.configured)
+
+    def test_cloud_type_still_requires_api_key(self):
+        slot = ProviderSlot(
+            number=1, provider_type="OPENAI_COMPATIBLE", model="gpt",
+            base_url="https://api.example.com/v1", api_key="", roles=(), timeout_seconds=45,
+        )
+        self.assertFalse(slot.configured)

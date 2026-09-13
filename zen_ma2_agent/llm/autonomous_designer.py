@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
+from ..external_lighting_knowledge import build_shadow_knowledge_context
 from ..portable import portable_state_path
 from .router import ProviderRouter, ProviderSlot
 
@@ -65,6 +66,12 @@ def build_designer_context(repo_root: Path) -> dict[str, object]:
     }
     data = {name: _compact(value) for name, path in candidates.items() if (value := _read_json(path)) is not None}
     docs = {name: path.read_text(encoding="utf-8")[:4500] for name, path in documents.items() if path.is_file()}
+    raw_knowledge_pack = _read_json(candidates["external_knowledge_pack"], limit=1_000_000)
+    external_knowledge_context = (
+        _compact(build_shadow_knowledge_context(raw_knowledge_pack))
+        if isinstance(raw_knowledge_pack, dict)
+        else {"schema": "zen.external_lighting_knowledge_context.v0.1", "runtime_mode": "SHADOW_ONLY", "records": []}
+    )
     context = {
         "context_schema": "zen.designer_context.v0.1",
         "evidence_boundary": {
@@ -78,6 +85,7 @@ def build_designer_context(repo_root: Path) -> dict[str, object]:
             "Do not fabricate unavailable song, venue, performance, or spatial information.",
             "Production Designer remains unchanged; this output is experimental until explicit approval.",
             "Fixture 9999 and protected existing objects are excluded.",
+            "professional_lighting_design_knowledge is SHADOW_ONLY: reasoning and review context, never an action recipe or production rule.",
         ],
         "categories": {
             "fixture_technical_capability": {
@@ -85,7 +93,7 @@ def build_designer_context(repo_root: Path) -> dict[str, object]:
                 "color_preset_evidence": data.get("show_bound_color_evidence", {}),
             },
             "rig_spatial_visual_affordance": data.get("current_show_visual_relationships", {}),
-            "professional_lighting_design_knowledge": data.get("external_knowledge_pack", {}),
+            "professional_lighting_design_knowledge": external_knowledge_context,
             "source_provenance": data.get("external_source_registry", {}),
             "project_constraints": data.get("project_control", {}),
             "prior_case_artifacts": {"previous_sheesh_test_plan": data.get("previous_sheesh_test_plan", {})},

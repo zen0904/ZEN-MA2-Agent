@@ -57,7 +57,7 @@ function Show-Preflight {
     if ($provider.AUTONOMOUS_DESIGNER_AVAILABLE -eq 'YES') {
         Write-Host "AUTONOMOUS DESIGNER: READY - slot $($provider.provider_slot), $($provider.provider_type) / $($provider.model)" -ForegroundColor Green
     } else {
-        $configured = @($provider.slots | Where-Object { $_.api_key_configured -and $_.base_url_configured -and $_.model })
+        $configured = @($provider.slots | Where-Object { $_.base_url_configured -and $_.model -and (-not $_.api_key_required -or $_.api_key_configured) })
         if ($configured.Count -eq 0) {
             Write-Host 'AUTONOMOUS DESIGNER: NOT CONFIGURED' -ForegroundColor Yellow
         } else {

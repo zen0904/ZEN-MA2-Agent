@@ -88,7 +88,7 @@ class FirstSongBuilderTests(unittest.TestCase):
     def test_preview_is_dynamic_approved_and_verifies_owned_sequence_and_cues(self):
         response = self.core.preview_first_song(INPUT)
         self.assertEqual(response["type"], "ACTION_PLAN")
-        self.assertIn("Target Sequence: 201", response["message"])
+        self.assertIn("Target Sequence: 301", response["message"])
         self.assertIn("At Preset 6.2", response["message"])
         self.assertNotIn("Store Cue", self.runtime.client.commands)
         result = self.core.approve_action(response["action"]["id"])
@@ -99,7 +99,7 @@ class FirstSongBuilderTests(unittest.TestCase):
         self.assertEqual(self.runtime.client.commands.count("ClearAll"), 2)
 
     def test_unavailable_active_range_blocks_without_writes(self):
-        bad = dict(INPUT); bad["active_sequence_range"] = [201, 200]
+        bad = dict(INPUT); bad["active_sequence_range"] = [301, 300]
         with self.assertRaises(ValueError):
             self.core.preview_first_song(bad)
 
@@ -107,12 +107,12 @@ class FirstSongBuilderTests(unittest.TestCase):
         profile = {
             "groups": [{"group_id": 1, "name": "HYBRID"}],
             "presets": [{"reference": "6.2", "preset_type": "FOCUS", "name": "normal"}],
-            "sequences": [{"number": 201, "name": "USER_SEQUENCE"}],
+            "sequences": [{"number": 301, "name": "USER_SEQUENCE"}],
         }
         plan = FirstSongDesigner().design(INPUT, profile)
         workflow = ShowPlanBuilder().build_first_song(plan, profile)
-        self.assertEqual(workflow.task.intent.parameters["sequence"], 202)
-        self.assertNotIn("Store Cue 1 Sequence 201", workflow.preview_note)
+        self.assertEqual(workflow.task.intent.parameters["sequence"], 302)
+        self.assertNotIn("Store Cue 1 Sequence 301", workflow.preview_note)
 
     def test_narrow_rollback_needs_exact_agent_ownership_proof(self):
         command = ShowPlanBuilder.narrow_rollback_command(201, "ZEN_AI_TEST_ZEN_FIRST_SONG_TEST", {"number": 201, "name": "ZEN_AI_TEST_ZEN_FIRST_SONG_TEST"})
@@ -121,7 +121,7 @@ class FirstSongBuilderTests(unittest.TestCase):
             ShowPlanBuilder.narrow_rollback_command(201, "ZEN_AI_TEST_ZEN_FIRST_SONG_TEST", {"number": 201, "name": "USER_SEQUENCE"})
 
     def test_script_parser_manual_override_and_role_vocabulary_are_explicit(self):
-        analysis = ScriptSongParser().parse("00:00 Intro\n00:18 Verse\n00:46 Chorus\n01:15 Sax Solo", title="Script Test", active_sequence_range=[201, 300])
+        analysis = ScriptSongParser().parse("00:00 Intro\n00:18 Verse\n00:46 Chorus\n01:15 Sax Solo", title="Script Test", active_sequence_range=[301, 400])
         self.assertEqual([item["role"] for item in analysis["sections"]], ["INTRO", "VERSE", "CHORUS", "SOLO"])
         self.assertEqual(analysis["sections"][0]["end"], 18.0)
         overridden = validate_song_analysis({**analysis, "manual_overrides": [{"section_id": "solo_4", "force_role": "SOLO", "force_energy": 0.75, "lighting_note": "Sax at stage left"}]})

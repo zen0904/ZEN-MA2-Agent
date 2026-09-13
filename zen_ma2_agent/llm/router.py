@@ -33,9 +33,19 @@ class ProviderSlot:
     roles: tuple[str, ...]
     timeout_seconds: float
 
+    #: Provider types that are expected to run without any credential (a
+    #: local OpenAI-compatible server such as Ollama or llama.cpp).  Cloud
+    #: types still require a non-empty ``api_key`` so a missing credential
+    #: fails loudly instead of silently marking the slot unconfigured.
+    LOCAL_TYPES = frozenset({"OPENAI_COMPATIBLE_LOCAL"})
+
     @property
     def configured(self) -> bool:
-        return bool(self.provider_type and self.model and self.base_url and self.api_key)
+        if not (self.provider_type and self.model and self.base_url):
+            return False
+        if self.provider_type in self.LOCAL_TYPES:
+            return True
+        return bool(self.api_key)
 
     def supports(self, role: str) -> bool:
         return not self.roles or role.upper() in self.roles
@@ -47,6 +57,7 @@ class ProviderSlot:
             "model": self.model,
             "base_url_configured": bool(self.base_url),
             "api_key_configured": bool(self.api_key),
+            "api_key_required": self.provider_type not in self.LOCAL_TYPES,
             "roles": list(self.roles),
         }
 
@@ -103,7 +114,7 @@ class OpenAICompatibleHTTPAdapter:
     """
 
     def complete(self, slot: ProviderSlot, *, system: str, user: str) -> str:
-        if slot.provider_type not in {"OPENAI_COMPATIBLE", "OPENAI"}:
+        if slot.provider_type not in {"OPENAI_COMPATIBLE", "OPENAI", "OPENAI_COMPATIBLE_LOCAL"}:
             raise ProviderUnavailable(f"Provider slot {slot.number} type is not implemented: {slot.provider_type or 'UNSET'}")
         endpoint = slot.base_url.rstrip("/")
         if not endpoint.endswith("/chat/completions"):
@@ -114,11 +125,12 @@ class OpenAICompatibleHTTPAdapter:
             "temperature": 0.2,
             "response_format": {"type": "json_object"},
         }).encode("utf-8")
-        request = Request(endpoint, data=body, method="POST", headers={
-            "Authorization": f"Bearer {slot.api_key}",
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        })
+        headers = {"Content-Type": "application/json", "Accept": "application/json"}
+        # A local, key-free server should not receive a bogus Bearer header;
+        # only attach Authorization when a credential is actually configured.
+        if slot.api_key:
+            headers["Authorization"] = f"Bearer {slot.api_key}"
+        request = Request(endpoint, data=body, method="POST", headers=headers)
         try:
             with urlopen(request, timeout=slot.timeout_seconds) as response:
                 payload = json.loads(response.read().decode("utf-8"))

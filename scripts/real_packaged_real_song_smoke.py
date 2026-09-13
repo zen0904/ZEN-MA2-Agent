@@ -15,10 +15,13 @@ import time
 from pathlib import Path
 from typing import Any
 
-
+import sys
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from zen_ma2_agent.protected_objects import PROTECTED_SEQUENCES
+
 EXE = ROOT / "dist" / "ZEN_MA2_Agent" / "ZEN_MA2_Agent.exe"
-PROTECTED_SEQUENCES = {201, 202, 204}
 
 
 def _free_port() -> int:
