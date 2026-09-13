@@ -1,10 +1,12 @@
 # Multi-Agent Design Plan
 
-Status: **plan only, not implemented**. See
-`ZEN_AUDIT_AND_FIXES_STATUS_002.md` Section 2 -- zero role orchestration
-exists in the codebase as of this writing. This document is the agreed shape
-for it, so any coding agent picking up the work builds toward the same
-target instead of inventing a different one.
+Status: the bounded four-role MVP (`RESEARCHER -> LIGHTING_DESIGNER -> CRITIC
+-> FINALIZER`) is implemented in `zen_ma2_agent.llm.multi_agent_runtime`.
+It is portable, sequential, checkpointed, and ends at a validated
+`zen.autonomous_design.v0.1` artifact. The remaining roles below are still
+plan-only; neither the MVP nor this document implements a Resolver/Builder or
+any MA2 write path. This remains the agreed target shape so later work extends
+the same pipeline rather than inventing a different one.
 
 ## Hardware this must run on
 

@@ -3,6 +3,14 @@
 Assessment date: 2026-09-13
 Assessment implementation HEAD at time of writing: `94e0bed` (main)
 
+> **Runtime update (2026-09-13):** The original audit correctly found no
+> orchestration at its assessment HEAD. A later bounded implementation now
+> provides the portable sequential MVP `RESEARCHER -> LIGHTING_DESIGNER ->
+> CRITIC -> FINALIZER`, with per-step checkpoints and final
+> `zen.autonomous_design.v0.1` validation. It remains LLM-only and has no
+> Resolver, Builder, or MA2 write path; the rest of this audit's implementation
+> boundaries remain in force.
+
 This report exists because `ZEN_MA2_AGENT_STATUS_REPORT.md` (2026-09-08) is now
 five days and several architectural findings out of date. Read this one first
 for "what is true right now"; the older report is historical evidence, not

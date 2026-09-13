@@ -159,6 +159,49 @@ def autonomous_design(request_file: Path) -> dict[str, object]:
     return result
 
 
+def multi_agent_design(request_file: Path, *, run_id: str | None = None, restart_run: bool = False) -> dict[str, object]:
+    if not request_file.is_file():
+        raise SystemExit(f"Design request file does not exist: {request_file}")
+    request = request_file.read_text(encoding="utf-8").strip()
+    if not request:
+        raise SystemExit("Design request file is empty.")
+    sys.path.insert(0, str(repo()))
+    from zen_ma2_agent.llm import MultiAgentRunError, ProviderRouter, run_multi_agent_design
+
+    try:
+        run = run_multi_agent_design(
+            ProviderRouter.from_portable_config(),
+            request=request,
+            repo_root=repo(),
+            run_id=run_id,
+            restart_run=restart_run,
+        )
+    except MultiAgentRunError as exc:
+        result = {
+            "AUTONOMOUS_DESIGNER_AVAILABLE": "NO",
+            "MULTI_AGENT_RUNTIME": "FAILED",
+            "reason": str(exc),
+            "CODEX_ARTISTIC_INTERVENTION": "NONE",
+        }
+        _log("multi_agent_design_failed", result)
+        return result
+    result = {
+        "AUTONOMOUS_DESIGNER_AVAILABLE": "YES",
+        "MULTI_AGENT_RUNTIME": "IMPLEMENTED",
+        "ZEN_RUN_ID": run.run_id,
+        "run_path": str(run.run_path),
+        "resumed_from": run.resumed_from,
+        "final_design_path": str(run.run_path / "final_design.json"),
+        "context_hash": run.context_hash,
+        "final_output_hash": __import__("hashlib").sha256(
+            json.dumps(run.final_design, ensure_ascii=False, sort_keys=True).encode("utf-8")
+        ).hexdigest(),
+        "CODEX_ARTISTIC_INTERVENTION": "NONE",
+    }
+    _log("multi_agent_design", result)
+    return result
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="ZEN USB portable launcher")
     choice = parser.add_mutually_exclusive_group()
@@ -168,6 +211,9 @@ def main() -> int:
     choice.add_argument("--provider-self-test", action="store_true")
     choice.add_argument("--ma2-connectivity", action="store_true")
     choice.add_argument("--design-request", type=Path)
+    choice.add_argument("--multi-agent-design", type=Path)
+    parser.add_argument("--run-id")
+    parser.add_argument("--restart-run", action="store_true")
     args = parser.parse_args()
     if args.git_status:
         result: dict[str, object] = git_status()
@@ -185,8 +231,14 @@ def main() -> int:
     elif args.ma2_connectivity:
         result = ma2_connectivity()
     elif args.design_request:
+        if args.run_id or args.restart_run:
+            parser.error("--run-id and --restart-run require --multi-agent-design.")
         result = autonomous_design(args.design_request)
+    elif args.multi_agent_design:
+        result = multi_agent_design(args.multi_agent_design, run_id=args.run_id, restart_run=args.restart_run)
     else:
+        if args.run_id or args.restart_run:
+            parser.error("--run-id and --restart-run require --multi-agent-design.")
         result = git_status()
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
