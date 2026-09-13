@@ -36,6 +36,8 @@ MAX_ROLE_ATTEMPTS = 3
 RUN_SCHEMA = "zen.multi_agent_run.v0.1"
 STEP_SCHEMA = "zen.multi_agent_step.v0.1"
 FAILURE_SCHEMA = "zen.multi_agent_failure.v0.1"
+ATTEMPT_SCHEMA = "zen.multi_agent_attempt_diagnostic.v0.1"
+ROLE_CONTEXT_PREVIEW_CHARACTERS = 1_200
 
 
 class MultiAgentRunError(RuntimeError):
@@ -59,6 +61,18 @@ def _sha256(value: object) -> str:
     return hashlib.sha256(_canonical_json(value).encode("utf-8")).hexdigest()
 
 
+def _bounded_context(value: object, *, limit: int = ROLE_CONTEXT_PREVIEW_CHARACTERS) -> object:
+    """Keep a provenance-bearing excerpt feasible for a portable CPU model."""
+    encoded = _canonical_json(value)
+    if len(encoded) <= limit:
+        return value
+    return {
+        "context_excerpt": encoded[:limit],
+        "truncated": True,
+        "full_value_sha256": hashlib.sha256(encoded.encode("utf-8")).hexdigest(),
+    }
+
+
 def _run_path(run_id: str) -> Path:
     if not run_id or Path(run_id).name != run_id:
         raise ValueError("run_id must be a single portable directory name.")
@@ -67,7 +81,7 @@ def _run_path(run_id: str) -> Path:
 
 def _git_head(repo_root: Path) -> str:
     result = subprocess.run(
-        ["git", "-C", str(repo_root), "rev-parse", "HEAD"],
+        ["git", "-c", f"safe.directory={repo_root}", "-C", str(repo_root), "rev-parse", "HEAD"],
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -197,18 +211,18 @@ def _role_context(role_name: str, *, request: str, context: dict[str, object], c
     if role_name == "researcher":
         return common | {
             "research_context": {
-                "professional_lighting_design_knowledge": categories.get("professional_lighting_design_knowledge", {}),
-                "source_provenance": categories.get("source_provenance", {}),
+                "professional_lighting_design_knowledge": _bounded_context(categories.get("professional_lighting_design_knowledge", {})),
+                "source_provenance": _bounded_context(categories.get("source_provenance", {})),
             }
         }
     if role_name == "lighting_designer":
         return common | {
             "research_artifact": completed["researcher"],
             "design_context": {
-                "fixture_technical_capability": categories.get("fixture_technical_capability", {}),
-                "rig_spatial_visual_affordance": categories.get("rig_spatial_visual_affordance", {}),
-                "professional_lighting_design_knowledge": categories.get("professional_lighting_design_knowledge", {}),
-                "operator_contract": categories.get("operator_contract", {}),
+                "fixture_technical_capability": _bounded_context(categories.get("fixture_technical_capability", {})),
+                "rig_spatial_visual_affordance": _bounded_context(categories.get("rig_spatial_visual_affordance", {})),
+                "professional_lighting_design_knowledge": _bounded_context(categories.get("professional_lighting_design_knowledge", {})),
+                "operator_contract": _bounded_context(categories.get("operator_contract", {})),
             },
         }
     if role_name == "critic":
@@ -216,8 +230,8 @@ def _role_context(role_name: str, *, request: str, context: dict[str, object], c
             "research_artifact": completed["researcher"],
             "designer_draft": completed["lighting_designer"],
             "relevant_show_constraints": {
-                "fixture_technical_capability": categories.get("fixture_technical_capability", {}),
-                "rig_spatial_visual_affordance": categories.get("rig_spatial_visual_affordance", {}),
+                "fixture_technical_capability": _bounded_context(categories.get("fixture_technical_capability", {})),
+                "rig_spatial_visual_affordance": _bounded_context(categories.get("rig_spatial_visual_affordance", {})),
             },
         }
     return common | {
@@ -225,9 +239,9 @@ def _role_context(role_name: str, *, request: str, context: dict[str, object], c
         "designer_draft": completed["lighting_designer"],
         "critic_artifact": completed["critic"],
         "finalization_context": {
-            "fixture_technical_capability": categories.get("fixture_technical_capability", {}),
-            "rig_spatial_visual_affordance": categories.get("rig_spatial_visual_affordance", {}),
-            "operator_contract": categories.get("operator_contract", {}),
+            "fixture_technical_capability": _bounded_context(categories.get("fixture_technical_capability", {})),
+            "rig_spatial_visual_affordance": _bounded_context(categories.get("rig_spatial_visual_affordance", {})),
+            "operator_contract": _bounded_context(categories.get("operator_contract", {})),
         },
     }
 
@@ -293,16 +307,33 @@ def _record_failure(path: Path, *, role_name: str, attempts: int, error: Excepti
     })
 
 
+def _record_attempt_diagnostic(path: Path, *, role_name: str, attempt: int, content: str, error: Exception) -> None:
+    """Keep an agent-owned failed response for local validation diagnosis."""
+    _write_json(path / "attempts" / f"{role_name}-{attempt:02}.json", {
+        "schema": ATTEMPT_SCHEMA,
+        "role": role_name,
+        "attempt": attempt,
+        "response_sha256": hashlib.sha256(content.encode("utf-8")).hexdigest(),
+        "response_characters": len(content),
+        "validation_error_type": type(error).__name__,
+        "validation_error": str(error),
+        "raw_response": content,
+        "CODEX_ARTISTIC_INTERVENTION": "NONE",
+    })
+
+
 def _run_role(
     router: ProviderRouter,
     *,
     role_name: str,
     payload: dict[str, object],
     max_attempts: int,
+    run_path: Path,
 ) -> tuple[dict[str, object], ProviderSlot, int]:
     validator = ROLE_VALIDATORS[role_name]
     last_error: Exception | None = None
     for attempt in range(1, max_attempts + 1):
+        content = ""
         system = ROLE_SYSTEM_PROMPTS[role_name]
         if last_error is not None:
             system += f" Previous attempt failed validation: {last_error}. Correct it and return JSON only."
@@ -315,6 +346,8 @@ def _run_role(
             return validator(_parse_json(content)), slot, attempt
         except (ProviderUnavailable, MultiAgentRunError, DesignValidationError) as exc:
             last_error = exc
+            if content:
+                _record_attempt_diagnostic(run_path, role_name=role_name, attempt=attempt, content=content, error=exc)
     assert last_error is not None
     raise MultiAgentRunError(f"{role_name} failed after {max_attempts} attempts: {last_error}") from last_error
 
@@ -397,6 +430,7 @@ def run_multi_agent_design(
                 role_name=role_name,
                 payload=payload,
                 max_attempts=max_role_attempts,
+                run_path=path,
             )
             if slot.api_key and slot.api_key in _canonical_json(artifact):
                 raise MultiAgentRunError("Role artifact contained a provider secret and was rejected.")

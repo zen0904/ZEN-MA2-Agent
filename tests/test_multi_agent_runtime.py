@@ -190,11 +190,24 @@ class MultiAgentRuntimeTests(unittest.TestCase):
     def test_invalid_role_json_retries_then_records_attempt_count(self):
         router, adapter = self._router(["not json", _research(), _draft(), _critic(), _final()])
 
-        run_multi_agent_design(router, request="synthetic request", repo_root=self.repo_root, run_id="retry")
+        run = run_multi_agent_design(router, request="synthetic request", repo_root=self.repo_root, run_id="retry")
 
         self.assertEqual(len(adapter.calls), 5)
         researcher = read_step_artifact("retry", "researcher")
         self.assertEqual(researcher["attempts"], 2)
+        diagnostic = json.loads((run.run_path / "attempts" / "researcher-01.json").read_text(encoding="utf-8"))
+        self.assertEqual(diagnostic["schema"], "zen.multi_agent_attempt_diagnostic.v0.1")
+        self.assertEqual(diagnostic["response_characters"], len("not json"))
+
+    def test_local_role_context_is_bounded_with_a_full_value_hash(self):
+        router, adapter = self._router([_research(), _draft(), _critic(), _final()])
+
+        run_multi_agent_design(router, request="synthetic request", repo_root=self.repo_root, run_id="bounded-context")
+
+        researcher_payload = json.loads(adapter.calls[0][2])
+        knowledge = researcher_payload["research_context"]["professional_lighting_design_knowledge"]
+        self.assertTrue(knowledge.get("truncated"))
+        self.assertEqual(len(knowledge["full_value_sha256"]), 64)
 
     def test_invalid_final_schema_fails_closed_without_final_design_or_ma2_write(self):
         invalid_final = _final() | {"ma2_commands": ["forbidden"]}
