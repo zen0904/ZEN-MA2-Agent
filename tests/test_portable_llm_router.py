@@ -39,6 +39,19 @@ class PortableLLMRouterTests(unittest.TestCase):
         self.assertTrue(slots[0].configured)
         self.assertFalse(slots[1].configured)
 
+    def test_local_inference_timeout_can_be_configured_for_long_cpu_runs(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "providers.private.env"
+            path.write_text(
+                "ZEN_PROVIDER_1_TYPE=OPENAI_COMPATIBLE_LOCAL\n"
+                "ZEN_PROVIDER_1_MODEL=test\n"
+                "ZEN_PROVIDER_1_BASE_URL=http://127.0.0.1:8080/v1\n"
+                "ZEN_PROVIDER_1_TIMEOUT_SECONDS=900\n",
+                encoding="utf-8",
+            )
+            _, slots = load_provider_slots(path)
+        self.assertEqual(slots[0].timeout_seconds, 900)
+
     def test_design_rejects_raw_command_fields(self):
         output = {key: {} for key in ("design_intent", "visual_strategy", "virtual_rig", "position_vocabulary", "main_sequence", "free_cue_layer", "evidence_trace")}
         output |= {"schema": SCHEMA, "ma2_commands": ["Store Sequence 1"]}

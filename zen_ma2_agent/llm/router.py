@@ -92,8 +92,12 @@ def load_provider_slots(path: Path | None = None) -> tuple[str, tuple[ProviderSl
             timeout = float(values.get(prefix + "TIMEOUT_SECONDS", "45"))
         except ValueError as exc:
             raise ValueError(f"Provider {number} timeout must be numeric.") from exc
-        if not 1 <= timeout <= 300:
-            raise ValueError(f"Provider {number} timeout must be from 1 to 300 seconds.")
+        # Portable CPU inference can legitimately take several minutes for a
+        # long structured prompt.  Keep a finite upper bound, while allowing a
+        # user-configured local provider enough time to complete without a
+        # false transport failure.
+        if not 1 <= timeout <= 900:
+            raise ValueError(f"Provider {number} timeout must be from 1 to 900 seconds.")
         slots.append(ProviderSlot(
             number=number,
             provider_type=values.get(prefix + "TYPE", "").strip().upper(),
