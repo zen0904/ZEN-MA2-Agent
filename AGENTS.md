@@ -9,6 +9,11 @@ For substantial work, read these in order:
 5. `ZEN_MA2_AGENT_STATUS_REPORT.md`
 6. Only reports and fixtures directly relevant to the current task
 
+For a continuation, also read `docs/ZEN_DEVELOPMENT_WORKFLOW.md`,
+`docs/ZEN_PRODUCT_ROADMAP.md`, and `data/zen_project_control.json`. They state
+the active milestone, next acceptance gate, and explicitly deferred work; do
+not choose a new task simply because it was discussed most recently.
+
 Do not recursively read every historical report. Reports are evidence/archive;
 the latest verified committed repository state is the default source of truth.
 If the user says “continue”, “keep going”, or “next” in this project, recover

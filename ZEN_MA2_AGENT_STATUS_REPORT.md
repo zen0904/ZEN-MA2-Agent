@@ -1216,3 +1216,26 @@ MA2. It is `READY_FOR_HUMAN_INPUT`; the next action is a one-pass Zen review of
 only known visual facts. Production remains `UNCHANGED`, B3 remains
 `GUIDANCE_ASSISTED_AB_ONLY`, `ZEN_STYLE_PROFILE` remains `DEFERRED`, and MA2
 writes remain `ZERO_WRITES`.
+
+## 53 Development Workflow + Roadmap 001
+
+`docs/ZEN_DEVELOPMENT_WORKFLOW.md`, `docs/ZEN_PRODUCT_ROADMAP.md`, and
+`data/zen_project_control.json` now provide the compact project-control layer.
+They classify discoveries before implementation, permit interruption only for
+safety/provenance/invalidating issues, and preserve deferred work without
+allowing it to replace the active milestone. `AGENTS.md` directs future
+continuations to this state before selecting a task.
+
+The current milestone is `M2_EXPRESSIVE_CAPABILITY`. The next acceptance gate
+is not another feature: a human review must decide whether the actual
+`REAL_SONG_EXISTING_SHOW_AB_002` density cohort is retainable, needs revision,
+or is insufficient. Its unresolved final saturation and group-homogeneity
+findings remain explicit. Current Show visual-relationship fields are optional
+case evidence, not a mandatory intake or mainline blocker unless a later case
+cannot be reviewed truthfully without them.
+
+No Designer, B3, MA2, geometry, resource mapping, or external-knowledge
+behavior changed. Production remains `UNCHANGED`, B3 remains
+`GUIDANCE_ASSISTED_AB_ONLY`, A/B 002 actions remain `UNCHANGED`,
+`ZEN_STYLE_PROFILE` remains `DEFERRED`, Fixture 9999 remains untouched, and
+the MA2 write audit remains `ZERO_WRITES`.

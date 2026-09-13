@@ -1,0 +1,177 @@
+{
+  "schema": "zen.project_control.v0.1",
+  "source_of_truth": "REPOSITORY_COMMITTED_STATE",
+  "current_milestone": {
+    "id": "M2_EXPRESSIVE_CAPABILITY",
+    "title": "Expressive Capability",
+    "status": "ACTIVE",
+    "active_objective": "Determine through human review whether the real Existing Show density-only B3 action path is a retainable bounded expressive base before another action grammar is added."
+  },
+  "last_closed_task": {
+    "id": "CURRENT_SHOW_VISUAL_RELATIONSHIP_INTAKE_001",
+    "status": "CLOSED",
+    "commit": "cdd4b0c86ac3bd7338723b2d6aee4a3b2b9519aa",
+    "result": "Role-free optional visual-evidence intake initialized UNKNOWN for Groups 1-7; no runtime wiring."
+  },
+  "next_acceptance_gate": {
+    "id": "REAL_SONG_EXISTING_SHOW_AB_002_HUMAN_DENSITY_REVIEW",
+    "classification": "REQUIRED",
+    "status": "CURRENT",
+    "why_it_matters": "The genuine density-only action delta is traceable but A/B 002 is NEEDS_REVISION due to FINAL_COHORT_SATURATION_RISK and GROUP_LEVEL_HOMOGENEITY_UNRESOLVED.",
+    "blocks_current_milestone": true,
+    "dependencies": [
+      "ZEN_REAL_SONG_EXISTING_SHOW_AB_002.md",
+      "actual B3 cue/action traces",
+      "human lighting-designer judgment"
+    ],
+    "next_review_condition": "Zen records whether the bounded density cohort is retainable, needs revision, or is insufficient for this Existing Show case."
+  },
+  "backlog": [
+    {
+      "id": "INDUSTRY_LIGHTING_DESIGN_CORPUS",
+      "classification": "HIGH_LEVERAGE",
+      "milestone": "M1_DESIGNER_FOUNDATION",
+      "status": "ONGOING",
+      "why_it_matters": "Broadens conditional professional design knowledge beyond individual cases.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "New bounded, source-diverse pack or a real reasoning gap."
+    },
+    {
+      "id": "VISUAL_AFFORDANCE_ARCHITECTURE",
+      "classification": "HIGH_LEVERAGE",
+      "milestone": "M3_SHOW_RIG_ADAPTATION",
+      "status": "UPCOMING",
+      "why_it_matters": "Separates verified capability and case visual affordance from fixed fixture roles.",
+      "blocks_current_milestone": false,
+      "dependencies": ["case-specific visual evidence", "verified action grammar"],
+      "next_review_condition": "A real case requires visual selection beyond density-only composition."
+    },
+    {
+      "id": "COLOR_EXPRESSIVE_ACTION_PATH",
+      "classification": "HIGH_LEVERAGE",
+      "milestone": "M2_EXPRESSIVE_CAPABILITY",
+      "status": "UPCOMING",
+      "why_it_matters": "Adds expressive color only after verified preset/action applicability.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "Density cohort review closes and a bounded case has safe color evidence."
+    },
+    {
+      "id": "MOVEMENT_TEXTURE_ACTION_GRAMMAR",
+      "classification": "RESEARCH_UNKNOWN",
+      "milestone": "M2_EXPRESSIVE_CAPABILITY",
+      "status": "UPCOMING",
+      "why_it_matters": "Requires safe typed action grammar and does not follow merely from mover capability.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "A verified native action path and a specific design-intent use case exist."
+    },
+    {
+      "id": "TIMING_IMPACT_ACTION_GRAMMAR",
+      "classification": "RESEARCH_UNKNOWN",
+      "milestone": "M2_EXPRESSIVE_CAPABILITY",
+      "status": "UPCOMING",
+      "why_it_matters": "Timing/strobe behavior needs verification and must not follow Group labels.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "Safe behavior/applicability evidence exists for a bounded case."
+    },
+    {
+      "id": "POSITION_FOCUS_SEMANTIC_EVIDENCE",
+      "classification": "REQUIRED",
+      "milestone": "M2_EXPRESSIVE_CAPABILITY",
+      "status": "UPCOMING",
+      "why_it_matters": "Performer/area focus needs semantic targets and geometry, not Pan/Tilt capability alone.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "A case requests focus/position expression."
+    },
+    {
+      "id": "BEAM_AERIAL_ROLE_VOCABULARY_GAP",
+      "classification": "RESEARCH_UNKNOWN",
+      "milestone": "M2_EXPRESSIVE_CAPABILITY",
+      "status": "PARKED",
+      "why_it_matters": "Current vocabulary must not force aerial/beam potential into an inaccurate role.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "A verified action path and real spatial case justify vocabulary work."
+    },
+    {
+      "id": "CURRENT_SHOW_SPATIAL_EVIDENCE",
+      "classification": "RESEARCH_UNKNOWN",
+      "milestone": "M3_SHOW_RIG_ADAPTATION",
+      "status": "CONDITIONAL",
+      "why_it_matters": "Can resolve coverage/hierarchy only when a specific case needs it.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "Zen has known visual facts, a confirmed layout, or a later case cannot be reviewed truthfully without them."
+    },
+    {
+      "id": "FIXTURE_MARKET_LEARNING",
+      "classification": "HIGH_LEVERAGE",
+      "milestone": "ONGOING",
+      "status": "RECURRING_120_DAY_REVIEW",
+      "why_it_matters": "Tracks materially new fixture technology without making selection automatic.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "About 120 days after the last review or a concrete production requirement."
+    },
+    {
+      "id": "FIXTURE_REQUIREMENT_ASSESSMENT",
+      "classification": "DEFERRED",
+      "milestone": "M3_SHOW_RIG_ADAPTATION",
+      "status": "CONDITIONAL",
+      "why_it_matters": "Only flexible/large-production planning may assess an actual design gap for equipment.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "An explicit production planning case permits fixture selection."
+    },
+    {
+      "id": "REAL_SHOW_VENUE_VALIDATION",
+      "classification": "REQUIRED",
+      "milestone": "M6_PRODUCTION_VALIDATION",
+      "status": "DEFERRED_WAIT_FOR_REAL_CASE",
+      "why_it_matters": "Production confidence requires real operator and venue evidence.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "A real show/venue case is available."
+    },
+    {
+      "id": "FOCUS_EXECUTE_VALIDATION",
+      "classification": "REQUIRED",
+      "milestone": "M5_FOCUS_EXECUTE",
+      "status": "DEFERRED",
+      "why_it_matters": "Tests whether an operator can refine rather than rescue a generated Show.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "Native MA2 implementation reaches rehearsal-ready scope."
+    },
+    {
+      "id": "MA3_FIRST_CLASS_ARCHITECTURE",
+      "classification": "DEFERRED",
+      "milestone": "ONGOING",
+      "status": "ARCHITECTURE_AWARE_ONLY",
+      "why_it_matters": "Preserve separable console capability/resolution layers without starting an MA3 Builder.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "Explicit MA3 implementation authorization."
+    },
+    {
+      "id": "ZEN_STYLE_PROFILE",
+      "classification": "DEFERRED",
+      "milestone": "FUTURE",
+      "status": "DEFERRED",
+      "why_it_matters": "Evidence and review remain the source of truth until runtime validation warrants a profile.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "Explicit post-validation decision."
+    },
+    {
+      "id": "DONEAUDIT",
+      "classification": "DEFERRED",
+      "milestone": "FUTURE",
+      "status": "DEFERRED",
+      "why_it_matters": "Verification-process tooling is intentionally separate from current product work.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "Explicit separate evaluation request."
+    }
+  ],
+  "safety_boundaries": {
+    "production_designer": "UNCHANGED",
+    "experimental_b3": "GUIDANCE_ASSISTED_AB_ONLY",
+    "ab002_actions": "UNCHANGED",
+    "ma2_write_audit": "ZERO_WRITES",
+    "fixture_9999": "UNTOUCHED",
+    "zen_style_profile": "DEFERRED",
+    "real_venue_validation": "WAIT_FOR_REAL_CASE",
+    "ma3_builder": "NOT_STARTED"
+  }
+}
