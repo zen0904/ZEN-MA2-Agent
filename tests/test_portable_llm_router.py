@@ -10,6 +10,7 @@ from unittest.mock import patch
 from zen_ma2_agent.llm.autonomous_designer import SCHEMA, DesignValidationError, validate_design_output
 from zen_ma2_agent.llm.router import ProviderRouter, ProviderSlot, ProviderUnavailable, load_provider_slots
 from zen_ma2_agent.config import settings_path
+from launcher.zen_portable_launcher import ma2_connectivity
 
 
 class _Adapter:
@@ -51,3 +52,14 @@ class PortableLLMRouterTests(unittest.TestCase):
     def test_zen_home_redirects_preferences_outside_repository(self):
         with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, {"ZEN_HOME": temp}, clear=False):
             self.assertEqual(settings_path(), Path(temp) / "config" / "settings.json")
+
+    def test_ma2_connectivity_is_tcp_only_and_uses_portable_settings(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "settings.json"
+            path.write_text('{"ma2":{"host":"127.0.0.1","port":30000}}', encoding="utf-8")
+            closed = []
+            class Connection:
+                def close(self): closed.append(True)
+            result = ma2_connectivity(path, lambda address, timeout: Connection())
+        self.assertEqual(result["MA2_CONNECTIVITY"], "TCP_REACHABLE")
+        self.assertTrue(closed)

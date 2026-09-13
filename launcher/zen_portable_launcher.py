@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import socket
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -107,6 +108,30 @@ def provider_self_test() -> dict[str, object]:
     return payload
 
 
+def ma2_connectivity(config_path: Path | None = None, socket_factory=socket.create_connection) -> dict[str, object]:
+    """Perform a no-command TCP reachability check for the current host's MA2.
+
+    This is intentionally not an authentication/Show-state claim.  The normal
+    ZEN runtime remains responsible for its existing authenticated readiness
+    and command safety checks.
+    """
+    path = config_path or home() / "config" / "settings.json"
+    host, port = "127.0.0.1", 30000
+    try:
+        settings = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+        ma2 = settings.get("ma2", {}) if isinstance(settings, dict) else {}
+        host = str(ma2.get("host", host)).strip() or host
+        port = int(ma2.get("port", port))
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return {"MA2_CONNECTIVITY": "CONFIG_INVALID", "host": host, "port": port}
+    try:
+        connection = socket_factory((host, port), timeout=1.5)
+        connection.close()
+    except OSError as exc:
+        return {"MA2_CONNECTIVITY": "NOT_REACHABLE", "host": host, "port": port, "reason": type(exc).__name__}
+    return {"MA2_CONNECTIVITY": "TCP_REACHABLE", "host": host, "port": port}
+
+
 def autonomous_design(request_file: Path) -> dict[str, object]:
     if not request_file.is_file():
         raise SystemExit(f"Design request file does not exist: {request_file}")
@@ -141,6 +166,7 @@ def main() -> int:
     choice.add_argument("--update", action="store_true")
     choice.add_argument("--push", action="store_true")
     choice.add_argument("--provider-self-test", action="store_true")
+    choice.add_argument("--ma2-connectivity", action="store_true")
     choice.add_argument("--design-request", type=Path)
     args = parser.parse_args()
     if args.git_status:
@@ -156,6 +182,8 @@ def main() -> int:
             result = git_status(fetch=False) | {"push": "OK" if pushed.returncode == 0 else "GIT_PUSH_AVAILABLE_NO"}
     elif args.provider_self_test:
         result = provider_self_test()
+    elif args.ma2_connectivity:
+        result = ma2_connectivity()
     elif args.design_request:
         result = autonomous_design(args.design_request)
     else:

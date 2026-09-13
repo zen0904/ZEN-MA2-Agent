@@ -19,10 +19,15 @@ vendor in artistic logic. A missing or unreachable provider means
 `AUTONOMOUS_DESIGNER_AVAILABLE = NO`; deterministic legacy designers must not
 be represented as autonomous LLM output.
 
-Use `run_zen_windows.cmd --provider-self-test` before an autonomous design
-run. The launcher never emits keys. `--git-status`, `--update`, and `--push`
-operate on the USB copy only; automatic pull is limited to a clean, behind,
-fast-forward-able `main`. Dirty or diverged work is preserved for review.
+Double-click `ZEN_HOME/run_zen_windows.cmd` (or `START ZEN.cmd`) for normal
+Windows use. It keeps its terminal open, performs a safe Git check/update,
+checks current-host MA2 TCP reachability, runs a short provider probe, and
+opens ZEN automatically when an autonomous provider is ready. If no provider
+is configured, it presents a small menu; **Provider Setup** opens the USB-local
+private file in Notepad. `--provider-self-test`, `--git-status`, `--update`,
+and `--push` remain available for development and diagnostics. Automatic pull
+is limited to a clean, behind, fast-forward-able `main`; dirty or diverged work
+is preserved for review.
 
 ## Autonomous boundary
 
