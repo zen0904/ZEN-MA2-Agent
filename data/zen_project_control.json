@@ -201,6 +201,21 @@
       "next_review_condition": "Explicit separate evaluation request."
     }
   ],
+  "recent_foundation": {
+    "id": "EXTERNAL_LIGHTING_KNOWLEDGE_FOUNDATION_001",
+    "status": "COMPLETE",
+    "artifacts": [
+      "ZEN_KNOWLEDGE_STORE_TRAINING_BENCHMARK_FOUNDATION_001.md",
+      "data/zen_knowledge_store_001.json",
+      "data/benchmark_cases_001.json",
+      "zen_ma2_agent/knowledge_store.py",
+      "zen_ma2_agent/training_dataset.py",
+      "zen_ma2_agent/benchmark.py"
+    ],
+    "runtime_activation": "NONE",
+    "local_llm_called": false,
+    "ma2_write_audit": "ZERO_WRITES"
+  },
   "safety_boundaries": {
     "production_designer": "UNCHANGED",
     "experimental_b3": "GUIDANCE_ASSISTED_AB_ONLY",

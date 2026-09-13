@@ -21,6 +21,7 @@ from uuid import uuid4
 
 from ..portable import portable_state_path
 from ..run_checkpoints import find_resume_point, read_step_artifact, write_step_artifact
+from ..knowledge_store import project_records, retrieve_records
 from .autonomous_designer import (
     FORBIDDEN_KEYS,
     SCHEMA as FINAL_DESIGN_SCHEMA,
@@ -37,7 +38,6 @@ RUN_SCHEMA = "zen.multi_agent_run.v0.1"
 STEP_SCHEMA = "zen.multi_agent_step.v0.1"
 FAILURE_SCHEMA = "zen.multi_agent_failure.v0.1"
 ATTEMPT_SCHEMA = "zen.multi_agent_attempt_diagnostic.v0.1"
-ROLE_CONTEXT_PREVIEW_CHARACTERS = 1_200
 
 
 class MultiAgentRunError(RuntimeError):
@@ -59,18 +59,6 @@ def _canonical_json(value: object) -> str:
 
 def _sha256(value: object) -> str:
     return hashlib.sha256(_canonical_json(value).encode("utf-8")).hexdigest()
-
-
-def _bounded_context(value: object, *, limit: int = ROLE_CONTEXT_PREVIEW_CHARACTERS) -> object:
-    """Keep a provenance-bearing excerpt feasible for a portable CPU model."""
-    encoded = _canonical_json(value)
-    if len(encoded) <= limit:
-        return value
-    return {
-        "context_excerpt": encoded[:limit],
-        "truncated": True,
-        "full_value_sha256": hashlib.sha256(encoded.encode("utf-8")).hexdigest(),
-    }
 
 
 def _run_path(run_id: str) -> Path:
@@ -203,26 +191,35 @@ ROLE_SYSTEM_PROMPTS = {
 
 def _role_context(role_name: str, *, request: str, context: dict[str, object], completed: dict[str, dict[str, object]]) -> dict[str, object]:
     categories = context.get("categories", {})
+    knowledge = categories.get("professional_lighting_design_knowledge", {})
+    knowledge_records = knowledge.get("records", []) if isinstance(knowledge, dict) else []
+    role_knowledge = project_records(retrieve_records(knowledge_records, role=ROLE_ROUTER_NAMES[role_name], request=request, current_context=context, limit=8, max_records_per_topic=2))
+    knowledge_context = {
+        "schema": "zen.knowledge_retrieval_context.v0.1",
+        "records": role_knowledge,
+        "knowledge_refs": [item["record_id"] for item in role_knowledge],
+        "topic_diversity": sorted({item["topic"] for item in role_knowledge}),
+    }
     common = {
         "user_request": request,
         "hard_constraints": context.get("hard_constraints", []),
         "evidence_boundary": context.get("evidence_boundary", {}),
+        "professional_lighting_design_knowledge": knowledge_context,
     }
     if role_name == "researcher":
         return common | {
             "research_context": {
-                "professional_lighting_design_knowledge": _bounded_context(categories.get("professional_lighting_design_knowledge", {})),
-                "source_provenance": _bounded_context(categories.get("source_provenance", {})),
+                "professional_lighting_design_knowledge": knowledge_context,
+                "source_provenance": categories.get("source_provenance", {}),
             }
         }
     if role_name == "lighting_designer":
         return common | {
             "research_artifact": completed["researcher"],
             "design_context": {
-                "fixture_technical_capability": _bounded_context(categories.get("fixture_technical_capability", {})),
-                "rig_spatial_visual_affordance": _bounded_context(categories.get("rig_spatial_visual_affordance", {})),
-                "professional_lighting_design_knowledge": _bounded_context(categories.get("professional_lighting_design_knowledge", {})),
-                "operator_contract": _bounded_context(categories.get("operator_contract", {})),
+                "fixture_technical_capability": categories.get("fixture_technical_capability", {}),
+                "rig_spatial_visual_affordance": categories.get("rig_spatial_visual_affordance", {}),
+                "operator_contract": categories.get("operator_contract", {}),
             },
         }
     if role_name == "critic":
@@ -230,8 +227,8 @@ def _role_context(role_name: str, *, request: str, context: dict[str, object], c
             "research_artifact": completed["researcher"],
             "designer_draft": completed["lighting_designer"],
             "relevant_show_constraints": {
-                "fixture_technical_capability": _bounded_context(categories.get("fixture_technical_capability", {})),
-                "rig_spatial_visual_affordance": _bounded_context(categories.get("rig_spatial_visual_affordance", {})),
+                "fixture_technical_capability": categories.get("fixture_technical_capability", {}),
+                "rig_spatial_visual_affordance": categories.get("rig_spatial_visual_affordance", {}),
             },
         }
     return common | {
@@ -239,9 +236,9 @@ def _role_context(role_name: str, *, request: str, context: dict[str, object], c
         "designer_draft": completed["lighting_designer"],
         "critic_artifact": completed["critic"],
         "finalization_context": {
-            "fixture_technical_capability": _bounded_context(categories.get("fixture_technical_capability", {})),
-            "rig_spatial_visual_affordance": _bounded_context(categories.get("rig_spatial_visual_affordance", {})),
-            "operator_contract": _bounded_context(categories.get("operator_contract", {})),
+            "fixture_technical_capability": categories.get("fixture_technical_capability", {}),
+            "rig_spatial_visual_affordance": categories.get("rig_spatial_visual_affordance", {}),
+            "operator_contract": categories.get("operator_contract", {}),
         },
     }
 

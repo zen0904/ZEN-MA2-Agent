@@ -140,3 +140,44 @@ Current Show visual/spatial relationship survey (or an explicitly
 user-confirmed rig layout). Then use Pack 001 only in shadow critique to assess
 the actual A/B 002 cohort composition before considering any richer
 case-specific expressive action experiment.
+
+## Canonical knowledge, training, and benchmark foundation (001)
+
+The existing pack now has a reusable canonical boundary in
+`zen_ma2_agent/knowledge_store.py`. `load_canonical_store()` validates the
+Source Registry and Pack before normalizing records; source metadata remains
+registry-owned and is never authored by an LLM. Records retain complete
+provenance and are classified into `GLOBAL_LIGHTING_DESIGN_KNOWLEDGE`,
+`MA2_TECHNICAL_KNOWLEDGE`, or `FIXTURE_TECHNICAL_KNOWLEDGE`. The extension
+categories `SHOW_FACTS` and `ZEN_STYLE_AND_WORKFLOW_KNOWLEDGE` are supported
+without inventing unverified records.
+
+Retrieval is deterministic and role-aware: role/topic relevance, request and
+context overlap, topic caps, and stable record-id ordering are preserved. The
+agent projection keeps `record_id`, claim, scope, exclusions, confidence,
+promotion state, and summary. The multi-agent runtime no longer uses blind
+first-N character excerpts for professional knowledge.
+
+The same module provides an Evidence Ledger boundary where `VERIFIED_FACT`,
+`DESIGN_KNOWLEDGE`, `ARTISTIC_PROPOSAL`, and `UNKNOWN` stay distinct; unknown
+references fail closed. The existing external pack remains `SHADOW_ONLY` and
+is not activated in Production Designer or B3.
+
+`zen_ma2_agent/training_dataset.py` defines reviewable samples and portable
+`training/{raw,reviewed,rejected,exports}` directories. Samples preserve run,
+commit, provider/model, context hash, knowledge references, review/approval
+state, and `CODEX_ARTISTIC_INTERVENTION = NONE`. Only explicitly `APPROVED`
+samples export to JSONL, and Codex cannot self-approve artistic ground truth.
+Training was not executed.
+
+`zen_ma2_agent/benchmark.py` plus `data/benchmark_cases_001.json` provide
+deterministic, non-artistic structural scoring for schema validity, forbidden
+commands, unknown/unsupported evidence, uncertainty, fixture-role locking,
+evidence references, retrieval coverage/diversity, retries, runtime, and
+output size. It does not grade artistic quality.
+
+`data/zen_knowledge_store_001.json` is a compact index referencing the existing
+registry and pack rather than duplicating them. No vector database, LangChain,
+model training, cloud call, MA2/Telnet/Builder execution, media archive, LFS,
+or CI expansion was introduced. Production Designer behavior and B3 remain
+unchanged.

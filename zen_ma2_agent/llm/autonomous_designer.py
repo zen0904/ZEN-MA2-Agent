@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
-from ..external_lighting_knowledge import build_shadow_knowledge_context
+from ..knowledge_store import load_canonical_store, project_records, retrieve_records
 from ..portable import portable_state_path
 from .router import ProviderRouter, ProviderSlot
 
@@ -66,12 +66,19 @@ def build_designer_context(repo_root: Path) -> dict[str, object]:
     }
     data = {name: _compact(value) for name, path in candidates.items() if (value := _read_json(path)) is not None}
     docs = {name: path.read_text(encoding="utf-8")[:4500] for name, path in documents.items() if path.is_file()}
-    raw_knowledge_pack = _read_json(candidates["external_knowledge_pack"], limit=1_000_000)
-    external_knowledge_context = (
-        _compact(build_shadow_knowledge_context(raw_knowledge_pack))
-        if isinstance(raw_knowledge_pack, dict)
-        else {"schema": "zen.external_lighting_knowledge_context.v0.1", "runtime_mode": "SHADOW_ONLY", "records": []}
-    )
+    external_knowledge_context = {"schema": "zen.knowledge_retrieval_context.v0.1", "runtime_mode": "SHADOW_ONLY", "records": [], "knowledge_refs": [], "topic_diversity": []}
+    try:
+        store = load_canonical_store(candidates["external_source_registry"], candidates["external_knowledge_pack"])
+        selected = retrieve_records(store["records"], role="LIGHTING_DESIGNER", request="lighting design", limit=12, max_records_per_topic=2)
+        external_knowledge_context |= {
+            "records": project_records(selected),
+            "knowledge_refs": [item["record_id"] for item in selected],
+            "topic_diversity": sorted({item["topic"] for item in selected}),
+            "source_registry_ref": store["source_registry_ref"],
+        }
+    except (OSError, ValueError, json.JSONDecodeError):
+        # The designer remains usable for diagnostics when the optional pack is unavailable.
+        pass
     context = {
         "context_schema": "zen.designer_context.v0.1",
         "evidence_boundary": {
