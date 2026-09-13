@@ -5,27 +5,40 @@
     "id": "M2_EXPRESSIVE_CAPABILITY",
     "title": "Expressive Capability",
     "status": "ACTIVE",
-    "active_objective": "Determine through human review whether the real Existing Show density-only B3 action path is a retainable bounded expressive base before another action grammar is added."
+    "active_objective": "Establish whether the current Existing Show has a provenance-safe, Show-bound Color action resource that can be evaluated as a second bounded expressive mechanism."
   },
   "last_closed_task": {
-    "id": "CURRENT_SHOW_VISUAL_RELATIONSHIP_INTAKE_001",
+    "id": "REAL_SONG_EXISTING_SHOW_AB_002_HUMAN_DENSITY_REVIEW_001",
     "status": "CLOSED",
-    "commit": "cdd4b0c86ac3bd7338723b2d6aee4a3b2b9519aa",
-    "result": "Role-free optional visual-evidence intake initialized UNKNOWN for Groups 1-7; no runtime wiring."
+    "result": "TECHNICAL_EXPRESSIVE_PATH_PROVEN; ARTISTIC_GENERALIZATION_NOT_APPLICABLE; NEUTRAL_ALLOCATOR_EXPERIMENTAL_ONLY; DENSITY_IS_CONTEXT_DEPENDENT_DIMENSION."
   },
   "next_acceptance_gate": {
-    "id": "REAL_SONG_EXISTING_SHOW_AB_002_HUMAN_DENSITY_REVIEW",
-    "classification": "REQUIRED",
+    "id": "SHOW_BOUND_COLOR_PRESET_APPLICABILITY_VERIFICATION_001",
+    "classification": "RESEARCH_UNKNOWN",
     "status": "CURRENT",
-    "why_it_matters": "The genuine density-only action delta is traceable but A/B 002 is NEEDS_REVISION due to FINAL_COHORT_SATURATION_RISK and GROUP_LEVEL_HOMOGENEITY_UNRESOLVED.",
+    "why_it_matters": "M2 has one safely proven typed mechanism (experimental density). The smallest evidence gap before evaluating another expressive mechanism is whether a current-Show Color preset/action resource can be bound, applied, and validated without name-based or artistic inference.",
     "blocks_current_milestone": true,
     "dependencies": [
-      "ZEN_REAL_SONG_EXISTING_SHOW_AB_002.md",
-      "actual B3 cue/action traces",
-      "human lighting-designer judgment"
+      "SHOW_BOUND_VERIFIED FixtureType/channel evidence",
+      "current Show Preset inventory and applicability evidence",
+      "safe typed plan/action boundary"
     ],
-    "next_review_condition": "Zen records whether the bounded density cohort is retainable, needs revision, or is insufficient for this Existing Show case."
+    "next_review_condition": "A bounded read-only verification reports SHOW_BOUND_VERIFIED, PARTIAL, or UNSUPPORTED Color action applicability. It must not select a palette, assign a Group role, or alter a plan."
   },
+  "human_review_decisions": [
+    {
+      "id": "REAL_SONG_EXISTING_SHOW_AB_002_HUMAN_DENSITY_REVIEW_001",
+      "source": "ZEN_REAL_SONG_EXISTING_SHOW_AB_002.md#human-density-cohort-review-001",
+      "status": "CLOSED",
+      "outcomes": [
+        "TECHNICAL_EXPRESSIVE_PATH_PROVEN",
+        "ARTISTIC_GENERALIZATION_NOT_APPLICABLE",
+        "NEUTRAL_ALLOCATOR_EXPERIMENTAL_ONLY",
+        "DENSITY_IS_CONTEXT_DEPENDENT_DIMENSION"
+      ],
+      "limitations": "No numeric-ID tie-break, equal Group level, cohort saturation, Group participation count, or dimmer level may be promoted into Lighting Design knowledge or a production strategy."
+    }
+  ],
   "backlog": [
     {
       "id": "INDUSTRY_LIGHTING_DESIGN_CORPUS",
@@ -48,12 +61,12 @@
     },
     {
       "id": "COLOR_EXPRESSIVE_ACTION_PATH",
-      "classification": "HIGH_LEVERAGE",
+      "classification": "RESEARCH_UNKNOWN",
       "milestone": "M2_EXPRESSIVE_CAPABILITY",
-      "status": "UPCOMING",
-      "why_it_matters": "Adds expressive color only after verified preset/action applicability.",
-      "blocks_current_milestone": false,
-      "next_review_condition": "Density cohort review closes and a bounded case has safe color evidence."
+      "status": "CURRENT",
+      "why_it_matters": "Color can become a second expressive mechanism only after a Show-bound preset/action applicability verification; it does not follow from channel COLOR capability alone.",
+      "blocks_current_milestone": true,
+      "next_review_condition": "SHOW_BOUND_COLOR_PRESET_APPLICABILITY_VERIFICATION_001 closes with a bounded evidence result."
     },
     {
       "id": "MOVEMENT_TEXTURE_ACTION_GRAMMAR",

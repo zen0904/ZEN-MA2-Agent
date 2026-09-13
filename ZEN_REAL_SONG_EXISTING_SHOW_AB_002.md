@@ -180,4 +180,22 @@ semantic positions, or pixel behavior.
 - MA2 objects modified: `NONE`.
 - MA2 write audit: `ZERO_WRITES`.
 - Fixture 9999 touched: `NO`.
-- Human review: `UNSET`.
+- Human review: closed; see **Human Density Cohort Review 001** below.
+
+## Human Density Cohort Review 001
+
+Zen has reviewed the actual A/B 002 result. This review preserves the
+technical experiment and prevents an unsupported artistic conclusion.
+
+| Review dimension | Human conclusion | Boundary |
+| --- | --- | --- |
+| Technical capability | `PASS` / `TECHNICAL_EXPRESSIVE_PATH_PROVEN` | B3 safely and traceably changed current Existing Show Group participation and typed `SET_DIMMER` actions. |
+| Artistic generalization | `ARTISTIC_GENERALIZATION_NOT_APPLICABLE` | The observed cohort is neither a universally good nor bad lighting design. Group selection, participation count, and levels depend on Design Intent, song/performance, composition, hierarchy, contrast, spatial relationships, rig, other visual dimensions, previous/future looks, and production context. |
+| Density concept | `DENSITY_IS_CONTEXT_DEPENDENT_DIMENSION` | Density is descriptive and controllable, not a prescriptive rule. It does not imply higher energy needs more Groups, a chorus needs density, a final chorus needs all resources, negative space needs fewer fixtures, or more fixtures make a stronger design. |
+| Neutral cohort allocator | `NEUTRAL_ALLOCATOR_EXPERIMENTAL_ONLY` | Numeric-ID tie-breaking, equal Group levels, and full-cohort saturation remain proof-of-path mechanics only. They are not Lighting Design knowledge, an artistic strategy, a permanent Group mapping, or production behavior. |
+
+The prior `FINAL_COHORT_SATURATION_RISK` and
+`GROUP_LEVEL_HOMOGENEITY_UNRESOLVED` findings remain useful technical review
+signals. They do not make Density fail, and they do not authorize a silent
+allocator correction. A future case may use Density only through its own
+Design Intent, verified resources, visual/context evidence, and human review.

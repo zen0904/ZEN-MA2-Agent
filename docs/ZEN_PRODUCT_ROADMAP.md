@@ -74,22 +74,26 @@ not production readiness.
 
 ```text
 CURRENT_MILESTONE: M2 — EXPRESSIVE CAPABILITY
-ACTIVE_OBJECTIVE: Decide whether the real Existing Show density-only B3 action
-  path is artistically and operationally useful enough to retain as a bounded
-  expressive base before extending another action grammar.
-CURRENT_BLOCKER: The real A/B 002 candidate is `NEEDS_REVISION`: it exposes
-  FINAL_COHORT_SATURATION_RISK and GROUP_LEVEL_HOMOGENEITY_UNRESOLVED. Its
-  human design review is still UNSET.
-NEXT_ACCEPTANCE_GATE: Human review of the actual A/B 002 density cohort,
-  recording whether the bounded density approach is retainable, requires
-  revision, or is insufficient for this Existing Show case.
+ACTIVE_OBJECTIVE: Establish whether the current Existing Show has a
+  provenance-safe, Show-bound Color action resource that can be evaluated as
+  a second bounded expressive mechanism.
+CURRENT_BLOCKER: Channel-level COLOR capability does not prove current-Preset
+  applicability, safe typed action use, or a case-specific palette decision.
+NEXT_ACCEPTANCE_GATE: `SHOW_BOUND_COLOR_PRESET_APPLICABILITY_VERIFICATION_001`
+  reports the strongest read-only binding/applicability result without
+  selecting a palette, assigning a role, or changing a plan.
 ```
 
 M1 has delivered bounded Design Intent, provenance, and shadow external
 knowledge sufficient for real expressive experiments. It remains an ongoing
 learning track, but it is not the current implementation gate. M2 has one
-verified, real typed density delta; that result must be reviewed honestly
-before adding more expressive machinery.
+verified, real typed density mechanism. Human review closed A/B 002 as
+`TECHNICAL_EXPRESSIVE_PATH_PROVEN`, while explicitly recording
+`ARTISTIC_GENERALIZATION_NOT_APPLICABLE`,
+`NEUTRAL_ALLOCATOR_EXPERIMENTAL_ONLY`, and
+`DENSITY_IS_CONTEXT_DEPENDENT_DIMENSION`. It neither approves nor rejects
+Density as a design dimension; it prevents the observed neutral allocator from
+becoming a design strategy.
 
 The Current Show visual relationship intake is optional case evidence. Its
 unknown fields do not block this gate, and it must not become a mandatory

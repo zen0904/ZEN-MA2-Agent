@@ -43,18 +43,21 @@ requires those facts.
 
 ## Active gate and exact next mainline task
 
-**Current blocker:** the A/B 002 density-only candidate has not received a
-human judgment on whether its cohort composition is useful, needs revision, or
-is insufficient for this Existing Show case.
+**Closed human review:** A/B 002 is
+`TECHNICAL_EXPRESSIVE_PATH_PROVEN`, but
+`ARTISTIC_GENERALIZATION_NOT_APPLICABLE`. The neutral allocator is
+`EXPERIMENTAL_ONLY` and Density remains a context-dependent design dimension;
+the review does not approve its numeric tie-breaking, equal levels, or
+full-cohort saturation as a design strategy.
 
 **Recommended next task:**
-`REAL SONG + EXISTING SHOW A/B 002 — HUMAN DENSITY COHORT REVIEW 001`.
+`SHOW-BOUND COLOR PRESET APPLICABILITY VERIFICATION 001`.
 
-That task should extract/review the actual cue-level B3 density selections and
-their A/B deltas, then record a human decision. It must not add another action
-grammar, infer visual relationships, or change production behavior. Optional
-known rig facts can be supplied as evidence, but a completed visual
-relationship intake is not required to conduct the review.
+That bounded, read-only task should determine whether the current Show has a
+provenance-safe Color preset/action resource that can be applied through the
+existing typed boundary. It must not select a palette, assign a Group role,
+infer visual relationships, or change a plan. A completed visual-relationship
+intake is not required for this technical applicability verification.
 
 ## Milestone and learning policy summary
 
