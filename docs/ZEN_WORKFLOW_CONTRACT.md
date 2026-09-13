@@ -40,3 +40,13 @@ This test extends rather than replaces HANDOVER_READABILITY, the Stable
 Operator Contract and Evolvable Implementation. An implementation improvement
 that materially changes this operator-facing contract remains a
 `PROPOSED_WORKFLOW_CHANGE` requiring explicit human approval.
+
+## Test Show Mode
+
+`PRODUCTION_SHOW_MODE` remains `PREVIEW_APPROVAL_REQUIRED`. A real console
+write is permitted only when Zen explicitly identifies the fingerprinted,
+currently loaded Show as a `TEST_SHOW_MODE = WRITE_ALLOWED` environment. The
+authorization is bounded to named Agent-owned objects and the stated test
+purpose; it never authorizes writes to another loaded Show, patch/address
+changes, unrelated objects, or Fixture 9999. Test results must be read back
+and handed to Zen for visual/operator refinement before any production claim.

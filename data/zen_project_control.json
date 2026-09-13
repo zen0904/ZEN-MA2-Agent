@@ -5,25 +5,25 @@
     "id": "M2_EXPRESSIVE_CAPABILITY",
     "title": "Expressive Capability",
     "status": "ACTIVE",
-    "active_objective": "Decide the permitted, operator-compatible provenance boundary for supplying a future Color resource after verifying that the current Existing Show has none through safe read-only inventory."
+    "active_objective": "Use Zen's visual and operator feedback from the real editable SHEESH test Show to refine this bounded test case; do not promote it to production behavior."
   },
   "last_closed_task": {
-    "id": "SHOW_BOUND_COLOR_PRESET_APPLICABILITY_VERIFICATION_001",
-    "status": "CLOSED",
-    "result": "UNSUPPORTED: fresh fingerprint-matched List Preset All returned only FOCUS rows, while List Preset Color returned Error #14 OBJECT DOES NOT EXIST; no Color preset/action resource or applicability can be proven."
+    "id": "REAL_MA2_TEST_SHOW_SHEESH_BUILD_001",
+    "status": "BUILT_AWAITING_HUMAN_VISUAL_OPERATOR_REVIEW",
+    "result": "TEST_SHOW_MODE real-console build verified: 13 owned Color presets, provisional TEST_STAGE_LAYOUT_SHEESH_001, Sequence 901 with 15 Cues, and Page 1 Executor 201 / ZEN_SHEESH_TEST. No Timecode was written because no actual audio file was available."
   },
   "next_acceptance_gate": {
-    "id": "COLOR_RESOURCE_PROVISIONING_BOUNDARY_REVIEW_001",
+    "id": "SHEESH_TEST_SHOW_VISUAL_OPERATOR_REVIEW_001",
     "classification": "REQUIRED",
     "status": "CURRENT",
-    "why_it_matters": "Fresh real-console evidence proves the current Show has no discoverable Color preset object. A Color action cannot be invented from fixture capability, so the next smallest blocker is an explicit provenance/Operator Workflow decision for how a future Color resource may enter a bounded case.",
+    "why_it_matters": "The first real editable MA2 test Show is now available. Zen's Stage/3D, playback and operator feedback is the smallest high-value evidence needed before changing its design or implementation.",
     "blocks_current_milestone": true,
     "dependencies": [
-      "ZEN_SHOW_BOUND_COLOR_PRESET_APPLICABILITY_VERIFICATION_001.md",
-      "ZEN_WORKFLOW_CONTRACT.md",
-      "MA2 native Preset/resource lifecycle evidence"
+      "ZEN_REAL_MA2_TEST_SHOW_SHEESH_BUILD_001.md",
+      "Sequence 901 / Executor 1.201 in the designated Test Show",
+      "Zen visual/operator review"
     ],
-    "next_review_condition": "Zen records which future Color-resource provenance paths may be considered, with no preset creation, palette selection, Group role assignment, or Show modification."
+    "next_review_condition": "Zen plays/inspects BABYMONSTER - SHEESH on the Test Show and records cue, color, composition, Stage/3D, transition and operator feedback."
   },
   "human_review_decisions": [
     {
@@ -40,6 +40,17 @@
     }
   ],
   "evidence_results": [
+    {
+      "id": "TEST_SHOW_COLOR_PROVISIONING_001",
+      "source": "ZEN_REAL_MA2_TEST_SHOW_SHEESH_BUILD_001.md",
+      "status": "HUMAN_AUTHORIZED_TEST_VALUE_PROVISIONED",
+      "outcomes": [
+        "THIRTEEN_NATIVE_EDITABLE_COLOR_PRESETS_CREATED",
+        "TEST_VALUES_NOT_PERMANENT_DESIGN_TRUTH",
+        "COLOR_ACTIONS_USED_ONLY_IN_TEST_SHOW_SEQUENCE_901"
+      ],
+      "limitations": "This explicit Test Show authorization closes the resource absence blocker for SHEESH only. It does not establish a permanent palette, Group-to-Color role, B3 production authorization, or a Color design rule."
+    },
     {
       "id": "SHOW_BOUND_COLOR_PRESET_APPLICABILITY_VERIFICATION_001",
       "source": "ZEN_SHOW_BOUND_COLOR_PRESET_APPLICABILITY_VERIFICATION_001.md",
@@ -76,10 +87,10 @@
       "id": "COLOR_EXPRESSIVE_ACTION_PATH",
       "classification": "REQUIRED",
       "milestone": "M2_EXPRESSIVE_CAPABILITY",
-      "status": "BLOCKED_BY_RESOURCE_ABSENCE",
-      "why_it_matters": "The current Show has no discovered Color preset object through fingerprint-matched safe inventory. Color cannot proceed from fixture channel capability alone.",
-      "blocks_current_milestone": true,
-      "next_review_condition": "COLOR_RESOURCE_PROVISIONING_BOUNDARY_REVIEW_001 establishes an allowed future resource provenance before any Color action work."
+      "status": "TEST_SHOW_PROVISIONED_AWAITING_OPERATOR_REVIEW",
+      "why_it_matters": "Zen explicitly authorized a bounded editable 13-color native MA2 Test Show palette after the read-only inventory proved the Show had none.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "Zen's SHEESH visual/operator feedback determines whether any test-case refinement is warranted; no production promotion follows automatically."
     },
     {
       "id": "MOVEMENT_TEXTURE_ACTION_GRAMMAR",
@@ -194,7 +205,8 @@
     "production_designer": "UNCHANGED",
     "experimental_b3": "GUIDANCE_ASSISTED_AB_ONLY",
     "ab002_actions": "UNCHANGED",
-    "ma2_write_audit": "ZERO_WRITES",
+    "ma2_write_audit": "TEST_SHOW_MODE_WRITE_ALLOWED: bounded Agent-owned SHEESH test objects verified; production writes remain preview/approval gated",
+    "test_show_mode": "WRITE_ALLOWED_ONLY_FOR_FINGERPRINTED_CURRENT_TEST_SHOW_AND_SHEESH_001_OWNED_OBJECTS",
     "fixture_9999": "UNTOUCHED",
     "zen_style_profile": "DEFERRED",
     "real_venue_validation": "WAIT_FOR_REAL_CASE",

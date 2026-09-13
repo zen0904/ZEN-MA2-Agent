@@ -1287,3 +1287,24 @@ or modify the Show. Production remains `UNCHANGED`, B3 remains
 `GUIDANCE_ASSISTED_AB_ONLY`, A/B 002 actions remain `UNCHANGED`, Fixture 9999
 remains untouched, `ZEN_STYLE_PROFILE` remains `DEFERRED`, and MA2 writes
 remain `ZERO_WRITES`.
+
+## 56 Real MA2 Test Show — SHEESH Build 001
+
+Zen explicitly designated the fingerprint-matched current Show as
+`TEST_SHOW_MODE = WRITE_ALLOWED` for this one build. `PRODUCTION_SHOW_MODE`
+remains `PREVIEW_APPROVAL_REQUIRED`. The build created only Agent-owned Color
+Presets `4.101`–`4.113` (`ZEN_COLOR_01_RED` through
+`ZEN_COLOR_13_CTO_CHAMPAGNE`), provisional `TEST_STAGE_LAYOUT_SHEESH_001`
+coordinates for Fixture IDs 101–708, Sequence 901 with 15 SHEESH cues, and
+Page 1 Executor 201, all visibly labelled `ZEN_SHEESH_TEST` where MA2 shares
+the Sequence/Executor label. Fixture 9999, patch/address, and existing
+Sequences 201/202/204/205 were not modified.
+
+The full real-console audit is recorded in
+`ZEN_REAL_MA2_TEST_SHOW_SHEESH_BUILD_001.md`. Read-back verified every new
+Preset, all primary/subfixture test coordinates (including Atomic instances),
+all 15 Cue labels, Sequence 901, and Executor `1.201`. No Timecode was
+created because no actual SHEESH audio file was available. The new active gate
+is Zen's visual/operator review in MA2 Stage/3D and playback; the current
+palette, coordinates, cue choices and levels are test values, not production
+truth, B3 promotion, a fixture-role mapping, or a style profile.

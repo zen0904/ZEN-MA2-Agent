@@ -8,6 +8,7 @@ data/*.json
 !data/current_show_visual_relationships_001.json
 !data/zen_project_control.json
 !data/zen_show_bound_color_preset_applicability_001.json
+!data/zen_real_ma2_test_show_sheesh_001_plan.json
 config/settings.json
 .venv/
 build/
