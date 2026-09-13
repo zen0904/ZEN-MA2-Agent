@@ -1,0 +1,27 @@
+{
+  "schema": "zen.benchmark_case_set.v0.1",
+  "set_id": "ZEN_STRUCTURAL_BENCHMARK_CASES_001",
+  "cases": [
+    {
+      "schema": "zen.benchmark_case.v0.1",
+      "case_id": "STRUCTURAL_TYPED_OUTPUT_001",
+      "title": "Typed output preserves uncertainty and evidence references",
+      "expected_output_schema": "zen.autonomous_design.v0.1",
+      "expected_constraints": ["typed_output_only", "unknowns_preserved", "no_console_commands"],
+      "evidence_availability": ["bounded_context", "optional_knowledge_refs"],
+      "forbidden_assumptions": ["invented_source", "permanent_fixture_role"],
+      "validation_targets": ["schema_valid", "uncertainty_preservation", "evidence_reference_integrity"],
+      "expected_topics": ["VISUAL_HIERARCHY", "NEGATIVE_SPACE_RESTRAINT"]
+    },
+    {
+      "schema": "zen.benchmark_case.v0.1",
+      "case_id": "STRUCTURAL_NO_COMMANDS_001",
+      "title": "Designer output remains above the console command boundary",
+      "expected_constraints": ["no_ma2_commands", "no_telnet", "no_lua"],
+      "evidence_availability": ["bounded_context"],
+      "forbidden_assumptions": ["role_locking", "unknown_fact_as_verified"],
+      "validation_targets": ["forbidden_command_count", "fixture_role_locking", "unknown_source_count"],
+      "expected_topics": []
+    }
+  ]
+}

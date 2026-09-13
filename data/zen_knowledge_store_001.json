@@ -1,0 +1,17 @@
+{
+  "schema": "zen.knowledge_store_index.v0.1",
+  "store_id": "ZEN_KNOWLEDGE_STORE_001",
+  "source_registry": "data/external_lighting_knowledge_source_registry_001.json",
+  "knowledge_pack": "data/external_lighting_knowledge_pack_001.json",
+  "categories_supported": [
+    "GLOBAL_LIGHTING_DESIGN_KNOWLEDGE",
+    "MA2_TECHNICAL_KNOWLEDGE",
+    "FIXTURE_TECHNICAL_KNOWLEDGE",
+    "SHOW_FACTS",
+    "ZEN_STYLE_AND_WORKFLOW_KNOWLEDGE"
+  ],
+  "runtime_mode": "SHADOW_ONLY",
+  "lossless_canonical_store": true,
+  "source_metadata_authority": "SOURCE_REGISTRY_ONLY",
+  "note": "The loader derives canonical records from the existing registry and pack; this index does not duplicate them. SHOW_FACTS and ZEN_STYLE_AND_WORKFLOW_KNOWLEDGE are supported extension categories and remain empty until verified inputs are ingested."
+}
