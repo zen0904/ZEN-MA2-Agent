@@ -4,13 +4,18 @@ Every Builder/Resolver that can allocate or modify a Sequence, Executor, or
 Fixture must import from here instead of redefining its own protected list.
 A protection that only exists as a local constant inside one script is not a
 guarantee for any other code path.
+
+Per the project owner: the current working Show is disposable test data, so
+no Sequence is protected right now. Fixture 9999 is kept aside intentionally
+and stays protected. If a future Show reuses real production Sequences,
+populate PROTECTED_SEQUENCES below -- every caller already enforces it.
 """
 from __future__ import annotations
 
-#: Sequences that belong to the existing production show. No ZEN code path
-#: may create, relabel, or store a Cue into one of these without an explicit,
-#: separately-recorded human authorization for that exact Sequence number.
-PROTECTED_SEQUENCES: frozenset[int] = frozenset({201, 202, 204, 205})
+#: Currently empty: the active Show is test-only and no Sequence needs
+#: protection. Populate with real production Sequence numbers if/when this
+#: Agent points at a Show that must not be overwritten.
+PROTECTED_SEQUENCES: frozenset[int] = frozenset()
 
 #: Fixture 9999 must never be selected, patched, addressed, or referenced by
 #: any automatically generated action.

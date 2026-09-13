@@ -10,19 +10,17 @@ from zen_ma2_agent.protected_objects import (
 
 
 class ProtectedObjectsTests(unittest.TestCase):
-    def test_known_protected_sequences_are_present(self):
-        self.assertEqual(PROTECTED_SEQUENCES, frozenset({201, 202, 204, 205}))
+    def test_no_sequence_is_protected_by_default(self):
+        # The active Show is disposable test data, so no Sequence is
+        # protected right now -- only Fixture 9999 is held aside.
+        self.assertEqual(PROTECTED_SEQUENCES, frozenset())
 
     def test_fixture_9999_is_protected(self):
         self.assertIn(9999, PROTECTED_FIXTURE_IDS)
 
-    def test_assert_sequence_allowed_rejects_protected_numbers(self):
-        for sequence in PROTECTED_SEQUENCES:
-            with self.assertRaises(ProtectedObjectError):
-                assert_sequence_allowed(sequence)
-
-    def test_assert_sequence_allowed_accepts_unprotected_numbers(self):
-        assert_sequence_allowed(901)  # must not raise
+    def test_assert_sequence_allowed_accepts_any_number_while_list_is_empty(self):
+        for sequence in (201, 202, 204, 205, 901):
+            assert_sequence_allowed(sequence)  # must not raise
 
     def test_assert_fixture_allowed_rejects_9999(self):
         with self.assertRaises(ProtectedObjectError):
