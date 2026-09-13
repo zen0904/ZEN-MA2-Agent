@@ -5,25 +5,25 @@
     "id": "M2_EXPRESSIVE_CAPABILITY",
     "title": "Expressive Capability",
     "status": "ACTIVE",
-    "active_objective": "Establish whether the current Existing Show has a provenance-safe, Show-bound Color action resource that can be evaluated as a second bounded expressive mechanism."
+    "active_objective": "Decide the permitted, operator-compatible provenance boundary for supplying a future Color resource after verifying that the current Existing Show has none through safe read-only inventory."
   },
   "last_closed_task": {
-    "id": "REAL_SONG_EXISTING_SHOW_AB_002_HUMAN_DENSITY_REVIEW_001",
+    "id": "SHOW_BOUND_COLOR_PRESET_APPLICABILITY_VERIFICATION_001",
     "status": "CLOSED",
-    "result": "TECHNICAL_EXPRESSIVE_PATH_PROVEN; ARTISTIC_GENERALIZATION_NOT_APPLICABLE; NEUTRAL_ALLOCATOR_EXPERIMENTAL_ONLY; DENSITY_IS_CONTEXT_DEPENDENT_DIMENSION."
+    "result": "UNSUPPORTED: fresh fingerprint-matched List Preset All returned only FOCUS rows, while List Preset Color returned Error #14 OBJECT DOES NOT EXIST; no Color preset/action resource or applicability can be proven."
   },
   "next_acceptance_gate": {
-    "id": "SHOW_BOUND_COLOR_PRESET_APPLICABILITY_VERIFICATION_001",
-    "classification": "RESEARCH_UNKNOWN",
+    "id": "COLOR_RESOURCE_PROVISIONING_BOUNDARY_REVIEW_001",
+    "classification": "REQUIRED",
     "status": "CURRENT",
-    "why_it_matters": "M2 has one safely proven typed mechanism (experimental density). The smallest evidence gap before evaluating another expressive mechanism is whether a current-Show Color preset/action resource can be bound, applied, and validated without name-based or artistic inference.",
+    "why_it_matters": "Fresh real-console evidence proves the current Show has no discoverable Color preset object. A Color action cannot be invented from fixture capability, so the next smallest blocker is an explicit provenance/Operator Workflow decision for how a future Color resource may enter a bounded case.",
     "blocks_current_milestone": true,
     "dependencies": [
-      "SHOW_BOUND_VERIFIED FixtureType/channel evidence",
-      "current Show Preset inventory and applicability evidence",
-      "safe typed plan/action boundary"
+      "ZEN_SHOW_BOUND_COLOR_PRESET_APPLICABILITY_VERIFICATION_001.md",
+      "ZEN_WORKFLOW_CONTRACT.md",
+      "MA2 native Preset/resource lifecycle evidence"
     ],
-    "next_review_condition": "A bounded read-only verification reports SHOW_BOUND_VERIFIED, PARTIAL, or UNSUPPORTED Color action applicability. It must not select a palette, assign a Group role, or alter a plan."
+    "next_review_condition": "Zen records which future Color-resource provenance paths may be considered, with no preset creation, palette selection, Group role assignment, or Show modification."
   },
   "human_review_decisions": [
     {
@@ -37,6 +37,19 @@
         "DENSITY_IS_CONTEXT_DEPENDENT_DIMENSION"
       ],
       "limitations": "No numeric-ID tie-break, equal Group level, cohort saturation, Group participation count, or dimmer level may be promoted into Lighting Design knowledge or a production strategy."
+    }
+  ],
+  "evidence_results": [
+    {
+      "id": "SHOW_BOUND_COLOR_PRESET_APPLICABILITY_VERIFICATION_001",
+      "source": "ZEN_SHOW_BOUND_COLOR_PRESET_APPLICABILITY_VERIFICATION_001.md",
+      "status": "CLOSED",
+      "outcomes": [
+        "UNSUPPORTED",
+        "NO_CURRENT_SHOW_COLOR_PRESET_DISCOVERED",
+        "ACTION_BOUNDARY_PARTIAL"
+      ],
+      "limitations": "Fixture COLOR capability and generic typed CALL_PRESET syntax do not establish a current Show Color preset, applicability, palette, role, or B3 authorization."
     }
   ],
   "backlog": [
@@ -61,12 +74,12 @@
     },
     {
       "id": "COLOR_EXPRESSIVE_ACTION_PATH",
-      "classification": "RESEARCH_UNKNOWN",
+      "classification": "REQUIRED",
       "milestone": "M2_EXPRESSIVE_CAPABILITY",
-      "status": "CURRENT",
-      "why_it_matters": "Color can become a second expressive mechanism only after a Show-bound preset/action applicability verification; it does not follow from channel COLOR capability alone.",
+      "status": "BLOCKED_BY_RESOURCE_ABSENCE",
+      "why_it_matters": "The current Show has no discovered Color preset object through fingerprint-matched safe inventory. Color cannot proceed from fixture channel capability alone.",
       "blocks_current_milestone": true,
-      "next_review_condition": "SHOW_BOUND_COLOR_PRESET_APPLICABILITY_VERIFICATION_001 closes with a bounded evidence result."
+      "next_review_condition": "COLOR_RESOURCE_PROVISIONING_BOUNDARY_REVIEW_001 establishes an allowed future resource provenance before any Color action work."
     },
     {
       "id": "MOVEMENT_TEXTURE_ACTION_GRAMMAR",

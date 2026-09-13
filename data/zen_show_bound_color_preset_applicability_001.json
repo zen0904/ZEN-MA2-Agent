@@ -1,0 +1,74 @@
+{
+  "schema": "zen.show_bound_color_preset_applicability_verification.v0.1",
+  "verification_id": "SHOW_BOUND_COLOR_PRESET_APPLICABILITY_VERIFICATION_001",
+  "verified_at": "2026-09-13T10:40:36.5598267+08:00",
+  "read_only": true,
+  "result": "UNSUPPORTED",
+  "result_reason": "The fingerprint-matched current Show exposes no Color preset pool object through fresh List Preset All, and fresh List Preset Color returns Error #14: OBJECT DOES NOT EXIST.",
+  "current_show_identity": {
+    "kind": "SCANNED_SHOW_PROFILE_FINGERPRINT",
+    "value": "497dfae11821c10eebc54a614fa66e81339cb79d789d50c112fcdfc33134f4ea",
+    "confidence": "PARTIAL",
+    "match_to_committed_existing_show_profile": "MATCH"
+  },
+  "transport": {
+    "endpoint": "127.0.0.1:30000",
+    "telnet_loopback_ready": true,
+    "authenticated_user": "MM",
+    "commands": [
+      "Login MM",
+      "List Group",
+      "List Fixture",
+      "List Preset All",
+      "List Preset Color"
+    ],
+    "ma2_object_write_audit": "ZERO_WRITES",
+    "fixture_9999_targeted": false
+  },
+  "preset_inventory": {
+    "source": "MA2_TELNET_LIST",
+    "list_preset_all": {
+      "count": 5,
+      "types_returned": ["FOCUS"],
+      "references": ["6.1", "6.2", "6.3", "6.4", "6.5"]
+    },
+    "list_preset_color": {
+      "row_count": 0,
+      "result": "OBJECT_DOES_NOT_EXIST",
+      "ma2_error": "Error #14: OBJECT DOES NOT EXIST"
+    },
+    "color_presets": []
+  },
+  "verification_dimensions": {
+    "color_preset_existence": {
+      "state": "UNSUPPORTED",
+      "reason": "No Color preset object was returned by either fresh List Preset All or List Preset Color."
+    },
+    "identity_and_type": {
+      "state": "NOT_APPLICABLE_NO_COLOR_PRESET",
+      "reason": "There is no discovered Color preset identifier, label, or pool row to verify."
+    },
+    "applicability": {
+      "state": "NOT_APPLICABLE_NO_COLOR_PRESET",
+      "reason": "No candidate Color preset exists. Existing safe sources also expose no Preset membership, stored Attribute, or stored-value evidence."
+    },
+    "typed_action_boundary": {
+      "state": "ACTION_BOUNDARY_PARTIAL",
+      "reason": "The canonical typed action schema supports CALL_PRESET with a typed preset_ref/preset_type and no raw console text, but it has no Show-bound Color resource/applicability binding or Color-specific action eligibility validator."
+    }
+  },
+  "not_run": [
+    "Export Preset: no discovered numeric Color preset reference exists; export would not establish applicability in any event.",
+    "Preset internal-value inspection/reverse engineering",
+    "Programmer selection or At Preset",
+    "Palette selection, Group role assignment, B3 action change, or Color experiment"
+  ],
+  "safety": {
+    "production_designer": "UNCHANGED",
+    "experimental_b3": "GUIDANCE_ASSISTED_AB_ONLY",
+    "ab002_actions": "UNCHANGED",
+    "ma2_write_audit": "ZERO_WRITES",
+    "fixture_9999": "UNTOUCHED",
+    "zen_style_profile": "DEFERRED"
+  }
+}

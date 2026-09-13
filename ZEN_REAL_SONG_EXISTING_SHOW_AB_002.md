@@ -1,8 +1,9 @@
 # Real Song + Existing Show A/B 002
 
-**Recommendation:** `NEEDS_REVISION` — this is a genuine, traceable B3 typed
-action-delta experiment, but it is not production readiness or artistic
-approval. Zen's review remains `UNSET`.
+**Technical result:** `TECHNICAL_EXPRESSIVE_PATH_PROVEN` — this is a genuine,
+traceable B3 typed action-delta experiment. **Artistic conclusion:**
+`ARTISTIC_GENERALIZATION_NOT_APPLICABLE`; it is neither production readiness
+nor an approval/rejection of Density as a design dimension.
 
 ## Scope and exact inputs
 
@@ -166,9 +167,9 @@ semantic positions, or pixel behavior.
 - Semantic target/position and geometry evidence before performer/area focus
   or spatial composition can be expressed.
 - A safe, separately verified texture/timing/effect action grammar.
-- Human judgment on whether neutral numeric cohort distribution is acceptable
-  for this real Show, or whether a future case must provide real visual
-  relationships before multi-Group density composition is meaningful.
+- Any future Density cohort requires its own Design Intent, verified resources,
+  visual/context evidence where needed, and human review. The neutral numeric
+  allocator remains experimental proof-of-path only.
 
 ## Safety and decision boundary
 

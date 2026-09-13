@@ -74,14 +74,16 @@ not production readiness.
 
 ```text
 CURRENT_MILESTONE: M2 — EXPRESSIVE CAPABILITY
-ACTIVE_OBJECTIVE: Establish whether the current Existing Show has a
-  provenance-safe, Show-bound Color action resource that can be evaluated as
-  a second bounded expressive mechanism.
-CURRENT_BLOCKER: Channel-level COLOR capability does not prove current-Preset
-  applicability, safe typed action use, or a case-specific palette decision.
-NEXT_ACCEPTANCE_GATE: `SHOW_BOUND_COLOR_PRESET_APPLICABILITY_VERIFICATION_001`
-  reports the strongest read-only binding/applicability result without
-  selecting a palette, assigning a role, or changing a plan.
+ACTIVE_OBJECTIVE: Decide the permitted, operator-compatible provenance boundary
+  for supplying a future Color resource after safe inventory verified none in
+  the current Existing Show.
+CURRENT_BLOCKER: `SHOW_BOUND_COLOR_PRESET_APPLICABILITY_VERIFICATION_001` is
+  `UNSUPPORTED`: fresh fingerprint-matched inventory returned five Focus
+  presets and no Color preset object. Fixture COLOR capability and generic
+  CALL_PRESET syntax do not supply a resource or applicability proof.
+NEXT_ACCEPTANCE_GATE: `COLOR_RESOURCE_PROVISIONING_BOUNDARY_REVIEW_001`
+  records which future resource provenance paths may be considered, without
+  creating a Preset, selecting a palette, assigning a role, or changing a Show.
 ```
 
 M1 has delivered bounded Design Intent, provenance, and shadow external
@@ -94,6 +96,12 @@ verified, real typed density mechanism. Human review closed A/B 002 as
 `DENSITY_IS_CONTEXT_DEPENDENT_DIMENSION`. It neither approves nor rejects
 Density as a design dimension; it prevents the observed neutral allocator from
 becoming a design strategy.
+
+The following bounded Color evidence gate is closed as `UNSUPPORTED`: the
+fresh, fingerprint-matched Existing Show has no discoverable Color preset pool
+object. This does not reject Color as an expressive dimension. It prevents
+fixture channel capability or a generic action shape from masquerading as an
+action-ready Current Show resource.
 
 The Current Show visual relationship intake is optional case evidence. Its
 unknown fields do not block this gate, and it must not become a mandatory

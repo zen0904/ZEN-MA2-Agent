@@ -50,14 +50,20 @@ requires those facts.
 the review does not approve its numeric tie-breaking, equal levels, or
 full-cohort saturation as a design strategy.
 
-**Recommended next task:**
-`SHOW-BOUND COLOR PRESET APPLICABILITY VERIFICATION 001`.
+**Closed Color evidence gate:**
+`SHOW_BOUND_COLOR_PRESET_APPLICABILITY_VERIFICATION_001` is `UNSUPPORTED`.
+Fresh, fingerprint-matched `List Preset All` returned five Focus rows only;
+`List Preset Color` returned native `Error #14: OBJECT DOES NOT EXIST`.
+Fixture COLOR channel capability and generic typed `CALL_PRESET` syntax do not
+create a Show-bound Color resource or prove applicability.
 
-That bounded, read-only task should determine whether the current Show has a
-provenance-safe Color preset/action resource that can be applied through the
-existing typed boundary. It must not select a palette, assign a Group role,
-infer visual relationships, or change a plan. A completed visual-relationship
-intake is not required for this technical applicability verification.
+**Recommended next task:**
+`COLOR RESOURCE PROVISIONING BOUNDARY REVIEW 001`.
+
+That bounded architecture/human-workflow review should decide which future
+Color-resource provenance paths may be considered. It must not create a
+Preset, select a palette, assign a Group role, infer visual relationships, or
+change a Show.
 
 ## Milestone and learning policy summary
 
