@@ -8,7 +8,7 @@ The request hash is identical in both run records:
 `7454b1f0b5c1e359c2e47fb21f61c506decbfb69434d63e4d20ad22b926276f1`.
 The run ID was `local-multi-agent-smoke-002`; Smoke 001 remains preserved and
 was not overwritten. The USB repo was fast-forwarded to the required
-`bb9058725a42bbdda363098351b498b457957abd` before the successful attempt.
+`bb9058725a42bbdda363098351b498b457957abd` before the attempted run.
 
 The exact bounded context path was the existing `build_designer_context`
 contract. It read these repo-owned inputs (when present):

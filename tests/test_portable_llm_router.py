@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 import json
+import io
 import os
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+from urllib.error import HTTPError
 
 from zen_ma2_agent.llm.autonomous_designer import SCHEMA, DesignValidationError, validate_design_output
-from zen_ma2_agent.llm.router import ProviderRouter, ProviderSlot, ProviderUnavailable, load_provider_slots
+from zen_ma2_agent.llm.router import OpenAICompatibleHTTPAdapter, ProviderRouter, ProviderSlot, ProviderUnavailable, load_provider_slots
 from zen_ma2_agent.config import settings_path
 from launcher.zen_portable_launcher import ma2_connectivity, provider_self_test
 
@@ -57,6 +59,37 @@ class PortableLLMRouterTests(unittest.TestCase):
         output |= {"schema": SCHEMA, "ma2_commands": ["Store Sequence 1"]}
         with self.assertRaises(DesignValidationError):
             validate_design_output(output)
+
+    def _http_slot(self):
+        return ProviderSlot(1, "OPENAI_COMPATIBLE_LOCAL", "test", "http://127.0.0.1:8080/v1", "", (), 5)
+
+    def test_http_error_preserves_status_and_safe_json_summary(self):
+        error = HTTPError(
+            "http://127.0.0.1:8080/v1/chat/completions",
+            413,
+            "Payload Too Large",
+            {},
+            io.BytesIO(b'{"error":{"message":"context too large"}}'),
+        )
+        with patch("zen_ma2_agent.llm.router.urlopen", side_effect=error):
+            with self.assertRaises(ProviderUnavailable) as raised:
+                OpenAICompatibleHTTPAdapter().complete(self._http_slot(), system="s", user="u")
+        self.assertIn("HTTPError 413", str(raised.exception))
+        self.assertIn("context too large", str(raised.exception))
+
+    def test_http_error_summary_does_not_leak_secret_or_headers(self):
+        error = HTTPError(
+            "http://127.0.0.1:8080/v1/chat/completions",
+            400,
+            "Bad Request",
+            {"Authorization": "Bearer secret-token"},
+            io.BytesIO(b'{"error":{"message":"Authorization Bearer secret-token"}}'),
+        )
+        with patch("zen_ma2_agent.llm.router.urlopen", side_effect=error):
+            with self.assertRaises(ProviderUnavailable) as raised:
+                OpenAICompatibleHTTPAdapter().complete(self._http_slot(), system="s", user="u")
+        self.assertEqual(str(raised.exception), "Provider slot 1 request failed: HTTPError 400")
+        self.assertNotIn("secret-token", str(raised.exception))
 
     def test_design_requires_structured_fields(self):
         with self.assertRaises(DesignValidationError):

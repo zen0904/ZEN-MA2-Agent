@@ -155,6 +155,7 @@ ROLE_ROUTER_NAMES = {
     "critic": "CRITIC",
     "finalizer": "FINALIZER",
 }
+ROLE_KNOWLEDGE_LIMIT = 8
 
 RETRY_SAFETY_CONTRACT = (
     " Preserve valid UNKNOWN and uncertainty states. Do not invent facts to satisfy validation."
@@ -200,29 +201,59 @@ ROLE_SYSTEM_PROMPTS = {
 }
 
 
+def build_role_evidence_ledger(full_ledger: dict[str, object], selected_ids: list[str]) -> dict[str, object]:
+    """Project the backend ledger for one role without weakening validation."""
+    selected = set(selected_ids)
+    entries = [
+        entry for entry in full_ledger.get("entries", [])
+        if isinstance(entry, dict) and (entry.get("kind") == "VERIFIED_FACT" or entry.get("evidence_ref") in selected)
+    ]
+    return {"schema": full_ledger.get("schema", "zen.evidence_ledger.v0.1"), "entries": sorted(entries, key=lambda item: str(item.get("evidence_ref", "")))}
+
+
+def project_role_source_registry(full_registry: dict[str, object], selected_records: list[dict[str, object]]) -> dict[str, object]:
+    """Expose only registry metadata referenced by a role's selected records."""
+    selected_ids = {str(record.get("source_id")) for record in selected_records}
+    sources = [source for source in full_registry.get("sources", []) if isinstance(source, dict) and source.get("source_id") in selected_ids]
+    return {"schema": full_registry.get("schema", "zen.external_lighting_knowledge_source_registry.v0.1"), "registry_id": full_registry.get("registry_id", ""), "sources": sorted(sources, key=lambda item: str(item.get("source_id", "")))}
+
+
 def _role_context(role_name: str, *, request: str, context: dict[str, object], completed: dict[str, dict[str, object]]) -> dict[str, object]:
     categories = context.get("categories", {})
-    knowledge = categories.get("professional_lighting_design_knowledge", {})
-    knowledge_records = knowledge.get("records", []) if isinstance(knowledge, dict) else []
-    role_knowledge = project_records(retrieve_records(knowledge_records, role=ROLE_ROUTER_NAMES[role_name], request=request, current_context=context, limit=8, max_records_per_topic=2))
+    # Retrieval is role-specific over the complete backend corpus.  The prior
+    # generic 12-record seed is intentionally not used as a model-facing pool.
+    canonical_records = context.get("canonical_knowledge_records", [])
+    selected_records = retrieve_records(canonical_records, role=ROLE_ROUTER_NAMES[role_name], request=request, current_context=context, limit=ROLE_KNOWLEDGE_LIMIT, max_records_per_topic=2)
+    role_knowledge = project_records(selected_records)
+    selected_ids = [str(item["record_id"]) for item in selected_records]
+    full_registry = categories.get("source_provenance", {}) if isinstance(categories, dict) else {}
+    role_registry = project_role_source_registry(full_registry, selected_records) if isinstance(full_registry, dict) else {"schema": "zen.external_lighting_knowledge_source_registry.v0.1", "registry_id": "", "sources": []}
+    role_ledger = build_role_evidence_ledger(context.get("evidence_ledger", {}), selected_ids)
     knowledge_context = {
         "schema": "zen.knowledge_retrieval_context.v0.1",
         "records": role_knowledge,
-        "knowledge_refs": [item["record_id"] for item in role_knowledge],
+        "knowledge_refs": selected_ids,
         "topic_diversity": sorted({item["topic"] for item in role_knowledge}),
     }
     common = {
         "user_request": request,
         "hard_constraints": context.get("hard_constraints", []),
         "evidence_boundary": context.get("evidence_boundary", {}),
-        "evidence_ledger": context.get("evidence_ledger", {"schema": "zen.evidence_ledger.v0.1", "entries": [], "available_verified_facts": []}),
+        "evidence_ledger": role_ledger,
         "professional_lighting_design_knowledge": knowledge_context,
+        "role_context_metadata": {
+            "selected_knowledge_count": len(selected_records),
+            "selected_knowledge_ids": selected_ids,
+            "selected_topics": sorted({str(item["topic"]) for item in selected_records}),
+            "selected_source_ids": sorted({str(item.get("source_id")) for item in selected_records}),
+            "evidence_entry_count": len(role_ledger["entries"]),
+        },
     }
     if role_name == "researcher":
         return common | {
             "research_context": {
                 "professional_lighting_design_knowledge": knowledge_context,
-                "source_provenance": categories.get("source_provenance", {}),
+                "source_provenance": role_registry,
             }
         }
     if role_name == "lighting_designer":
@@ -355,6 +386,24 @@ def _record_attempt_diagnostic(path: Path, *, role_name: str, attempt: int, cont
     })
 
 
+def _record_model_context_diagnostic(path: Path, *, role_name: str, attempt: int, system: str, user: str, payload: dict[str, object]) -> None:
+    metadata = payload.get("role_context_metadata", {})
+    _write_json(path / "diagnostics" / f"{role_name}-{attempt:02}.json", {
+        "schema": "zen.model_context_diagnostic.v0.1",
+        "role": role_name,
+        "attempt": attempt,
+        "selected_knowledge_count": metadata.get("selected_knowledge_count", 0) if isinstance(metadata, dict) else 0,
+        "selected_knowledge_ids": metadata.get("selected_knowledge_ids", []) if isinstance(metadata, dict) else [],
+        "selected_topics": metadata.get("selected_topics", []) if isinstance(metadata, dict) else [],
+        "selected_source_ids": metadata.get("selected_source_ids", []) if isinstance(metadata, dict) else [],
+        "evidence_entry_count": len(payload.get("evidence_ledger", {}).get("entries", [])) if isinstance(payload.get("evidence_ledger"), dict) else 0,
+        "system_characters": len(system),
+        "user_characters": len(user),
+        "payload_utf8_bytes": len((system + user).encode("utf-8")),
+        "secrets_included": False,
+    })
+
+
 def _run_role(
     router: ProviderRouter,
     *,
@@ -371,10 +420,12 @@ def _run_role(
         if last_error is not None:
             system += f" Previous attempt failed validation: {last_error}. Correct only the structural issue and return JSON only." + RETRY_SAFETY_CONTRACT
         try:
+            user = _canonical_json(payload)
+            _record_model_context_diagnostic(run_path, role_name=role_name, attempt=attempt, system=system, user=user, payload=payload)
             content, slot = router.complete(
                 role=ROLE_ROUTER_NAMES[role_name],
                 system=system,
-                user=_canonical_json(payload),
+                user=user,
             )
             return validator(_parse_json(content)), slot, attempt
         except (ProviderUnavailable, MultiAgentRunError, DesignValidationError) as exc:

@@ -110,6 +110,30 @@ def load_provider_slots(path: Path | None = None) -> tuple[str, tuple[ProviderSl
     return mode, tuple(slots)
 
 
+def _safe_http_error_summary(exc: HTTPError) -> str:
+    """Return a bounded, non-secret diagnostic extracted from an HTTP error."""
+    try:
+        raw = exc.read(4096).decode("utf-8", errors="replace")
+    except Exception:
+        return ""
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        return ""
+    if not isinstance(payload, dict):
+        return ""
+    error = payload.get("error")
+    if isinstance(error, dict):
+        value = error.get("message") or error.get("detail")
+    else:
+        value = payload.get("message") or payload.get("detail")
+    text = str(value or "").strip()
+    lowered = text.casefold()
+    if any(token in lowered for token in ("authorization", "api_key", "apikey", "bearer", "token")):
+        return ""
+    return " ".join(text.split())[:500]
+
+
 class OpenAICompatibleHTTPAdapter:
     """Small adapter for OpenAI-compatible Chat Completions endpoints.
 
@@ -138,7 +162,11 @@ class OpenAICompatibleHTTPAdapter:
         try:
             with urlopen(request, timeout=slot.timeout_seconds) as response:
                 payload = json.loads(response.read().decode("utf-8"))
-        except (HTTPError, URLError, TimeoutError, socket.timeout, json.JSONDecodeError) as exc:
+        except HTTPError as exc:
+            detail = _safe_http_error_summary(exc)
+            suffix = f": {detail}" if detail else ""
+            raise ProviderUnavailable(f"Provider slot {slot.number} request failed: HTTPError {exc.code}{suffix}") from exc
+        except (URLError, TimeoutError, socket.timeout, json.JSONDecodeError) as exc:
             # Do not leak endpoint query details, response bodies, or credentials.
             raise ProviderUnavailable(f"Provider slot {slot.number} request failed: {type(exc).__name__}") from exc
         try:

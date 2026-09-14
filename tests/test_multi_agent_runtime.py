@@ -7,7 +7,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from zen_ma2_agent.llm.multi_agent_runtime import MultiAgentRunError, run_multi_agent_design
+from zen_ma2_agent.llm.autonomous_designer import build_designer_context
+from zen_ma2_agent.llm.multi_agent_runtime import MultiAgentRunError, _role_context, run_multi_agent_design
 from zen_ma2_agent.llm.router import ProviderRouter, ProviderSlot, ProviderUnavailable
 from zen_ma2_agent.run_checkpoints import read_step_artifact
 
@@ -239,6 +240,47 @@ class MultiAgentRuntimeTests(unittest.TestCase):
         self.assertTrue(knowledge["knowledge_refs"])
         self.assertEqual(len(knowledge["knowledge_refs"]), len(knowledge["records"]))
         self.assertNotIn("context_excerpt", json.dumps(knowledge))
+
+    def test_each_role_retrieves_from_full_canonical_store_and_receives_scoped_context(self):
+        context = build_designer_context(self.repo_root)
+        self.assertEqual(len(context["canonical_knowledge_records"]), 140)
+        self.assertEqual(len(context["evidence_ledger"]["entries"]), 140)
+        completed = {"researcher": _research(), "lighting_designer": _draft(), "critic": _critic()}
+        for role_name in ("researcher", "lighting_designer", "critic", "finalizer"):
+            payload = _role_context(role_name, request="synthetic context-size regression", context=context, completed=completed)
+            metadata = payload["role_context_metadata"]
+            projected = payload["professional_lighting_design_knowledge"]
+            self.assertLessEqual(metadata["selected_knowledge_count"], 8)
+            self.assertEqual(metadata["selected_knowledge_count"], len(projected["records"]))
+            self.assertEqual(metadata["selected_knowledge_ids"], projected["knowledge_refs"])
+            self.assertLess(len(json.dumps(payload, ensure_ascii=False)), len(json.dumps(context, ensure_ascii=False)))
+            self.assertNotEqual(len(payload["evidence_ledger"]["entries"]), len(context["evidence_ledger"]["entries"]))
+            if role_name == "researcher":
+                source_ids = {source["source_id"] for source in payload["research_context"]["source_provenance"]["sources"]}
+                self.assertTrue(source_ids <= set(metadata["selected_source_ids"]))
+
+    def test_role_retrieval_does_not_depend_on_generic_projected_subset(self):
+        context = build_designer_context(self.repo_root)
+        context["categories"]["professional_lighting_design_knowledge"] = {"records": []}
+        payload = _role_context(
+            "researcher",
+            request="visual hierarchy and negative space",
+            context=context,
+            completed={},
+        )
+        self.assertGreater(payload["role_context_metadata"]["selected_knowledge_count"], 0)
+        self.assertTrue(payload["professional_lighting_design_knowledge"]["records"])
+
+    def test_model_context_diagnostics_are_bounded_and_secret_free(self):
+        router, _ = self._router([_research(), _draft(), _critic(), _final()])
+        run = run_multi_agent_design(router, request="diagnostic request", repo_root=self.repo_root, run_id="context-diagnostics")
+        for role_name in ("researcher", "lighting_designer", "critic", "finalizer"):
+            diagnostic = json.loads((run.run_path / "diagnostics" / f"{role_name}-01.json").read_text(encoding="utf-8"))
+            self.assertEqual(diagnostic["schema"], "zen.model_context_diagnostic.v0.1")
+            self.assertLessEqual(diagnostic["selected_knowledge_count"], 8)
+            self.assertGreater(diagnostic["payload_utf8_bytes"], 0)
+            self.assertFalse(diagnostic["secrets_included"])
+            self.assertNotIn("Authorization", json.dumps(diagnostic))
 
     def test_invalid_final_schema_fails_closed_without_final_design_or_ma2_write(self):
         invalid_final = _final() | {"ma2_commands": ["forbidden"]}
