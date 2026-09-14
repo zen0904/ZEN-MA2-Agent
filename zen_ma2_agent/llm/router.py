@@ -127,9 +127,11 @@ def _safe_http_error_summary(exc: HTTPError) -> str:
         value = error.get("message") or error.get("detail")
     else:
         value = payload.get("message") or payload.get("detail")
-    text = str(value or "").strip()
+    if not isinstance(value, str):
+        return ""
+    text = value.strip()
     lowered = text.casefold()
-    if any(token in lowered for token in ("authorization", "api_key", "apikey", "bearer", "token")):
+    if any(token in lowered for token in ("authorization", "api_key", "apikey", "bearer", "token", "secret")):
         return ""
     return " ".join(text.split())[:500]
 

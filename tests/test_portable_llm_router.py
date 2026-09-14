@@ -91,6 +91,20 @@ class PortableLLMRouterTests(unittest.TestCase):
         self.assertEqual(str(raised.exception), "Provider slot 1 request failed: HTTPError 400")
         self.assertNotIn("secret-token", str(raised.exception))
 
+    def test_http_error_non_string_detail_is_discarded(self):
+        error = HTTPError(
+            "http://127.0.0.1:8080/v1/chat/completions",
+            500,
+            "Server Error",
+            {},
+            io.BytesIO(b'{"error":{"message":{"Authorization":"secret-token"}}}'),
+        )
+        with patch("zen_ma2_agent.llm.router.urlopen", side_effect=error):
+            with self.assertRaises(ProviderUnavailable) as raised:
+                OpenAICompatibleHTTPAdapter().complete(self._http_slot(), system="s", user="u")
+        self.assertEqual(str(raised.exception), "Provider slot 1 request failed: HTTPError 500")
+        self.assertNotIn("secret-token", str(raised.exception))
+
     def test_design_requires_structured_fields(self):
         with self.assertRaises(DesignValidationError):
             validate_design_output({"schema": SCHEMA})
