@@ -208,7 +208,11 @@ def build_role_evidence_ledger(full_ledger: dict[str, object], selected_ids: lis
         entry for entry in full_ledger.get("entries", [])
         if isinstance(entry, dict) and (entry.get("kind") == "VERIFIED_FACT" or entry.get("evidence_ref") in selected)
     ]
-    return {"schema": full_ledger.get("schema", "zen.evidence_ledger.v0.1"), "entries": sorted(entries, key=lambda item: str(item.get("evidence_ref", "")))}
+    return {
+        "schema": full_ledger.get("schema", "zen.evidence_ledger.v0.1"),
+        "entries": sorted(entries, key=lambda item: str(item.get("evidence_ref", ""))),
+        "available_verified_facts": full_ledger.get("available_verified_facts", []),
+    }
 
 
 def project_role_source_registry(full_registry: dict[str, object], selected_records: list[dict[str, object]]) -> dict[str, object]:

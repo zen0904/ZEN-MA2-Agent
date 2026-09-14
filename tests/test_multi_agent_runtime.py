@@ -255,6 +255,7 @@ class MultiAgentRuntimeTests(unittest.TestCase):
             self.assertEqual(metadata["selected_knowledge_ids"], projected["knowledge_refs"])
             self.assertLess(len(json.dumps(payload, ensure_ascii=False)), len(json.dumps(context, ensure_ascii=False)))
             self.assertNotEqual(len(payload["evidence_ledger"]["entries"]), len(context["evidence_ledger"]["entries"]))
+            self.assertEqual(payload["evidence_ledger"]["available_verified_facts"], context["evidence_ledger"]["available_verified_facts"])
             if role_name == "researcher":
                 source_ids = {source["source_id"] for source in payload["research_context"]["source_provenance"]["sources"]}
                 self.assertTrue(source_ids <= set(metadata["selected_source_ids"]))
