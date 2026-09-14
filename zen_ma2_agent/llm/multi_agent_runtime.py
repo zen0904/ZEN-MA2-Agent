@@ -13,6 +13,7 @@ import json
 import platform
 import shutil
 import subprocess
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -157,6 +158,30 @@ ROLE_ROUTER_NAMES = {
 }
 ROLE_KNOWLEDGE_LIMIT = 8
 
+FINALIZER_RESEARCH_FIELDS = (
+    "research_status",
+    "subject",
+    "transferable_design_observations",
+    "constraints",
+    "uncertainties",
+    "evidence_refs",
+    "sources",
+)
+FINALIZER_DESIGNER_FIELDS = (
+    "design_intent",
+    "visual_strategy",
+    "resource_considerations",
+    "uncertainties",
+    "evidence_refs",
+)
+FINALIZER_CRITIC_FIELDS = (
+    "strengths",
+    "problems",
+    "severity",
+    "revision_requests",
+    "evidence_refs",
+)
+
 RETRY_SAFETY_CONTRACT = (
     " Preserve valid UNKNOWN and uncertainty states. Do not invent facts to satisfy validation."
     " Do not invent color, position, intensity, fixture role, performer position, stage geometry, or source metadata."
@@ -222,12 +247,56 @@ def project_role_source_registry(full_registry: dict[str, object], selected_reco
     return {"schema": full_registry.get("schema", "zen.external_lighting_knowledge_source_registry.v0.1"), "registry_id": full_registry.get("registry_id", ""), "sources": sorted(sources, key=lambda item: str(item.get("source_id", "")))}
 
 
+def _project_artifact_fields(artifact: dict[str, object], fields: tuple[str, ...]) -> dict[str, object]:
+    """Select finalizer inputs without summarizing or rewriting their values."""
+    return {field: artifact[field] for field in fields if field in artifact}
+
+
+def _project_research_artifact(artifact: dict[str, object]) -> dict[str, object]:
+    projected = _project_artifact_fields(artifact, FINALIZER_RESEARCH_FIELDS)
+    sources = projected.get("sources")
+    if isinstance(sources, list):
+        # Source identity is sufficient downstream; canonical metadata remains
+        # available to the backend resolver and is not duplicated in the prompt.
+        projected["sources"] = [
+            {key: item[key] for key in ("source_id", "record_id") if key in item}
+            if isinstance(item, dict) else item
+            for item in sources
+        ]
+    return projected
+
+
+def _project_finalization_context(context: dict[str, object]) -> dict[str, object]:
+    categories = context.get("categories", {})
+    if not isinstance(categories, dict):
+        categories = {}
+    operator_contract = categories.get("operator_contract", {})
+    if isinstance(operator_contract, dict):
+        # Product narrative is not needed to finalize a typed design. Keep the
+        # workflow and console handover constraints, while the full documents
+        # remain available in backend context for validation/audit.
+        operator_contract = {
+            key: operator_contract[key]
+            for key in ("workflow_contract", "ma2_programming_intelligence")
+            if key in operator_contract
+        }
+    return {
+        "fixture_technical_capability": categories.get("fixture_technical_capability", {}),
+        "rig_spatial_visual_affordance": categories.get("rig_spatial_visual_affordance", {}),
+        "operator_contract": operator_contract,
+    }
+
+
 def _role_context(role_name: str, *, request: str, context: dict[str, object], completed: dict[str, dict[str, object]]) -> dict[str, object]:
     categories = context.get("categories", {})
     # Retrieval is role-specific over the complete backend corpus.  The prior
     # generic 12-record seed is intentionally not used as a model-facing pool.
     canonical_records = context.get("canonical_knowledge_records", [])
-    selected_records = retrieve_records(canonical_records, role=ROLE_ROUTER_NAMES[role_name], request=request, current_context=context, limit=ROLE_KNOWLEDGE_LIMIT, max_records_per_topic=2)
+    # Finalization already receives three upstream artifacts; one fewer
+    # knowledge record keeps its model-facing context bounded without changing
+    # retrieval scoring or the canonical backend corpus.
+    role_limit = ROLE_KNOWLEDGE_LIMIT - 1 if role_name == "finalizer" else ROLE_KNOWLEDGE_LIMIT
+    selected_records = retrieve_records(canonical_records, role=ROLE_ROUTER_NAMES[role_name], request=request, current_context=context, limit=role_limit, max_records_per_topic=2)
     role_knowledge = project_records(selected_records)
     selected_ids = [str(item["record_id"]) for item in selected_records]
     full_registry = categories.get("source_provenance", {}) if isinstance(categories, dict) else {}
@@ -279,14 +348,10 @@ def _role_context(role_name: str, *, request: str, context: dict[str, object], c
             },
         }
     return common | {
-        "research_artifact": completed["researcher"],
-        "designer_draft": completed["lighting_designer"],
-        "critic_artifact": completed["critic"],
-        "finalization_context": {
-            "fixture_technical_capability": categories.get("fixture_technical_capability", {}),
-            "rig_spatial_visual_affordance": categories.get("rig_spatial_visual_affordance", {}),
-            "operator_contract": categories.get("operator_contract", {}),
-        },
+        "research_artifact": _project_research_artifact(completed["researcher"]),
+        "designer_draft": _project_artifact_fields(completed["lighting_designer"], FINALIZER_DESIGNER_FIELDS),
+        "critic_artifact": _project_artifact_fields(completed["critic"], FINALIZER_CRITIC_FIELDS),
+        "finalization_context": _project_finalization_context(context),
     }
 
 
@@ -390,9 +455,20 @@ def _record_attempt_diagnostic(path: Path, *, role_name: str, attempt: int, cont
     })
 
 
-def _record_model_context_diagnostic(path: Path, *, role_name: str, attempt: int, system: str, user: str, payload: dict[str, object]) -> None:
+def _record_model_context_diagnostic(
+    path: Path,
+    *,
+    role_name: str,
+    attempt: int,
+    system: str,
+    user: str,
+    payload: dict[str, object],
+    provider_elapsed_seconds: float | None = None,
+    failure_class: str = "PENDING",
+) -> Path:
     metadata = payload.get("role_context_metadata", {})
-    _write_json(path / "diagnostics" / f"{role_name}-{attempt:02}.json", {
+    diagnostic_path = path / "diagnostics" / f"{role_name}-{attempt:02}.json"
+    _write_json(diagnostic_path, {
         "schema": "zen.model_context_diagnostic.v0.1",
         "role": role_name,
         "attempt": attempt,
@@ -404,8 +480,34 @@ def _record_model_context_diagnostic(path: Path, *, role_name: str, attempt: int
         "system_characters": len(system),
         "user_characters": len(user),
         "payload_utf8_bytes": len((system + user).encode("utf-8")),
+        "provider_elapsed_seconds": provider_elapsed_seconds,
+        "failure_class": failure_class,
         "secrets_included": False,
     })
+    return diagnostic_path
+
+
+def _update_model_context_diagnostic(path: Path, *, provider_elapsed_seconds: float, failure_class: str) -> None:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return
+    if not isinstance(value, dict):
+        return
+    value["provider_elapsed_seconds"] = round(provider_elapsed_seconds, 3)
+    value["failure_class"] = failure_class
+    _write_json(path, value)
+
+
+def _failure_class(error: Exception) -> str:
+    if isinstance(error, ProviderUnavailable):
+        message = str(error).casefold()
+        if any(marker in message for marker in ("timeouterror", "socket.timeout", "timed out", "timeout")):
+            return "TRANSPORT_TIMEOUT"
+        if any(marker in message for marker in ("urlerror", "connectionerror", "connection refused", "connection failed")):
+            return "TRANSPORT_ERROR"
+        return "PROVIDER_ERROR"
+    return "OUTPUT_VALIDATION"
 
 
 def _run_role(
@@ -423,21 +525,45 @@ def _run_role(
         system = ROLE_SYSTEM_PROMPTS[role_name]
         if last_error is not None:
             system += f" Previous attempt failed validation: {last_error}. Correct only the structural issue and return JSON only." + RETRY_SAFETY_CONTRACT
+        diagnostic_path: Path | None = None
+        started = time.monotonic()
         try:
             user = _canonical_json(payload)
-            _record_model_context_diagnostic(run_path, role_name=role_name, attempt=attempt, system=system, user=user, payload=payload)
+            diagnostic_path = _record_model_context_diagnostic(
+                run_path,
+                role_name=role_name,
+                attempt=attempt,
+                system=system,
+                user=user,
+                payload=payload,
+            )
             content, slot = router.complete(
                 role=ROLE_ROUTER_NAMES[role_name],
                 system=system,
                 user=user,
             )
-            return validator(_parse_json(content)), slot, attempt
+            elapsed = time.monotonic() - started
+            _update_model_context_diagnostic(path=diagnostic_path, provider_elapsed_seconds=elapsed, failure_class="SUCCESS")
+            try:
+                artifact = validator(_parse_json(content))
+            except (MultiAgentRunError, DesignValidationError) as exc:
+                _update_model_context_diagnostic(path=diagnostic_path, provider_elapsed_seconds=elapsed, failure_class="OUTPUT_VALIDATION")
+                raise exc
+            return artifact, slot, attempt
         except (ProviderUnavailable, MultiAgentRunError, DesignValidationError) as exc:
+            elapsed = time.monotonic() - started
+            if diagnostic_path is not None:
+                classification = _failure_class(exc)
+                _update_model_context_diagnostic(path=diagnostic_path, provider_elapsed_seconds=elapsed, failure_class=classification)
             last_error = exc
             if content:
                 _record_attempt_diagnostic(run_path, role_name=role_name, attempt=attempt, content=content, error=exc)
+            if _failure_class(exc) == "TRANSPORT_TIMEOUT":
+                break
     assert last_error is not None
-    raise MultiAgentRunError(f"{role_name} failed after {max_attempts} attempts: {last_error}") from last_error
+    failure = MultiAgentRunError(f"{role_name} failed after {attempt} attempts: {last_error}")
+    failure.attempts = attempt
+    raise failure from last_error
 
 
 def _new_run_id() -> str:
@@ -559,5 +685,5 @@ def run_multi_agent_design(
     except (MultiAgentRunError, DesignValidationError, KeyError) as exc:
         state |= {"status": "FAILED", "failed_at": datetime.now(timezone.utc).isoformat()}
         _write_run_state(path, state)
-        _record_failure(path, role_name=active_role, attempts=max_role_attempts, error=exc)
+        _record_failure(path, role_name=active_role, attempts=getattr(exc, "attempts", max_role_attempts), error=exc)
         raise MultiAgentRunError(str(exc)) from exc

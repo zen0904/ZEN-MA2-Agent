@@ -4,6 +4,8 @@ import json
 import os
 import tempfile
 import unittest
+import ast
+import inspect
 from pathlib import Path
 from unittest.mock import patch
 
@@ -199,6 +201,9 @@ class MultiAgentRuntimeTests(unittest.TestCase):
         diagnostic = json.loads((run.run_path / "attempts" / "researcher-01.json").read_text(encoding="utf-8"))
         self.assertEqual(diagnostic["schema"], "zen.multi_agent_attempt_diagnostic.v0.1")
         self.assertEqual(diagnostic["response_characters"], len("not json"))
+        context_diagnostic = json.loads((run.run_path / "diagnostics" / "researcher-01.json").read_text(encoding="utf-8"))
+        self.assertEqual(context_diagnostic["failure_class"], "OUTPUT_VALIDATION")
+        self.assertIsInstance(context_diagnostic["provider_elapsed_seconds"], (int, float))
 
     def test_retry_prompt_preserves_uncertainty_and_avoids_artistic_invention(self):
         router, adapter = self._router(["not json", _research(), _draft(), _critic(), _final()])
@@ -280,8 +285,104 @@ class MultiAgentRuntimeTests(unittest.TestCase):
             self.assertEqual(diagnostic["schema"], "zen.model_context_diagnostic.v0.1")
             self.assertLessEqual(diagnostic["selected_knowledge_count"], 8)
             self.assertGreater(diagnostic["payload_utf8_bytes"], 0)
+            self.assertEqual(diagnostic["failure_class"], "SUCCESS")
+            self.assertIsInstance(diagnostic["provider_elapsed_seconds"], (int, float))
             self.assertFalse(diagnostic["secrets_included"])
             self.assertNotIn("Authorization", json.dumps(diagnostic))
+
+    def test_finalizer_projection_preserves_semantics_without_redundant_envelopes(self):
+        context = build_designer_context(self.repo_root)
+        research = _research() | {
+            "transferable_design_observations": [{"observation": "layer depth", "evidence_refs": ["K-001"]}],
+            "constraints": ["keep UNKNOWN"],
+            "uncertainties": ["instrumentation UNKNOWN"],
+            "evidence_refs": ["K-001"],
+            "sources": [{"source_id": "SRC-001", "record_id": "K-001", "title": "must not be duplicated"}],
+            "resolved_sources": [{"source_id": "SRC-001", "title": "canonical metadata", "url": "https://example.invalid"}],
+            "provider": "secret-free-envelope",
+            "artifact_hash": "redundant",
+        }
+        designer = _draft() | {
+            "design_intent": {"purpose": "preserve contrast", "evidence_refs": ["K-001"]},
+            "visual_strategy": {"keep": ["negative space"]},
+            "uncertainties": ["stage target UNKNOWN"],
+            "evidence_refs": ["K-001"],
+            "provider": "redundant",
+        }
+        critic = _critic() | {
+            "strengths": ["clear hierarchy"],
+            "revision_requests": [{"request": "retain headroom", "evidence_refs": ["K-001"]}],
+            "evidence_refs": ["K-001"],
+            "run_diagnostics": {"payload": "redundant"},
+        }
+        payload = _role_context(
+            "finalizer",
+            request="projection test",
+            context=context,
+            completed={"researcher": research, "lighting_designer": designer, "critic": critic},
+        )
+        self.assertEqual(payload["research_artifact"]["evidence_refs"], ["K-001"])
+        self.assertEqual(payload["research_artifact"]["sources"], [{"source_id": "SRC-001", "record_id": "K-001"}])
+        self.assertEqual(payload["designer_draft"]["design_intent"], designer["design_intent"])
+        self.assertEqual(payload["designer_draft"]["uncertainties"], designer["uncertainties"])
+        self.assertEqual(payload["critic_artifact"]["revision_requests"], critic["revision_requests"])
+        self.assertNotIn("resolved_sources", payload["research_artifact"])
+        self.assertNotIn("provider", json.dumps(payload))
+        self.assertNotIn("run_diagnostics", json.dumps(payload))
+        self.assertNotIn("source_provenance", json.dumps(payload["finalization_context"]))
+
+    def test_finalizer_projection_is_materially_smaller_than_legacy_shape(self):
+        context = build_designer_context(self.repo_root)
+        research = _research() | {
+            "sources": [{"source_id": f"SRC-{i:03}", "record_id": f"K-{i:03}", "title": "duplicate metadata", "url": "https://example.invalid"} for i in range(20)],
+            "resolved_sources": [{"source_id": f"SRC-{i:03}", "record_id": f"K-{i:03}", "title": "canonical", "url": "https://example.invalid", "publisher": "publisher"} for i in range(20)],
+            "envelope_metadata": {"diagnostics": "x" * 6000},
+        }
+        designer = _draft() | {"envelope_metadata": {"diagnostics": "y" * 5000}}
+        critic = _critic() | {"envelope_metadata": {"diagnostics": "z" * 5000}}
+        completed = {"researcher": research, "lighting_designer": designer, "critic": critic}
+        payload = _role_context("finalizer", request="synthetic 140-record context", context=context, completed=completed)
+        legacy = {
+            "user_request": "synthetic 140-record context",
+            "research_artifact": research,
+            "designer_draft": designer,
+            "critic_artifact": critic,
+            "finalization_context": {
+                "fixture_technical_capability": context["categories"]["fixture_technical_capability"],
+                "rig_spatial_visual_affordance": context["categories"]["rig_spatial_visual_affordance"],
+                "operator_contract": context["categories"]["operator_contract"],
+            },
+            "evidence_ledger": context["evidence_ledger"],
+            "source_registry": context["categories"]["source_provenance"],
+        }
+        old_bytes = len(json.dumps(legacy, ensure_ascii=False).encode("utf-8"))
+        new_bytes = len(json.dumps(payload, ensure_ascii=False).encode("utf-8"))
+        self.assertLess(new_bytes, old_bytes)
+        self.assertLessEqual(new_bytes, 24000)
+        self.assertEqual(len(context["canonical_knowledge_records"]), 140)
+        self.assertEqual(len(context["evidence_ledger"]["entries"]), 140)
+
+    def test_timeout_fails_fast_without_identical_retries_and_records_class(self):
+        router, adapter = self._router([ProviderUnavailable("Provider slot 1 request failed: TimeoutError")])
+        with self.assertRaises(MultiAgentRunError):
+            run_multi_agent_design(router, request="timeout", repo_root=self.repo_root, run_id="timeout-fast")
+        self.assertEqual(len(adapter.calls), 1)
+        root = Path(self.temp.name) / "projects" / "runs" / "timeout-fast"
+        diagnostic = json.loads((root / "diagnostics" / "researcher-01.json").read_text(encoding="utf-8"))
+        self.assertEqual(diagnostic["failure_class"], "TRANSPORT_TIMEOUT")
+        self.assertIsInstance(diagnostic["provider_elapsed_seconds"], (int, float))
+        self.assertFalse((root / "diagnostics" / "researcher-02.json").exists())
+
+    def test_runtime_has_no_ma2_builder_or_resolver_import(self):
+        import zen_ma2_agent.llm.multi_agent_runtime as runtime
+        tree = ast.parse(inspect.getsource(runtime))
+        imported = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom):
+                imported.append(node.module or "")
+            elif isinstance(node, ast.Import):
+                imported.extend(alias.name for alias in node.names)
+        self.assertFalse(any("ma2" in name.casefold() or "builder" in name.casefold() or "resolver" in name.casefold() for name in imported))
 
     def test_invalid_final_schema_fails_closed_without_final_design_or_ma2_write(self):
         invalid_final = _final() | {"ma2_commands": ["forbidden"]}
