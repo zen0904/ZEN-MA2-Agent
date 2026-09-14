@@ -31,7 +31,7 @@ The historical Smoke 002 payload sizes above remain the production-like baseline
 
 Output/schema/evidence validation failures retain the existing bounded structural retry behavior. Provider transport failures are classified separately. A timeout (`TimeoutError`, `socket.timeout`, or equivalent timeout diagnostic) fails fast after the first request, so identical timeout retries are zero (one total attempt). Other provider errors retain the bounded retry limit.
 
-Each model-context diagnostic now records `provider_elapsed_seconds` and `failure_class` (`SUCCESS`, `OUTPUT_VALIDATION`, `TRANSPORT_TIMEOUT`, `TRANSPORT_ERROR`, or `PROVIDER_ERROR`) in addition to the existing bounded context metadata. No API keys, authorization headers, or full prompt dumps are recorded.
+Each model-context diagnostic now records `provider_elapsed_seconds` and `failure_class` (`SUCCESS`, `OUTPUT_VALIDATION`, `TRANSPORT_TIMEOUT`, `TRANSPORT_ERROR`, or `PROVIDER_ERROR`) in addition to the existing bounded context metadata. Failed-response attempt diagnostics carry the same timing/classification fields. No API keys, authorization headers, or full prompt dumps are recorded.
 
 ## Verification
 

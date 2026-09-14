@@ -440,7 +440,16 @@ def _record_failure(path: Path, *, role_name: str, attempts: int, error: Excepti
     })
 
 
-def _record_attempt_diagnostic(path: Path, *, role_name: str, attempt: int, content: str, error: Exception) -> None:
+def _record_attempt_diagnostic(
+    path: Path,
+    *,
+    role_name: str,
+    attempt: int,
+    content: str,
+    error: Exception,
+    provider_elapsed_seconds: float | None = None,
+    failure_class: str = "OUTPUT_VALIDATION",
+) -> None:
     """Keep an agent-owned failed response for local validation diagnosis."""
     _write_json(path / "attempts" / f"{role_name}-{attempt:02}.json", {
         "schema": ATTEMPT_SCHEMA,
@@ -450,6 +459,8 @@ def _record_attempt_diagnostic(path: Path, *, role_name: str, attempt: int, cont
         "response_characters": len(content),
         "validation_error_type": type(error).__name__,
         "validation_error": str(error),
+        "provider_elapsed_seconds": provider_elapsed_seconds,
+        "failure_class": failure_class,
         "raw_response": content,
         "CODEX_ARTISTIC_INTERVENTION": "NONE",
     })
@@ -557,7 +568,15 @@ def _run_role(
                 _update_model_context_diagnostic(path=diagnostic_path, provider_elapsed_seconds=elapsed, failure_class=classification)
             last_error = exc
             if content:
-                _record_attempt_diagnostic(run_path, role_name=role_name, attempt=attempt, content=content, error=exc)
+                _record_attempt_diagnostic(
+                    run_path,
+                    role_name=role_name,
+                    attempt=attempt,
+                    content=content,
+                    error=exc,
+                    provider_elapsed_seconds=elapsed,
+                    failure_class=_failure_class(exc),
+                )
             if _failure_class(exc) == "TRANSPORT_TIMEOUT":
                 break
     assert last_error is not None
