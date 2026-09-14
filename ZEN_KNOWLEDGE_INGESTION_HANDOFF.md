@@ -1,11 +1,12 @@
 # ZEN Knowledge Ingestion Handoff
 
 Batch: Pack 001 complete (A/B/C/D)
+Commits: c1fa8eb (pack/registry), 259907f (retrieval + visual-reference foundation), 5f34e5f (benchmarks/reports)
 Records: 140
 Sources: 15
 Duplicate candidates: 0 at deterministic threshold 0.82
 Rejected candidates: 0
-Tests: targeted knowledge/visual-reference/benchmark tests passed; full suite pending final run
+Tests: 405 passed, 2 warnings, 18 subtests
 Production Designer: UNCHANGED
 B3: GUIDANCE_ASSISTED_AB_ONLY
 Local model called: NO
