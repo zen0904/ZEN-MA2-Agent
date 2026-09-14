@@ -194,3 +194,63 @@ Safety: no MA2 objects, fixtures, presets, sequences, executors, or Show state
 were modified. No cloud call or training occurred, and no local-model design
 output was fabricated. Existing cache directories, Smoke 001 artifacts, and
 the original failed Smoke 002 attempt remain intact.
+
+## Smoke 002 post-Finalizer-fix rerun
+
+This section records the latest successful run and does not erase the earlier
+failed attempts above. The exact unchanged request file was used. Its runtime
+canonical request hash was `7454b1f0b5c1e359c2e47fb21f61c506decbfb69434d63e4d20ad22b926276f1` and the USB working copy was fast-forwarded to `3d49578d2c5411b10b6177e6b6219e6ec91795b8` before launch. Local `/health` and `/v1/models` both returned HTTP 200 for Qwen2.5-7B-Instruct-Q4_K_M. Cloud was neither configured nor used, and MA2 was not invoked.
+
+Run state is `COMPLETE`; the validated final artifact is the actual
+`E:\\ZEN_MA2_AGENT\\projects\\runs\\local-multi-agent-smoke-002\\final_design.json`.
+Prior evidence remains under `restart_archive/`; a stale diagnostic was moved
+there after the run so current diagnostics contain only current attempts.
+
+| Role | Attempts | Selected records | Evidence entries | Payload bytes | Elapsed seconds | Result |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Researcher | 1 | 8 | 8 | 17,161 | 493.500 | SUCCESS |
+| Lighting Designer | 1 | 8 | 8 | 28,440 | 648.891 | SUCCESS |
+| Critic | 1 | 8 | 8 | 23,819 | 630.468 | SUCCESS |
+| Finalizer | 2 | 7 | 7 | 26,858 / 27,349 | 853.109 / 717.562 | OUTPUT_VALIDATION / SUCCESS |
+
+Total runtime was 3,343.902 seconds (~55m44s), versus the prior controlled
+rerun's approximately 3,600 seconds (~60m), an operational reduction of about
+7.11%. Finalizer attempt 1 returned content but failed structural validation;
+attempt 2 was a bounded validation repair and succeeded. No Finalizer
+transport timeout occurred, so timeout fail-fast was not exercised and no
+identical timeout retry was sent.
+
+The Finalizer diagnostics show the deterministic projection: seven selected
+knowledge records/evidence entries, projected upstream fields, and no full
+source registry in the model-facing payload. Runtime validation still used the
+full canonical ledger and source registry. The final artifact is schema-valid
+(`zen.autonomous_design.v0.1`) but sparse: it preserves `UNKNOWN` for position,
+main sequence, and free-cue details. This is an artifact observation, not an
+artistic approval.
+
+### Latest A/B matrix (Smoke 001 vs successful Smoke 002 rerun)
+
+| Criterion | Result | Artifact evidence |
+|---|---|---|
+| Research provenance | BETTER | Researcher source IDs resolved through the canonical registry. |
+| Knowledge utilization | BETTER | Role-scoped records/evidence were retrieved from the 140-record store. |
+| Design hierarchy | BETTER / HUMAN REVIEW REQUIRED | Designer and Finalizer describe hierarchy and contrast; human judgment remains required. |
+| Negative space / restraint | BETTER / HUMAN REVIEW REQUIRED | Intent and strategy mention restraint/quiet scenes. |
+| Depth / layering | BETTER / HUMAN REVIEW REQUIRED | Designer strategy references visual depth. |
+| Color reasoning | BETTER / CONTEXTUAL ONLY | Color is treated as a separable dimension, not a fixed recipe. |
+| Movement reasoning | BETTER / UNKNOWN-SAFE | Movement is selectively activated without invented implementation. |
+| Repeated-section development | BETTER / NOT DEMONSTRATED | No concrete repeated section exists in the synthetic request. |
+| Density/intensity headroom | BETTER / BOUNDED | Artifacts reference reserving dimensions for later contrast. |
+| Fixture-role locking | BETTER | No permanent role is assigned from Group labels. |
+| Unknown preservation | BETTER | Finalizer keeps `UNKNOWN` for position, main sequence, and free-cue layer. |
+| Critic usefulness | BETTER | Critic identifies missing song/spatial context and strategy clarity. |
+| Finalizer hallucination | BETTER | No fabricated geometry, position target, or executable command appears. |
+| Retry degradation | BETTER operationally | One structural retry succeeded after projection; no timeout repetition. |
+| Overall professional plausibility | INCONCLUSIVE | Schema-valid output exists, but artistic quality remains for human review. |
+
+Role verdicts remain evidence-bound: `QWEN_7B_RESEARCHER=PASS`,
+`QWEN_7B_DESIGNER=BORDERLINE`, `QWEN_7B_CRITIC=BORDERLINE`,
+`QWEN_7B_FINALIZER=BORDERLINE` (schema-valid and uncertainty-preserving, but
+sparse). This is not a production-readiness claim.
+
+`MA2_WRITES=0` and `CODEX_ARTISTIC_INTERVENTION=NONE`.
