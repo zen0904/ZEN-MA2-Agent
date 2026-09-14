@@ -10,6 +10,19 @@ The run ID was `local-multi-agent-smoke-002`; Smoke 001 remains preserved and
 was not overwritten. The USB repo was fast-forwarded to the required
 `bb9058725a42bbdda363098351b498b457957abd` before the successful attempt.
 
+The exact bounded context path was the existing `build_designer_context`
+contract. It read these repo-owned inputs (when present):
+`data/zen_project_control.json`,
+`data/external_lighting_knowledge_pack_001.json`,
+`data/external_lighting_knowledge_source_registry_001.json`,
+`data/current_show_visual_relationships_001.json`,
+`data/zen_show_bound_color_preset_applicability_001.json`,
+`data/ZEN_SHOW_BOUND_FIXTURE_TYPE_BINDING_001.json`, and
+`data/zen_real_ma2_test_show_sheesh_001_plan.json`, plus the bounded
+constitution/workflow/MA2 documents. Smoke 001 recorded context hash
+`6a984d105bc597a68e567ac1e6cf25978e5c82852745282158c32b3de865bf26`;
+Smoke 002 recorded `5d5e6f12444974768e3fc6beaa8447b94f220b26be74f181acd79822df9e772c`.
+
 ## Provider and runtime checks
 
 - Provider: `OPENAI_COMPATIBLE_LOCAL`
