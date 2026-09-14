@@ -139,3 +139,21 @@ commands. Repeated sections receive a bounded deterministic occurrence
 variation, while explicit section-bound accents are limited to at most three
 cues per section. No audio role inference or external AI provider is wired in
 this version.
+
+## Future MA-initiated ZEN MA Box
+
+A separate future deployment architecture lets grandMA2 initiate requests to a
+headless ZEN appliance instead of requiring the operator to begin from the ZEN
+Desktop/Phone surface. The direction is `MA → ZEN → typed intent/design →
+Resolver/Builder → MA`; it does **not** permit an LLM to emit and immediately
+execute arbitrary MA command text.
+
+The first proposed appliance target is the owner's 2012 Mac mini running Ubuntu
+Server headlessly. Its currently reported state is approximately 16 GB RAM
+(unverified) and the original HDD; the HDD is acceptable for an early PoC but
+an SSD is strongly recommended before sustained 24/7/field deployment.
+
+See [ZEN MA Box Architecture](ZEN_MA_BOX_ARCHITECTURE.md) for the detailed
+service split, MA-initiated protocol, watchdog/failure-domain rules, Ubuntu
+porting strategy, hardware assumptions, network isolation, safety boundaries,
+and phased implementation plan.
