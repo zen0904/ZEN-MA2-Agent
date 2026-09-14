@@ -7,13 +7,14 @@ from typing import Any
 SCHEMA = "zen.visual_reference.v0.1"
 REVIEW_STATUSES = {"NEEDS_REVIEW", "HUMAN_CONFIRMED", "REJECTED"}
 REFERENCE_KINDS = {"POSITIVE", "NEGATIVE", "MIXED"}
+MEDIA_ORIGINS = {"EXTERNAL_WEB", "USER_PROVIDED_MEDIA", "LOCAL_REFERENCE"}
 
 
 @dataclass(frozen=True)
 class VisualReference:
     reference_id: str
     title: str
-    source_url: str
+    source_url: str | None
     publisher: str
     retrieved_at: str
     reference_kind: str
@@ -23,11 +24,19 @@ class VisualReference:
     related_topics: tuple[str, ...]
     confidence: str
     review_status: str
+    media_origin: str = "EXTERNAL_WEB"
+    media_ref: str | None = None
     media_policy: str = "METADATA_ONLY_NO_BINARY_MEDIA"
 
     def __post_init__(self) -> None:
-        if not self.reference_id.strip() or not self.title.strip() or not self.source_url.startswith(("https://", "http://")):
-            raise ValueError("Visual reference identity and URL are required.")
+        if not self.reference_id.strip() or not self.title.strip():
+            raise ValueError("Visual reference identity and title are required.")
+        if self.media_origin not in MEDIA_ORIGINS:
+            raise ValueError("Invalid visual reference media origin.")
+        if self.source_url is not None and not self.source_url.startswith(("https://", "http://")):
+            raise ValueError("Visual reference source_url must be an HTTP(S) URL when supplied.")
+        if self.source_url is None and not (self.media_origin == "USER_PROVIDED_MEDIA" and self.media_ref):
+            raise ValueError("A reference without source_url requires USER_PROVIDED_MEDIA and media_ref.")
         if self.reference_kind not in REFERENCE_KINDS or self.review_status not in REVIEW_STATUSES:
             raise ValueError("Invalid visual reference kind or review status.")
         if self.media_policy != "METADATA_ONLY_NO_BINARY_MEDIA":
@@ -42,7 +51,8 @@ class VisualReference:
 def validate_visual_reference(value: dict[str, Any]) -> dict[str, Any]:
     if value.get("schema") != SCHEMA:
         raise ValueError(f"Visual reference schema must be {SCHEMA}.")
-    fields = {field: value[field] for field in VisualReference.__dataclass_fields__}
+    defaults = {"media_origin": "EXTERNAL_WEB", "media_ref": None, "media_policy": "METADATA_ONLY_NO_BINARY_MEDIA"}
+    fields = {field: value[field] if field in value else defaults[field] for field in VisualReference.__dataclass_fields__}
     for name in ("observations", "transferable_concepts", "non_transferable_specifics", "related_topics"):
         fields[name] = tuple(fields[name])
     return VisualReference(**fields).to_dict()

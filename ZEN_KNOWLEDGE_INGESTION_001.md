@@ -60,3 +60,14 @@ The pack can supply contextual questions about hierarchy, contrast, restraint, r
 ## Remaining gaps and next leverage
 
 The pack is broad enough for shared retrieval across Researcher, Designer, Critic, and Finalizer, but artistic usefulness still requires human case review. Highest leverage is a bounded visual/spatial evidence case (or real operator review) that lets the shadow critique distinguish cohort homogeneity, headroom, and hierarchy without inventing Group relationships. Further packs should add diverse sources and preserve scope, not accumulate fixed recipes.
+
+## Visual reference correction addendum (2026-09-14)
+
+`VR_ZEN_YG_LANGUAGE_001` is now recorded as `POSITIVE` and
+`HUMAN_CONFIRMED`, reflecting the user's explicit approval of that reference
+as a preference-layer example. Its observations and transferable concepts are
+bounded around hierarchy, negative space, restraint, headroom, depth, focus,
+contrast, and movement restraint; no color, fixture, placement, timing, or
+genre-wide recipe is promoted. The source is a user-provided media metadata
+reference (`media_ref` only); no binary media is stored and `source_url` is
+nullable for this origin.

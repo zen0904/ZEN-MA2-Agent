@@ -13,5 +13,6 @@ Local model called: NO
 Training executed: NO
 MA2 write audit: ZERO_WRITES
 Codex artistic intervention: NONE
+Visual reference correction: VR_ZEN_YG_LANGUAGE_001 = POSITIVE / HUMAN_CONFIRMED; user media traced by media_ref only
 
 Next step: human review of the retrieved knowledge context and a bounded Show-specific visual/spatial evidence case. Do not promote records or alter production behavior without explicit review and case trial.
