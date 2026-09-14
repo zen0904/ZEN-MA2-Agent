@@ -8,7 +8,7 @@ The request hash is identical in both run records:
 `7454b1f0b5c1e359c2e47fb21f61c506decbfb69434d63e4d20ad22b926276f1`.
 The run ID was `local-multi-agent-smoke-002`; Smoke 001 remains preserved and
 was not overwritten. The USB repo was fast-forwarded to the required
-`bb9058725a42bbdda363098351b498b457957abd` before the attempted run.
+`0c5362906b39dc59f55a1cb40a269978bf7b2220` before the controlled rerun.
 
 The exact bounded context path was the existing `build_designer_context`
 contract. It read these repo-owned inputs (when present):
@@ -33,24 +33,25 @@ Smoke 002 recorded `5d5e6f12444974768e3fc6beaa8447b94f220b26be74f181acd79822df9e
 - Cloud fallback: not configured/used
 - MA2/Telnet/Builder/Resolver: not invoked
 
-Smoke 002 ended at the first role. The formal launcher returned:
-`researcher failed after 3 attempts: slot 1: Provider slot 1 request failed: HTTPError`.
-Its run record has `status = FAILED`, `role_execution = []`,
-`LOCAL_MODEL_USED = NO` (no role completed), `CLOUD_REQUIRED = NO`, and
-`CODEX_ARTISTIC_INTERVENTION = NONE`. The failed run and its restart archive
-remain on the USB; no output was edited.
+The original Smoke 002 attempt (before Context Packaging Fix 001) ended at the
+first role with an HTTPError and remains preserved in the USB restart archive.
+The controlled rerun after the fix reached Researcher, Lighting Designer, and
+Critic successfully, then exhausted three Finalizer attempts on local
+`TimeoutError`. Its run record has `status = FAILED`, `LOCAL_MODEL_USED = YES`,
+`CLOUD_REQUIRED = NO`, and `CODEX_ARTISTIC_INTERVENTION = NONE`; no output was
+edited by Codex.
 
 ## Deterministic A/B facts
 
 | Measure | Smoke 001 | Smoke 002 |
 |---|---|---|
-| Run status | COMPLETE | FAILED at RESEARCHER |
-| Git HEAD recorded | `bcedea28...` (older USB checkout) | `bb905872...` |
+| Run status | COMPLETE | FAILED at FINALIZER (controlled rerun); original attempt failed at RESEARCHER |
+| Git HEAD recorded | `bcedea28...` (older USB checkout) | `0c536290...` |
 | Provider/model | Local Qwen2.5-7B Q4_K_M | Local Qwen2.5-7B Q4_K_M |
-| Role attempts | researcher 1; designer 1; critic 1; finalizer 2 | researcher 3; remaining roles 0 |
-| Retry count | 1 (finalizer) | 2 (researcher) |
-| Total runtime | ~23m 52s | ~0.24s after launcher start |
-| Final schema | Valid `zen.autonomous_design.v0.1` | NOT_AVAILABLE (no final artifact) |
+| Role attempts | researcher 1; designer 1; critic 1; finalizer 2 | researcher 1; designer 1; critic 1; finalizer 3 |
+| Retry count | 1 (finalizer) | 2 (finalizer) |
+| Total runtime | ~23m 52s | ~60m 00s (provider timeout) |
+| Final schema | Valid `zen.autonomous_design.v0.1` | NOT_AVAILABLE (Finalizer exhausted retries) |
 | MA2 writes | 0 | 0 |
 
 Smoke 001 artifacts used for review are the actual USB files under
@@ -83,7 +84,7 @@ These are technical observations, not an artistic approval:
   outside theatre; no instrumentation, harmony, staging, or choreography facts
   were fabricated in the final artifact.
 
-## Smoke 002 structural result
+## Smoke 002 structural result (original failed attempt)
 
 There is no Researcher, Lighting Designer, Critic, or Finalizer artifact to
 grade. Therefore these are `NOT_AVAILABLE`, not passes: knowledge utilization,
@@ -91,58 +92,98 @@ design hierarchy, negative space, depth/layering, repeated-section development,
 unknown preservation in output, critic usefulness, finalizer hallucination, and
 retry degradation after a completed role.
 
-The only deterministic finding is a provider failure at Researcher after three
-attempts, with no cloud fallback and no partial role artifacts. This prevents
-an artistic A/B conclusion and does not prove a Qwen design ceiling.
+The only deterministic finding for the original attempt is a provider failure
+at Researcher after three attempts, with no cloud fallback and no partial role
+artifacts. This remains historical evidence and does not prove a Qwen design
+ceiling.
 
-## A/B review matrix
+## Smoke 002 controlled rerun after Context Packaging Fix 001
+
+The exact request was read from the unchanged USB file. Raw file SHA256 was
+`bc70432407646ae763296934cda39e60ea517da74bc4c898eb4d654e449b0ce7`; the
+runtime canonical request hash was
+`7454b1f0b5c1e359c2e47fb21f61c506decbfb69434d63e4d20ad22b926276f1`, matching
+the recorded Smoke 001/002 identity. No request text was changed.
+
+The fixed runtime used the full canonical store (`140` records) for each role
+and exposed bounded role context (`8` selected records and `8` evidence entries
+per request). Context diagnostics are preserved under
+`E:\\ZEN_MA2_AGENT\\projects\\runs\\local-multi-agent-smoke-002\\diagnostics\\`:
+
+| Role / attempt | Selected records | Evidence entries | Payload UTF-8 bytes | Result |
+|---|---:|---:|---:|---|
+| Researcher 1 | 8 | 8 | 17,161 | completed |
+| Lighting Designer 1 | 8 | 8 | 28,468 | completed |
+| Critic 1 | 8 | 8 | 23,679 | completed |
+| Finalizer 1 | 8 | 8 | 30,870 | TimeoutError |
+| Finalizer 2 | 8 | 8 | 31,376 | TimeoutError |
+| Finalizer 3 | 8 | 8 | 31,410 | TimeoutError |
+
+The completed role artifacts are the actual USB files under `steps/`. The
+Researcher resolved all three supplied source IDs through the canonical full
+registry; no source metadata conflict was reported. The Designer preserved
+uncertainties and contextual language without adding executable fields. The
+Critic identified missing section-specific detail and execution uncertainty.
+These are structural observations only, not an artistic quality approval.
+
+Finalizer produced no validated artifact, so no end-to-end design comparison
+or artistic verdict is possible. The failure evidence is explicit:
+`FAILED_ROLE=finalizer`, `ATTEMPTS=3`, `HTTP_STATUS=NOT_AVAILABLE`,
+`SAFE_PROVIDER_ERROR=TimeoutError`, final attempt `PAYLOAD_UTF8_BYTES=31410`,
+`SYSTEM_CHARACTERS=1183`, `USER_CHARACTERS=29453`,
+`SELECTED_KNOWLEDGE_COUNT=8`, `EVIDENCE_ENTRY_COUNT=8`.
+
+## A/B review matrix (Smoke 001 vs controlled Smoke 002)
 
 | Criterion | Result | Artifact evidence |
 |---|---|---|
-| Research provenance | WORSE | Smoke 001 researcher artifact fails current canonical metadata resolution; Smoke 002 produced none. |
-| Knowledge utilization | WORSE / NOT_AVAILABLE | Smoke 001 used one generic color claim; Smoke 002 had no role output. |
-| Design hierarchy | NOT_AVAILABLE | No Smoke 002 Designer output. |
-| Negative space / restraint | NOT_AVAILABLE | No Smoke 002 Designer output. |
-| Depth / layering | NOT_AVAILABLE | No Smoke 002 Designer output. |
-| Color reasoning | NOT_AVAILABLE | No Smoke 002 Designer output. |
-| Movement reasoning | NOT_AVAILABLE | No Smoke 002 Designer output. |
-| Repeated-section development | NOT_AVAILABLE | No Smoke 002 Designer output. |
-| Fixture-role locking | SAME RISK / NOT_AVAILABLE | Label-driven risk is present in Smoke 001; Smoke 002 has no output. |
-| Unknown preservation | NOT_AVAILABLE | No Smoke 002 artifact to inspect. |
-| Critic usefulness | NOT_AVAILABLE | Critic did not run in Smoke 002. |
-| Finalizer hallucination | NOT_AVAILABLE | Finalizer did not run in Smoke 002. |
-| Retry degradation | WORSE operationally | Smoke 002 exhausted 3 Researcher attempts on HTTPError before any checkpoint. |
-| Overall professional plausibility | INCONCLUSIVE | A failed run cannot establish design quality. |
+| Research provenance | BETTER | Smoke 002 Researcher sources resolve against the canonical registry; Smoke 001 had a metadata conflict. |
+| Knowledge utilization | BETTER | Smoke 002 Researcher emitted seven topic observations from role-scoped records; no final design claim is made. |
+| Design hierarchy | NOT_AVAILABLE | Designer draft exists, but no validated Finalizer output for a complete comparison. |
+| Negative space / restraint | NOT_AVAILABLE | Draft references restraint; end-to-end design artifact is absent. |
+| Depth / layering | NOT_AVAILABLE | Draft references hierarchy/layering; no final artifact to assess. |
+| Color reasoning | NOT_AVAILABLE | No validated final design comparison. |
+| Movement reasoning | NOT_AVAILABLE | No validated final design comparison. |
+| Repeated-section development | NOT_AVAILABLE | No validated final design comparison. |
+| Fixture-role locking | BETTER / UNRESOLVED | Current role prompts and draft retain capability-vs-role boundary; no final output exists to verify behavior. |
+| Unknown preservation | BETTER | Researcher and Designer preserve explicit uncertainties; Finalizer behavior is unavailable. |
+| Critic usefulness | BETTER | Critic ran and identified missing specificity/role clarity; human review is still required. |
+| Finalizer hallucination | NOT_AVAILABLE | Finalizer timed out before producing an artifact. |
+| Retry degradation | WORSE operationally | Three Finalizer attempts consumed the run without a validated final artifact. |
+| Overall professional plausibility | INCONCLUSIVE | Partial role completion cannot establish design quality or production readiness. |
 
-No `BETTER` artistic result can be claimed. Smoke 001 is the only completed
-design artifact and already contains the provenance and generic-recipe
-weaknesses listed above.
+No artistic `PASS` is claimed. The controlled rerun demonstrates that the
+context/provenance fix allowed three roles to execute locally, but the
+Finalizer timeout prevents a complete A/B design judgment and does not by
+itself establish a Qwen reasoning ceiling.
 
 ## Required final fields
 
 ```text
 RUN_ID=local-multi-agent-smoke-002
-GIT_HEAD=bb9058725a42bbdda363098351b498b457957abd
+GIT_HEAD=0c5362906b39dc59f55a1cb40a269978bf7b2220
 MODEL=Qwen2.5-7B-Instruct-Q4_K_M
-LOCAL_MODEL_USED=NO (no role completed; local endpoint was verified)
+LOCAL_MODEL_USED=YES (researcher, designer, and critic completed locally)
 CLOUD_REQUIRED=NO
-TOTAL_RUNTIME=~0.24s
-ROLE_ATTEMPTS=researcher:3; lighting_designer:0; critic:0; finalizer:0
-RETRY_COUNT=2
+TOTAL_RUNTIME=~3600s (60m; finalizer timeout)
+ROLE_ATTEMPTS=researcher:1; lighting_designer:1; critic:1; finalizer:3
+RETRY_COUNT=2 (finalizer)
 FINAL_SCHEMA_VALID=NO / NOT_AVAILABLE
-SOURCE_CONTAMINATION=NOT_AVAILABLE in Smoke 002; Smoke 001 researcher artifact had canonical metadata conflict
-UNKNOWN_PRESERVED=NOT_AVAILABLE in Smoke 002; limited uncertainty present in Smoke 001 final
-FIXTURE_ROLE_LOCKING=NOT_AVAILABLE in Smoke 002; label-driven risk present in Smoke 001
-ARTISTIC_RECIPE_CONTAMINATION=NOT_AVAILABLE in Smoke 002; generic color/intensity recipe risk present in Smoke 001
+SOURCE_CONTAMINATION=NO observed in completed Smoke 002 Researcher; Finalizer unavailable
+UNKNOWN_PRESERVED=YES in completed Researcher/Designer artifacts; Finalizer unavailable
+FIXTURE_ROLE_LOCKING=UNRESOLVED (no completed final design)
+ARTISTIC_RECIPE_CONTAMINATION=UNRESOLVED (no completed final design)
+RETRY_DEGRADATION=YES operationally (Finalizer timeout after 3 attempts)
 MA2_WRITES=0
 CODEX_ARTISTIC_INTERVENTION=NONE
 ```
 
 ## Conclusion
 
-`QWEN_7B_DESIGNER = INCONCLUSIVE` (no completed Smoke 002 Designer artifact).
-`QWEN_7B_CRITIC = INCONCLUSIVE` (not reached).
-`QWEN_7B_FINALIZER = INCONCLUSIVE` (not reached).
+`QWEN_7B_RESEARCHER = PASS` (local artifact validated and canonical sources resolved).
+`QWEN_7B_DESIGNER = BORDERLINE` (artifact validated, but specificity remains limited and no final assembly completed).
+`QWEN_7B_CRITIC = BORDERLINE` (artifact validated and issues were identified; human usefulness review remains).
+`QWEN_7B_FINALIZER = INCONCLUSIVE` (three local attempts timed out before a validated artifact).
 
 This smoke does not justify production readiness, model replacement, prompt
 changes, fine-tuning, or a third smoke. Any future rerun requires human
@@ -150,5 +191,6 @@ direction on the provider/runtime failure and the same exact-input rule; no
 artistic remediation was performed here.
 
 Safety: no MA2 objects, fixtures, presets, sequences, executors, or Show state
-were modified. No cloud call, training, or local-model design output was
-fabricated. Existing cache directories and Smoke 001 artifacts remain intact.
+were modified. No cloud call or training occurred, and no local-model design
+output was fabricated. Existing cache directories, Smoke 001 artifacts, and
+the original failed Smoke 002 attempt remain intact.
