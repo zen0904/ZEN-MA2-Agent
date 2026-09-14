@@ -69,8 +69,12 @@ def build_designer_context(repo_root: Path) -> dict[str, object]:
     external_knowledge_context = {"schema": "zen.knowledge_retrieval_context.v0.1", "runtime_mode": "SHADOW_ONLY", "records": [], "knowledge_refs": [], "topic_diversity": []}
     evidence_ledger = {"schema": "zen.evidence_ledger.v0.1", "entries": [], "available_verified_facts": []}
     canonical_knowledge_records: list[dict[str, object]] = []
+    source_registry_for_context = data.get("external_source_registry", {})
     try:
         store = load_canonical_store(candidates["external_source_registry"], candidates["external_knowledge_pack"])
+        # Keep the registry structurally complete for provenance validation; it
+        # is compact metadata, not an unbounded source dump.
+        source_registry_for_context = store["source_registry"]
         selected = retrieve_records(store["records"], role="LIGHTING_DESIGNER", request="lighting design", limit=12, max_records_per_topic=2)
         external_knowledge_context |= {
             "records": project_records(selected),
@@ -107,7 +111,7 @@ def build_designer_context(repo_root: Path) -> dict[str, object]:
             },
             "rig_spatial_visual_affordance": data.get("current_show_visual_relationships", {}),
             "professional_lighting_design_knowledge": external_knowledge_context,
-            "source_provenance": data.get("external_source_registry", {}),
+            "source_provenance": source_registry_for_context,
             "project_constraints": data.get("project_control", {}),
             "prior_case_artifacts": {"previous_sheesh_test_plan": data.get("previous_sheesh_test_plan", {})},
             "operator_contract": docs,

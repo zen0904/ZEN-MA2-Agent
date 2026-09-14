@@ -8,6 +8,7 @@ from pathlib import Path
 from zen_ma2_agent.knowledge_store import (
     artistic_proposal,
     build_evidence_ledger,
+    find_duplicate_candidates,
     load_canonical_store,
     project_records,
     resolve_research_sources,
@@ -23,8 +24,8 @@ ROOT = Path(__file__).resolve().parents[1]
 class KnowledgeStoreTests(unittest.TestCase):
     def test_existing_pack_loads_losslessly_with_source_registry_integrity(self):
         store = load_canonical_store(ROOT / "data/external_lighting_knowledge_source_registry_001.json", ROOT / "data/external_lighting_knowledge_pack_001.json")
-        self.assertEqual(len(store["records"]), 25)
-        self.assertEqual({record["category"] for record in store["records"]}, {"GLOBAL_LIGHTING_DESIGN_KNOWLEDGE", "MA2_TECHNICAL_KNOWLEDGE", "FIXTURE_TECHNICAL_KNOWLEDGE"})
+        self.assertGreaterEqual(len(store["records"]), 100)
+        self.assertIn("ZEN_STYLE_AND_WORKFLOW_KNOWLEDGE", {record["category"] for record in store["records"]})
 
     def test_unknown_source_fails_closed(self):
         pack = json.loads((ROOT / "data/external_lighting_knowledge_pack_001.json").read_text(encoding="utf-8"))
@@ -84,6 +85,18 @@ class KnowledgeStoreTests(unittest.TestCase):
             resolve_research_sources(sources=[{"source_id": first["source_id"], "record_id": second["record_id"]}], source_registry=registry, records=pack["records"])
         with self.assertRaises(ValueError):
             resolve_research_sources(sources=[{"source_id": first["source_id"], "title": "Fabricated title"}], source_registry=registry, records=pack["records"])
+
+    def test_duplicate_candidates_are_deterministic_and_non_mutating(self):
+        records = [
+            {"record_id": "B", "topic": "DENSITY", "normalized_claim": "Density can change through selective source use."},
+            {"record_id": "A", "topic": "DENSITY", "normalized_claim": "Density can change through selective source use."},
+            {"record_id": "C", "topic": "COLOR_RELATIONSHIPS", "normalized_claim": "Color supports palette relationships."},
+        ]
+        found = find_duplicate_candidates(records)
+        self.assertEqual(found[0]["record_id_a"], "A")
+        self.assertEqual(found[0]["record_id_b"], "B")
+        self.assertEqual(found[0]["review_status"], "REVIEW_REQUIRED")
+        self.assertEqual(records[0]["record_id"], "B")
 
 
 if __name__ == "__main__":

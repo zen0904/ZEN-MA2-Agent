@@ -29,7 +29,8 @@ class ExternalLightingKnowledgeTests(unittest.TestCase):
     def test_pack_is_small_traceable_and_unpromoted(self):
         self.assertEqual(self.pack["schema"], PACK_SCHEMA)
         self.assertGreaterEqual(len(self.pack["records"]), 20)
-        self.assertLessEqual(len(self.pack["records"]), 50)
+        self.assertGreaterEqual(len(self.pack["records"]), 100)
+        self.assertLessEqual(len(self.pack["records"]), 160)
         self.assertEqual(self.pack["runtime_wiring"], "NOT_RUN")
         self.assertEqual(self.pack["global_promotions"], [])
         source_ids = {source["source_id"] for source in self.pack["sources"]}

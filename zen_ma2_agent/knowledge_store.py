@@ -36,7 +36,9 @@ def _tokens(value: object) -> set[str]:
     return {token for token in re.findall(r"[a-z0-9_]+", str(value).lower()) if len(token) > 2}
 
 
-def topic_category(topic: str) -> str:
+def topic_category(topic: str, *, evidence_classification: str | None = None) -> str:
+    if evidence_classification == "USER_PREFERENCE":
+        return "ZEN_STYLE_AND_WORKFLOW_KNOWLEDGE"
     if topic == "CONSOLE_MAINTAINABILITY":
         return "MA2_TECHNICAL_KNOWLEDGE"
     if topic == "FIXTURE_CAPABILITY_PROVENANCE":
@@ -48,7 +50,7 @@ def normalize_records(pack: dict[str, Any]) -> tuple[dict[str, Any], ...]:
     records = []
     for raw in pack.get("records", []):
         record = dict(raw)
-        record["category"] = topic_category(str(record["topic"]))
+        record["category"] = topic_category(str(record["topic"]), evidence_classification=record.get("evidence_classification"))
         records.append(record)
     return tuple(sorted(records, key=lambda item: str(item["record_id"])))
 
@@ -114,6 +116,26 @@ def retrieve_records(records: Iterable[dict[str, Any]], *, role: str, request: s
         if len(selected) >= limit:
             break
     return selected
+
+
+def find_duplicate_candidates(records: Iterable[dict[str, Any]], *, similarity_threshold: float = 0.82) -> list[dict[str, Any]]:
+    """Return deterministic near-duplicate candidates without deleting or merging records."""
+    ordered = sorted((dict(record) for record in records), key=lambda item: str(item.get("record_id", "")))
+    candidates: list[dict[str, Any]] = []
+    for index, left in enumerate(ordered):
+        left_tokens = _tokens(left.get("normalized_claim", left.get("claim", "")))
+        if not left_tokens:
+            continue
+        for right in ordered[index + 1:]:
+            if left.get("topic") != right.get("topic"):
+                continue
+            right_tokens = _tokens(right.get("normalized_claim", right.get("claim", "")))
+            if not right_tokens:
+                continue
+            score = len(left_tokens & right_tokens) / len(left_tokens | right_tokens)
+            if score >= similarity_threshold:
+                candidates.append({"record_id_a": left.get("record_id"), "record_id_b": right.get("record_id"), "topic": left.get("topic"), "similarity": round(score, 4), "review_status": "REVIEW_REQUIRED"})
+    return candidates
 
 
 def project_records(records: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
