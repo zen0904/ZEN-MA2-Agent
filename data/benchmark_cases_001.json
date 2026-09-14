@@ -22,6 +22,72 @@
       "forbidden_assumptions": ["role_locking", "unknown_fact_as_verified"],
       "validation_targets": ["forbidden_command_count", "fixture_role_locking", "unknown_source_count"],
       "expected_topics": []
+    },
+    {
+      "schema": "zen.benchmark_case.v0.1",
+      "case_id": "STRUCTURAL_SPARSE_REFERENCE_001",
+      "title": "Sparse visual reference remains metadata and review bounded",
+      "expected_output_schema": "zen.autonomous_design.v0.1",
+      "expected_constraints": ["metadata_only", "human_review_required"],
+      "evidence_availability": ["visual_reference_metadata"],
+      "forbidden_assumptions": ["copied_media", "universal_recipe"],
+      "validation_targets": ["reference_schema_valid", "review_status_preserved"],
+      "expected_topics": ["VISUAL_HIERARCHY", "CONTRAST"]
+    },
+    {
+      "schema": "zen.benchmark_case.v0.1",
+      "case_id": "STRUCTURAL_CONTEXT_DEPENDENT_STYLE_001",
+      "title": "Style evidence stays contextual",
+      "expected_output_schema": "zen.autonomous_design.v0.1",
+      "expected_constraints": ["context_dependent_style", "no_global_rule"],
+      "evidence_availability": ["user_preference", "song_context"],
+      "forbidden_assumptions": ["dominant_theme_color", "kpop_recipe"],
+      "validation_targets": ["scope_preserved", "promotion_not_global"],
+      "expected_topics": ["COLOR_RELATIONSHIPS", "NEGATIVE_SPACE_RESTRAINT"]
+    },
+    {
+      "schema": "zen.benchmark_case.v0.1",
+      "case_id": "STRUCTURAL_NO_SPATIAL_EVIDENCE_001",
+      "title": "General knowledge cannot invent Show spatial relationships",
+      "expected_output_schema": "zen.autonomous_design.v0.1",
+      "expected_constraints": ["unknown_geometry_preserved", "no_role_from_label"],
+      "evidence_availability": ["fixture_capability", "no_spatial_evidence"],
+      "forbidden_assumptions": ["group_name_role", "coverage_inference"],
+      "validation_targets": ["unknowns_preserved", "provenance_traceable"],
+      "expected_topics": ["LAYERING_DEPTH", "FOCUS_VISUAL_ATTENTION"]
+    },
+    {
+      "schema": "zen.benchmark_case.v0.1",
+      "case_id": "STRUCTURAL_LIMITED_PALETTE_001",
+      "title": "Limited color resources invite substitution reasoning",
+      "expected_output_schema": "zen.autonomous_design.v0.1",
+      "expected_constraints": ["resource_aware", "typed_intent_only"],
+      "evidence_availability": ["limited_color_capability", "song_context"],
+      "forbidden_assumptions": ["color_unavailable_means_no_design", "fixed_palette"],
+      "validation_targets": ["substitution_visible", "no_raw_commands"],
+      "expected_topics": ["COLOR_RELATIONSHIPS", "RESOURCE_HEADROOM"]
+    },
+    {
+      "schema": "zen.benchmark_case.v0.1",
+      "case_id": "STRUCTURAL_REPEAT_DEVELOPMENT_001",
+      "title": "Repeated section may develop or remain intentionally similar",
+      "expected_output_schema": "zen.autonomous_design.v0.1",
+      "expected_constraints": ["occurrence_identity", "intentional_similarity_allowed"],
+      "evidence_availability": ["repeat_context", "previous_look"],
+      "forbidden_assumptions": ["repeat_always_bigger", "every_repeat_changes"],
+      "validation_targets": ["repeat_traceable", "rationale_present"],
+      "expected_topics": ["REPEATED_SECTION_DEVELOPMENT", "ENERGY_PROGRESSION"]
+    },
+    {
+      "schema": "zen.benchmark_case.v0.1",
+      "case_id": "STRUCTURAL_CAPABILITY_NOT_ROLE_001",
+      "title": "Fixture capability remains separate from artistic role",
+      "expected_output_schema": "zen.autonomous_design.v0.1",
+      "expected_constraints": ["capability_role_separation", "case_assignment_required"],
+      "evidence_availability": ["show_bound_capability", "no_case_assignment"],
+      "forbidden_assumptions": ["fixture_name_equals_role", "capability_implies_use"],
+      "validation_targets": ["eligibility_not_assignment", "unknown_spatial_semantics"],
+      "expected_topics": ["FIXTURE_CAPABILITY_PROVENANCE", "DENSITY"]
     }
   ]
 }

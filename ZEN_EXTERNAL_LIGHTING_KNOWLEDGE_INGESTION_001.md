@@ -181,3 +181,9 @@ registry and pack rather than duplicating them. No vector database, LangChain,
 model training, cloud call, MA2/Telnet/Builder execution, media archive, LFS,
 or CI expansion was introduced. Production Designer behavior and B3 remain
 unchanged.
+
+## Ingestion 001 expansion addendum (2026-09-14)
+
+The pack was expanded in four bounded batches to 140 records and 15 registered
+sources. See `ZEN_KNOWLEDGE_INGESTION_001.md` for the current distribution,
+retrieval inspections, duplicate review, and visual-reference foundation.

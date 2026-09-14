@@ -1,0 +1,22 @@
+{
+  "schema": "zen.visual_reference_set.v0.1",
+  "set_id": "VISUAL_REFERENCE_FOUNDATION_001",
+  "references": [
+    {
+      "schema": "zen.visual_reference.v0.1",
+      "reference_id": "VR_ZEN_YG_LANGUAGE_001",
+      "title": "ZEN approved restrained high-impact visual-language reference",
+      "source_url": "https://github.com/zen0904/ZEN-MA2-Agent",
+      "publisher": "ZEN MA2 Agent project owner",
+      "retrieved_at": "2026-09-14",
+      "reference_kind": "MIXED",
+      "observations": ["Readable hierarchy", "Intentional restraint around selected impacts", "Palette coherence is valued"],
+      "transferable_concepts": ["hierarchy", "contrast", "negative_space", "palette_relationship"],
+      "non_transferable_specifics": ["No fixture placement", "No universal cue recipe", "No permanent role mapping"],
+      "related_topics": ["VISUAL_HIERARCHY", "NEGATIVE_SPACE_RESTRAINT", "COLOR_RELATIONSHIPS"],
+      "confidence": "MEDIUM",
+      "review_status": "NEEDS_REVIEW",
+      "media_policy": "METADATA_ONLY_NO_BINARY_MEDIA"
+    }
+  ]
+}
