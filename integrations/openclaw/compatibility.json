@@ -1,0 +1,9 @@
+{
+  "schema": "zen.openclaw_compatibility.v0.1",
+  "integration_status": "PYTHON_CONTRACT_IMPLEMENTED_PLUGIN_PENDING",
+  "tested_openclaw_version": null,
+  "version_verification_required": true,
+  "ui_strategy": "OPENCLAW_FIRST",
+  "openclaw_required_for_field_core": false,
+  "ma2_writes": 0
+}
