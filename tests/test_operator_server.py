@@ -153,6 +153,20 @@ class OperatorServerTests(unittest.TestCase):
         self.assertTrue(data["field_core"]["available"])
         self.assertTrue(data["remote_ai_available"])
 
+    def test_bridge_server_state_is_projected(self):
+        core = SimpleNamespace(
+            runtime=SimpleNamespace(
+                state=SimpleNamespace(value="DISCONNECTED"),
+                preferences={"ma2": {"host": "127.0.0.1", "port": 30000}},
+            )
+        )
+        bridge = SimpleNamespace(running=True)
+        data = status_provider_from_core(core, bridge_server=bridge)().to_dict()
+        self.assertEqual(data["ma"]["bridge_state"], "ONLINE")
+        bridge.running = False
+        data = status_provider_from_core(core, bridge_server=bridge)().to_dict()
+        self.assertEqual(data["ma"]["bridge_state"], "OFFLINE")
+
     def test_non_loopback_bind_is_blocked_by_default(self):
         with self.assertRaises(ValueError):
             OperatorServer(self._provider(), host="0.0.0.0")
