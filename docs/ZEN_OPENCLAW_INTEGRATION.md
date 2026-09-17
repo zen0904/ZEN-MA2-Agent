@@ -1,9 +1,6 @@
 # ZEN OpenClaw Integration
 
-Status: **GROUNDWORK COMPLETE / LOCAL HOST IMPLEMENTATION PENDING**
-
-This document narrows the implementation path for using OpenClaw as ZEN's
-primary operator interface.
+Status: **LOCAL OPERATOR API IMPLEMENTED / OPENCLAW HOST PLUGIN PENDING**
 
 ## Decision
 
@@ -12,138 +9,148 @@ OpenClaw = operator UI / chat / dashboard shell
 ZEN      = independent backend / Brain / Safety / Resolver / Builder / MA Bridge
 ```
 
-OpenClaw must not become a safety-critical dependency. A healthy local ZEN
-Field Core must remain usable when OpenClaw is unavailable.
+OpenClaw is the primary human-facing interface, but it is not a safety-critical
+runtime dependency. A healthy ZEN Field Core must remain usable when OpenClaw
+is unavailable.
 
-## Current repository groundwork
+## Implemented repository foundation
 
 The repository now contains:
 
 - `docs/ZEN_OPENCLAW_FIRST_UI_ARCHITECTURE.md`
 - `docs/CODEX_HANDOFF_OPENCLAW_FIRST_001.md`
+- `docs/ZEN_OPERATOR_LOCAL_API.md`
 - `integrations/openclaw/README.md`
+- `integrations/openclaw/compatibility.json`
 - `integrations/openclaw/contracts/zen_operator_status_v0_1.schema.json`
 - `integrations/openclaw/contracts/zen_tool_result_v0_1.schema.json`
+- `zen_ma2_agent/operator_api.py`
+- `zen_ma2_agent/operator_server.py`
+- focused operator API/server tests
 
-No OpenClaw plugin runtime has been claimed as implemented yet.
+No executable OpenClaw Feature Plugin is claimed yet because the exact installed
+OpenClaw version must be verified and pinned first.
 
-## Current ZEN web/API reality
+## Current ZEN API layers
 
-ZEN already ships FastAPI infrastructure in `zen_ma2_agent/web_server.py` and
-mobile/PWA tests in `tests/test_agent_core_mobile.py`.
-
-The existing API currently provides pairing-protected state, skills, chat,
-approval/cancel, and WebSocket updates. This should be reused as architectural
-evidence and shared Core logic, not blindly exposed as the OpenClaw contract.
-
-Important distinction:
+ZEN now has two deliberately separate API surfaces.
 
 ```text
 Existing mobile API
-= current LAN/mobile operator surface
+= LAN/mobile PWA surface
+= pairing-protected
+= may expose approval-capable workflows
 
-Future OpenClaw adapter API
-= narrow, versioned, localhost-first integration surface
+OpenClaw Operator API
+= narrow versioned adapter surface
+= localhost-first
+= read-only today
+= no direct MA write authority
 ```
 
-The existing `MobileServer` intentionally binds to `0.0.0.0` for LAN/mobile
-access. The first OpenClaw adapter should default to loopback because OpenClaw
-and ZEN are expected to run on the same Field Node in the intended deployment.
+The existing mobile server remains unchanged. OpenClaw should not receive the
+entire mobile API wholesale.
 
-## OpenClaw capability facts checked on 2026-09-17
+## Local Operator API
 
-Current official OpenClaw documentation states that Feature Plugins can add
-Control UI pages, navigation, session actions, panels, dashboard widgets, and
-other UI contributions. OpenClaw also states that plugin SDK and native Control
-UI APIs are experimental and host versions should be pinned and tested.
+The OpenClaw-facing local boundary is implemented in
+`zen_ma2_agent/operator_server.py`.
 
-User-installed native Control UI is a trusted surface and is disabled by
-default until the Custom plugin UI lab is enabled.
+Default bind:
 
-These facts justify an OpenClaw-first UI architecture, but they also mean the
-exact plugin scaffold should be generated against the exact OpenClaw version
-installed on the development host rather than guessed in advance.
+```text
+127.0.0.1:8876
+```
 
-Official references:
+Current endpoints:
 
-- https://docs.openclaw.ai/plugins/feature-plugins
-- https://docs.openclaw.ai/plugins/sdk-overview
-- https://docs.openclaw.ai/plugins/manage-plugins
-- https://docs.openclaw.ai/plugins/manifest
+```text
+GET  /healthz
+GET  /zen/v0.1/status
+POST /zen/v0.1/tools/{tool_name}
+```
 
-## First implementation slice when the development host is online
-
-1. Install OpenClaw from current official guidance.
-2. Record and pin the exact host version.
-3. Scaffold a Feature Plugin using that installed version's CLI/SDK.
-4. Keep the plugin thin.
-5. Add a localhost-first ZEN adapter that emits
-   `zen.operator_status.v0.1`.
-6. Start with read-only tools/status only.
-7. Return `NOT_IMPLEMENTED` for design/preview/approval operations not yet
-   backed by stable typed APIs.
-8. Validate that OpenClaw can stop while ZEN Field Core remains healthy.
-9. Run plugin build/validate and the existing ZEN Python tests before merging
-   executable plugin code.
+The server rejects non-loopback binds by default. A future remote deployment
+requires an explicit opt-in plus a separate authenticated-network review.
 
 ## Initial status mapping
 
-The OpenClaw surface should display, without inventing facts:
+The status contract exposes bounded state only:
 
 ```text
-FIELD CORE      ONLINE / OFFLINE / DEGRADED / UNKNOWN
-MA BRIDGE       ONLINE / OFFLINE / DEGRADED / UNKNOWN
-MA2             READY / CONNECTING / DISCONNECTED / DEGRADED / UNKNOWN
-REMOTE AI       AVAILABLE / UNAVAILABLE
-WORKER A        ONLINE / OFFLINE / DEGRADED / UNKNOWN
-WORKER B        ONLINE / OFFLINE / DEGRADED / UNKNOWN
-Researcher      IDLE / RUNNING / DONE / FAILED / UNKNOWN
-Designer        IDLE / RUNNING / DONE / FAILED / UNKNOWN
-Critic          IDLE / RUNNING / DONE / FAILED / UNKNOWN
-Finalizer       IDLE / RUNNING / DONE / FAILED / UNKNOWN
-Latest artifact known / none
+FIELD CORE
+MA BRIDGE
+MA2 connection
+REMOTE AI
+Workers
+Researcher
+Designer
+Critic
+Finalizer
+Latest artifact metadata
 ```
 
-## Initial tool boundary
+Unknown information remains `UNKNOWN`.
 
-Candidate names are reserved by the contract:
+The current Core adapter deliberately does not call `AgentCore.snapshot()` so a
+UI status poll does not cause unrelated Internet-status checks.
+
+Current conservative mappings:
+
+- Field Core is available when the local Core/provider is running.
+- MA runtime connection state is mapped to the bounded operator enum.
+- MA Bridge is `UNKNOWN` until the MA-initiated Bridge is implemented.
+- Remote AI is unavailable until the Worker registry exists.
+- Pipeline roles remain `UNKNOWN` until real pipeline state is wired.
+- Latest artifact remains null until a real artifact source is wired.
+
+## Tool boundary
+
+Implemented read-only tools:
 
 ```text
 zen.status
 zen.worker.status
 zen.ma.status
 zen.artifact.latest
+```
+
+Reserved but intentionally not implemented:
+
+```text
 zen.design.request
 zen.preview
 zen.approve
 ```
 
-The first implementation should expose only operations that have a real typed
-ZEN backend path. A UI button is not authorization to invent or bypass a
-backend capability.
+Reserved actions return structured `NOT_IMPLEMENTED` rather than synthetic
+success.
+
+There is no OpenClaw-facing generic shell, arbitrary filesystem operation, raw
+MA command endpoint, raw Telnet endpoint, or unrestricted proxy.
 
 ## Security boundary
 
-OpenClaw integration must not introduce:
+OpenClaw integration must never introduce:
 
-- raw MA command execution;
-- arbitrary shell execution;
-- arbitrary filesystem operations;
-- unrestricted generic HTTP proxying;
 - MA credentials in UI/tool results;
-- a direct Worker-to-MA path.
+- a direct Worker-to-MA path;
+- arbitrary process execution;
+- arbitrary filesystem access;
+- public unauthenticated operator API exposure;
+- bypass of ZEN Safety / Preview / Approval / Resolver / Builder.
 
-Production MA writes remain behind ZEN's own Safety / Preview / Approval /
-Resolver / Builder boundary.
+`MA2_WRITES=0` remains the integration-phase requirement.
 
 ## Deployment relationship
 
-Intended later placement:
+Intended placement remains:
 
 ```text
 2012 Mac mini / Ubuntu
 ├─ OpenClaw Gateway + Control UI
 └─ ZEN Field Core
+    ├─ Local Operator API
     ├─ MA Bridge
     ├─ Safety / Resolver / Builder
     ├─ Worker Router
@@ -153,19 +160,36 @@ Intended later placement:
        Home Worker B / GPU UNKNOWN / 16 GB
 ```
 
-Only the Mac mini travels. Remote workers remain optional compute and must not
-be required for Field Core availability.
+Only the Mac mini travels. Remote workers remain optional compute and cannot be
+required for Field Core availability.
 
-## Not implemented yet
+## Still pending on the powered development host
 
-- exact OpenClaw host version pin;
-- generated OpenClaw plugin scaffold;
-- plugin manifest/runtime;
-- Custom plugin UI enablement;
-- browser rendering verification;
-- dedicated localhost ZEN adapter route;
-- remote-worker inference;
-- real MA-Initiated Bridge execution;
-- production MA writes.
+- install OpenClaw using current official guidance;
+- record `openclaw --version`;
+- pin that exact tested version in `compatibility.json`;
+- scaffold the Feature Plugin against that installed SDK/API;
+- enable the trusted custom plugin UI only as required;
+- connect the plugin to the localhost Operator API;
+- verify the Control UI in a browser;
+- run the full repository test suite.
 
-`MA2_WRITES=0` remains the integration-phase requirement.
+## Later runtime work
+
+Separate future work remains for:
+
+- Worker registry / router and real remote inference;
+- MA-Initiated Bridge implementation;
+- pipeline progress source wiring;
+- artifact-store source wiring;
+- authenticated private networking;
+- real production approval/write integration after separate validation.
+
+OpenClaw failure must continue to satisfy:
+
+```text
+OPENCLAW_AVAILABLE=NO
+FIELD_CORE_AVAILABLE=YES
+```
+
+when the ZEN Field Core itself is healthy.
