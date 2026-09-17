@@ -1,24 +1,22 @@
 # ZEN MA-Initiated Bridge Protocol v0.1
 
-Status: **PARSER + DEDUP FOUNDATION IMPLEMENTED / TCP SERVER + MA EXECUTION PENDING**
+Status: **PARSER + DEDUP + TCP DISPATCHER IMPLEMENTED / MA EXECUTION PENDING**
 
-This document records the first executable protocol boundary for MA-initiated
-ZEN requests.
+This document records the executable protocol boundary for MA-initiated ZEN requests.
 
 ```text
 MA-side caller
-   ↓ text line
+   ↓ TCP text line
 ZEN/1 parser
    ↓ typed BridgeRequest
-future dispatcher
+bounded dedup + deterministic dispatcher
    ↓
-Safety / Resolver / Builder
+future Safety / Resolver / Builder handoff
    ↓
-MA transport
+future MA transport
 ```
 
-The current implementation stops at the typed request / dedup boundary. It does
-not execute MA commands, invoke the LLM, or write to a show.
+The current implementation does not execute MA commands, invoke the LLM, or write to a show.
 
 ## Request grammar
 
@@ -47,13 +45,35 @@ ZEN/1 REQ 1004 DESIGN REQUEST=NEXT_SECTION
 ## Current execution semantics
 
 ```text
-PING    = parseable typed request
-STATUS  = parseable typed request
-DIMMER  = parse-only, no MA write
-DESIGN  = parse-only, no LLM call
+PING    → READY <id> PONG
+STATUS  → READY <id> <bounded deterministic status payload>
+DIMMER  → READY <id> NOT_EXECUTED
+DESIGN  → READY <id> NOT_IMPLEMENTED
 ```
 
 No command in this module can reach Telnet, Art-Net, DMX, a shell, or a model.
+
+## TCP server
+
+`zen_ma2_agent.ma_bridge.server.BridgeServer` now provides a bounded line-oriented TCP server.
+
+Defaults:
+
+```text
+host = 127.0.0.1
+port = 8877
+```
+
+Non-loopback bind is rejected unless `allow_remote=True` is explicitly supplied. That flag is not a substitute for later authentication/private-network review.
+
+The server has:
+
+- bounded line reads;
+- per-connection timeout;
+- malformed-client isolation;
+- multiple sequential/concurrent client handling through a bounded threaded TCP server;
+- clean stop semantics;
+- no MA or LLM dependency.
 
 ## Validation
 
@@ -75,69 +95,50 @@ The parser fails closed for:
 
 The current line limit is 1024 UTF-8 bytes.
 
-## Request identity
+## Request identity and idempotency
 
-Each parsed request gets a deterministic SHA-256 `payload_hash` over canonical
-JSON containing:
-
-- protocol version;
-- request ID;
-- command;
-- normalized arguments.
-
-Equivalent argument ordering therefore produces the same identity.
-
-## Dedup
-
-`RequestDeduplicator` is bounded and defaults to 256 entries.
+Each parsed request gets a deterministic SHA-256 `payload_hash` over canonical JSON.
 
 Behavior:
 
 ```text
 new request_id + payload
-→ NEW
+→ process once and cache response
 
 same request_id + same payload
-→ DUPLICATE
+→ return the original cached response
 
 same request_id + different payload
 → REQUEST_ID_CONFLICT
 ```
 
-This layer only classifies requests. It never executes them.
+Both request and response caches are bounded.
 
-## Response helpers
+## OpenClaw status relationship
 
-The foundation includes bounded formatting helpers for:
+The OpenClaw-facing Operator API can now project Bridge runtime state when the Field Node composition supplies a BridgeServer instance:
 
 ```text
-ZEN/1 READY <request_id> [payload]
-ZEN/1 ERROR <request_id> <ERROR_CODE>
+running=True  → ma.bridge_state=ONLINE
+running=False → ma.bridge_state=OFFLINE
+no instance   → ma.bridge_state=UNKNOWN
 ```
 
-Actual dispatch/status response policy belongs to the later Bridge server.
+This does not make OpenClaw a dependency of the Bridge.
 
 ## Test status
 
-The isolated protocol tests were executed outside the development host after
-creation: **17/17 passed**.
+The earlier isolated protocol tests were **17/17 passed**.
 
-The complete repository test suite still requires the normal development host
-and must be rerun before production use.
+New repository tests cover dispatcher behavior, duplicate-response identity, request-ID conflict, loopback TCP roundtrip, and non-loopback default denial. The complete repository test suite still requires the normal development host and must be rerun before production use.
 
-## Next Bridge slice
+## Still pending
 
-Still pending:
-
-- TCP line server;
-- deterministic PING/STATUS dispatcher;
-- integration with ZEN Field Core status;
-- request timeout policy;
-- connection lifecycle;
-- Bridge health state exposed to the Operator API;
-- DIMMER typed-intent handoff;
-- DESIGN typed job handoff;
-- Safety/Approval integration;
+- real Field Node service composition;
+- authenticated/private remote Bridge transport if ever required;
+- DIMMER typed-intent handoff to Safety/Resolver/Builder;
+- DESIGN job handoff;
+- Approval integration;
 - all real MA writes.
 
 `MA2_WRITES=0` remains the current requirement.
