@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zen.local/schemas/zen.operator_status.v0.1.json",
+  "title": "ZEN Operator Status v0.1",
+  "description": "Read-only, OpenClaw-facing status contract. It carries no MA command authority and must preserve UNKNOWN rather than inventing state.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "field_core",
+    "ma",
+    "remote_ai_available",
+    "workers",
+    "pipeline",
+    "latest_artifact"
+  ],
+  "properties": {
+    "schema": {
+      "const": "zen.operator_status.v0.1"
+    },
+    "generated_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "field_core": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["available", "state"],
+      "properties": {
+        "available": {"type": "boolean"},
+        "state": {"$ref": "#/$defs/componentState"}
+      }
+    },
+    "ma": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bridge_state", "connection_state"],
+      "properties": {
+        "bridge_state": {"$ref": "#/$defs/componentState"},
+        "connection_state": {
+          "type": "string",
+          "enum": ["READY", "CONNECTING", "DISCONNECTED", "DEGRADED", "UNKNOWN"]
+        },
+        "target": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["host", "port"],
+          "properties": {
+            "host": {"type": "string", "minLength": 1, "maxLength": 255},
+            "port": {"type": "integer", "minimum": 1, "maximum": 65535}
+          }
+        }
+      }
+    },
+    "remote_ai_available": {
+      "type": "boolean"
+    },
+    "workers": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["worker_id", "state"],
+        "properties": {
+          "worker_id": {"type": "string", "minLength": 1, "maxLength": 128},
+          "state": {"$ref": "#/$defs/componentState"},
+          "gpu_name": {"type": ["string", "null"], "maxLength": 256},
+          "model_runtime_available": {"type": ["boolean", "null"]}
+        }
+      }
+    },
+    "pipeline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["researcher", "designer", "critic", "finalizer"],
+      "properties": {
+        "researcher": {"$ref": "#/$defs/pipelineState"},
+        "designer": {"$ref": "#/$defs/pipelineState"},
+        "critic": {"$ref": "#/$defs/pipelineState"},
+        "finalizer": {"$ref": "#/$defs/pipelineState"}
+      }
+    },
+    "latest_artifact": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["artifact_id", "schema", "request_hash"],
+          "properties": {
+            "artifact_id": {"type": "string", "minLength": 1, "maxLength": 256},
+            "schema": {"type": "string", "minLength": 1, "maxLength": 128},
+            "request_hash": {"type": "string", "minLength": 1, "maxLength": 128},
+            "show_context_hash": {"type": ["string", "null"], "maxLength": 128},
+            "created_at": {"type": ["string", "null"], "format": "date-time"},
+            "source_worker_id": {"type": ["string", "null"], "maxLength": 128}
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "componentState": {
+      "type": "string",
+      "enum": ["ONLINE", "OFFLINE", "DEGRADED", "UNKNOWN"]
+    },
+    "pipelineState": {
+      "type": "string",
+      "enum": ["IDLE", "RUNNING", "DONE", "FAILED", "UNKNOWN"]
+    }
+  }
+}
