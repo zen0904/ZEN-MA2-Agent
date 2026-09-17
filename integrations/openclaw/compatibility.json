@@ -1,9 +1,12 @@
 {
   "schema": "zen.openclaw_compatibility.v0.1",
-  "integration_status": "PYTHON_CONTRACT_IMPLEMENTED_PLUGIN_PENDING",
+  "integration_status": "LOCAL_OPERATOR_API_IMPLEMENTED_OPENCLAW_PLUGIN_PENDING",
   "tested_openclaw_version": null,
   "version_verification_required": true,
   "ui_strategy": "OPENCLAW_FIRST",
+  "operator_api_schema": "zen.operator_status.v0.1",
+  "operator_http_schema": "zen.operator_http.v0.1",
+  "operator_default_bind": "127.0.0.1:8876",
   "openclaw_required_for_field_core": false,
   "ma2_writes": 0
 }
