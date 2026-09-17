@@ -1,0 +1,22 @@
+[Unit]
+Description=ZEN Remote AI Worker Control Plane
+After=network.target
+
+[Service]
+Type=simple
+User=@ZEN_USER@
+Group=@ZEN_GROUP@
+EnvironmentFile=@ZEN_ENV_FILE@
+WorkingDirectory=@ZEN_APP_DIR@
+ExecStart=@ZEN_VENV_DIR@/bin/python -m zen_ma2_agent.worker.cli --worker-id ${ZEN_NODE_ID} --host ${ZEN_WORKER_HOST} --port ${ZEN_WORKER_PORT}
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=@ZEN_HOME@
+
+[Install]
+WantedBy=multi-user.target
