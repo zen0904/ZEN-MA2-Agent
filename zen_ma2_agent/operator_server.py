@@ -38,9 +38,19 @@ def _ma_connection_state(value: object) -> MAConnectionState:
     return MAConnectionState.UNKNOWN
 
 
+def _bridge_state(bridge_server: Any) -> ComponentState:
+    if bridge_server is None:
+        return ComponentState.UNKNOWN
+    try:
+        return ComponentState.ONLINE if bool(bridge_server.running) else ComponentState.OFFLINE
+    except Exception:
+        return ComponentState.DEGRADED
+
+
 def status_provider_from_core(
     core: Any,
     worker_registry: Optional[WorkerRegistry] = None,
+    bridge_server: Any = None,
 ) -> StatusProvider:
     """Create a read-only status provider without calling AgentCore.snapshot().
 
@@ -75,7 +85,7 @@ def status_provider_from_core(
         return build_operator_status(
             field_core_available=True,
             field_core_state=ComponentState.ONLINE,
-            ma_bridge_state=ComponentState.UNKNOWN,
+            ma_bridge_state=_bridge_state(bridge_server),
             ma_connection_state=_ma_connection_state(
                 getattr(runtime, "state", None) if runtime is not None else None
             ),
