@@ -16,7 +16,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=${ZEN_HOME}
+ReadWritePaths=@ZEN_HOME@
 
 [Install]
 WantedBy=multi-user.target
