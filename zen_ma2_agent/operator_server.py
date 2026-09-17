@@ -16,6 +16,7 @@ from .operator_api import (
     UnknownOpenClawTool,
     build_operator_status,
 )
+from .remote_workers import WorkerRegistry
 
 OPERATOR_HTTP_SCHEMA = "zen.operator_http.v0.1"
 OPERATOR_HEALTH_SCHEMA = "zen.operator_http_health.v0.1"
@@ -37,7 +38,10 @@ def _ma_connection_state(value: object) -> MAConnectionState:
     return MAConnectionState.UNKNOWN
 
 
-def status_provider_from_core(core: Any) -> StatusProvider:
+def status_provider_from_core(
+    core: Any,
+    worker_registry: Optional[WorkerRegistry] = None,
+) -> StatusProvider:
     """Create a read-only status provider without calling AgentCore.snapshot().
 
     AgentCore.snapshot() also performs Internet-status bookkeeping. The OpenClaw
@@ -63,6 +67,11 @@ def status_provider_from_core(core: Any) -> StatusProvider:
 
                 ma_target = MATarget(host=host, port=port_number)
 
+        workers = worker_registry.operator_workers() if worker_registry is not None else ()
+        remote_ai_available = (
+            worker_registry.remote_ai_available if worker_registry is not None else False
+        )
+
         return build_operator_status(
             field_core_available=True,
             field_core_state=ComponentState.ONLINE,
@@ -70,8 +79,8 @@ def status_provider_from_core(core: Any) -> StatusProvider:
             ma_connection_state=_ma_connection_state(
                 getattr(runtime, "state", None) if runtime is not None else None
             ),
-            remote_ai_available=False,
-            workers=(),
+            remote_ai_available=remote_ai_available,
+            workers=workers,
             pipeline=PipelineStatus(),
             latest_artifact=None,
             ma_target=ma_target,
