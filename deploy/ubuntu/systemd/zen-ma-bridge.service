@@ -1,0 +1,22 @@
+[Unit]
+Description=ZEN MA-Initiated Bridge
+After=network.target
+
+[Service]
+Type=simple
+User=@ZEN_USER@
+Group=@ZEN_GROUP@
+EnvironmentFile=@ZEN_ENV_FILE@
+WorkingDirectory=@ZEN_APP_DIR@
+ExecStart=@ZEN_VENV_DIR@/bin/python -m zen_ma2_agent.ma_bridge.cli --host ${ZEN_BRIDGE_HOST} --port ${ZEN_BRIDGE_PORT}
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=${ZEN_HOME}
+
+[Install]
+WantedBy=multi-user.target
