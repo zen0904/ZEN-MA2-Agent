@@ -142,8 +142,11 @@ class BridgeServer:
         connection_timeout: float = 5.0,
         allow_remote: bool = False,
     ):
-        if not 1 <= int(port) <= 65535:
-            raise ValueError("bridge port must be in range 1..65535")
+        # Port 0 is permitted for ephemeral loopback test/dev binding only.
+        if not 0 <= int(port) <= 65535:
+            raise ValueError("bridge port must be in range 0..65535")
+        if int(port) == 0 and not _is_loopback_host(host):
+            raise ValueError("ephemeral bridge port is allowed only on loopback")
         if connection_timeout <= 0:
             raise ValueError("connection_timeout must be positive")
         if not allow_remote and not _is_loopback_host(host):
