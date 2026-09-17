@@ -14,6 +14,7 @@ from zen_ma2_agent.operator_server import (
     create_operator_app,
     status_provider_from_core,
 )
+from zen_ma2_agent.remote_workers import RegisteredWorker, WorkerRegistry
 
 
 class OperatorServerTests(unittest.TestCase):
@@ -128,6 +129,29 @@ class OperatorServerTests(unittest.TestCase):
         data = status_provider_from_core(core)().to_dict()
         self.assertEqual(data["ma"]["connection_state"], "UNKNOWN")
         self.assertEqual(data["ma"]["bridge_state"], "UNKNOWN")
+
+    def test_worker_registry_is_projected_without_becoming_field_dependency(self):
+        core = SimpleNamespace(
+            runtime=SimpleNamespace(
+                state=SimpleNamespace(value="DISCONNECTED"),
+                preferences={"ma2": {"host": "127.0.0.1", "port": 30000}},
+            )
+        )
+        registry = WorkerRegistry(
+            (
+                RegisteredWorker("worker-a", priority=10, state=ComponentState.OFFLINE),
+                RegisteredWorker("worker-b", priority=20, state=ComponentState.UNKNOWN),
+            )
+        )
+        data = status_provider_from_core(core, registry)().to_dict()
+        self.assertTrue(data["field_core"]["available"])
+        self.assertFalse(data["remote_ai_available"])
+        self.assertEqual([item["worker_id"] for item in data["workers"]], ["worker-a", "worker-b"])
+
+        registry.set_state("worker-a", ComponentState.ONLINE)
+        data = status_provider_from_core(core, registry)().to_dict()
+        self.assertTrue(data["field_core"]["available"])
+        self.assertTrue(data["remote_ai_available"])
 
     def test_non_loopback_bind_is_blocked_by_default(self):
         with self.assertRaises(ValueError):
