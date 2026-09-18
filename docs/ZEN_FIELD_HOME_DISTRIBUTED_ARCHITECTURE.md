@@ -57,7 +57,10 @@ Current decision:
 
 - the operator-visible Windows machine is Hub-only and is not the Gateway / Field Host;
 - the 2012 Mac mini is explicitly excluded from current Gateway / Field Host consideration;
-- Worker A/B remain primary AI compute and are not Gateway authorities by default;
+- Worker A/B remain primary AI compute;
+- Worker A is explicitly allowed to co-host OpenClaw Gateway + ZEN Field Core +
+  Worker runtime if real host checks pass;
+- Worker B remains a primary AI Worker and is not the preferred Gateway host;
 - only actually intended, physically available hosts with verified networking,
   service/autostart and maintenance characteristics should be considered.
 
@@ -170,7 +173,9 @@ Appropriate responsibilities include:
 - alternative design generation
 - expensive second-pass critique
 
-A home worker must never receive unrestricted raw MA command execution authority.
+A Worker inference runtime must never receive unrestricted raw MA command
+execution authority. Physical co-location with the Field Core does not merge
+those authorities.
 
 Expected boundary:
 
@@ -445,10 +450,9 @@ Current working direction to preserve for later discussion:
 
 ```text
 Field hardware:
-Selected host / hardware TBD
-→ ZEN Field Node / Master / Coordinator
-→ local safety-critical services
-→ actually intended evidence-backed host only
+Preferred next candidate for verification: Worker A
+→ may co-host OpenClaw Gateway + ZEN Field Core + Worker runtime
+→ must pass real OS/network/systemd/recovery checks before selection
 → 2012 Mac mini EXCLUDED
 → operator Windows machine HUB-ONLY
 
@@ -458,7 +462,8 @@ Worker B / 16 GB / GPU TBD
 → main ZEN inference / heavy-compute tier
 
 Field Node:
-actual selected headless/service-capable host
+Worker A if D2.6 host checks pass, otherwise another explicitly intended
+headless/service-capable host
 → local Safety / MA Bridge / Resolver / Builder / cache / recovery
 
 Design principle:
