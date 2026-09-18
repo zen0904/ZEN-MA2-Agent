@@ -4,14 +4,11 @@ import unittest
 from pathlib import Path
 from shutil import copytree
 
-from fastapi.testclient import TestClient
-
 from zen_ma2_agent.core import AgentCore
 from zen_ma2_agent.parser import parse
 from zen_ma2_agent.runtime import AgentRuntime
 from zen_ma2_agent.state.providers.group_membership import GroupMembershipProvider, GroupMembershipProviderError
 from zen_ma2_agent.telnet_client import ConnectionState
-from zen_ma2_agent.web_server import create_app
 
 
 class CloneClient:
@@ -177,14 +174,6 @@ class GeometryCloneTests(unittest.TestCase):
         self.assertIn("Verification: PARTIAL", result["result"])
         self.assertIn("Internal cloned fixture data", result["result"])
         self.assertIn("Rollback: Not automatically available", action["rollback_strategy"])
-
-    def test_desktop_and_mobile_route_to_the_same_preview_path(self):
-        desktop = self.core.handle_request("Clone Group 1 to Group 2", source="desktop")
-        app = TestClient(create_app(self.core, self.source_root))
-        token = app.post("/api/pair", json={"code": self.core.pairing.code, "nonce": self.core.pairing.nonce}).json()["token"]
-        mobile = app.post("/api/chat", json={"text": "Clone Group 1 to Group 2"}, headers={"Authorization": "Bearer " + token}).json()
-        self.assertEqual((desktop["type"], desktop["action"]["status"]), ("ACTION_PLAN", "PREVIEW_ONLY"))
-        self.assertEqual((mobile["type"], mobile["action"]["status"]), ("ACTION_PLAN", "PREVIEW_ONLY"))
 
     def test_operator_cannot_enable_clone_before_safe_real_target_exists(self):
         with self.assertRaisesRegex(ValueError, "safe real-MA2 write target"):

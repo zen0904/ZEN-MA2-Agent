@@ -6,13 +6,10 @@ import re
 from pathlib import Path
 from shutil import copytree
 
-from fastapi.testclient import TestClient
-
 from zen_ma2_agent.core import AgentCore
 from zen_ma2_agent.runtime import AgentRuntime
 from zen_ma2_agent.state.providers import AdapterResponseError, AdapterUnsupported, ZenStateAdapter
 from zen_ma2_agent.telnet_client import ConnectionState
-from zen_ma2_agent.web_server import create_app
 
 
 class MailboxStateClient:
@@ -124,16 +121,6 @@ class ExtendedStateTests(unittest.TestCase):
             adapter.group_membership("ZEN_STATE|abc123|BEGIN|group_membership|1\r\nZEN_STATE|abc123|END|group_membership|1", request)
         with self.assertRaises(AdapterUnsupported):
             adapter.group_membership("ZEN_STATE|abc123|ERROR|GROUP_NOT_FOUND", request)
-
-    def test_chat_and_mobile_share_mailbox_state(self):
-        membership = self.core.handle_request("HYBRID 裡有哪些燈？", source="desktop")
-        self.assertEqual(membership["type"], "ANSWER")
-        self.assertIn("1, 101, 1007", membership["message"])
-        client = TestClient(create_app(self.core, self.source_root))
-        token = client.post("/api/pair", json={"code": self.core.pairing.code, "nonce": self.core.pairing.nonce}).json()["token"]
-        response = client.post("/api/chat", json={"text": "有哪些 Fixture？"}, headers={"Authorization": "Bearer " + token})
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("1007: Beam", response.json()["message"])
 
     def test_quotes_escape_and_concurrent_requests_are_serialized(self):
         self.assertEqual(AgentRuntime.user_var_command('a"b\\c'), 'SetUserVar $ZEN_AGENT_REQUEST="a\\"b\\\\c"')

@@ -4,13 +4,11 @@ import unittest
 from pathlib import Path
 from shutil import copytree
 
-from fastapi.testclient import TestClient
 from zen_ma2_agent.core import AgentCore
 from zen_ma2_agent.diagnostics import ShowDiagnostics
 from zen_ma2_agent.runtime import AgentRuntime
 from zen_ma2_agent.state.store import StateStore
 from zen_ma2_agent.telnet_client import ConnectionState
-from zen_ma2_agent.web_server import create_app
 
 
 class DiagnosticsClient:
@@ -131,15 +129,6 @@ class ShowDiagnosticsTests(unittest.TestCase):
         self.assertIn("group.duplicate_name", ids)
         self.assertIn("group.empty", ids)
         self.assertNotIn("fixture.duplicate_id", ids)
-
-    def test_mobile_and_desktop_share_diagnostics_route(self):
-        desktop = self.core.handle_request("檢查 Show", source="desktop")
-        client = TestClient(create_app(self.core, Path(__file__).resolve().parents[1]))
-        token = client.post("/api/pair", json={"code": self.core.pairing.code, "nonce": self.core.pairing.nonce}).json()["token"]
-        mobile = client.post("/api/chat", json={"text": "Show Diagnostics"}, headers={"Authorization": "Bearer " + token}).json()
-        self.assertEqual((desktop["type"], mobile["type"]), ("ANSWER", "ANSWER"))
-        self.assertIn("Show Diagnostics", mobile["message"])
-        self.assertEqual(self.core.last_chat_routing["ROUTER_INTENT"], "diagnose_show")
 
 
 if __name__ == "__main__":

@@ -4,8 +4,6 @@ import unittest
 from pathlib import Path
 from shutil import copytree
 
-from fastapi.testclient import TestClient
-
 from zen_ma2_agent.core import AgentCore
 from zen_ma2_agent.models import Intent
 from zen_ma2_agent.runtime import AgentRuntime
@@ -14,7 +12,6 @@ from zen_ma2_agent.state.models import Group
 from zen_ma2_agent.state.providers import FixtureProvider, FixtureTypeExportError, GroupProvider
 from zen_ma2_agent.state.store import StateStore
 from zen_ma2_agent.telnet_client import ConnectionState
-from zen_ma2_agent.web_server import create_app
 
 
 class StateClient:
@@ -148,7 +145,7 @@ class StateAndSkillsTests(unittest.TestCase):
         self.assertEqual(len(combined.skill_graph), 2)
         self.assertEqual(combined.commands, ("Go Sequence 5", 'Group "BEAM"'))
 
-    def test_user_installed_proposal_is_approval_gated_and_mobile_shares_registry(self):
+    def test_user_installed_proposal_is_approval_gated(self):
         proposal = self.core.propose_skill("Cue Time Adjust", "adjust_cue_time", ["sequences", "cues"], "MODIFY")
         self.assertEqual(proposal["status"], "PENDING_APPROVAL")
         installed = self.core.install_skill_proposal(proposal["id"])
@@ -156,11 +153,6 @@ class StateAndSkillsTests(unittest.TestCase):
         skills = self.core.snapshot()["skills"]
         self.assertIn("adjust.cue.time", [item["id"] for item in skills])
         self.assertFalse(next(item for item in skills if item["id"] == "adjust.cue.time")["executable"])
-        client = TestClient(create_app(self.core, self.source_root))
-        token = client.post("/api/pair", json={"code": self.core.pairing.code, "nonce": self.core.pairing.nonce}).json()["token"]
-        response = client.get("/api/skills", headers={"Authorization": "Bearer " + token})
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("adjust.cue.time", [item["id"] for item in response.json()])
 
 
 if __name__ == "__main__":

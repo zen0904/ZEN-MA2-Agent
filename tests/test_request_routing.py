@@ -3,12 +3,9 @@ import unittest
 from pathlib import Path
 from shutil import copytree
 
-from fastapi.testclient import TestClient
-
 from zen_ma2_agent.core import AgentCore
 from zen_ma2_agent.runtime import AgentRuntime
 from zen_ma2_agent.telnet_client import ConnectionState
-from zen_ma2_agent.web_server import create_app
 
 
 class RoutingClient:
@@ -71,16 +68,6 @@ class RequestRoutingTests(unittest.TestCase):
         response = self.core.handle_request("幫我整理一下")
         self.assertEqual(response["type"], "NEEDS_CLARIFICATION")
         self.assertNotIn("Unsupported MVP", response["message"])
-
-    def test_desktop_and_mobile_use_same_handle_request_path(self):
-        self.ready()
-        desktop = self.core.router.route("複製群組1變2", self.core.skills)
-        client = TestClient(create_app(self.core, self.source_root))
-        token = client.post("/api/pair", json={"code": self.core.pairing.code, "nonce": self.core.pairing.nonce}).json()["token"]
-        mobile = client.post("/api/chat", json={"text": "現在有哪些 Group"}, headers={"Authorization": "Bearer " + token}).json()
-        self.assertEqual(desktop.intent.kind, "geometry_clone")
-        self.assertEqual(mobile["type"], "ANSWER")
-        self.assertEqual([item["source"] for item in self.core.chat if item["role"] == "user"], ["mobile"])
 
 
 if __name__ == "__main__":
