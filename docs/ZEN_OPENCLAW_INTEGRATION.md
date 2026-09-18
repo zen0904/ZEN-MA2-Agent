@@ -31,25 +31,20 @@ The repository now contains:
 No executable OpenClaw Feature Plugin is claimed yet because the exact installed
 OpenClaw version must be verified and pinned first.
 
-## Current ZEN API layers
+## Current ZEN API layer
 
-ZEN now has two deliberately separate API surfaces.
+The legacy mobile PWA/server/pairing surface has been retired. The supported
+operator-facing boundary is now the narrow, versioned OpenClaw Operator API:
 
 ```text
-Existing mobile API
-= LAN/mobile PWA surface
-= pairing-protected
-= may expose approval-capable workflows
-
 OpenClaw Operator API
-= narrow versioned adapter surface
 = localhost-first
 = read-only today
 = no direct MA write authority
 ```
 
-The existing mobile server remains unchanged. OpenClaw should not receive the
-entire mobile API wholesale.
+ZEN core services remain independent of OpenClaw, but there is no second
+ZEN-owned mobile or desktop frontend stack to maintain.
 
 ## Local Operator API
 
