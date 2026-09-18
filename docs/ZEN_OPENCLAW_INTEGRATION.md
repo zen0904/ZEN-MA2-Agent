@@ -144,10 +144,10 @@ OpenClaw integration must never introduce:
 
 ## Deployment relationship
 
-Intended placement remains:
+Intended placement is role-based rather than tied to one chassis:
 
 ```text
-2012 Mac mini / Ubuntu
+Selected Field Host
 ├─ OpenClaw Gateway + Control UI
 └─ ZEN Field Core
     ├─ Local Operator API
@@ -156,12 +156,15 @@ Intended placement remains:
     ├─ Worker Router
     └─ Artifact cache
          ↕ private authenticated network later
-       Home Worker A / GTX1650 / 16 GB
-       Home Worker B / GPU UNKNOWN / 16 GB
+       Worker A / GTX1650 / 16 GB
+       Worker B / GPU UNKNOWN / 16 GB
+       optional additional/backup host roles
 ```
 
-Only the Mac mini travels. Remote workers remain optional compute and cannot be
-required for Field Core availability.
+The selected Field Host may be the operator's current Mac, the 2012 Mac mini,
+or a future replacement. Two secondary hosts are available, but their exact
+Worker/backup assignments are not fixed yet. Remote workers remain optional
+compute and cannot be required for Field Core availability.
 
 ## Still pending on the powered development host
 
