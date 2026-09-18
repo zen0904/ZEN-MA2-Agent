@@ -156,15 +156,16 @@ Selected Field Host
     ├─ Worker Router
     └─ Artifact cache
          ↕ private authenticated network later
-       Worker A / GTX1650 / 16 GB
-       Worker B / GPU UNKNOWN / 16 GB
-       optional additional/backup host roles
+       Primary Worker A / GTX1650 / 16 GB
+       Primary Worker B / GPU UNKNOWN / 16 GB
 ```
 
 The selected Field Host may be the operator's current Mac, the 2012 Mac mini,
-or a future replacement. Two secondary hosts are available, but their exact
-Worker/backup assignments are not fixed yet. Remote workers remain optional
-compute and cannot be required for Field Core availability.
+or a future replacement. The two Worker hosts are the primary AI inference
+compute tier. They remain non-authoritative for MA control and must not be
+required for Field Core availability: if both workers are unavailable, heavy
+AI capability may be unavailable, but local Safety, Bridge, Resolver/Builder
+and deterministic recovery remain alive.
 
 ## Still pending on the powered development host
 
