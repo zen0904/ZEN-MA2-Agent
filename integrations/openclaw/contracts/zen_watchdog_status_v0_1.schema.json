@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zen.local/schemas/zen.watchdog_status.v0.1.json",
+  "title": "ZEN Watchdog Status v0.1",
+  "description": "Read-only Field watchdog snapshot. Events are edge-triggered and bounded; the contract carries no MA command authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "state", "components", "recent_events"],
+  "properties": {
+    "schema": {"const": "zen.watchdog_status.v0.1"},
+    "state": {"$ref": "#/$defs/componentState"},
+    "components": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["component_id", "state", "required", "detail"],
+        "properties": {
+          "component_id": {"type": "string", "minLength": 1, "maxLength": 128},
+          "state": {"$ref": "#/$defs/componentState"},
+          "required": {"type": "boolean"},
+          "detail": {"type": ["string", "null"], "maxLength": 512}
+        }
+      }
+    },
+    "recent_events": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sequence",
+          "component_id",
+          "previous_state",
+          "current_state",
+          "severity",
+          "message"
+        ],
+        "properties": {
+          "sequence": {"type": "integer", "minimum": 1},
+          "component_id": {"type": "string", "minLength": 1, "maxLength": 128},
+          "previous_state": {
+            "oneOf": [
+              {"type": "null"},
+              {"$ref": "#/$defs/componentState"}
+            ]
+          },
+          "current_state": {"$ref": "#/$defs/componentState"},
+          "severity": {
+            "type": "string",
+            "enum": ["INFO", "WARNING", "CRITICAL"]
+          },
+          "message": {"type": "string", "minLength": 1, "maxLength": 512}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "componentState": {
+      "type": "string",
+      "enum": ["ONLINE", "OFFLINE", "DEGRADED", "UNKNOWN"]
+    }
+  }
+}
