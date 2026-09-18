@@ -98,6 +98,8 @@ Current conservative mappings:
 - Remote AI availability is projected from the Worker registry.
 - Watchdog exposes bounded edge-triggered Field/Bridge/MA/Worker state through
   `zen.watchdog.status`.
+- Host CPU/RAM/disk/available-temperature metrics are exposed read-only through
+  `zen.host.status` using psutil; unsupported temperature sensors remain unknown.
 - Pipeline roles remain `UNKNOWN` until real pipeline state is wired.
 - Latest artifact remains null until a real artifact source is wired.
 
@@ -111,6 +113,7 @@ zen.worker.status
 zen.ma.status
 zen.artifact.latest
 zen.watchdog.status
+zen.host.status
 ```
 
 Reserved but intentionally not implemented:
