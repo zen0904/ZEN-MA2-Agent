@@ -61,11 +61,11 @@ OpenClaw is an adapter and operator surface, not the authority that writes direc
 ## Intended topology
 
 ```text
-Operator
+Operator-visible Windows machine
+└─ OpenClaw Windows Hub
    ↕
-OpenClaw Control UI / Chat
-   ↕
-ZEN OpenClaw integration adapter
+Headless OpenClaw Gateway host
+└─ ZEN OpenClaw integration adapter
    ↕
 ZEN Field Node API / control plane
    ├─ MA Bridge
@@ -79,8 +79,12 @@ ZEN Field Node API / control plane
         ↕
  authenticated private network later
         ↕
-Home AI Workers
+Primary AI Workers (headless)
 ```
+
+The Windows machine the operator watches should use the native Hub as the
+human-facing surface. It is not required to host the standalone OpenClaw CLI or
+Gateway. Gateway placement is a separate deployment decision.
 
 Field hardware is intentionally not fixed to one machine.
 
@@ -191,14 +195,20 @@ Small purpose-built views remain acceptable if OpenClaw genuinely cannot express
 
 The preferred sequence is:
 
-1. Install and record an exact OpenClaw version on the development host.
-2. Validate its Control UI/plugin capabilities for that exact version.
-3. Pin the tested OpenClaw version for production compatibility.
-4. Build a thin `integrations/openclaw/` adapter/plugin.
-5. Create or consolidate a stable versioned ZEN local API.
-6. Render real ZEN status through OpenClaw.
-7. Add safe typed actions gradually.
-8. Keep MA2 writes disabled until the independent Safety/Resolver/Builder path is verified.
+1. Install the native OpenClaw Windows Hub on the operator-visible Windows machine.
+2. Select and prepare the headless Gateway / Field Host separately.
+3. Record the exact OpenClaw/Gateway version on the host that actually runs the Gateway.
+4. Validate Hub-to-Gateway and plugin capabilities for that exact tested version.
+5. Pin the tested version for production compatibility.
+6. Build a thin `integrations/openclaw/` adapter/plugin on the Gateway side.
+7. Connect it to the stable versioned ZEN local API.
+8. Render real ZEN status through the Windows Hub.
+9. Add safe typed actions gradually.
+10. Keep MA2 writes disabled until the independent Safety/Resolver/Builder path is verified.
+
+Do not install a standalone CLI on the operator Windows machine solely to
+satisfy a version-check step. Version verification belongs to the component
+that actually hosts the Gateway/runtime.
 
 ## Versioning rule
 
@@ -219,7 +229,8 @@ As of this decision:
 
 ```text
 OPENCLAW_FIRST_UI=DECIDED
-OPENCLAW_INSTALLED=UNKNOWN / requires powered development host
+OPENCLAW_WINDOWS_HUB=NOT_YET_VERIFIED
+OPENCLAW_GATEWAY_HOST=UNSELECTED
 ZEN_OPENCLAW_PLUGIN=NOT_IMPLEMENTED
 ZEN_UI_ADAPTER=NOT_IMPLEMENTED
 FULL_CUSTOM_ZEN_FRONTEND=NOT_PLANNED
