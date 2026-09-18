@@ -19,5 +19,11 @@
   "gateway_cohosting_allowed": true,
   "worker_a_authority_boundary": "COHOSTING_DOES_NOT_GRANT_WORKER_INFERENCE_MA_AUTHORITY",
   "worker_a_os": "TO_VERIFY",
-  "worker_b_os": "TO_VERIFY"
+  "worker_b_os": "TO_VERIFY",
+  "hardware_return_preflight": "READY",
+  "preflight_command": "python scripts/host_preflight.py",
+  "deployment_templates": {
+    "linux_systemd": "deploy/ubuntu",
+    "windows_headless": "deploy/windows"
+  }
 }
