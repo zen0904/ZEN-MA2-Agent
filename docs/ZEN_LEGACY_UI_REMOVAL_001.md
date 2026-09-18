@@ -47,10 +47,9 @@ The removal does not delete:
 - MA-Initiated Bridge
 - USB-portable runtime/state layout
 
-The legacy PairingManager and a small amount of compatibility state inside
-AgentCore remain temporarily because core code still references them. They no
-longer have a frontend or network surface and can be removed in a later
-core-only cleanup after the full development-host regression suite runs.
+The former PairingManager compatibility layer and phone-specific AgentCore
+state have now also been removed. Current main has no ZEN-owned desktop/mobile
+presentation stack or pairing frontend flow.
 
 ## New runtime
 
