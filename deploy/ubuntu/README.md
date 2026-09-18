@@ -1,29 +1,68 @@
-# ZEN Ubuntu deployment skeleton
+# ZEN Linux/systemd deployment skeleton
 
 Status: **REPOSITORY PREPARED / HOST INSTALL NOT PERFORMED**
 
-This directory prepares ZEN for the planned field/home topology without modifying any real Ubuntu host.
+This directory prepares ZEN for a possible Linux/systemd Gateway, Field Core,
+and/or Worker host without modifying any real machine.
 
-## Current target roles
+It is intentionally host-neutral. Do not assume the 2012 Mac mini or assume
+that Worker A/B currently run Linux. Actual OS is verified only when the
+physical machines return.
 
-- Field Node: 2012 Mac mini, Ubuntu, i7-3615QM, 8 GB RAM, Intel 545s 256 GB SSD.
-- Home Worker A: Ubuntu, 16 GB RAM, GTX 1650 4 GB.
-- Home Worker B: Ubuntu, 16 GB RAM, GPU model still UNKNOWN.
+## Current deployment direction
 
-Only the Field Node travels to the venue. Home workers are optional compute and are not required for Field Core availability.
+- Operator-visible Windows machine: OpenClaw Windows Hub only.
+- Preferred next Gateway / Field Host candidate to verify: Worker A.
+- Worker A may physically co-host OpenClaw Gateway + ZEN Field Core + Worker
+  runtime if host checks pass.
+- Worker B remains primarily an AI Worker.
+- Physical co-location does not merge MA authority with Worker inference.
 
-## Implemented repository components
+## Reuse-first deployment
 
-- `zen_ma2_agent.ma_bridge.protocol`: strict ZEN/1 parser + bounded request dedup.
-- `zen_ma2_agent.ma_bridge.server`: localhost-first TCP dispatcher. `PING` and `STATUS` are deterministic; `DIMMER` is parse-only and `DESIGN` is NOT_IMPLEMENTED.
-- `zen_ma2_agent.operator_server`: localhost-first OpenClaw-facing ZEN Operator API.
-- `zen_ma2_agent.worker.server`: worker `/health`, `/capabilities`, and `/jobs` control plane with `ECHO_TEST` plus `INFERENCE_RESERVED`.
-- `zen_ma2_agent.artifacts`: local artifact metadata/cache and stale-result checks.
-- `check_host.py`: non-destructive host readiness report.
+Use existing platform/runtime facilities:
+
+- systemd for Linux service lifecycle;
+- `main.py` / `FieldHost` for the ZEN Field Core;
+- `zen_ma2_agent.worker.cli` for Worker control plane;
+- official OpenClaw Gateway installation/service guidance for the exact tested
+  host version.
+
+Do not create a custom supervisor when systemd is available.
+
+## Host preflight
+
+The canonical cross-platform preflight is:
+
+```bash
+python3 scripts/host_preflight.py
+```
+
+Optional reachability probes:
+
+```bash
+python3 scripts/host_preflight.py \
+  --target ma=<MA_HOST>:30000 \
+  --target peer=<OTHER_WORKER_IP>:8878
+```
+
+`deploy/ubuntu/check_host.py` remains only as a compatibility entrypoint and
+delegates to that canonical script.
 
 ## Service templates
 
-`systemd/*.service` are templates, not drop-in units. Replace these placeholders before installation:
+Templates under `systemd/` are not installed automatically.
+
+Primary templates:
+
+- `zen-field-core.service` — normal ZEN FieldHost process. It owns Operator
+  API, MA Bridge, Watchdog, Host Metrics and Worker Registry.
+- `zen-worker.service` — Worker HTTP control plane.
+
+`zen-ma-bridge.service` is retained only for isolated Bridge testing. Do not
+run it alongside `zen-field-core.service` on the same bind/port.
+
+Replace placeholders before installation:
 
 - `@ZEN_USER@`
 - `@ZEN_GROUP@`
@@ -32,35 +71,52 @@ Only the Field Node travels to the venue. Home workers are optional compute and 
 - `@ZEN_VENV_DIR@`
 - `@ZEN_HOME@`
 
-The templates intentionally do not call `sudo`, alter firewall rules, install packages, install drivers, configure VPNs, or change network settings.
+The templates do not:
+
+- call sudo;
+- install packages/drivers;
+- change firewall/VPN/network configuration;
+- install OpenClaw;
+- enable MA writes.
 
 ## Environment
 
-Start from `env.example` and create a host-specific environment file outside Git. Do not commit secrets or MA credentials.
+Start from `env.example` and create a host-specific EnvironmentFile outside
+Git. Do not commit secrets or MA credentials.
 
-Field Node defaults should keep Operator API and MA Bridge on loopback. Worker API also defaults to loopback until a private authenticated network is deliberately configured.
+The normal Field Core keeps Operator API and MA Bridge on loopback by default.
+Remote exposure requires an explicit authenticated-network decision.
 
-## Host check
+Worker API also stays loopback-only by default. If a later private-network
+deployment requires a non-loopback Worker bind, use the existing
+`--allow-remote` flag only after that network/security decision is made.
 
-Run from a cloned repository:
+## First real-machine sequence
 
-```bash
-python3 deploy/ubuntu/check_host.py
+When a physical host returns:
+
+```text
+1. git pull --ff-only origin main
+2. python3 scripts/host_preflight.py
+3. python3 -m pip install -r requirements.txt
+4. python3 -m unittest discover -s tests -v
+5. python3 main.py --self-check
+6. manual Worker smoke if applicable
+7. select Gateway host only if evidence passes
+8. install native service templates only after selection
+9. install OpenClaw Gateway using official guidance for the actual OS
+10. verify/pin exact Gateway version
 ```
 
-This only inspects OS/Python/CPU/RAM/free disk/tool availability and optional `nvidia-smi` output. It performs no installation or configuration.
+## Still pending until hardware returns
 
-## Not implemented yet
+- actual OS for Worker A/B;
+- actual service/autostart behavior;
+- MA and peer reachability;
+- OpenClaw Gateway support/version on the selected host;
+- private-network transport;
+- actual model runtime;
+- real remote inference;
+- production MA writes.
 
-- actual Ubuntu package/systemd installation;
-- OpenClaw installation and plugin scaffold against a pinned host version;
-- private-network transport between field and home;
-- Qwen/llama.cpp on either worker;
-- CUDA setup/benchmark;
-- authenticated worker transport;
-- actual remote inference job;
-- DIMMER execution;
-- DESIGN execution;
-- any production MA2 write.
-
-`MA2_WRITES=0` remains required in this phase.
+`MA2_WRITES=0` remains required during integration.
