@@ -2,6 +2,8 @@
   "schema": "zen.openclaw_compatibility.v0.1",
   "integration_status": "LOCAL_OPERATOR_API_IMPLEMENTED_OPENCLAW_PLUGIN_PENDING",
   "tested_openclaw_version": null,
+  "windows_hub_version": "2026.9.4",
+  "windows_hub_status": "INSTALLED_LAUNCHED_SETUP_PENDING_GATEWAY",
   "version_verification_required": true,
   "ui_strategy": "OPENCLAW_FIRST",
   "operator_api_schema": "zen.operator_status.v0.1",
