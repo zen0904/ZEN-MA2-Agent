@@ -174,6 +174,7 @@ def build_operator_status(
 
 
 StatusProvider = Callable[[], OperatorStatusSnapshot]
+WatchdogProvider = Callable[[], Mapping[str, Any]]
 
 
 class UnknownOpenClawTool(ValueError):
@@ -189,6 +190,7 @@ class OpenClawOperatorAdapter:
             "zen.worker.status",
             "zen.ma.status",
             "zen.artifact.latest",
+            "zen.watchdog.status",
         }
     )
     RESERVED_TOOLS = frozenset(
@@ -200,8 +202,13 @@ class OpenClawOperatorAdapter:
     )
     ALLOWED_TOOLS = READ_ONLY_TOOLS | RESERVED_TOOLS
 
-    def __init__(self, status_provider: StatusProvider):
+    def __init__(
+        self,
+        status_provider: StatusProvider,
+        watchdog_provider: Optional[WatchdogProvider] = None,
+    ):
         self._status_provider = status_provider
+        self._watchdog_provider = watchdog_provider
 
     def invoke(
         self,
@@ -237,6 +244,17 @@ class OpenClawOperatorAdapter:
 
         if tool_name in self.RESERVED_TOOLS:
             return self._result(tool_name, "NOT_IMPLEMENTED", None, None, request_id)
+
+        if tool_name == "zen.watchdog.status":
+            if self._watchdog_provider is None:
+                return self._result(tool_name, "NOT_IMPLEMENTED", None, None, request_id)
+            return self._result(
+                tool_name,
+                "SUCCESS",
+                dict(self._watchdog_provider()),
+                None,
+                request_id,
+            )
 
         snapshot = self._status_provider()
         snapshot_data = snapshot.to_dict()
