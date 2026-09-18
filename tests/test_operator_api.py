@@ -115,6 +115,28 @@ class OperatorApiTests(unittest.TestCase):
         self.assertEqual(result["status"], "NOT_IMPLEMENTED")
         self.assertIsNone(result["result"])
 
+    def test_host_status_tool_is_read_only_projection(self):
+        adapter = OpenClawOperatorAdapter(
+            self._snapshot,
+            host_status_provider=lambda: {
+                "schema": "zen.host_status.v0.1",
+                "state": "ONLINE",
+                "cpu_percent": 12.5,
+                "memory": {"percent": 50.0, "available_mb": 4096, "total_mb": 8192},
+                "disk": {"path": "/", "percent": 40.0, "free_mb": 1000, "total_mb": 2000},
+                "temperature_c": None,
+                "errors": [],
+            },
+        )
+        result = adapter.invoke("zen.host.status")
+        self.assertEqual(result["status"], "SUCCESS")
+        self.assertEqual(result["result"]["schema"], "zen.host_status.v0.1")
+
+    def test_host_status_tool_is_not_implemented_without_provider(self):
+        result = OpenClawOperatorAdapter(self._snapshot).invoke("zen.host.status")
+        self.assertEqual(result["status"], "NOT_IMPLEMENTED")
+        self.assertIsNone(result["result"])
+
     def test_mutating_tools_are_reserved_but_not_implemented(self):
         adapter = OpenClawOperatorAdapter(self._snapshot)
         for name in ("zen.design.request", "zen.preview", "zen.approve"):
