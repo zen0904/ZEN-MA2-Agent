@@ -77,6 +77,26 @@ class OperatorServerTests(unittest.TestCase):
         self.assertEqual(response.json()["status"], "SUCCESS")
         self.assertEqual(response.json()["result"]["state"], "DEGRADED")
 
+    def test_host_status_tool_uses_optional_provider(self):
+        client = TestClient(
+            create_operator_app(
+                self._provider(),
+                host_status_provider=lambda: {
+                    "schema": "zen.host_status.v0.1",
+                    "state": "ONLINE",
+                    "cpu_percent": 10.0,
+                    "memory": {"percent": 20.0, "available_mb": 1, "total_mb": 2},
+                    "disk": {"path": "/", "percent": 30.0, "free_mb": 1, "total_mb": 2},
+                    "temperature_c": None,
+                    "errors": [],
+                },
+            )
+        )
+        response = client.post("/zen/v0.1/tools/zen.host.status", json={})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "SUCCESS")
+        self.assertEqual(response.json()["result"]["schema"], "zen.host_status.v0.1")
+
     def test_reserved_mutating_tool_is_not_implemented(self):
         client = TestClient(create_operator_app(self._provider()))
         response = client.post("/zen/v0.1/tools/zen.approve", json={})
