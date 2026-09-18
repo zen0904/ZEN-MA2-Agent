@@ -145,11 +145,17 @@ OpenClaw integration must never introduce:
 
 ## Deployment relationship
 
-Intended placement is role-based rather than tied to one chassis:
+The operator-visible Windows machine is intentionally separated from the
+headless Gateway / Field Core role.
 
 ```text
-Selected Field Host
-├─ OpenClaw Gateway + Control UI
+Operator Windows machine
+└─ OpenClaw Windows Hub
+   └─ visual operator surface only
+
+Headless Gateway / Field Host
+├─ OpenClaw Gateway
+├─ ZEN OpenClaw integration adapter
 └─ ZEN Field Core
     ├─ Local Operator API
     ├─ MA Bridge
@@ -161,23 +167,30 @@ Selected Field Host
        Primary Worker B / GPU UNKNOWN / 16 GB
 ```
 
-The selected Field Host may be the operator's current Mac, the 2012 Mac mini,
-or a future replacement. The two Worker hosts are the primary AI inference
-compute tier. They remain non-authoritative for MA control and must not be
-required for Field Core availability: if both workers are unavailable, heavy
-AI capability may be unavailable, but local Safety, Bridge, Resolver/Builder
-and deterministic recovery remain alive.
+The operator Windows machine is not required to install or host the standalone
+OpenClaw CLI/Gateway merely to provide the visible UI. It should use the
+Windows Hub and connect to the selected Gateway host.
 
-## Still pending on the powered development host
+The Gateway / Field Host remains selectable and may be the current Mac, the
+2012 Mac mini, one of the headless compute-capable hosts if explicitly chosen
+later, or a future replacement. The two Worker hosts remain the primary AI
+inference tier and are expected to run headless. They remain non-authoritative
+for MA control and must not be required for Field Core availability: if both
+workers are unavailable, heavy AI capability may be unavailable, but local
+Safety, Bridge, Resolver/Builder and deterministic recovery remain alive.
 
-- install OpenClaw using current official guidance;
-- record `openclaw --version`;
-- pin that exact tested version in `compatibility.json`;
+## Still pending on the OpenClaw host(s)
+
+- install the OpenClaw Windows Hub on the operator-visible Windows machine;
+- select the actual headless Gateway / Field Host;
+- install and verify the Gateway on that selected host;
+- record the exact tested Gateway/OpenClaw version from the host that actually runs it;
+- pin that tested version in `compatibility.json`;
 - scaffold the Feature Plugin against that installed SDK/API;
-- enable the trusted custom plugin UI only as required;
-- connect the plugin to the localhost Operator API;
-- verify the Control UI in a browser;
-- run the full repository test suite.
+- connect the plugin to the ZEN Operator API;
+- verify the Hub can operate against the real Gateway/plugin path;
+- do not require a standalone CLI installation on the operator Windows machine
+  unless a later concrete need justifies it.
 
 ## Later runtime work
 
