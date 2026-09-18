@@ -59,26 +59,19 @@ Official references used for this boundary:
 
 ## Existing ZEN HTTP surface
 
-ZEN already has a FastAPI mobile/LAN surface in
-`zen_ma2_agent/web_server.py`. It currently exposes pairing-protected state,
-skill, chat, approval/cancel, and WebSocket endpoints and serves the existing
-PWA.
+The legacy mobile/PWA server has been retired. ZEN now exposes a dedicated,
+narrow, versioned Operator API for OpenClaw integration:
 
-That existing server is evidence that ZEN does **not** need another full web
-frontend merely for OpenClaw.
+```text
+GET  /healthz
+GET  /zen/v0.1/status
+POST /zen/v0.1/tools/{tool_name}
+```
 
-However, it is not yet declared to be the stable OpenClaw API because:
+Default bind is loopback-only at `127.0.0.1:8876`.
 
-- it was designed for the mobile PWA, not plugin compatibility;
-- `MobileServer.start()` currently binds to `0.0.0.0` for LAN/mobile use;
-- it includes approval/write-capable routes that a first OpenClaw integration
-  should not receive by default;
-- its response shapes are internal/mobile shapes rather than a versioned
-  OpenClaw-facing contract.
-
-The first OpenClaw implementation should therefore reuse ZEN state/core logic
-while adding a narrow, versioned, localhost-first adapter instead of exposing
-all existing mobile routes wholesale.
+The integration must use this typed boundary rather than reintroducing the
+retired mobile server or exposing ZEN internals wholesale.
 
 ## Initial read-only contract
 
@@ -122,16 +115,24 @@ The plugin must never expose:
 
 ## Local implementation handoff
 
-When the development computer is online:
+Current deployment split:
 
-1. Install OpenClaw using its current official instructions.
-2. Record the exact `openclaw --version` output.
-3. Pin that tested host version in ZEN compatibility documentation.
-4. Scaffold against the installed version's current Feature Plugin SDK.
-5. Keep the plugin thin; call ZEN through a versioned local adapter.
-6. Keep development binds loopback-only by default.
-7. Run plugin build/validate plus the existing ZEN test suite before merging
-   implementation code.
+- operator-visible Windows machine: verified OpenClaw Windows Hub 2026.9.4;
+- standalone CLI/Gateway is not required on that Windows operator machine;
+- Gateway / Field Host remains unselected until a real host returns and passes
+  preflight;
+- Worker A is the preferred first co-host candidate to verify, not a selected
+  host.
+
+After the actual Gateway host is selected:
+
+1. install OpenClaw Gateway using current official instructions for that OS;
+2. record the exact Gateway/OpenClaw version on that host;
+3. pin that tested Gateway version in ZEN compatibility documentation;
+4. scaffold against that installed version's current Feature Plugin SDK;
+5. keep the plugin thin and call the versioned ZEN Operator API;
+6. keep development binds loopback-only by default where co-located;
+7. run plugin validation plus the existing ZEN test suite before merging.
 
 Until those steps are completed, this directory is a contract and handoff, not
 a claim that the OpenClaw plugin is operational.
