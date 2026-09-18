@@ -53,26 +53,17 @@ reachable.
 
 The Field Node role is not assigned permanently to one chassis.
 
-Current candidates include:
+Current decision:
 
-- the operator's current Mac, if it remains the preferred portable host;
-- the 2012 Mac mini as an optional dedicated headless host;
-- a future replacement machine that satisfies the same Field Core contract.
+- the operator-visible Windows machine is Hub-only and is not the Gateway / Field Host;
+- the 2012 Mac mini is explicitly excluded from current Gateway / Field Host consideration;
+- Worker A/B remain primary AI compute and are not Gateway authorities by default;
+- only actually intended, physically available hosts with verified networking,
+  service/autostart and maintenance characteristics should be considered.
 
-Known 2012 Mac mini candidate:
-
-- CPU: Intel Core i7-3615QM, 4 cores / 8 threads, 2.30 GHz base, up to 3.30 GHz
-- RAM: 8 GB installed as 4 GB + 4 GB
-- storage: Intel 545s 256 GB SATA SSD (`INTEL SSDSC2KW256G8`)
-- Ubuntu-capable and suitable for SSH / CLI-only operation
-
-This hardware record is capability evidence, not a deployment commitment. The
-current Mac may remain the Field Node instead, and the mini may remain unused
-or take another role.
-
-The product should therefore target a host-neutral Field Core contract:
-headless operation is supported, but macOS/Linux deployment details belong in
-adapters and service packaging rather than in core logic.
+The product therefore targets a host-neutral Field Core contract. Headless
+operation is supported, but OS-specific deployment details belong in adapters
+and service packaging rather than in core logic.
 
 ### 2.2 Primary AI Worker A
 
@@ -457,7 +448,9 @@ Field hardware:
 Selected host / hardware TBD
 → ZEN Field Node / Master / Coordinator
 → local safety-critical services
-→ current Mac OR 2012 Mac mini OR future compatible host
+→ actually intended evidence-backed host only
+→ 2012 Mac mini EXCLUDED
+→ operator Windows machine HUB-ONLY
 
 Primary AI compute:
 Worker A / 16 GB / GTX 1650
@@ -465,7 +458,7 @@ Worker B / 16 GB / GPU TBD
 → main ZEN inference / heavy-compute tier
 
 Field Node:
-current Mac OR 2012 Mac mini OR future compatible host
+actual selected headless/service-capable host
 → local Safety / MA Bridge / Resolver / Builder / cache / recovery
 
 Design principle:
