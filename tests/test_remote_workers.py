@@ -21,8 +21,18 @@ class RemoteWorkerRegistryTests(unittest.TestCase):
     def test_preferred_online_worker_is_selected(self):
         registry = WorkerRegistry(
             (
-                RegisteredWorker("worker-b", priority=20, state=ComponentState.ONLINE),
-                RegisteredWorker("worker-a", priority=10, state=ComponentState.ONLINE),
+                RegisteredWorker(
+                    "worker-b",
+                    priority=20,
+                    state=ComponentState.ONLINE,
+                    capabilities=WorkerCapabilities(model_runtime_available=True),
+                ),
+                RegisteredWorker(
+                    "worker-a",
+                    priority=10,
+                    state=ComponentState.ONLINE,
+                    capabilities=WorkerCapabilities(model_runtime_available=True),
+                ),
             )
         )
         decision = registry.route()
@@ -33,13 +43,38 @@ class RemoteWorkerRegistryTests(unittest.TestCase):
         registry = WorkerRegistry(
             (
                 RegisteredWorker("worker-a", priority=10, state=ComponentState.OFFLINE),
-                RegisteredWorker("worker-b", priority=20, state=ComponentState.ONLINE),
+                RegisteredWorker(
+                    "worker-b",
+                    priority=20,
+                    state=ComponentState.ONLINE,
+                    capabilities=WorkerCapabilities(model_runtime_available=True),
+                ),
             )
         )
         self.assertEqual(registry.route().selected_worker_id, "worker-b")
 
     def test_unknown_is_not_online(self):
         registry = WorkerRegistry((RegisteredWorker("worker-a"),))
+        self.assertFalse(registry.remote_ai_available)
+        self.assertIsNone(registry.route().selected_worker_id)
+
+    def test_online_worker_without_confirmed_model_runtime_is_not_ai_available(self):
+        registry = WorkerRegistry(
+            (RegisteredWorker("worker-a", state=ComponentState.ONLINE),)
+        )
+        self.assertFalse(registry.remote_ai_available)
+        self.assertIsNone(registry.route().selected_worker_id)
+
+    def test_online_worker_with_model_runtime_false_is_not_routed(self):
+        registry = WorkerRegistry(
+            (
+                RegisteredWorker(
+                    "worker-a",
+                    state=ComponentState.ONLINE,
+                    capabilities=WorkerCapabilities(model_runtime_available=False),
+                ),
+            )
+        )
         self.assertFalse(registry.remote_ai_available)
         self.assertIsNone(registry.route().selected_worker_id)
 
