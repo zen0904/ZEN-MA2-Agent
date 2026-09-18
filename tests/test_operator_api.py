@@ -95,6 +95,26 @@ class OperatorApiTests(unittest.TestCase):
         self.assertEqual(result["result"]["artifact_id"], "artifact-1")
         self.assertNotIn("content", result["result"])
 
+    def test_watchdog_tool_is_read_only_projection(self):
+        adapter = OpenClawOperatorAdapter(
+            self._snapshot,
+            lambda: {
+                "schema": "zen.watchdog_status.v0.1",
+                "state": "ONLINE",
+                "components": [],
+                "recent_events": [],
+            },
+        )
+        result = adapter.invoke("zen.watchdog.status")
+        self.assertEqual(result["status"], "SUCCESS")
+        self.assertEqual(result["result"]["schema"], "zen.watchdog_status.v0.1")
+        self.assertEqual(result["result"]["state"], "ONLINE")
+
+    def test_watchdog_tool_is_not_implemented_without_provider(self):
+        result = OpenClawOperatorAdapter(self._snapshot).invoke("zen.watchdog.status")
+        self.assertEqual(result["status"], "NOT_IMPLEMENTED")
+        self.assertIsNone(result["result"])
+
     def test_mutating_tools_are_reserved_but_not_implemented(self):
         adapter = OpenClawOperatorAdapter(self._snapshot)
         for name in ("zen.design.request", "zen.preview", "zen.approve"):
