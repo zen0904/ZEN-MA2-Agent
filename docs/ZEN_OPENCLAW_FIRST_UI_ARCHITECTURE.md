@@ -91,13 +91,17 @@ Field hardware is intentionally not fixed to one machine.
 Current Gateway / Field Host candidates include only hosts the operator
 actually intends to use and that can be verified against the Field Core
 requirements. The 2012 Mac mini is explicitly excluded from current
-consideration. The operator-visible Windows machine remains Hub-only.
+consideration. The operator-visible Windows machine remains Hub-only. Worker A
+is explicitly permitted as a co-host candidate for Gateway + ZEN Field Core +
+Worker runtime, subject to real OS/network/service verification.
 
 Primary AI compute is provided by two dedicated Worker hosts. Known targets currently include one Ubuntu / 16 GB / GTX 1650 4 GB system and another 16 GB system with weaker/unknown GPU.
 
-These two Workers are the main inference tier for Researcher / Designer / Critic /
-Finalizer and other heavy AI jobs. They are not MA command authorities and must
-not bypass the Field Node's Safety / Resolver / Builder boundary.
+These two Workers are the main inference tier for Researcher / Designer /
+Critic / Finalizer and other heavy AI jobs. Their inference runtime is not an
+MA command authority and must not bypass the Field Node's Safety / Resolver /
+Builder boundary. If Worker A co-hosts the Field Core, process/role boundaries
+still remain separate.
 
 The product invariant is the Field Node role and safety boundary, not the
 chassis. The primary-compute role of the two Worker hosts is intentional, while
