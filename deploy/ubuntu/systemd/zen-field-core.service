@@ -1,0 +1,24 @@
+[Unit]
+Description=ZEN Field Core
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@ZEN_USER@
+Group=@ZEN_GROUP@
+EnvironmentFile=@ZEN_ENV_FILE@
+Environment=ZEN_HOME=@ZEN_HOME@
+WorkingDirectory=@ZEN_APP_DIR@
+ExecStart=@ZEN_VENV_DIR@/bin/python @ZEN_APP_DIR@/main.py --operator-host ${ZEN_OPERATOR_HOST} --operator-port ${ZEN_OPERATOR_PORT} --bridge-host ${ZEN_BRIDGE_HOST} --bridge-port ${ZEN_BRIDGE_PORT}
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=15
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=@ZEN_HOME@
+
+[Install]
+WantedBy=multi-user.target
