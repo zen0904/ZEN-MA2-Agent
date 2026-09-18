@@ -125,8 +125,9 @@ Selected host / hardware TBD
 -> MA Bridge / Safety / Resolver / Builder / cache
 
 Available compute:
-Current Mac may remain a Field Node candidate
-2012 Mac mini remains an optional Field Node candidate, not a fixed deployment target
+Gateway / Field Host remains unselected
+2012 Mac mini is excluded from current Gateway / Field Host consideration
+Operator Windows machine remains OpenClaw Hub-only
 Primary AI Worker A / Ubuntu / 16 GB / GTX 1650 4 GB
 Primary AI Worker B / Ubuntu / 16 GB / GPU model UNKNOWN
 
