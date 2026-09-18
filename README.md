@@ -115,6 +115,26 @@ DESIGN  -> parse only, NOT_IMPLEMENTED
 
 No Bridge command currently performs a real MA write or calls the LLM.
 
+## Hardware return quickstart
+
+The two compute hosts are not currently physically available. Repository-side
+prep is already in place so bring-up does not require redesign when they return.
+
+Canonical read-only preflight:
+
+```text
+python scripts/host_preflight.py
+```
+
+See:
+
+- `docs/ZEN_HOST_RETURN_QUICKSTART.md`
+- `deploy/ubuntu/` if the returned host is Linux/systemd
+- `deploy/windows/` if the returned host is Windows
+
+Actual Worker OS, IPs and Gateway suitability must be verified on the physical
+machines. Do not assume Ubuntu or Windows from historical plans.
+
 ## Distributed target
 
 ```text
