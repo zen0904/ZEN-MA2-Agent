@@ -6,15 +6,21 @@ This document records a possible next-stage deployment model for ZEN MA2 Agent. 
 
 ## 1. Core idea
 
-The operator carries only a compact **Field Node** to the venue. Heavier AI compute remains at home as one or more **Remote AI Workers**.
+The operator-facing Windows machine is the visible control surface and uses the
+OpenClaw Windows Hub. The ZEN Field/Gateway runtime may live on a separate
+headless host. Heavier AI compute remains on one or more headless Primary AI
+Workers.
 
 ```text
 Venue / field
 
- grandMA2
-    ↕
- ZEN Field Node
+ Operator Windows machine
+ - OpenClaw Windows Hub
+ - visible UI only
+        ↕
+ Headless Gateway / ZEN Field Node
  selected host / hardware TBD
+ - OpenClaw Gateway
  - MA Bridge
  - Watchdog
  - Safety
@@ -23,7 +29,6 @@ Venue / field
  - show-state cache
  - knowledge / artifact cache
  - logs / telemetry
- - optional Web/API
     ↕
  Internet / private overlay network
     ↕
@@ -150,7 +155,12 @@ The Field Node should host components that must remain available beside the cons
 - remote-worker availability state
 - optional local Web/API used from phone, tablet, or laptop
 
-The Field Node must not require a graphical desktop. Headless Ubuntu managed by systemd and SSH is one valid target; the current Mac may also host the role when appropriate. OpenClaw remains the primary operator surface, so core logic must not depend on a local desktop GUI.
+The Field Node must not require a graphical desktop. Headless Ubuntu managed by
+systemd and SSH is one valid target; the current Mac may also host the role
+when appropriate. The operator-visible Windows machine is expected to use the
+OpenClaw Windows Hub rather than serving as the required CLI/Gateway host.
+OpenClaw remains the primary operator surface, so core logic must not depend on
+a local desktop GUI.
 
 ## 5. What belongs on Home AI Workers
 
@@ -356,7 +366,7 @@ They should not receive:
 
 The Field Node should accept only authenticated, schema-validated worker responses tied to an outstanding request.
 
-## 13. CLI-only / headless Field Node is acceptable
+## 13. Headless Gateway / Field Node is acceptable
 
 The absence of a local graphical interface is not a blocker.
 
