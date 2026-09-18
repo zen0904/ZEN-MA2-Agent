@@ -14,7 +14,7 @@ Venue / field
  grandMA2
     ↕
  ZEN Field Node
- 2012 Mac mini / Ubuntu
+ selected host / hardware TBD
  - MA Bridge
  - Watchdog
  - Safety
@@ -40,20 +40,32 @@ The design goal is not to make the venue depend on the home machines. The home w
 
 ## 2. Current known hardware
 
-### 2.1 Field Node candidate
+### 2.1 Field Node candidates
 
-2012 Mac mini:
+The Field Node role is not assigned permanently to one chassis.
+
+Current candidates include:
+
+- the operator's current Mac, if it remains the preferred portable host;
+- the 2012 Mac mini as an optional dedicated headless host;
+- a future replacement machine that satisfies the same Field Core contract.
+
+Known 2012 Mac mini candidate:
 
 - CPU: Intel Core i7-3615QM, 4 cores / 8 threads, 2.30 GHz base, up to 3.30 GHz
 - RAM: 8 GB installed as 4 GB + 4 GB
 - storage: Intel 545s 256 GB SATA SSD (`INTEL SSDSC2KW256G8`)
-- OS: Ubuntu
-- current management mode: SSH / CLI only; no permanent local graphical desktop is required
-- intended role: portable ZEN Field Node / coordinator, not the primary heavy LLM machine
+- Ubuntu-capable and suitable for SSH / CLI-only operation
 
-The Mac mini may later be upgraded to 16 GB RAM, but this is not required for the deterministic field-control role if heavy LLM inference remains on remote workers.
+This hardware record is capability evidence, not a deployment commitment. The
+current Mac may remain the Field Node instead, and the mini may remain unused
+or take another role.
 
-### 2.2 Home AI Worker A
+The product should therefore target a host-neutral Field Core contract:
+headless operation is supported, but macOS/Linux deployment details belong in
+adapters and service packaging rather than in core logic.
+
+### 2.2 Secondary AI Worker A
 
 Known target:
 
@@ -65,7 +77,7 @@ Known target:
 
 The GTX 1650 does not provide enough VRAM to assume the full current Qwen 7B model plus runtime state will fit entirely in VRAM. Partial GPU offload / CPU+GPU inference is expected unless later benchmarks prove otherwise.
 
-### 2.3 Home AI Worker B
+### 2.3 Secondary AI Worker B
 
 Known target:
 
@@ -134,7 +146,7 @@ The Field Node should host components that must remain available beside the cons
 - remote-worker availability state
 - optional local Web/API used from phone, tablet, or laptop
 
-The Field Node must not require a graphical desktop. A headless Ubuntu system managed by systemd and SSH is a valid target. A Web UI can be served to another device if operator-facing visualization is needed.
+The Field Node must not require a graphical desktop. Headless Ubuntu managed by systemd and SSH is one valid target; the current Mac may also host the role when appropriate. OpenClaw remains the primary operator surface, so core logic must not depend on a local desktop GUI.
 
 ## 5. What belongs on Home AI Workers
 
@@ -334,7 +346,7 @@ They should not receive:
 
 The Field Node should accept only authenticated, schema-validated worker responses tied to an outstanding request.
 
-## 13. CLI-only Mac mini is acceptable
+## 13. CLI-only / headless Field Node is acceptable
 
 The absence of a local graphical interface is not a blocker.
 
@@ -421,16 +433,16 @@ This proposal does not authorize or imply:
 Current working direction to preserve for later discussion:
 
 ```text
-Portable hardware:
-2012 Mac mini
+Field hardware:
+Selected host / hardware TBD
 → ZEN Field Node / Master / Coordinator
-→ headless Ubuntu / SSH administration
 → local safety-critical services
+→ current Mac OR 2012 Mac mini OR future compatible host
 
-Home hardware:
-DDR3 PC A / 16 GB / GTX 1650
-DDR3 PC B / 16 GB / GPU TBD
-→ Remote AI Workers
+Available secondary hardware:
+Host A / 16 GB / GTX 1650
+Host B / 16 GB / GPU TBD
+→ Remote AI Worker / backup roles assigned by capability and deployment need
 
 Design principle:
 Home compute accelerates ZEN.
