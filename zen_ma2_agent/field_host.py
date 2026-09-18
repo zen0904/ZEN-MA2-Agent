@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import threading
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Iterable
 
 from .core import AgentCore
 from .ma_bridge.server import (
@@ -18,8 +18,9 @@ from .operator_server import (
     status_provider_from_core,
 )
 from .operator_api import ComponentState
-from .remote_workers import WorkerRegistry
+from .remote_workers import RegisteredWorker, WorkerRegistry
 from .watchdog import WatchdogComponent, WatchdogMonitor, WatchdogService
+from .worker_health import WorkerEndpoint, WorkerHealthProbe, WorkerHealthService
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,8 @@ class FieldHostConfig:
     allow_remote_operator: bool = False
     allow_remote_bridge: bool = False
     watchdog_interval_seconds: float = 1.0
+    worker_health_interval_seconds: float = 5.0
+    worker_health_timeout_seconds: float = 2.0
 
 
 class FieldHost:
@@ -46,10 +49,30 @@ class FieldHost:
         *,
         core: AgentCore | None = None,
         worker_registry: WorkerRegistry | None = None,
+        worker_endpoints: Iterable[WorkerEndpoint] = (),
     ) -> None:
         self.config = config or FieldHostConfig()
         self.core = core or AgentCore()
-        self.worker_registry = worker_registry or WorkerRegistry()
+        endpoints = tuple(worker_endpoints)
+        if worker_registry is None:
+            self.worker_registry = WorkerRegistry(
+                RegisteredWorker(endpoint.worker_id, priority=(index + 1) * 10)
+                for index, endpoint in enumerate(endpoints)
+            )
+        else:
+            self.worker_registry = worker_registry
+        self.worker_health = (
+            WorkerHealthService(
+                WorkerHealthProbe(
+                    self.worker_registry,
+                    endpoints,
+                    timeout_seconds=self.config.worker_health_timeout_seconds,
+                ),
+                interval_seconds=self.config.worker_health_interval_seconds,
+            )
+            if endpoints
+            else None
+        )
 
         self.bridge = BridgeServer(
             BridgeDispatcher(status_payload_provider=self._bridge_status_payload),
@@ -128,17 +151,23 @@ class FieldHost:
 
     def start(self) -> None:
         self.bridge.start()
+        if self.worker_health is not None:
+            self.worker_health.start()
         self.watchdog.start()
         try:
             self.operator.start()
         except Exception:
             self.watchdog.stop()
+            if self.worker_health is not None:
+                self.worker_health.stop()
             self.bridge.stop()
             raise
 
     def stop(self) -> None:
         self.operator.stop()
         self.watchdog.stop()
+        if self.worker_health is not None:
+            self.worker_health.stop()
         self.bridge.stop()
         self._stop.set()
 
