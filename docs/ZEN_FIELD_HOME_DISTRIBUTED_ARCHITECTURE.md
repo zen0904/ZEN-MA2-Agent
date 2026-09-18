@@ -75,6 +75,7 @@ Known target:
 - DDR3-generation desktop PC
 - planned 16 GB RAM
 - NVIDIA GTX 1650, 4 GB VRAM
+- actual current OS: TO VERIFY when hardware returns
 - remains at home
 - intended role: primary local inference worker
 
@@ -88,6 +89,7 @@ Known target:
 - planned 16 GB RAM
 - second older discrete GPU
 - exact GPU model is currently unknown and must be measured before assigning a role
+- actual current OS: TO VERIFY when hardware returns
 - remains at home
 
 Do not assume the two GPUs combine into a single larger VRAM pool. Unless a future inference backend explicitly supports distributed model execution, each worker is an independent compute node.
@@ -451,8 +453,9 @@ Current working direction to preserve for later discussion:
 ```text
 Field hardware:
 Preferred next candidate for verification: Worker A
+→ currently NOT PHYSICALLY AVAILABLE
 → may co-host OpenClaw Gateway + ZEN Field Core + Worker runtime
-→ must pass real OS/network/systemd/recovery checks before selection
+→ must pass real OS/network/service/recovery checks after the machine returns
 → 2012 Mac mini EXCLUDED
 → operator Windows machine HUB-ONLY
 
