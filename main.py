@@ -5,6 +5,17 @@ import json
 
 from zen_ma2_agent.core import AgentCore
 from zen_ma2_agent.field_host import FieldHost, FieldHostConfig
+from zen_ma2_agent.worker_health import WorkerEndpoint
+
+
+def _worker_endpoint(value: str) -> WorkerEndpoint:
+    worker_id, separator, base_url = value.partition("=")
+    if not separator or not worker_id or not base_url:
+        raise argparse.ArgumentTypeError("worker must use WORKER_ID=BASE_URL")
+    try:
+        return WorkerEndpoint(worker_id=worker_id, base_url=base_url)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from exc
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -19,6 +30,16 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--bridge-port", type=int, default=8877)
     parser.add_argument("--allow-remote-operator", action="store_true")
     parser.add_argument("--allow-remote-bridge", action="store_true")
+    parser.add_argument(
+        "--worker",
+        action="append",
+        type=_worker_endpoint,
+        default=[],
+        metavar="WORKER_ID=BASE_URL",
+        help="Register a primary AI Worker using its existing HTTP health/capability API.",
+    )
+    parser.add_argument("--worker-health-interval", type=float, default=5.0)
+    parser.add_argument("--worker-health-timeout", type=float, default=2.0)
     return parser
 
 
@@ -38,7 +59,10 @@ def main() -> int:
             bridge_port=args.bridge_port,
             allow_remote_operator=args.allow_remote_operator,
             allow_remote_bridge=args.allow_remote_bridge,
-        )
+            worker_health_interval_seconds=args.worker_health_interval,
+            worker_health_timeout_seconds=args.worker_health_timeout,
+        ),
+        worker_endpoints=args.worker,
     )
 
     if args.self_check:
@@ -49,6 +73,7 @@ def main() -> int:
                     "ui_strategy": "OPENCLAW_FIRST",
                     "field_core_available": host.status()["field_core"]["available"],
                     "remote_ai_available": host.status()["remote_ai_available"],
+                    "worker_count": len(host.status()["workers"]),
                     "ma_bridge_state": host.status()["ma"]["bridge_state"],
                     "operator_bind": f"{host.operator.host}:{host.operator.port}",
                     "bridge_bind": f"{host.bridge.host}:{host.bridge.port}",
