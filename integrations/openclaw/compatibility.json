@@ -15,7 +15,9 @@
   "operator_windows_cli_required": false,
   "gateway_host": "UNSELECTED_HEADLESS_HOST",
   "gateway_version_source": "VERIFY_ON_ACTUAL_GATEWAY_HOST",
-  "gateway_candidate": "WORKER_A_PENDING_D2_6_VERIFICATION",
+  "gateway_candidate": "WORKER_A_PENDING_HARDWARE_RETURN_AND_D2_6_VERIFICATION",
   "gateway_cohosting_allowed": true,
-  "worker_a_authority_boundary": "COHOSTING_DOES_NOT_GRANT_WORKER_INFERENCE_MA_AUTHORITY"
+  "worker_a_authority_boundary": "COHOSTING_DOES_NOT_GRANT_WORKER_INFERENCE_MA_AUTHORITY",
+  "worker_a_os": "TO_VERIFY",
+  "worker_b_os": "TO_VERIFY"
 }
