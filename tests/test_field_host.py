@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from zen_ma2_agent.field_host import FieldHost, FieldHostConfig
 from zen_ma2_agent.operator_api import ComponentState
 from zen_ma2_agent.remote_workers import RegisteredWorker, WorkerRegistry
+from zen_ma2_agent.worker_health import WorkerEndpoint
 
 
 class _FakeCore:
@@ -36,6 +37,22 @@ class FieldHostTests(unittest.TestCase):
             host._bridge_status_payload(),
             "FIELD_CORE_AVAILABLE=YES REMOTE_AI_AVAILABLE=NO",
         )
+
+    def test_worker_endpoints_auto_register_primary_workers_without_network_io(self):
+        host = FieldHost(
+            FieldHostConfig(operator_port=8876, bridge_port=8877),
+            core=_FakeCore(),
+            worker_endpoints=(
+                WorkerEndpoint("worker-a", "http://10.0.0.10:8878"),
+                WorkerEndpoint("worker-b", "http://10.0.0.20:8878"),
+            ),
+        )
+        self.assertIsNotNone(host.worker_health)
+        self.assertEqual(
+            [item.worker_id for item in host.worker_registry.operator_workers()],
+            ["worker-a", "worker-b"],
+        )
+        self.assertFalse(host.worker_registry.remote_ai_available)
 
     def test_watchdog_observes_field_bridge_ma_and_primary_workers(self):
         registry = WorkerRegistry(
