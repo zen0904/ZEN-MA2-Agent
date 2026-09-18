@@ -1,195 +1,82 @@
-import sys
-import json
-import re
-import tempfile
-from types import SimpleNamespace
-from pathlib import Path
-from shutil import copytree
+from __future__ import annotations
 
-from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QApplication
+import argparse
+import json
 
 from zen_ma2_agent.core import AgentCore
-from zen_ma2_agent.desktop import ZenDesktop, run_desktop
-from zen_ma2_agent.desktop_automation import automation_enabled, automation_port
-from zen_ma2_agent.web_server import MobileServer
-from zen_ma2_agent.runtime import AgentRuntime
-from zen_ma2_agent.telnet_client import ConnectionState
+from zen_ma2_agent.field_host import FieldHost, FieldHostConfig
 
 
-class _PortableSmokeClient:
-    """Read-only stand-in used only by the frozen UI routing smoke command."""
-
-    export_directory: Path | None = None
-
-    def __init__(self, *_args):
-        self.state = ConnectionState.DISCONNECTED
-        self.authenticated_user = None
-        self.audit_entries: list[str] = []
-        self.commands: list[str] = []
-        self.effect_labels: dict[int, str] = {}
-        self.timecode_offset = "0s"
-
-    def connect(self, username: str, password: str = "") -> str:
-        self.state, self.authenticated_user = ConnectionState.READY, username
-        return f"Logged in as User '{username}'"
-
-    def execute(self, command: str) -> str:
-        self.commands.append(command)
-        match = re.fullmatch(r'Export Group (\d+) "(ZEN_AGENT_G\d+_[A-Za-z0-9_-]+\.xml)" /nc', command)
-        if match:
-            assert self.export_directory is not None
-            group_no, filename = match.groups()
-            members = {"1": ("HYBRID", (101, 102)), "2": ("SPOT", (201, 202))}.get(group_no, ("", ()))
-            name, fixtures = members
-            fixture_xml = "".join(f'<Subfixture fix_id="{fixture}" />' for fixture in fixtures)
-            (self.export_directory / filename).write_text(
-                f'<MA><Group index="{int(group_no) - 1}" name="{name}"><Subfixtures>{fixture_xml}</Subfixtures></Group></MA>',
-                encoding="utf-8",
-            )
-            return "exported"
-        match = re.fullmatch(r'Export Layout (\d+) "(ZEN_AGENT_LAYOUT_\d+_[A-Za-z0-9_-]+\.xml)" /nc', command)
-        if match:
-            assert self.export_directory is not None
-            layout_no, filename = match.groups()
-            (self.export_directory / filename).write_text(
-                f'<MA><Group index="{int(layout_no) - 1}" name=""><LayoutData><CObjects /></LayoutData></Group></MA>',
-                encoding="utf-8",
-            )
-            return "exported"
-        if command == "List Group":
-            return 'Group 1 "HYBRID"\nGroup 2 "SPOT"\n'
-        if command == "List Effect":
-            created = "".join(f'Effect {number} "{label}"\n' for number, label in sorted(self.effect_labels.items()))
-            return 'Effect 1 Base\nEffect 3520 "ZEN_FX_DIM_CHASE_SLOW_GROUP1"\n' + created
-        if command == "List Effect 3520":
-            return 'Effect 3520 "ZEN_FX_DIM_CHASE_SLOW_GROUP1"\n'
-        if match := re.fullmatch(r"List Effect (\d+)", command):
-            number = int(match.group(1))
-            return f'Effect {number} "{self.effect_labels[number]}"\n' if number in self.effect_labels else "WARNING, NO OBJECTS FOUND FOR LIST\n"
-        if command == "List Effect 2500":
-            return f'Effect 2500 "{self.effect_label}"\n' if self.effect_label else "WARNING, NO OBJECTS FOUND FOR LIST\n"
-        if command == "List Timecode":
-            offset = "0:15" if self.timecode_offset == "0.50s" else "0:00"
-            return f"Timecode 9000 ZEN Timecode Test Intern 0:00 {offset} Endless Repeat\n"
-        if match := re.fullmatch(r'Label Effect (\d+) "([^"]+)" /nc', command):
-            self.effect_labels[int(match.group(1))] = match.group(2)
-        if command.startswith("Assign Timecode 9000/Offset = "):
-            self.timecode_offset = command.rsplit("= ", 1)[1]
-        if command == "List Fixture":
-            return 'Fixture 101 "Hybrid 1"\nFixture 102 "Hybrid 2"\nFixture 201 "Spot 1"\nFixture 202 "Spot 2"\n'
-        if command == "List Preset All":
-            return "Focus 6.2 6.2  normal     Normal\n"
-        if command in {"List Layout", "List Preset Position", "List Sequence", "List Page", "List Executor"}:
-            return ""
-        return "Executing : " + command
-
-    def close(self) -> None:
-        self.state = ConnectionState.DISCONNECTED
-
-
-def _portable_smoke_core() -> tuple[AgentCore, tempfile.TemporaryDirectory[str]]:
-    temporary = tempfile.TemporaryDirectory(prefix="zen-portable-ui-smoke-")
-    root = Path(temporary.name)
-    copytree(Path(sys.executable).resolve().parent / "skills", root / "skills")
-    copytree(Path(sys.executable).resolve().parent / "examples", root / "examples")
-    export_directory = root / "importexport"
-    export_directory.mkdir()
-    _PortableSmokeClient.export_directory = export_directory
-    runtime = AgentRuntime(root, client_factory=_PortableSmokeClient)
-    runtime.preferences["state_adapter"] = {"plugin_slot": None, "timeout_seconds": 1.0, "importexport_path": str(export_directory)}
-    core = AgentCore(runtime)
-    core.connect("127.0.0.1", 30000, "SMOKE", "")
-    return core, temporary
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="ZEN Field Core headless runtime (OpenClaw-first UI architecture)"
+    )
+    parser.add_argument("--build-identity", action="store_true")
+    parser.add_argument("--self-check", action="store_true")
+    parser.add_argument("--operator-host", default="127.0.0.1")
+    parser.add_argument("--operator-port", type=int, default=8876)
+    parser.add_argument("--bridge-host", default="127.0.0.1")
+    parser.add_argument("--bridge-port", type=int, default=8877)
+    parser.add_argument("--allow-remote-operator", action="store_true")
+    parser.add_argument("--allow-remote-bridge", action="store_true")
+    return parser
 
 
 def main() -> int:
-    core = AgentCore()
-    if "--build-identity" in sys.argv:
+    args = _parser().parse_args()
+
+    if args.build_identity:
+        core = AgentCore()
         print(json.dumps(core.build_identity, ensure_ascii=False, sort_keys=True), flush=True)
         return 0
-    smoke_mode = "--portable-routing-smoke" in sys.argv
-    effect_approval_smoke = "--portable-effect-approval-smoke" in sys.argv
-    timecode_approval_smoke = "--portable-timecode-approval-smoke" in sys.argv
-    song_analysis_smoke = "--portable-song-analysis-smoke" in sys.argv
-    real_song_analysis_smoke = "--portable-real-song-analysis-smoke" in sys.argv
-    if song_analysis_smoke:
-        core, smoke_temporary = _portable_smoke_core()
-        try:
-            analysis_path = core.runtime.root / "examples" / "REALISTIC_SONG_ANALYSIS.json"
-            response = core.preview_song_analysis(json.loads(analysis_path.read_text(encoding="utf-8")))
-            print(json.dumps({"response": response, "commands": core.runtime.client.commands}, ensure_ascii=False), flush=True)
-            return 0
-        finally:
-            core.disconnect()
-            smoke_temporary.cleanup()
-    if real_song_analysis_smoke:
-        from zen_ma2_agent.cue_effect_application import CueEffectApplicationCapability, CueEffectApplicationSpec
-        from zen_ma2_agent.effect_resources import EffectRequirement, show_identity
 
-        core, smoke_temporary = _portable_smoke_core()
-        try:
-            for resource, kwargs in (("groups", {}), ("fixtures", {}), ("presets", {"sequence": "ALL"}), ("effects", {}), ("sequences", {})):
-                core.refresh_state(resource, **kwargs)
-            profile = core.scan_show_profile()
-            requirement = EffectRequirement.from_dict({
-                "feature": "DIMMER", "family": "CHASE", "waveform": "PWM", "low": 0, "high": 100,
-                "speed_class": "SLOW", "speed_bpm": 30, "phase": "0..360", "direction": "forward", "groups": 1,
-                "target_type": "group", "target_ref": 1, "target_name": "HYBRID",
-            })
-            core.effect_catalog.record(requirement=requirement, effect_id=3520, label="ZEN_FX_DIM_CHASE_SLOW_GROUP1", identity=show_identity(profile), verification={"object": "VERIFIED", "label": "VERIFIED", "parameters": "PARTIAL"})
-            CueEffectApplicationCapability(core.runtime.root).record(CueEffectApplicationSpec(3520, "ZEN_FX_DIM_CHASE_SLOW_GROUP1", 1, "HYBRID", 299, "ZEN_AI_EFFECT_CALL_TEST_299"))
-            analysis_path = core.runtime.root / "examples" / "ZEN_REAL_LIGHTING_DESIGN_TEST.json"
-            response = core.preview_song_analysis(json.loads(analysis_path.read_text(encoding="utf-8")))
-            print(json.dumps({"response": response, "commands": core.runtime.client.commands}, ensure_ascii=False), flush=True)
-            return 0
-        finally:
-            core.disconnect()
-            smoke_temporary.cleanup()
-    if "--ui-smoke-request" in sys.argv or smoke_mode or effect_approval_smoke or timecode_approval_smoke:
-        option = "--portable-effect-approval-smoke" if effect_approval_smoke else "--portable-timecode-approval-smoke" if timecode_approval_smoke else "--portable-routing-smoke" if smoke_mode else "--ui-smoke-request"
-        index = sys.argv.index(option)
-        if index + 1 >= len(sys.argv):
-            raise SystemExit(f"{option} requires text")
-        smoke_temporary = None
-        if smoke_mode or effect_approval_smoke or timecode_approval_smoke:
-            core, smoke_temporary = _portable_smoke_core()
-        app = QApplication.instance() or QApplication([])
-        window = ZenDesktop(core, SimpleNamespace(port=8765))
-        window.request.setText(sys.argv[index + 1])
-        window.submit()
-        print(window.chat.toPlainText(), flush=True)
-        if smoke_mode:
-            response = core.chat[-1]
-            print(json.dumps({"routing": core.last_chat_routing, "response": response}, ensure_ascii=False), flush=True)
-        if effect_approval_smoke:
-            pending = next((item for item in core.actions.values() if item.status == "PENDING_APPROVAL"), None)
-            if not pending:
-                raise SystemExit("Portable effect approval smoke did not produce a pending ActionPlan.")
-            before = list(core.runtime.client.commands)
-            window.execute_action()
-            print(json.dumps({"before": before, "action_status": pending.status, "result": pending.result, "commands": core.runtime.client.commands}, ensure_ascii=False), flush=True)
-        if timecode_approval_smoke:
-            pending = next((item for item in core.actions.values() if item.status == "PENDING_APPROVAL"), None)
-            if not pending:
-                raise SystemExit("Portable Timecode approval smoke did not produce a pending ActionPlan.")
-            before = list(core.runtime.client.commands)
-            window.execute_action()
-            print(json.dumps({"before": before, "action_status": pending.status, "result": pending.result, "commands": core.runtime.client.commands}, ensure_ascii=False), flush=True)
-        window.close()
-        QTimer.singleShot(0, app.quit)
-        app.exec()
-        if smoke_temporary:
-            smoke_temporary.cleanup()
+    host = FieldHost(
+        FieldHostConfig(
+            operator_host=args.operator_host,
+            operator_port=args.operator_port,
+            bridge_host=args.bridge_host,
+            bridge_port=args.bridge_port,
+            allow_remote_operator=args.allow_remote_operator,
+            allow_remote_bridge=args.allow_remote_bridge,
+        )
+    )
+
+    if args.self_check:
+        print(
+            json.dumps(
+                {
+                    "schema": "zen.field_host_self_check.v0.1",
+                    "ui_strategy": "OPENCLAW_FIRST",
+                    "field_core_available": host.status()["field_core"]["available"],
+                    "remote_ai_available": host.status()["remote_ai_available"],
+                    "ma_bridge_state": host.status()["ma"]["bridge_state"],
+                    "operator_bind": f"{host.operator.host}:{host.operator.port}",
+                    "bridge_bind": f"{host.bridge.host}:{host.bridge.port}",
+                    "ma2_writes": 0,
+                },
+                ensure_ascii=False,
+                sort_keys=True,
+            ),
+            flush=True,
+        )
         return 0
-    mobile = core.runtime.preferences.get("mobile", {})
-    server = MobileServer(core, int(mobile.get("port", 8765)))
-    if mobile.get("enabled", True):
-        server.start()
-    try:
-        return run_desktop(core, server, automation_port=automation_port() if automation_enabled(sys.argv) else None)
-    finally:
-        server.stop()
+
+    print(
+        json.dumps(
+            {
+                "schema": "zen.field_host_start.v0.1",
+                "ui_strategy": "OPENCLAW_FIRST",
+                "operator_api": f"http://{host.operator.host}:{host.operator.port}",
+                "bridge": f"{host.bridge.host}:{host.bridge.port}",
+                "ma2_writes": 0,
+            },
+            ensure_ascii=False,
+            sort_keys=True,
+        ),
+        flush=True,
+    )
+    host.run_forever()
+    return 0
 
 
 if __name__ == "__main__":

@@ -1,41 +1,53 @@
 # Portable USB Runtime
 
-`ZEN_HOME` is the directory containing `run_zen_windows.cmd` or
-`run_zen_macos.command`. Launchers derive it from their own location; neither a
-drive letter nor a user home directory is part of the contract.
+ZEN's portable runtime is now headless. OpenClaw is the operator UI; the USB
+bundle carries ZEN's backend/runtime, MA integration resources and mutable state.
 
-The source working copy lives at `ZEN_HOME/repo/ZEN-MA2-Agent` and retains its
-`.git` history. Mutable state stays at `ZEN_HOME/{config,knowledge,show_context,
-projects,logs,cache,temp,secrets}`. `secrets/providers.private.env` is
-USB-local, ignored by Git, and must never be copied into reports or logs.
+`ZEN_HOME` is the directory containing the portable launch scripts. Launchers
+derive it from their own location; neither a drive letter nor a user home
+directory is part of the contract.
 
-## Providers
+The source working copy lives at:
 
-Three configurable slots are supported. Set a slot's `TYPE`, `MODEL`,
-`BASE_URL`, and `API_KEY` in `secrets/providers.private.env`; the current
-implemented adapter accepts `OPENAI_COMPATIBLE` endpoints. `PRIMARY_ONLY`,
-`FALLBACK`, and `ROUTED` select eligible configured slots without embedding a
-vendor in artistic logic. A missing or unreachable provider means
-`AUTONOMOUS_DESIGNER_AVAILABLE = NO`; deterministic legacy designers must not
-be represented as autonomous LLM output.
+```text
+ZEN_HOME/repo/ZEN-MA2-Agent
+```
 
-Double-click `ZEN_HOME/run_zen_windows.cmd` (or `START ZEN.cmd`) for normal
-Windows use. It keeps its terminal open, performs a safe Git check/update,
-checks current-host MA2 TCP reachability, runs a short provider probe, and
-opens ZEN automatically when an autonomous provider is ready. If no provider
-is configured, it presents a small menu; **Provider Setup** opens the USB-local
-private file in Notepad. `--provider-self-test`, `--git-status`, `--update`,
-and `--push` remain available for development and diagnostics. Automatic pull
-is limited to a clean, behind, fast-forward-able `main`; dirty or diverged work
-is preserved for review.
+Mutable state stays under:
+
+```text
+ZEN_HOME/{config,knowledge,show_context,projects,logs,cache,temp,secrets,models}
+```
+
+Provider secrets remain USB-local and must never be committed.
+
+## Windows runtime
+
+The launcher may start `main.py`, which now runs the headless Field Core.
+
+Default local services:
+
+```text
+Operator API  127.0.0.1:8876
+MA Bridge     127.0.0.1:8877
+```
+
+OpenClaw is a separate operator surface and is not bundled into the Windows
+PyInstaller core.
+
+## Portable build
+
+```powershell
+.\.venv\Scripts\python.exe scripts\build_portable.py
+.\.venv\Scripts\python.exe scripts\smoke_portable.py
+```
+
+The bundle intentionally does not include the retired PySide6 desktop or mobile
+PWA.
 
 ## Autonomous boundary
 
-The provider receives a bounded, provenance-bearing Designer Context, not a
-repository dump. It must return `zen.autonomous_design.v0.1` JSON. Raw MA2,
-Telnet, Lua, and shell command fields are rejected. A separate deterministic
-compiler/approval layer remains the only MA2 command boundary.
-
-`runtime/*` may contain a portable Python environment. If unavailable, use
-`--bootstrap-runtime` to create one on the USB with an installed host Python;
-the host Python is a bootstrap dependency, not durable Agent state.
+The provider receives bounded, provenance-bearing context and returns typed
+artifacts. Raw MA2, Telnet, Lua and shell command fields remain outside the
+model-authority boundary. Safety / Resolver / deterministic Builder remain the
+only route toward future MA execution.

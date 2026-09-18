@@ -1,224 +1,180 @@
 # ZEN MA2 Agent
 
-Portable-first grandMA2 onPC assistant runtime. ZEN runs beside MA2 on the
-Windows console and exposes the same guarded workflow to its PySide6 desktop
-workspace and to a paired phone on the local LAN. This release deliberately keeps AI
-out of the control path: natural language is parsed into a typed intent, then a
-deterministic command is safety-classified, previewed, and only sent after the
-operator presses **Execute**.
+ZEN is an OpenClaw-first, headless grandMA2 assistant runtime.
 
-## Run on Windows
+```text
+OpenClaw
+= operator UI / chat / dashboard / session shell
+
+ZEN
+= Brain / Field Core / Safety / Resolver / Builder / MA Bridge / Worker Router
+```
+
+The operator frontend is no longer implemented inside this repository. The
+legacy PySide6 desktop and mobile PWA were retired to avoid maintaining a second
+UI stack.
+
+## Current runtime
+
+Run the Field Core:
 
 ```powershell
 .\.venv\Scripts\python.exe main.py
 ```
 
-No grandMA2 instance is required to open the UI. Use **Connect** after starting
-grandMA2 onPC Telnet. Connection settings live in `config/settings.json`, which
-is created beside the app so the folder can travel on a USB drive. Host, port,
-and username are editable in the UI; password is masked and never stored.
-
-`config/settings.json` contains only durable, non-secret connection settings:
-
-```json
-{
-  "ma2": {
-    "host": "127.0.0.1",
-    "port": 30000,
-    "username": ""
-  }
-}
-```
-
-Connection moves through `DISCONNECTED → TCP_CONNECTED → NEGOTIATING →
-AUTHENTICATING → READY`. An empty username is blocked with `USERNAME REQUIRED`.
-Changing Host, Port, or User while connected never changes the active socket;
-the UI instead shows `Settings changed — reconnect required`.
-
-## Included MVP flow
-
-1. Rule parser: Chinese and English command phrases become `Intent` records.
-2. Deterministic command builder: no LLM-generated command is executed.
-3. Safety validator: `SAFE`, `MODIFY`, and `DANGEROUS` levels.
-4. Structured action plan: every command is shown before execution.
-5. Shared AgentCore: Desktop and mobile call the same planner, safety engine,
-   preview, approval, and Telnet transport.
-6. PySide6 dark desktop workspace with Chat, MA2 State, Skills, Plugins, Phone,
-   Logs, and Settings pages.
-7. Paired local-LAN mobile PWA at port `8765` by default. The QR contains only
-   the selected LAN address and a pairing nonce; it never exposes a permanent
-   secret. A six-digit pairing code is still required.
-8. General MA2 State cache: Groups, Fixtures, Layout Pool, Sequences and Cue
-   metadata use core-owned read-only providers. Local onPC Group membership
-   uses a temporary native Export XML file; Layout XY retains the bundled
-   Echo-only Lua adapter. Unsupported accessors are reported explicitly and
-   never emulated through a selection/programmer mutation.
-9. Workflow-first Skill registry: each Skill may describe state dependencies,
-   subtasks, multi-step commands, approval gates, verification, and recovery
-   metadata. User-installed code is never auto-imported.
-
-## Desktop and Phone
-
-The main window starts the local mobile server automatically (default
-`0.0.0.0:8765`). Open **Phone** in the desktop sidebar, choose the correct LAN
-address if more than one is listed, then scan the QR code and enter the
-displayed six-digit pairing code. The phone never connects to MA2 directly:
+Default local endpoints:
 
 ```text
-Phone PWA → paired HTTP/WebSocket → AgentCore → Planner/Safety/Preview → MA2 Telnet
-Desktop UI ───────────────────────┘
+ZEN Operator API   127.0.0.1:8876
+MA-Initiated Bridge 127.0.0.1:8877
 ```
 
-Connection configuration remains in **Settings → MA2 Connection**. Password is
-masked, session-only, and is not written to JSON or audit logging.
+Both are loopback-only by default.
 
-## Portable build
+Quick self-check:
 
-Install dependencies into a project virtual environment, then run:
+```powershell
+.\.venv\Scripts\python.exe main.py --self-check
+```
+
+The Field Core is intentionally independent of OpenClaw. If OpenClaw is
+stopped, ZEN's local backend, Safety boundary, Worker state, artifacts and MA
+control infrastructure remain available.
+
+## OpenClaw integration
+
+The integration boundary lives in:
+
+```text
+integrations/openclaw/
+docs/ZEN_OPENCLAW_INTEGRATION.md
+docs/ZEN_OPENCLAW_FIRST_UI_ARCHITECTURE.md
+```
+
+The repository already exposes a narrow, versioned Operator API for the future
+OpenClaw plugin:
+
+```text
+GET  /healthz
+GET  /zen/v0.1/status
+POST /zen/v0.1/tools/{tool_name}
+```
+
+Read-only tool contracts currently include:
+
+```text
+zen.status
+zen.worker.status
+zen.ma.status
+zen.artifact.latest
+```
+
+Mutation-facing OpenClaw tools remain reserved until they have a real typed
+backend path.
+
+## MA-Initiated Bridge
+
+Protocol:
+
+```text
+ZEN/1 REQ <request_id> <command> [KEY=VALUE ...]
+```
+
+Current commands:
+
+```text
+PING
+STATUS
+DIMMER GROUP=<positive integer> VALUE=<0..100>
+DESIGN REQUEST=<bounded identifier>
+```
+
+Current semantics:
+
+```text
+PING    -> deterministic PONG
+STATUS  -> deterministic Field/Remote status
+DIMMER  -> parse only, NOT_EXECUTED
+DESIGN  -> parse only, NOT_IMPLEMENTED
+```
+
+No Bridge command currently performs a real MA write or calls the LLM.
+
+## Distributed target
+
+```text
+Venue:
+2012 Mac mini / Ubuntu / 8 GB
+-> ZEN Field Node
+-> OpenClaw operator UI
+-> MA Bridge / Safety / Resolver / Builder / cache
+
+Home:
+Worker A / Ubuntu / 16 GB / GTX 1650 4 GB
+Worker B / Ubuntu / 16 GB / GPU model UNKNOWN
+```
+
+Home compute is optional. The required invariant is:
+
+```text
+REMOTE_AI_AVAILABLE=NO
+FIELD_CORE_AVAILABLE=YES
+```
+
+## Portable core
+
+The historical USB runtime remains supported as a headless core/runtime bundle.
+It no longer packages a duplicate frontend.
+
+Build on Windows:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\build_portable.py
 ```
 
-Verify the built EXE itself (not the source Python process) with:
+Smoke-test the packaged core:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\smoke_portable.py
 ```
 
-### Test-only packaged Desktop bridge
+Mutable state remains under `ZEN_HOME`; core code must not depend on a fixed
+drive letter.
 
-For explicit real-machine validation when Windows UI Automation cannot type
-into PySide6, the packaged EXE has a deliberately inactive-by-default bridge.
-It starts only with `ZEN_MA2_AUTOMATION=1` or `--automation-test`, binds only
-to `127.0.0.1`, and accepts only fixed `status`, `connect`, `submit`,
-`chat_text`, `connection_state`, and `shutdown` actions. It never returns the
-session password and has no raw Telnet, code, or filesystem endpoint.
+## Safety boundary
 
-Run the real-current-show verification only after an explicit operator choice:
+ZEN does not allow an LLM or OpenClaw plugin to emit arbitrary MA commands and
+execute them directly.
 
-```powershell
-.\.venv\Scripts\python.exe scripts\real_packaged_desktop_smoke.py --real-machine
+Target path:
+
+```text
+human/OpenClaw
+-> typed request
+-> ZEN backend
+-> validation / Safety
+-> Resolver
+-> deterministic Builder
+-> MA transport
 ```
 
-The verifier drives the packaged `ZenDesktop.connect()` and
-`ZenDesktop.submit()` handlers on the Qt GUI thread; it does not call
-`AgentCore` directly.
+Fixture 9999 and production protections remain outside the UI layer.
 
-The portable bundle is `dist\ZEN_MA2_Agent\ZEN_MA2_Agent.exe`. Its `web`,
-`lua`, `skills`, `config`, `logs`, and `cache` resources resolve relative to the EXE, so
-moving the folder to another USB drive letter is supported.
+## Tests
 
-## Skills and Show State
-
-Use **MA2 State** to refresh Groups or Fixture inventory, or ask in Chat:
-`現在 Show 裡有哪些 Group？` / `List Fixtures` / `有哪些 Sequence？`.
-
-The general State layer also supports Group membership, Layout XY, selection,
-programmer summary, and Cue metadata. It records each cached resource's source,
-timestamp, stale flag, and error state. Local Group membership needs access to
-the onPC `importexport` filesystem; a remote console without filesystem access
-returns `REMOTE_EXPORT_ACCESS_UNAVAILABLE`. See [MA2 State adapter](docs/MA2_STATE.md)
-and [Group Export provider](docs/MA2_GROUP_EXPORT.md) for the compatibility
-boundary.
-
-The executable builtins include Group Select, Set Dimmer, Fixture Select, Go
-Sequence, Show Diagnostics, Effect Builder, and Timecode Offset. Timecode
-Offset v1 is intentionally narrow: it applies MA2's documented positive,
-whole-show `Timecode/Offset` property through Preview and Approval, only when
-the requested offset is exactly representable by the verified 30 FPS `List
-Timecode` read-back (for example 100 ms, 500 ms, or 1 s). Event/track
-readback, range offsets, non-frame-aligned offsets, and moving a Timecode earlier remain explicit
-`UNSUPPORTED` capabilities rather than guessed commands. Geometry Clone v1 can
-build a real, read-only ordered Group-membership mapping and a MODIFY Preview,
-but remains Disabled until it has a dedicated safe real-MA2 write target.
-Auto Position and Programmer Inspect remain explicit placeholders.
-
-### First Song Builder PoC
-
-`examples\FIRST_SONG_INPUT.json` is a manual, portable song-structure input
-for the first Builder proof of concept. Its `active_sequence_range` is an
-explicit user-controlled allocation range; the Builder scans the live Sequence
-pool and chooses only the first unused slot. The deterministic Designer emits
-typed actions, never MA2 command strings. The Builder resolves only scanned
-Groups and Presets, previews every allow-listed command, then requires the
-normal MODIFY approval lifecycle before it can create a new `ZEN_AI_TEST_*`
-Sequence. Existing Presets, Effects, and Sequences are never overwritten.
-Verification reads the exact Sequence label plus Cue count, labels, and fades;
-Cue-content readback is explicitly `PARTIAL`.
-
-### Typed Effect Resource Resolver
-
-The Designer can opt in to the strictly typed `DIMMER_CHASE_V1` effect policy.
-It emits an `EffectRequirement`, never an MA2 command. `EffectResourceResolver`
-then prefers a freshly listed, catalog-verified Agent-owned Effect; it accepts
-an existing template only when its label exactly follows the strict
-`FX_DIM_CHASE_SLOW|MED|FAST` convention. A name such as `Chase` is only a
-candidate and is never automatically selected.
-
-If no verified resource exists, the resolver converts the requirement to the
-existing Effect Builder v1 `EffectSpec`. Effect creation has its own MODIFY
-Preview and Approval, records a show-bound `data\ZEN_EFFECT_CATALOG.json` row
-only after the Effect object and label are read back, and never overwrites an
-existing Effect. A later Show Plan carries only a typed Effect reference.
-
-Cue Effect application is now verified on grandMA2 3.9 through one isolated,
-Agent-owned POC: select the fresh verified target Group, then call the existing
-Effect pool object (`Effect <id>`), store a newly allocated Cue, and finally
-clear the Programmer. The evidence record is
-`data\ZEN_CUE_EFFECT_APPLICATION_CAPABILITY.json`. Builder enables the typed
-`CALL_EFFECT` operation only when that record says
-`REAL_MACHINE_VERIFIED`; the Designer still emits no MA2 command text. Cue
-content read-back remains explicitly `PARTIAL`.
-
-### Song Analysis Input v0.1
-
-`zen_ma2_agent.song_analysis` is the command-free upstream boundary for a real
-song, cue script, or manual section notes. It accepts a validated
-`zen.song_analysis.v0.1` JSON document, deterministic TXT/Markdown structure
-scripts, and explicit manual overrides. Analysis records source/confidence,
-keeps unknown timing/BPM/energy as `null`, and rejects any `telnet`, `lua`, or
-MA2 command field. It adapts only into the existing Designer input; the
-verified path remains `analysis → typed ZEN_SHOW_PLAN → Builder → Preview →
-Approval`. `examples\REALISTIC_SONG_ANALYSIS.json` and
-`examples\REALISTIC_SONG_SCRIPT.md` are portable, realistic fixtures.
-`examples\ZEN_REAL_LIGHTING_DESIGN_TEST.json` is the isolated 10-section
-integration fixture. Its explicit `DIMMER_CHASE_REUSE_SLOW_V1` policy reuses
-one catalog-verified Agent-owned DIMMER CHASE instead of creating duplicates;
-it produces a local `ZEN_REAL_SONG_DESIGN_REPORT.md` and never embeds MA2
-command text.
-
-## Show Diagnostics v1
-
-Ask `檢查 Show`, `Show Diagnostics`, or `幫我檢查目前 Show` for a SAFE,
-read-only health summary. It refreshes the supported Group, Fixture, Layout,
-Preset, Effect, Sequence/Cue, Page, and Executor providers, then reports
-deterministic findings with `INFO`, `WARNING`, or `ERROR` severity. Use
-`顯示詳細診斷`, `只看 Warning`, or `Layout 有什麼問題？` for a filtered view.
-Unsupported data is explicitly shown as a capability limit: the current
-grandMA2 Layout Export path supports CObjects but not fixture-level geometry.
-
-See [Skill system](docs/SKILL_SYSTEM.md) and
-[self-extension](docs/SELF_EXTENSION.md) for the controlled install boundary.
-
-Supported examples:
-
-- `選 Group BEAM` → `Group "BEAM"`
-- `Beam 亮 30%` → `Group "BEAM"; At 30`
-- `Go Sequence 5` → `Go Sequence 5`
-- `選 Fixture 1 到 10` → `Fixture 1 Thru 10`
-- `HYBRID 裡有哪些燈？` → refreshes Group inventory, then reads Group 1 membership
-  through the read-only adapter
-- `Layout 1 裡有哪些燈？` → reads fixture/group XY metadata through the adapter
-- `Sequence 5 有哪些 Cue？` → read-only Cue inventory
-- `Blackout` → preview only; it remains unconfigured until the show-specific
-  BO command template is deliberately set in preferences.
-
-Run automated checks with:
+Run:
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-See [architecture](docs/ARCHITECTURE.md) and the future
-[geometry clone design](docs/GEOMETRY_CLONE.md).
+The normal development host must run the full suite after dependency and
+packaging changes.
+
+Key architecture docs:
+
+- `docs/ZEN_OPENCLAW_INTEGRATION.md`
+- `docs/ZEN_FIELD_HOME_DISTRIBUTED_ARCHITECTURE.md`
+- `docs/ZEN_MA_BRIDGE_PROTOCOL_V0_1.md`
+- `docs/ZEN_LEGACY_UI_REMOVAL_001.md`
+- `docs/PORTABLE_USB_RUNTIME.md`
