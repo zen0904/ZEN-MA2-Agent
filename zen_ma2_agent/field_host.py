@@ -17,7 +17,9 @@ from .operator_server import (
     OperatorServer,
     status_provider_from_core,
 )
+from .operator_api import ComponentState
 from .remote_workers import WorkerRegistry
+from .watchdog import WatchdogComponent, WatchdogMonitor, WatchdogService
 
 
 @dataclass(frozen=True)
@@ -28,6 +30,7 @@ class FieldHostConfig:
     bridge_port: int = DEFAULT_BRIDGE_PORT
     allow_remote_operator: bool = False
     allow_remote_bridge: bool = False
+    watchdog_interval_seconds: float = 1.0
 
 
 class FieldHost:
@@ -54,6 +57,11 @@ class FieldHost:
             port=self.config.bridge_port,
             allow_remote=self.config.allow_remote_bridge,
         )
+        self.watchdog = WatchdogService(
+            WatchdogMonitor(),
+            self._watchdog_observations,
+            interval_seconds=self.config.watchdog_interval_seconds,
+        )
         self._status_provider = status_provider_from_core(
             self.core,
             self.worker_registry,
@@ -64,6 +72,7 @@ class FieldHost:
             host=self.config.operator_host,
             port=self.config.operator_port,
             allow_remote=self.config.allow_remote_operator,
+            watchdog_provider=self.watchdog.snapshot,
         )
         self._stop = threading.Event()
 
@@ -71,19 +80,65 @@ class FieldHost:
         remote = "YES" if self.worker_registry.remote_ai_available else "NO"
         return f"FIELD_CORE_AVAILABLE=YES REMOTE_AI_AVAILABLE={remote}"
 
+    def _watchdog_observations(self) -> tuple[WatchdogComponent, ...]:
+        observations = [
+            WatchdogComponent("field_core", ComponentState.ONLINE, required=True),
+            WatchdogComponent(
+                "ma_bridge",
+                ComponentState.ONLINE if self.bridge.running else ComponentState.OFFLINE,
+                required=True,
+            ),
+        ]
+
+        runtime = getattr(self.core, "runtime", None)
+        raw_state = str(
+            getattr(getattr(runtime, "state", None), "value", getattr(runtime, "state", ""))
+            or ""
+        ).upper()
+        if raw_state == "READY":
+            ma_state = ComponentState.ONLINE
+        elif raw_state in {"TCP_CONNECTED", "NEGOTIATING", "AUTHENTICATING", "CONNECTING"}:
+            ma_state = ComponentState.DEGRADED
+        elif raw_state in {"DISCONNECTED", "AUTH_FAILED"}:
+            ma_state = ComponentState.OFFLINE
+        else:
+            ma_state = ComponentState.UNKNOWN
+        observations.append(
+            WatchdogComponent(
+                "ma_connection",
+                ma_state,
+                required=False,
+                detail=raw_state or None,
+            )
+        )
+
+        for worker in self.worker_registry.operator_workers():
+            observations.append(
+                WatchdogComponent(
+                    f"worker:{worker.worker_id}",
+                    worker.state,
+                    required=False,
+                    detail=worker.gpu_name,
+                )
+            )
+        return tuple(observations)
+
     def status(self) -> dict[str, Any]:
         return self._status_provider().to_dict()
 
     def start(self) -> None:
         self.bridge.start()
+        self.watchdog.start()
         try:
             self.operator.start()
         except Exception:
+            self.watchdog.stop()
             self.bridge.stop()
             raise
 
     def stop(self) -> None:
         self.operator.stop()
+        self.watchdog.stop()
         self.bridge.stop()
         self._stop.set()
 
