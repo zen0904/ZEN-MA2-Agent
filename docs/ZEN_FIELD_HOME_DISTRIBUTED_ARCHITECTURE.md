@@ -1,6 +1,6 @@
 # ZEN Field + Home Distributed Architecture
 
-Status: **ARCHITECTURE_PROPOSAL / NOT_IMPLEMENTED**
+Status: **ARCHITECTURE FOUNDATION PARTIALLY IMPLEMENTED / REAL REMOTE INFERENCE PENDING**
 
 This document records a possible next-stage deployment model for ZEN MA2 Agent. It is intentionally a design note, not an implementation commitment. The purpose is to preserve the idea in Git so it can be evaluated and refined later without interrupting the current validated ZEN development path.
 
@@ -224,6 +224,12 @@ Current candidates include:
 Do not expose an unauthenticated inference or MA-related service directly to the public Internet.
 
 Remote worker traffic should be limited to a typed job protocol and health/status channel. The Field Node remains the trust boundary for anything that could eventually produce an MA write.
+
+Current foundation reuses the Worker's existing HTTP `/health` and
+`/capabilities` endpoints. The Field Node may register Worker endpoints at
+runtime without hard-coded addresses. Worker identity and schema are checked
+before registry state is updated. A reachable HTTP service is not enough to
+declare AI capability: routing requires `model_runtime_available=true`.
 
 ## 8. Job routing
 
