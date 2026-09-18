@@ -99,8 +99,10 @@ Current conservative mappings:
 
 - Field Core is available when the local Core/provider is running.
 - MA runtime connection state is mapped to the bounded operator enum.
-- MA Bridge is `UNKNOWN` until the MA-initiated Bridge is implemented.
-- Remote AI is unavailable until the Worker registry exists.
+- MA Bridge state is projected from the local Bridge runtime.
+- Remote AI availability is projected from the Worker registry.
+- Watchdog exposes bounded edge-triggered Field/Bridge/MA/Worker state through
+  `zen.watchdog.status`.
 - Pipeline roles remain `UNKNOWN` until real pipeline state is wired.
 - Latest artifact remains null until a real artifact source is wired.
 
@@ -113,6 +115,7 @@ zen.status
 zen.worker.status
 zen.ma.status
 zen.artifact.latest
+zen.watchdog.status
 ```
 
 Reserved but intentionally not implemented:
