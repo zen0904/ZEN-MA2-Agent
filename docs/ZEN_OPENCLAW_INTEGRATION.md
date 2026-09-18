@@ -180,8 +180,8 @@ and deterministic recovery remain alive.
 
 Separate future work remains for:
 
-- Worker registry / router and real remote inference;
-- MA-Initiated Bridge implementation;
+- real remote inference job execution beyond the existing Worker registry/router and health/capability probing;
+- MA-Initiated Bridge execution beyond the existing parser/TCP foundation;
 - pipeline progress source wiring;
 - artifact-store source wiring;
 - authenticated private networking;
