@@ -126,9 +126,9 @@ Selected host / hardware TBD
 
 Available compute:
 Gateway / Field Host remains unselected pending D2.6 verification
-Preferred next candidate: Primary AI Worker A / Ubuntu / 16 GB / GTX 1650 4 GB
+Preferred next candidate: Primary AI Worker A / OS TO VERIFY / 16 GB / GTX 1650 4 GB
 Worker A may co-host Gateway + ZEN Field Core + Worker runtime if host checks pass
-Primary AI Worker B / Ubuntu / 16 GB / GPU model UNKNOWN remains Worker-focused
+Primary AI Worker B / OS TO VERIFY / 16 GB / GPU model UNKNOWN remains Worker-focused
 2012 Mac mini is excluded from current Gateway / Field Host consideration
 Operator Windows machine remains OpenClaw Hub-only
 
