@@ -171,17 +171,21 @@ The operator Windows machine is not required to install or host the standalone
 OpenClaw CLI/Gateway merely to provide the visible UI. It should use the
 Windows Hub and connect to the selected Gateway host.
 
-The Gateway / Field Host remains selectable and may be the current Mac, the
-2012 Mac mini, one of the headless compute-capable hosts if explicitly chosen
-later, or a future replacement. The two Worker hosts remain the primary AI
+The Gateway / Field Host remains selectable. The 2012 Mac mini is explicitly
+excluded from current Gateway / Field Host candidates. The operator Windows
+machine remains Hub-only. Current realistic candidates are the operator's
+other actually intended host(s) and future compatible headless hosts backed by
+real reachability/service evidence. The two Worker hosts remain the primary AI
 inference tier and are expected to run headless. They remain non-authoritative
 for MA control and must not be required for Field Core availability: if both
 workers are unavailable, heavy AI capability may be unavailable, but local
 Safety, Bridge, Resolver/Builder and deterministic recovery remain alive.
 
-## Still pending on the OpenClaw host(s)
+## Current OpenClaw host status
 
-- install the OpenClaw Windows Hub on the operator-visible Windows machine;
+- OpenClaw Windows Hub is installed and verified on the operator-visible
+  Windows machine, version 2026.9.4;
+- no standalone OpenClaw CLI/Gateway is installed on the operator Windows machine;
 - select the actual headless Gateway / Field Host;
 - install and verify the Gateway on that selected host;
 - record the exact tested Gateway/OpenClaw version from the host that actually runs it;
