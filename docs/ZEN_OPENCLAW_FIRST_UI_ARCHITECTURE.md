@@ -88,11 +88,10 @@ Gateway. Gateway placement is a separate deployment decision.
 
 Field hardware is intentionally not fixed to one machine.
 
-Current candidates include:
-
-- the operator's current Mac, if it remains the most practical portable host;
-- the 2012 Mac mini / Ubuntu system as an optional dedicated headless Field Node;
-- a future replacement host that satisfies the same Field Core contract.
+Current Gateway / Field Host candidates include only hosts the operator
+actually intends to use and that can be verified against the Field Core
+requirements. The 2012 Mac mini is explicitly excluded from current
+consideration. The operator-visible Windows machine remains Hub-only.
 
 Primary AI compute is provided by two dedicated Worker hosts. Known targets currently include one Ubuntu / 16 GB / GTX 1650 4 GB system and another 16 GB system with weaker/unknown GPU.
 
@@ -100,9 +99,10 @@ These two Workers are the main inference tier for Researcher / Designer / Critic
 Finalizer and other heavy AI jobs. They are not MA command authorities and must
 not bypass the Field Node's Safety / Resolver / Builder boundary.
 
-The product invariant is the Field Node role and safety boundary, not the chassis.
-Do not assume the Mac mini must travel. The primary-compute role of the two Worker
-hosts is intentional, while the exact Field Node host remains selectable.
+The product invariant is the Field Node role and safety boundary, not the
+chassis. The primary-compute role of the two Worker hosts is intentional, while
+the exact Field Node host remains selectable from actually intended,
+evidence-backed candidates.
 
 ## What OpenClaw should provide
 
@@ -229,7 +229,7 @@ As of this decision:
 
 ```text
 OPENCLAW_FIRST_UI=DECIDED
-OPENCLAW_WINDOWS_HUB=NOT_YET_VERIFIED
+OPENCLAW_WINDOWS_HUB=VERIFIED_2026.9.4
 OPENCLAW_GATEWAY_HOST=UNSELECTED
 ZEN_OPENCLAW_PLUGIN=NOT_IMPLEMENTED
 ZEN_UI_ADAPTER=NOT_IMPLEMENTED
