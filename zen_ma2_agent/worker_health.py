@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import ipaddress
 import threading
 from dataclasses import dataclass
 from typing import Callable, Iterable, Optional
