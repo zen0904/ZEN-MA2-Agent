@@ -90,9 +90,15 @@ Current candidates include:
 - the 2012 Mac mini / Ubuntu system as an optional dedicated headless Field Node;
 - a future replacement host that satisfies the same Field Core contract.
 
-Available secondary compute includes two additional hosts that can serve as AI Workers, backup workers, or other non-authoritative compute roles. Known worker candidates currently include one Ubuntu / 16 GB / GTX 1650 4 GB system and another 16 GB system with weaker/unknown GPU.
+Primary AI compute is provided by two dedicated Worker hosts. Known targets currently include one Ubuntu / 16 GB / GTX 1650 4 GB system and another 16 GB system with weaker/unknown GPU.
 
-The product invariant is the Field Node role and safety boundary, not the chassis. Do not assume the Mac mini must travel or that any specific host is permanently assigned.
+These two Workers are the main inference tier for Researcher / Designer / Critic /
+Finalizer and other heavy AI jobs. They are not MA command authorities and must
+not bypass the Field Node's Safety / Resolver / Builder boundary.
+
+The product invariant is the Field Node role and safety boundary, not the chassis.
+Do not assume the Mac mini must travel. The primary-compute role of the two Worker
+hosts is intentional, while the exact Field Node host remains selectable.
 
 ## What OpenClaw should provide
 
