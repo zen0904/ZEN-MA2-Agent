@@ -110,7 +110,11 @@ class WorkerRegistry:
 
     @property
     def remote_ai_available(self) -> bool:
-        return any(worker.state == ComponentState.ONLINE for worker in self._workers.values())
+        return any(
+            worker.state == ComponentState.ONLINE
+            and worker.capabilities.model_runtime_available is True
+            for worker in self._workers.values()
+        )
 
     def operator_workers(self) -> Tuple[WorkerStatus, ...]:
         ordered = sorted(self._workers.values(), key=lambda item: (item.priority, item.worker_id))
@@ -121,6 +125,7 @@ class WorkerRegistry:
             worker
             for worker in self._workers.values()
             if worker.state == ComponentState.ONLINE
+            and worker.capabilities.model_runtime_available is True
         ]
         if not online:
             return WorkerRouteDecision(
