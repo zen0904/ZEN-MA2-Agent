@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Iterable
 
 from .core import AgentCore
+from .host_metrics import HostMetricsProvider
 from .ma_bridge.server import (
     DEFAULT_BRIDGE_HOST,
     DEFAULT_BRIDGE_PORT,
@@ -74,6 +75,7 @@ class FieldHost:
             else None
         )
 
+        self.host_metrics = HostMetricsProvider()
         self.bridge = BridgeServer(
             BridgeDispatcher(status_payload_provider=self._bridge_status_payload),
             host=self.config.bridge_host,
@@ -96,6 +98,7 @@ class FieldHost:
             port=self.config.operator_port,
             allow_remote=self.config.allow_remote_operator,
             watchdog_provider=self.watchdog.snapshot,
+            host_status_provider=self.host_metrics.snapshot,
         )
         self._stop = threading.Event()
 
@@ -104,8 +107,20 @@ class FieldHost:
         return f"FIELD_CORE_AVAILABLE=YES REMOTE_AI_AVAILABLE={remote}"
 
     def _watchdog_observations(self) -> tuple[WatchdogComponent, ...]:
+        host_status = self.host_metrics.snapshot()
+        host_detail = (
+            f"CPU={host_status.get('cpu_percent')}% "
+            f"RAM={host_status.get('memory', {}).get('percent')}% "
+            f"DISK={host_status.get('disk', {}).get('percent')}%"
+        )
         observations = [
             WatchdogComponent("field_core", ComponentState.ONLINE, required=True),
+            WatchdogComponent(
+                "host_metrics",
+                ComponentState(host_status["state"]),
+                required=False,
+                detail=host_detail,
+            ),
             WatchdogComponent(
                 "ma_bridge",
                 ComponentState.ONLINE if self.bridge.running else ComponentState.OFFLINE,
