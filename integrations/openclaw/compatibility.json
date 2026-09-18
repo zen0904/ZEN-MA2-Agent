@@ -8,5 +8,9 @@
   "operator_http_schema": "zen.operator_http.v0.1",
   "operator_default_bind": "127.0.0.1:8876",
   "openclaw_required_for_field_core": false,
-  "ma2_writes": 0
+  "ma2_writes": 0,
+  "operator_surface": "WINDOWS_HUB",
+  "operator_windows_cli_required": false,
+  "gateway_host": "UNSELECTED_HEADLESS_HOST",
+  "gateway_version_source": "VERIFY_ON_ACTUAL_GATEWAY_HOST"
 }
