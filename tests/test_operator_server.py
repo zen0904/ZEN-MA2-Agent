@@ -60,6 +60,23 @@ class OperatorServerTests(unittest.TestCase):
         self.assertEqual(data["status"], "SUCCESS")
         self.assertEqual(data["request_id"], "req-1")
 
+    def test_watchdog_tool_uses_optional_provider(self):
+        client = TestClient(
+            create_operator_app(
+                self._provider(),
+                lambda: {
+                    "schema": "zen.watchdog_status.v0.1",
+                    "state": "DEGRADED",
+                    "components": [],
+                    "recent_events": [],
+                },
+            )
+        )
+        response = client.post("/zen/v0.1/tools/zen.watchdog.status", json={})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "SUCCESS")
+        self.assertEqual(response.json()["result"]["state"], "DEGRADED")
+
     def test_reserved_mutating_tool_is_not_implemented(self):
         client = TestClient(create_operator_app(self._provider()))
         response = client.post("/zen/v0.1/tools/zen.approve", json={})
