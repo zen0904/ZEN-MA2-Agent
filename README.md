@@ -37,6 +37,19 @@ Quick self-check:
 .\.venv\Scripts\python.exe main.py --self-check
 ```
 
+Optional primary Worker registration reuses each Worker's existing
+`/health` and `/capabilities` API:
+
+```text
+python main.py \
+  --worker worker-a=http://10.0.0.10:8878 \
+  --worker worker-b=http://10.0.0.20:8878
+```
+
+The addresses above are examples only; deployment does not hard-code Worker IPs.
+A Worker counts toward `REMOTE_AI_AVAILABLE=YES` only when it is ONLINE and
+reports `model_runtime_available=true`.
+
 The Field Core is intentionally independent of OpenClaw. If OpenClaw is
 stopped, ZEN's local backend, Safety boundary, Worker state, artifacts and MA
 control infrastructure remain available.
