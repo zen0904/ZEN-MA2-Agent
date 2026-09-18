@@ -173,13 +173,15 @@ Windows Hub and connect to the selected Gateway host.
 
 The Gateway / Field Host remains selectable. The 2012 Mac mini is explicitly
 excluded from current Gateway / Field Host candidates. The operator Windows
-machine remains Hub-only. Current realistic candidates are the operator's
-other actually intended host(s) and future compatible headless hosts backed by
-real reachability/service evidence. The two Worker hosts remain the primary AI
-inference tier and are expected to run headless. They remain non-authoritative
-for MA control and must not be required for Field Core availability: if both
-workers are unavailable, heavy AI capability may be unavailable, but local
-Safety, Bridge, Resolver/Builder and deterministic recovery remain alive.
+machine remains Hub-only. Current realistic candidates include the operator's actually intended hosts
+and, by explicit decision, Worker A as a co-host candidate for OpenClaw Gateway
++ ZEN Field Core + its Worker runtime. This is a hardware co-location decision,
+not a trust-boundary collapse. Worker B remains a primary AI Worker and is not
+the preferred Gateway candidate. The Worker inference role remains non-authoritative for MA control even if
+Worker A physically co-hosts the Gateway / Field Core. The logical path remains
+typed Worker result -> Field Core validation / Safety / Resolver / Builder ->
+MA. A Worker runtime crash must not be allowed to bypass or inherit Field Core
+authority.
 
 ## Current OpenClaw host status
 
