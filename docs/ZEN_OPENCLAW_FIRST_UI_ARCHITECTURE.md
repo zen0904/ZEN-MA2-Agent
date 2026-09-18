@@ -82,21 +82,17 @@ ZEN Field Node API / control plane
 Home AI Workers
 ```
 
-Field hardware remains:
+Field hardware is intentionally not fixed to one machine.
 
-- 2012 Mac mini
-- Ubuntu
-- Intel Core i7-3615QM
-- 8 GB RAM
-- Intel 545s 256 GB SSD
-- portable Field Node
+Current candidates include:
 
-Home compute remains:
+- the operator's current Mac, if it remains the most practical portable host;
+- the 2012 Mac mini / Ubuntu system as an optional dedicated headless Field Node;
+- a future replacement host that satisfies the same Field Core contract.
 
-- Worker A: Ubuntu / 16 GB / GTX 1650 4 GB
-- Worker B: Ubuntu / 16 GB / weaker GPU, exact model unknown
+Available secondary compute includes two additional hosts that can serve as AI Workers, backup workers, or other non-authoritative compute roles. Known worker candidates currently include one Ubuntu / 16 GB / GTX 1650 4 GB system and another 16 GB system with weaker/unknown GPU.
 
-Only the Mac mini travels to the venue.
+The product invariant is the Field Node role and safety boundary, not the chassis. Do not assume the Mac mini must travel or that any specific host is permanently assigned.
 
 ## What OpenClaw should provide
 
