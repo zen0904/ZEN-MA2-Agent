@@ -16,6 +16,7 @@
         "zen.ma.status",
         "zen.artifact.latest",
         "zen.watchdog.status",
+        "zen.host.status",
         "zen.design.request",
         "zen.preview",
         "zen.approve"
