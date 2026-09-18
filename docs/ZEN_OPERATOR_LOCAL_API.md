@@ -49,6 +49,7 @@ Current read-only tools:
 - `zen.ma.status`
 - `zen.artifact.latest`
 - `zen.watchdog.status`
+- `zen.host.status`
 
 Reserved tools return `NOT_IMPLEMENTED`:
 
@@ -100,8 +101,8 @@ Node, so loopback is the normal path.
 - real OpenClaw Feature Plugin scaffold for that pinned version;
 - browser/Control UI verification;
 - authenticated private-network policy if a future remote bind is needed;
-- host CPU/RAM/disk/thermal metric adapters for Watchdog;
-- real Worker health probing beyond registry state;
+- operator-tuned alert thresholds for CPU/RAM/disk/thermal metrics;
+- authenticated/private Worker transport beyond the existing health probe;
 - pipeline progress source wiring;
 - artifact-store source wiring.
 
