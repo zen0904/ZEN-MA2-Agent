@@ -13,8 +13,7 @@ from .config import save_preferences
 from .diagnostics import DiagnosticReport, ShowDiagnostics
 from .build_identity import load_build_identity
 from .extensions import ExtensionManager
-from .network import internet_online, lan_ipv4_addresses
-from .pairing import PairingManager
+from .network import internet_online
 from .router import IntentRouter, ResponseType
 from .runtime import AgentRuntime
 from .skill_system import SkillError, SkillRegistry
@@ -58,14 +57,13 @@ class ActionRecord:
 
 
 class AgentCore:
-    """Single control boundary used by Desktop UI and mobile HTTP/WebSocket UI."""
+    """Single backend control boundary used by OpenClaw and headless ZEN services."""
     CHAT_ROW_LIMIT = 30
 
     def __init__(self, runtime: AgentRuntime | None = None, group_membership_provider: GroupMembershipProvider | None = None):
         self.runtime = runtime or AgentRuntime()
         self.build_identity = load_build_identity(self.runtime.root)
         self.events = EventBus()
-        self.pairing = PairingManager()
         self.chat: list[dict[str, Any]] = []
         self.actions: dict[str, ActionRecord] = {}
         self.state = StateStore()
@@ -106,7 +104,6 @@ class AgentCore:
         return {
             "connection": {"state": self.runtime.state.value, "ready": self.runtime.ready, "status": self.runtime.status_text(), "host": ma2["host"], "port": ma2["port"], "user": self.runtime.client.authenticated_user if self.runtime.client else None},
             "internet": "ONLINE" if online else "OFFLINE",
-            "phone_connected": self.pairing.connected_count,
             "progress": self.progress,
             "chat": list(self.chat[-40:]),
             "actions": [{"id": item.id, "status": item.status, "result": item.result, **item.plan} for item in self.actions.values()],
@@ -1276,5 +1273,3 @@ class AgentCore:
             self.runtime.log("effect_builder_verification", {"effect_number": number, "status": "PARTIAL", "error": str(exc)})
             return execution_result + f"\nVerification: PARTIAL — Effect commands were sent, but read-back failed: {exc}"
 
-    def phone_urls(self, port: int) -> list[str]:
-        return [f"http://{address}:{port}/?nonce={self.pairing.nonce}" for address in lan_ipv4_addresses()]
