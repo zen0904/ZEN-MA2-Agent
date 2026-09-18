@@ -70,6 +70,7 @@ class FieldHostTests(unittest.TestCase):
         snapshot = host.watchdog.snapshot()
         components = {item["component_id"]: item for item in snapshot["components"]}
         self.assertEqual(components["field_core"]["state"], "ONLINE")
+        self.assertIn(components["host_metrics"]["state"], {"ONLINE", "DEGRADED"})
         self.assertEqual(components["ma_bridge"]["state"], "OFFLINE")
         self.assertTrue(components["ma_bridge"]["required"])
         self.assertEqual(components["ma_connection"]["state"], "OFFLINE")
