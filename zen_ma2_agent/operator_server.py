@@ -14,6 +14,7 @@ from .operator_api import (
     PipelineStatus,
     StatusProvider,
     UnknownOpenClawTool,
+    WatchdogProvider,
     build_operator_status,
 )
 from .remote_workers import WorkerRegistry
@@ -99,10 +100,13 @@ def status_provider_from_core(
     return provider
 
 
-def create_operator_app(status_provider: StatusProvider) -> FastAPI:
+def create_operator_app(
+    status_provider: StatusProvider,
+    watchdog_provider: Optional[WatchdogProvider] = None,
+) -> FastAPI:
     """Build the narrow localhost-first API intended for the OpenClaw adapter."""
 
-    adapter = OpenClawOperatorAdapter(status_provider)
+    adapter = OpenClawOperatorAdapter(status_provider, watchdog_provider)
     app = FastAPI(
         title="ZEN Operator API",
         version="0.1",
@@ -203,6 +207,7 @@ class OperatorServer:
         *,
         host: str = DEFAULT_OPERATOR_HOST,
         allow_remote: bool = False,
+        watchdog_provider: Optional[WatchdogProvider] = None,
     ):
         if not 1 <= int(port) <= 65535:
             raise ValueError("operator port must be in range 1..65535")
@@ -212,7 +217,7 @@ class OperatorServer:
             )
         self.host = host
         self.port = int(port)
-        self.app = create_operator_app(status_provider)
+        self.app = create_operator_app(status_provider, watchdog_provider)
         self._server: Optional[uvicorn.Server] = None
         self._thread: Optional[threading.Thread] = None
 
