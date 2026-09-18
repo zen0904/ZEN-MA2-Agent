@@ -104,14 +104,18 @@ No Bridge command currently performs a real MA write or calls the LLM.
 
 ```text
 Venue:
-2012 Mac mini / Ubuntu / 8 GB
+Selected host / hardware TBD
 -> ZEN Field Node
 -> OpenClaw operator UI
 -> MA Bridge / Safety / Resolver / Builder / cache
 
-Home:
+Available compute:
+Current Mac may remain a Field Node candidate
+2012 Mac mini remains an optional candidate, not a fixed deployment target
 Worker A / Ubuntu / 16 GB / GTX 1650 4 GB
 Worker B / Ubuntu / 16 GB / GPU model UNKNOWN
+
+Two additional hosts are available for Worker / backup roles; exact assignment is deployment-time policy, not a product invariant.
 ```
 
 Home compute is optional. The required invariant is:
