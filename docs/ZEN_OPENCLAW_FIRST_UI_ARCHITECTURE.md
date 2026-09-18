@@ -93,9 +93,13 @@ actually intends to use and that can be verified against the Field Core
 requirements. The 2012 Mac mini is explicitly excluded from current
 consideration. The operator-visible Windows machine remains Hub-only. Worker A
 is explicitly permitted as a co-host candidate for Gateway + ZEN Field Core +
-Worker runtime, subject to real OS/network/service verification.
+Worker runtime, but D2.6 is blocked until that physical machine returns and
+real OS/network/service verification can be performed.
 
-Primary AI compute is provided by two dedicated Worker hosts. Known targets currently include one Ubuntu / 16 GB / GTX 1650 4 GB system and another 16 GB system with weaker/unknown GPU.
+Primary AI compute is provided by two dedicated Worker hosts. Known hardware
+currently includes one 16 GB / GTX 1650 4 GB system and another 16 GB system
+with weaker/unknown GPU. Their actual current operating systems must be
+verified when the machines are physically available; do not assume Ubuntu.
 
 These two Workers are the main inference tier for Researcher / Designer /
 Critic / Finalizer and other heavy AI jobs. Their inference runtime is not an
