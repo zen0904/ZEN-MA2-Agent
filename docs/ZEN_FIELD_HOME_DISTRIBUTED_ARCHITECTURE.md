@@ -36,7 +36,11 @@ Home
  DDR3 PC / 16 GB RAM / second older GPU (exact model TBD)
 ```
 
-The design goal is not to make the venue depend on the home machines. The home workers are optional heavy-compute resources. The Field Node remains the authoritative local control and safety boundary.
+The two Worker hosts are the primary heavy-compute tier for ZEN AI inference.
+The design goal is still not to make field safety depend on them. The Field Node
+remains the authoritative local control and safety boundary, while the Workers
+provide the main Researcher / Designer / Critic / Finalizer compute whenever
+reachable.
 
 ## 2. Current known hardware
 
@@ -65,7 +69,7 @@ The product should therefore target a host-neutral Field Core contract:
 headless operation is supported, but macOS/Linux deployment details belong in
 adapters and service packaging rather than in core logic.
 
-### 2.2 Secondary AI Worker A
+### 2.2 Primary AI Worker A
 
 Known target:
 
@@ -77,7 +81,7 @@ Known target:
 
 The GTX 1650 does not provide enough VRAM to assume the full current Qwen 7B model plus runtime state will fit entirely in VRAM. Partial GPU offload / CPU+GPU inference is expected unless later benchmarks prove otherwise.
 
-### 2.3 Secondary AI Worker B
+### 2.3 Primary AI Worker B
 
 Known target:
 
@@ -439,10 +443,14 @@ Selected host / hardware TBD
 → local safety-critical services
 → current Mac OR 2012 Mac mini OR future compatible host
 
-Available secondary hardware:
-Host A / 16 GB / GTX 1650
-Host B / 16 GB / GPU TBD
-→ Remote AI Worker / backup roles assigned by capability and deployment need
+Primary AI compute:
+Worker A / 16 GB / GTX 1650
+Worker B / 16 GB / GPU TBD
+→ main ZEN inference / heavy-compute tier
+
+Field Node:
+current Mac OR 2012 Mac mini OR future compatible host
+→ local Safety / MA Bridge / Resolver / Builder / cache / recovery
 
 Design principle:
 Home compute accelerates ZEN.
