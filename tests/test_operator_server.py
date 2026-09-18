@@ -14,7 +14,7 @@ from zen_ma2_agent.operator_server import (
     create_operator_app,
     status_provider_from_core,
 )
-from zen_ma2_agent.remote_workers import RegisteredWorker, WorkerRegistry
+from zen_ma2_agent.remote_workers import RegisteredWorker, WorkerCapabilities, WorkerRegistry
 
 
 class OperatorServerTests(unittest.TestCase):
@@ -165,7 +165,11 @@ class OperatorServerTests(unittest.TestCase):
         self.assertFalse(data["remote_ai_available"])
         self.assertEqual([item["worker_id"] for item in data["workers"]], ["worker-a", "worker-b"])
 
-        registry.set_state("worker-a", ComponentState.ONLINE)
+        registry.set_state(
+            "worker-a",
+            ComponentState.ONLINE,
+            capabilities=WorkerCapabilities(model_runtime_available=True),
+        )
         data = status_provider_from_core(core, registry)().to_dict()
         self.assertTrue(data["field_core"]["available"])
         self.assertTrue(data["remote_ai_available"])
