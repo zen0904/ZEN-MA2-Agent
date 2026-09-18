@@ -1,85 +1,43 @@
 # ZEN Legacy UI Retirement Plan
 
-Status: **AUDITED / DO NOT DELETE YET**
+Status: **SUPERSEDED / RETIREMENT COMPLETED**
 
-OpenClaw is now the intended primary operator interface. ZEN should not maintain two full UI stacks indefinitely. However, the current repository still actively depends on the legacy PySide6 desktop and mobile PWA, so deleting them before OpenClaw cutover would break the only verified operator surface and the Windows portable build.
+This file is retained only as historical planning context.
 
-## Candidate UI code to retire later
+The deletion gate described in the original plan has been completed. Current
+authoritative state is recorded in:
 
-### PySide6 desktop shell
+- `docs/ZEN_LEGACY_UI_REMOVAL_001.md`
+- `docs/ZEN_OPENCLAW_FIRST_UI_ARCHITECTURE.md`
+- `docs/ZEN_OPENCLAW_INTEGRATION.md`
 
-Primary candidates:
+The retired presentation stack no longer exists on current `main`:
 
-- `zen_ma2_agent/desktop.py`
-- `zen_ma2_agent/desktop_automation.py`
-- desktop-only UI tests
-- PySide6-specific portable smoke plumbing that exists only to drive the desktop UI
+- PySide6 desktop workspace;
+- Tkinter MVP UI;
+- mobile PWA assets;
+- mobile FastAPI UI server;
+- desktop-only automation bridge;
+- packaged desktop UI smoke/runtime-hook plumbing;
+- QR/pairing frontend flow.
 
-These are UI shell code, not the ZEN Brain/Safety/Builder contract.
+The final core-only compatibility remnants were also removed:
 
-### Mobile PWA shell
+- `zen_ma2_agent/pairing.py`;
+- `AgentCore.pairing`;
+- `phone_connected` snapshot state;
+- `AgentCore.phone_urls()`.
 
-Primary candidates:
+The product boundary is now:
 
-- `web/index.html`
-- `web/app.js`
-- `web/style.css`
-- `web/manifest.json`
-- `web/sw.js`
-- `web/icon.svg`
-- phone/QR/pairing UI flows that exist only for the old PWA
+```text
+OpenClaw = operator presentation / chat / dashboard shell
+ZEN      = independent backend / Field Core / Brain / Safety / Resolver /
+           deterministic Builder / MA Bridge / Worker Router / Watchdog
+```
 
-### Legacy combined mobile server surface
+OpenClaw replaces the presentation shell only. Safety, approval semantics,
+typed backend contracts, MA transport, state providers, Worker routing and
+artifacts remain ZEN-owned.
 
-`zen_ma2_agent/web_server.py` is a mixed case. It currently serves both static PWA assets and mobile API/write-capable routes. The static/PWA role should retire after OpenClaw cutover. Reusable backend behavior must not be deleted until every needed operation has a stable ZEN backend/OpenClaw adapter path.
-
-## Why deletion is blocked today
-
-Current `main.py` directly imports and starts:
-
-- `ZenDesktop`
-- `MobileServer`
-
-The Windows portable build also explicitly bundles the `web/` directory. Existing mobile and portable tests assert that these assets and flows exist.
-
-Deleting those files now would therefore create a deliberate regression before OpenClaw is installed and verified.
-
-## Keep permanently
-
-Do not delete merely because OpenClaw becomes the UI:
-
-- `AgentCore`
-- Safety / Preview / Approval semantics
-- Resolver / Builder
-- MA transport and state providers
-- `operator_api.py`
-- `operator_server.py`
-- MA Bridge
-- worker registry/router
-- artifact/cache contracts
-- any reusable typed schemas and validation
-
-OpenClaw replaces the presentation/operator shell, not ZEN's control authority.
-
-## Cutover gate before deleting old UI
-
-Legacy UI deletion becomes safe only after all of the following are verified on the development host:
-
-1. OpenClaw exact version installed and pinned.
-2. ZEN OpenClaw plugin loads successfully.
-3. `zen.status`, Worker status, MA status, and artifact status render correctly.
-4. Required Preview/Approval workflow has a real typed OpenClaw path or an explicitly retained fallback.
-5. OpenClaw can fail without taking down ZEN Field Core.
-6. Windows/Ubuntu deployment no longer starts `ZenDesktop` or the old PWA by default.
-7. Portable build/tests are updated to the new operator model.
-8. Full test suite passes after the removal diff.
-
-## Expected removal phase
-
-When the gate is satisfied, perform one dedicated task:
-
-`ZEN LEGACY UI RETIREMENT 001`
-
-That task should remove only presentation-specific code, update launchers/build scripts/tests/docs, and preserve the backend and safety contracts.
-
-Until then, mark the old UI as **LEGACY FALLBACK**, not current product direction.
+No production MA write authority is introduced by this retirement.
