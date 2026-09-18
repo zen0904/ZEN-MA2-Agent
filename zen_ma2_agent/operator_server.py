@@ -9,6 +9,7 @@ from fastapi import FastAPI, HTTPException
 
 from .operator_api import (
     ComponentState,
+    HostStatusProvider,
     MAConnectionState,
     OpenClawOperatorAdapter,
     PipelineStatus,
@@ -103,10 +104,15 @@ def status_provider_from_core(
 def create_operator_app(
     status_provider: StatusProvider,
     watchdog_provider: Optional[WatchdogProvider] = None,
+    host_status_provider: Optional[HostStatusProvider] = None,
 ) -> FastAPI:
     """Build the narrow localhost-first API intended for the OpenClaw adapter."""
 
-    adapter = OpenClawOperatorAdapter(status_provider, watchdog_provider)
+    adapter = OpenClawOperatorAdapter(
+        status_provider,
+        watchdog_provider,
+        host_status_provider,
+    )
     app = FastAPI(
         title="ZEN Operator API",
         version="0.1",
@@ -208,6 +214,7 @@ class OperatorServer:
         host: str = DEFAULT_OPERATOR_HOST,
         allow_remote: bool = False,
         watchdog_provider: Optional[WatchdogProvider] = None,
+        host_status_provider: Optional[HostStatusProvider] = None,
     ):
         if not 1 <= int(port) <= 65535:
             raise ValueError("operator port must be in range 1..65535")
@@ -217,7 +224,11 @@ class OperatorServer:
             )
         self.host = host
         self.port = int(port)
-        self.app = create_operator_app(status_provider, watchdog_provider)
+        self.app = create_operator_app(
+            status_provider,
+            watchdog_provider,
+            host_status_provider,
+        )
         self._server: Optional[uvicorn.Server] = None
         self._thread: Optional[threading.Thread] = None
 
