@@ -111,11 +111,13 @@ Selected host / hardware TBD
 
 Available compute:
 Current Mac may remain a Field Node candidate
-2012 Mac mini remains an optional candidate, not a fixed deployment target
-Worker A / Ubuntu / 16 GB / GTX 1650 4 GB
-Worker B / Ubuntu / 16 GB / GPU model UNKNOWN
+2012 Mac mini remains an optional Field Node candidate, not a fixed deployment target
+Primary AI Worker A / Ubuntu / 16 GB / GTX 1650 4 GB
+Primary AI Worker B / Ubuntu / 16 GB / GPU model UNKNOWN
 
-Two additional hosts are available for Worker / backup roles; exact assignment is deployment-time policy, not a product invariant.
+The two Worker hosts are the primary AI inference/compute tier. Field Core
+availability must still remain independent of them for safety-critical and
+deterministic local operation.
 ```
 
 Home compute is optional. The required invariant is:
