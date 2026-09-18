@@ -67,6 +67,7 @@ zen.status
 zen.worker.status
 zen.ma.status
 zen.artifact.latest
+zen.watchdog.status
 ```
 
 Mutation-facing OpenClaw tools remain reserved until they have a real typed
