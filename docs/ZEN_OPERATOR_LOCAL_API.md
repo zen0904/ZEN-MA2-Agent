@@ -48,6 +48,7 @@ Current read-only tools:
 - `zen.worker.status`
 - `zen.ma.status`
 - `zen.artifact.latest`
+- `zen.watchdog.status`
 
 Reserved tools return `NOT_IMPLEMENTED`:
 
@@ -68,8 +69,10 @@ Current mapping is deliberately conservative:
 
 - a running local Core maps to `FIELD_CORE_AVAILABLE=true`;
 - current MA runtime connection state is mapped to the bounded operator enum;
-- MA Bridge remains `UNKNOWN` until the MA-initiated Bridge is implemented;
-- remote AI remains unavailable until the Worker registry exists;
+- MA Bridge runtime state is projected from the local Bridge server;
+- remote AI availability is projected from the Worker registry;
+- Watchdog status is available as a separate read-only tool with bounded,
+  edge-triggered events;
 - pipeline role states remain `UNKNOWN` until a real pipeline-state source is wired;
 - credentials are never copied into the operator result.
 
@@ -97,8 +100,8 @@ Node, so loopback is the normal path.
 - real OpenClaw Feature Plugin scaffold for that pinned version;
 - browser/Control UI verification;
 - authenticated private-network policy if a future remote bind is needed;
-- Worker registry and remote AI state wiring;
-- MA-Initiated Bridge state wiring;
+- host CPU/RAM/disk/thermal metric adapters for Watchdog;
+- real Worker health probing beyond registry state;
 - pipeline progress source wiring;
 - artifact-store source wiring.
 
