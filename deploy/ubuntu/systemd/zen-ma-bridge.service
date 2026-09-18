@@ -1,3 +1,6 @@
+# Isolated MA Bridge test template only.
+# Normal deployment uses zen-field-core.service, which already owns the Bridge.
+# Do not run both on the same bind/port.
 [Unit]
 Description=ZEN MA-Initiated Bridge
 After=network.target
