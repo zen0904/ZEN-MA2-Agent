@@ -163,8 +163,8 @@ Headless Gateway / Field Host
     ├─ Worker Router
     └─ Artifact cache
          ↕ private authenticated network later
-       Primary Worker A / GTX1650 / 16 GB
-       Primary Worker B / GPU UNKNOWN / 16 GB
+       Primary Worker A / OS TO VERIFY / GTX1650 / 16 GB
+       Primary Worker B / OS TO VERIFY / GPU UNKNOWN / 16 GB
 ```
 
 The operator Windows machine is not required to install or host the standalone
@@ -175,7 +175,8 @@ The Gateway / Field Host remains selectable. The 2012 Mac mini is explicitly
 excluded from current Gateway / Field Host candidates. The operator Windows
 machine remains Hub-only. Current realistic candidates include the operator's actually intended hosts
 and, by explicit decision, Worker A as a co-host candidate for OpenClaw Gateway
-+ ZEN Field Core + its Worker runtime. This is a hardware co-location decision,
++ ZEN Field Core + its Worker runtime once that physical machine is back and
+its actual OS/network/service state can be verified. This is a hardware co-location decision,
 not a trust-boundary collapse. Worker B remains a primary AI Worker and is not
 the preferred Gateway candidate. The Worker inference role remains non-authoritative for MA control even if
 Worker A physically co-hosts the Gateway / Field Core. The logical path remains
