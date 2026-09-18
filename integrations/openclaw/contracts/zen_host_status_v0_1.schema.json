@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zen.local/schemas/zen.host_status.v0.1.json",
+  "title": "ZEN Host Status v0.1",
+  "description": "Read-only Field Host resource metrics backed by psutil. No automatic control authority is implied.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "state",
+    "cpu_percent",
+    "memory",
+    "disk",
+    "temperature_c",
+    "errors"
+  ],
+  "properties": {
+    "schema": {"const": "zen.host_status.v0.1"},
+    "state": {
+      "type": "string",
+      "enum": ["ONLINE", "OFFLINE", "DEGRADED", "UNKNOWN"]
+    },
+    "cpu_percent": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 100
+    },
+    "memory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["percent", "available_mb", "total_mb"],
+      "properties": {
+        "percent": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+        "available_mb": {"type": ["integer", "null"], "minimum": 0},
+        "total_mb": {"type": ["integer", "null"], "minimum": 0}
+      }
+    },
+    "disk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "percent", "free_mb", "total_mb"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1, "maxLength": 1024},
+        "percent": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+        "free_mb": {"type": ["integer", "null"], "minimum": 0},
+        "total_mb": {"type": ["integer", "null"], "minimum": 0}
+      }
+    },
+    "temperature_c": {"type": ["number", "null"]},
+    "errors": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {"type": "string", "minLength": 1, "maxLength": 512}
+    }
+  }
+}
