@@ -5,27 +5,41 @@
     "id": "M2_EXPRESSIVE_CAPABILITY",
     "title": "Expressive Capability",
     "status": "ACTIVE",
-    "active_objective": "Use Zen's visual and operator feedback from the real editable SHEESH test Show to refine this bounded test case; do not promote it to production behavior."
+    "active_objective": "Use the fingerprinted editable current MA2 Test Show for SHEESH_CURRENT_SHOW_REDESIGN_001: snapshot the real Show, let ZEN design Stage/3D spatial geometry upstream of SHEESH lighting design, and write back only through verified supported Test-Show paths."
   },
   "last_closed_task": {
     "id": "REAL_MA2_TEST_SHOW_SHEESH_BUILD_001",
-    "status": "BUILT_AWAITING_HUMAN_VISUAL_OPERATOR_REVIEW",
+    "status": "BUILT_AWAITING_REDESIGN_EXPERIMENT",
     "result": "TEST_SHOW_MODE real-console build verified: 13 owned Color presets, provisional TEST_STAGE_LAYOUT_SHEESH_001, Sequence 901 with 15 Cues, and Page 1 Executor 201 / ZEN_SHEESH_TEST. No Timecode was written because no actual audio file was available."
   },
   "next_acceptance_gate": {
-    "id": "SHEESH_TEST_SHOW_VISUAL_OPERATOR_REVIEW_001",
+    "id": "SHEESH_CURRENT_SHOW_REDESIGN_001",
     "classification": "REQUIRED",
     "status": "CURRENT",
-    "why_it_matters": "The first real editable MA2 test Show is now available. Zen's Stage/3D, playback and operator feedback is the smallest high-value evidence needed before changing its design or implementation.",
+    "why_it_matters": "Zen explicitly authorized the currently loaded fingerprinted Test Show for a bounded redesign experiment. The high-value evidence is now whether ZEN can read the real rig, create its own spatial design before song design, and safely realize supported portions without coding-agent artistic intervention.",
     "blocks_current_milestone": true,
     "dependencies": [
+      "ZEN_SHEESH_CURRENT_SHOW_REDESIGN_001.md",
       "ZEN_REAL_MA2_TEST_SHOW_SHEESH_BUILD_001.md",
-      "Sequence 901 / Executor 1.201 in the designated Test Show",
-      "Zen visual/operator review"
+      "fingerprinted currently loaded Test Show",
+      "existing ZEN four-role provider runtime"
     ],
-    "next_review_condition": "Zen plays/inspects BABYMONSTER - SHEESH on the Test Show and records cue, color, composition, Stage/3D, transition and operator feedback."
+    "next_review_condition": "Complete the current-Show snapshot and ZEN spatial/SHEESH run; write only supported safe portions; report any spatial/autonomous write capability gap instead of inventing raw MA commands."
   },
   "human_review_decisions": [
+    {
+      "id": "SHEESH_TEST_SHOW_REDESIGN_AUTHORIZATION_001",
+      "source": "ZEN_SHEESH_CURRENT_SHOW_REDESIGN_001.md",
+      "status": "CURRENT_AUTHORIZATION",
+      "outcomes": [
+        "CURRENT_LOADED_SHOW_IS_EXPLICIT_TEST_SHOW",
+        "STAGE_3D_GEOMETRY_REDESIGN_AUTHORIZED",
+        "AGENT_OWNED_SHEESH_CONTENT_REDESIGN_AUTHORIZED",
+        "CODEX_ARTISTIC_INTERVENTION_NONE",
+        "UNSUPPORTED_WRITE_PATHS_FAIL_CLOSED"
+      ],
+      "limitations": "Authorization is limited to the fingerprinted current Test Show, this SHEESH/Stage View experiment and Agent-owned objects. It does not authorize Patch, Address, Fixture ID, Fixture Type, Fixture 9999, unrelated objects or production Show writes."
+    },
     {
       "id": "REAL_SONG_EXISTING_SHOW_AB_002_HUMAN_DENSITY_REVIEW_001",
       "source": "ZEN_REAL_SONG_EXISTING_SHOW_AB_002.md#human-density-cohort-review-001",
@@ -77,20 +91,24 @@
       "id": "VISUAL_AFFORDANCE_ARCHITECTURE",
       "classification": "HIGH_LEVERAGE",
       "milestone": "M3_SHOW_RIG_ADAPTATION",
-      "status": "UPCOMING",
-      "why_it_matters": "Separates verified capability and case visual affordance from fixed fixture roles.",
+      "status": "ACTIVE_CASE_EXPERIMENT",
+      "why_it_matters": "SHEESH_CURRENT_SHOW_REDESIGN_001 now requires ZEN to reason from verified current-Show resources into a spatial design without fixed fixture-role assumptions.",
       "blocks_current_milestone": false,
-      "dependencies": ["case-specific visual evidence", "verified action grammar"],
-      "next_review_condition": "A real case requires visual selection beyond density-only composition."
+      "dependencies": [
+        "current Show snapshot",
+        "verified geometry/capability evidence",
+        "ZEN spatial artifact"
+      ],
+      "next_review_condition": "The redesign experiment proves which spatial inputs/artifacts and write adapters actually exist or exposes the first concrete blocker."
     },
     {
       "id": "COLOR_EXPRESSIVE_ACTION_PATH",
       "classification": "REQUIRED",
       "milestone": "M2_EXPRESSIVE_CAPABILITY",
-      "status": "TEST_SHOW_PROVISIONED_AWAITING_OPERATOR_REVIEW",
-      "why_it_matters": "Zen explicitly authorized a bounded editable 13-color native MA2 Test Show palette after the read-only inventory proved the Show had none.",
+      "status": "TEST_SHOW_PROVISIONED_ACTIVE_REDESIGN_CASE",
+      "why_it_matters": "The bounded editable 13-color native MA2 Test Show palette remains test data available to the current SHEESH redesign experiment, not permanent design truth.",
       "blocks_current_milestone": false,
-      "next_review_condition": "Zen's SHEESH visual/operator feedback determines whether any test-case refinement is warranted; no production promotion follows automatically."
+      "next_review_condition": "Review the new ZEN-produced SHEESH artifact and any supported writeback; no production promotion follows automatically."
     },
     {
       "id": "MOVEMENT_TEXTURE_ACTION_GRAMMAR",
@@ -130,12 +148,12 @@
     },
     {
       "id": "CURRENT_SHOW_SPATIAL_EVIDENCE",
-      "classification": "RESEARCH_UNKNOWN",
+      "classification": "REQUIRED",
       "milestone": "M3_SHOW_RIG_ADAPTATION",
-      "status": "CONDITIONAL",
-      "why_it_matters": "Can resolve coverage/hierarchy only when a specific case needs it.",
-      "blocks_current_milestone": false,
-      "next_review_condition": "Zen has known visual facts, a confirmed layout, or a later case cannot be reviewed truthfully without them."
+      "status": "ACTIVE_SHEESH_REDESIGN_CASE",
+      "why_it_matters": "The current experiment explicitly requires a read-only original geometry snapshot and verified fixture/capability evidence before ZEN proposes new Test Show geometry.",
+      "blocks_current_milestone": true,
+      "next_review_condition": "Snapshot, spatial artifact and write-path capability report are produced for SHEESH_CURRENT_SHOW_REDESIGN_001."
     },
     {
       "id": "FIXTURE_MARKET_LEARNING",
@@ -178,7 +196,7 @@
       "classification": "DEFERRED",
       "milestone": "ONGOING",
       "status": "ARCHITECTURE_AWARE_ONLY",
-      "why_it_matters": "Preserve separable console capability/resolution layers without starting an MA3 Builder.",
+      "why_it_matters": "Preserve separable capability/resolution layers without starting an MA3 Builder.",
       "blocks_current_milestone": false,
       "next_review_condition": "Explicit MA3 implementation authorization."
     },
@@ -220,8 +238,8 @@
     "production_designer": "UNCHANGED",
     "experimental_b3": "GUIDANCE_ASSISTED_AB_ONLY",
     "ab002_actions": "UNCHANGED",
-    "ma2_write_audit": "TEST_SHOW_MODE_WRITE_ALLOWED: bounded Agent-owned SHEESH test objects verified; production writes remain preview/approval gated",
-    "test_show_mode": "WRITE_ALLOWED_ONLY_FOR_FINGERPRINTED_CURRENT_TEST_SHOW_AND_SHEESH_001_OWNED_OBJECTS",
+    "ma2_write_audit": "TEST_SHOW_MODE_WRITE_ALLOWED only for fingerprinted current Test Show, this SHEESH_CURRENT_SHOW_REDESIGN_001 experiment and explicitly Agent-owned objects; production writes remain preview/approval gated",
+    "test_show_mode": "WRITE_ALLOWED_FOR_FINGERPRINTED_CURRENT_TEST_SHOW_SHEESH_CURRENT_SHOW_REDESIGN_001_WITH_FAIL_CLOSED_UNSUPPORTED_PATHS",
     "fixture_9999": "UNTOUCHED",
     "zen_style_profile": "DEFERRED",
     "real_venue_validation": "WAIT_FOR_REAL_CASE",
