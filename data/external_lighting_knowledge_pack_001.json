@@ -5590,6 +5590,328 @@
       "related_console_capabilities": [],
       "source_provenance": "ROSS_WILLIAMS_BTS_ARIRANG_2026: case study describing divided responsibilities within a shared lighting-control environment.",
       "summary": "Case evidence that complex shows benefit from explicit control responsibilities instead of one undifferentiated automation layer."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk005_ma2_macro_popup_parameter_input",
+      "source_id": "MA2_MACRO_POPUP_MANUAL",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "grandMA2 Macros can pause for typed operator input through pop-ups, allowing a reusable Macro to collect case-specific parameters instead of duplicating one Macro per value or target.",
+      "evidence_classification": "OFFICIAL_DOCUMENTED",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA2_3_9_INTERACTIVE_MACRO_INPUT",
+      "exclusions": [
+        "Does not make interactive prompts appropriate for time-critical live playback.",
+        "Does not validate or sanitize arbitrary operator input by itself."
+      ],
+      "confidence": "HIGH",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "A fixed deterministic Macro is safer when the correct input is known in advance or the live workflow must be one-touch."
+      ],
+      "related_design_concepts": [
+        "parameterization",
+        "operator_input",
+        "reusability",
+        "safety"
+      ],
+      "related_console_capabilities": [
+        "macro",
+        "popup",
+        "variables"
+      ],
+      "source_provenance": "MA2_MACRO_POPUP_MANUAL: official grandMA2 3.9 Macro pop-up documentation.",
+      "summary": "Supports parameterized operator workflows while keeping live-use and input-validation risks explicit."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk005_ma2_macro_secret_state_hygiene",
+      "source_id": "MA2_MACRO_POPUP_MANUAL",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "The grandMA2 Macro documentation demonstrates clearing a password variable after use, showing that temporary sensitive or transient operator input should not be left in reusable console variables longer than necessary.",
+      "evidence_classification": "OFFICIAL_DOCUMENTED",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA2_3_9_MACRO_TRANSIENT_STATE",
+      "exclusions": [
+        "Does not establish a general secret-storage mechanism for ZEN or external provider credentials.",
+        "Does not make grandMA2 variables suitable for long-lived confidential data."
+      ],
+      "confidence": "HIGH",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "ZEN provider secrets remain outside MA and follow ZEN's separate secret boundary."
+      ],
+      "related_design_concepts": [
+        "state_hygiene",
+        "security",
+        "recoverability"
+      ],
+      "related_console_capabilities": [
+        "macro",
+        "setvar",
+        "variables"
+      ],
+      "source_provenance": "MA2_MACRO_POPUP_MANUAL: official example clears a temporary password variable after login.",
+      "summary": "Adds transient-state hygiene to Macro reasoning and reinforces that sensitive data should not persist in console variables."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk005_ma2_plugin_escalation_from_complex_macro",
+      "source_id": "MA2_PLUGIN_RELEASE_31",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "MA Lighting introduced Lua plugins in grandMA2 partly to extend or replace complex Macro logic, so Plugin is a justified escalation when stateful processing or logic has outgrown a clear Macro rather than a default starting point.",
+      "evidence_classification": "OFFICIAL_DOCUMENTED",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA2_PLUGIN_ESCALATION",
+      "exclusions": [
+        "Does not mean every long Macro should become Lua.",
+        "Does not justify reimplementing existing native console features in a Plugin."
+      ],
+      "confidence": "HIGH",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "A native feature, simpler Macro, or Agent-side tool may remain more maintainable depending on lifecycle and operator needs."
+      ],
+      "related_design_concepts": [
+        "escalation",
+        "maintainability",
+        "abstraction",
+        "native_first"
+      ],
+      "related_console_capabilities": [
+        "macro",
+        "plugin",
+        "lua"
+      ],
+      "source_provenance": "MA2_PLUGIN_RELEASE_31: official release notes describe Lua as a way to extend or replace complex Macros.",
+      "summary": "Establishes the intended Macro-to-Lua escalation boundary without treating Plugin as automatically superior."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk005_ma2_plugin_migration_cost",
+      "source_id": "MA2_RELOAD_PLUGINS_MANUAL",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "MA Lighting warns that complex Lua plugins may fall outside normal support and can require rewriting when migrating show files to future grandMA2 software versions, so Plugin use carries a real maintenance and migration cost.",
+      "evidence_classification": "OFFICIAL_DOCUMENTED",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA2_PLUGIN_LIFECYCLE",
+      "exclusions": [
+        "Does not prohibit plugins.",
+        "Does not establish that a specific Plugin will break across versions."
+      ],
+      "confidence": "HIGH",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "A well-bounded Plugin may still be the cleanest solution when native features and Macros cannot express the required logic."
+      ],
+      "related_design_concepts": [
+        "maintenance_cost",
+        "migration",
+        "supportability",
+        "handover"
+      ],
+      "related_console_capabilities": [
+        "plugin",
+        "lua"
+      ],
+      "source_provenance": "MA2_RELOAD_PLUGINS_MANUAL: official grandMA2 support and migration caution for Lua plugins.",
+      "summary": "Makes future-version and support burden part of the Plugin decision rather than an afterthought."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk005_ma2_plugin_reload_state",
+      "source_id": "MA2_RELOAD_PLUGINS_MANUAL",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "grandMA2 reloads the Lua engine and plugin code rather than preserving a snapshot of Lua memory, so Plugins that rely on hidden in-memory state need explicit initialization and recovery behavior if they are expected to survive reloads predictably.",
+      "evidence_classification": "OFFICIAL_DOCUMENTED",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA2_PLUGIN_STATE_RECOVERY",
+      "exclusions": [
+        "Does not prescribe one persistence mechanism.",
+        "Does not mean Plugins may not keep runtime state while the Lua engine remains active."
+      ],
+      "confidence": "HIGH",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Stateless Plugins or Plugins that reconstruct state from explicit Show objects can avoid much of this risk."
+      ],
+      "related_design_concepts": [
+        "state_management",
+        "recovery",
+        "determinism",
+        "reliability"
+      ],
+      "related_console_capabilities": [
+        "plugin",
+        "lua",
+        "reloadplugins"
+      ],
+      "source_provenance": "MA2_RELOAD_PLUGINS_MANUAL: official documentation states saved show files do not contain a snapshot of Lua memory.",
+      "summary": "Adds restart/reload determinism to Plugin design and review."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk005_ma2_psr_native_show_reuse",
+      "source_id": "MA2_PSR_MANUAL",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "Partial Show Read is grandMA2's native mechanism for importing selected objects from another show, including dependent objects such as presets used by imported sequences, so cross-show reuse should evaluate PSR before custom file-copy or reconstruction workflows.",
+      "evidence_classification": "OFFICIAL_DOCUMENTED",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA2_3_9_CROSS_SHOW_REUSE",
+      "exclusions": [
+        "Does not make PSR safe without fixture/object matching and destination review.",
+        "Does not imply imported artistic content remains appropriate in the new production."
+      ],
+      "confidence": "HIGH",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Export/import of a smaller isolated object or manual reconstruction may be clearer when only a tiny bounded asset is needed."
+      ],
+      "related_design_concepts": [
+        "reuse",
+        "handover",
+        "dependency_management",
+        "native_first"
+      ],
+      "related_console_capabilities": [
+        "partial_show_read",
+        "presets",
+        "sequences",
+        "groups",
+        "effects",
+        "layouts"
+      ],
+      "source_provenance": "MA2_PSR_MANUAL: official grandMA2 3.9 Partial Show Read documentation.",
+      "summary": "Promotes PSR as a native candidate for bounded cross-show reuse while keeping semantic and mapping review mandatory."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk005_ma2_psr_backup_before_import",
+      "source_id": "MA2_PSR_HOWTO_MANUAL",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "The grandMA2 PSR procedure recommends saving the destination show before importing so the operator can return to the initial state, making backup-before-destructive-import a first-class recovery step.",
+      "evidence_classification": "OFFICIAL_DOCUMENTED",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA2_3_9_PSR_RECOVERY",
+      "exclusions": [
+        "Does not make every PSR operation destructive.",
+        "Does not replace reviewing scope, mapping, merge and overwrite choices before import."
+      ],
+      "confidence": "HIGH",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "None for the recovery principle; the exact backup/version workflow remains case-specific."
+      ],
+      "related_design_concepts": [
+        "rollback",
+        "backup",
+        "recovery",
+        "change_safety"
+      ],
+      "related_console_capabilities": [
+        "partial_show_read",
+        "backup"
+      ],
+      "source_provenance": "MA2_PSR_HOWTO_MANUAL: official PSR how-to recommends saving before performing PSR.",
+      "summary": "Adds a concrete rollback requirement to any future automated or assisted PSR workflow."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk005_ma2_psr_merge_overwrite_decision",
+      "source_id": "MA2_PSR_HOWTO_MANUAL",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "When PSR imports into an occupied destination location, grandMA2 distinguishes merge from overwrite, so collision handling is an explicit destructive-change decision and must never be silently selected by an autonomous agent.",
+      "evidence_classification": "OFFICIAL_DOCUMENTED",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA2_3_9_PSR_COLLISION_HANDLING",
+      "exclusions": [
+        "Does not establish which option is correct for a specific destination object.",
+        "Does not authorize ZEN to execute PSR or overwrite production content."
+      ],
+      "confidence": "HIGH",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "The safe action may be canceling the import rather than choosing merge or overwrite."
+      ],
+      "related_design_concepts": [
+        "collision_handling",
+        "human_approval",
+        "data_preservation",
+        "rollback"
+      ],
+      "related_console_capabilities": [
+        "partial_show_read",
+        "merge",
+        "overwrite"
+      ],
+      "source_provenance": "MA2_PSR_HOWTO_MANUAL: official PSR procedure exposes Cancel, Merge and Overwrite when an import destination is occupied.",
+      "summary": "Makes PSR collision policy an explicit human-reviewed decision, not an implementation default."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk005_ma2_clone_default_non_destructive",
+      "source_id": "MA2_CLONE_MANUAL",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "grandMA2 Clone defaults to low-priority behavior that preserves existing destination data and adds source programming only where destination data is absent, making default Clone materially different from Merge or Overwrite.",
+      "evidence_classification": "OFFICIAL_DOCUMENTED",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA2_3_9_CLONE_DATA_PRESERVATION",
+      "exclusions": [
+        "Does not mean default Clone is artistically or semantically correct for every adaptation.",
+        "Does not remove the need to inspect destination data and references."
+      ],
+      "confidence": "HIGH",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Merge or Overwrite may be intentionally required, but their destructive behavior requires explicit justification and review."
+      ],
+      "related_design_concepts": [
+        "data_preservation",
+        "adaptation",
+        "rollback",
+        "native_first"
+      ],
+      "related_console_capabilities": [
+        "clone",
+        "low_priority_merge",
+        "merge",
+        "overwrite"
+      ],
+      "source_provenance": "MA2_CLONE_MANUAL: official grandMA2 3.9 Clone documentation on default low-priority behavior.",
+      "summary": "Sharpens Clone safety reasoning by distinguishing its default preservation behavior from more destructive modes."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk005_ma2_clone_dependency_awareness",
+      "source_id": "MA2_CLONE_MANUAL",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "When Clone is limited to specific objects, grandMA2 can also clone referenced dependencies such as presets and effects, so a seemingly narrow fixture adaptation can have a wider dependency footprint that must be previewed and reviewed.",
+      "evidence_classification": "OFFICIAL_DOCUMENTED",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA2_3_9_CLONE_DEPENDENCIES",
+      "exclusions": [
+        "Does not imply every cloned object has dependencies.",
+        "Does not authorize automatic dependency changes in production."
+      ],
+      "confidence": "HIGH",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "A manual or differently scoped adaptation may be preferable when dependency propagation would make the change too broad."
+      ],
+      "related_design_concepts": [
+        "dependency_management",
+        "scope",
+        "preview",
+        "change_safety"
+      ],
+      "related_console_capabilities": [
+        "clone",
+        "presets",
+        "effects",
+        "sequences"
+      ],
+      "source_provenance": "MA2_CLONE_MANUAL: official grandMA2 Clone documentation states referenced dependencies may be cloned for limited-scope operations.",
+      "summary": "Adds dependency-footprint awareness to Clone planning so bounded-looking changes are not assumed to be isolated."
     }
   ]
 }
