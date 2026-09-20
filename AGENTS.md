@@ -16,6 +16,9 @@ For substantial work, read these in order:
    - If the task touches song/artist input, audio, arrangements, cue sheets,
      production briefs, student/client requests, or incomplete design input,
      also read `docs/DESIGN_INTAKE_AND_FEASIBILITY.md`.
+   - If the task touches face/key light, performer visibility, shared fixtures,
+     or which resources ZEN may treat as effects, also read
+     `docs/LIGHTING_RESOURCE_OWNERSHIP.md`.
 4. `ZEN_MULTI_PROVIDER_PARALLEL_POOL_001.md` -- current provider-pool,
    FREE_FIRST, parallel Designer/Critic, and lightweight-local-fallback state.
 5. `docs/ZEN_PRODUCT_CONSTITUTION.md`
