@@ -384,6 +384,61 @@ class MultiAgentRuntimeTests(unittest.TestCase):
                 imported.extend(alias.name for alias in node.names)
         self.assertFalse(any("ma2" in name.casefold() or "builder" in name.casefold() or "resolver" in name.casefold() for name in imported))
 
+
+    def test_parallel_designer_and_critic_candidates_reach_finalizer(self):
+        class ParallelRoleAdapter:
+            def __init__(self):
+                self.calls = []
+
+            def complete(self, slot, *, system, user):
+                self.calls.append((slot.number, system, user))
+                role = system.split(". ", 1)[0]
+                payload = json.loads(user)
+                if role == "ROLE: RESEARCHER":
+                    return json.dumps(_research())
+                if role == "ROLE: LIGHTING_DESIGNER":
+                    value = _draft()
+                    value["design_intent"] = {"provider_slot": slot.number}
+                    return json.dumps(value)
+                if role == "ROLE: CRITIC":
+                    self.assert_candidate_count = len(payload.get("designer_candidates", []))
+                    value = _critic()
+                    value["revision_requests"] = [{"provider_slot": slot.number}]
+                    return json.dumps(value)
+                if role == "ROLE: FINALIZER":
+                    self.finalizer_designer_count = len(payload.get("designer_candidates", []))
+                    self.finalizer_critic_count = len(payload.get("critic_candidates", []))
+                    return json.dumps(_final())
+                raise AssertionError(role)
+
+        adapter = ParallelRoleAdapter()
+        slots = (
+            ProviderSlot(1, "OPENAI_COMPATIBLE_LOCAL", "local-a", "http://127.0.0.1:8080/v1", "", (), 5, priority=10, cost_class="LOCAL"),
+            ProviderSlot(2, "OPENAI_COMPATIBLE_LOCAL", "local-b", "http://127.0.0.1:8081/v1", "", (), 5, priority=20, cost_class="LOCAL"),
+        )
+        router = ProviderRouter(
+            "FREE_FIRST",
+            slots,
+            adapter,
+            parallelism=2,
+            parallel_roles=("LIGHTING_DESIGNER", "CRITIC"),
+        )
+
+        run = run_multi_agent_design(router, request="parallel synthetic request", repo_root=self.repo_root, run_id="parallel-candidates")
+
+        designer = read_step_artifact("parallel-candidates", "lighting_designer")
+        critic = read_step_artifact("parallel-candidates", "critic")
+        self.assertEqual(len(designer["candidate_artifacts"]), 2)
+        self.assertEqual(len(critic["candidate_artifacts"]), 2)
+        self.assertEqual(adapter.assert_candidate_count, 2)
+        self.assertEqual(adapter.finalizer_designer_count, 2)
+        self.assertEqual(adapter.finalizer_critic_count, 2)
+        state = json.loads((run.run_path / "run.json").read_text(encoding="utf-8"))
+        execution = {item["role"]: item for item in state["role_execution"]}
+        self.assertEqual(execution["lighting_designer"]["parallel_candidates"], 2)
+        self.assertEqual(execution["critic"]["parallel_candidates"], 2)
+        self.assertEqual(run.final_design["schema"], "zen.autonomous_design.v0.1")
+
     def test_invalid_final_schema_fails_closed_without_final_design_or_ma2_write(self):
         invalid_final = _final() | {"ma2_commands": ["forbidden"]}
         router, _ = self._router([_research(), _draft(), _critic(), invalid_final, invalid_final, invalid_final])
