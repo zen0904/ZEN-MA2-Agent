@@ -92,6 +92,17 @@ fingerprint, fixture-reference, protected-fixture, finite-coordinate,
 mutation/command and consistency checks. Raw provider output remains separate
 from any normalized accepted artifact in secret-safe diagnostics.
 
+Position Designer receives a deterministic, compact `position_context` rather
+than the entire live snapshot. It contains the snapshot fingerprint, the
+backend-authoritative coordinate-system metadata, only geometry-bearing
+fixture/subfixture identities with current XYZ/rotation/availability, an exact
+backend-generated `allowed_placement_refs` list, protected references, and
+limitations. Patch, Address, unrelated pools, and Fixture 9999 as a placement
+candidate are excluded. The prompt requires coordinate metadata to be copied
+exactly as an object and every placement identity to come from the allow-list;
+the validator checks both. This is structural context reduction only and
+does not choose or repair spatial content.
+
 This route is design-artifact generation only. It does not call MA2, Resolver,
 or Builder, and it does not write geometry. A provider artifact that fails
 schema, inventory, evidence, or safety validation stops the route at that

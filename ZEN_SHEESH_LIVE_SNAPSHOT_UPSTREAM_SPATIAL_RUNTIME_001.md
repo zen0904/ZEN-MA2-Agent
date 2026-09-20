@@ -1,11 +1,15 @@
 # SHEESH Live Snapshot Upstream Spatial Runtime 001
 
-**Status:** STRUCTURAL CONTRACT HARDENED; CONTROLLED RERUN BLOCKED AT `RESEARCHER`
+**Status:** SIX-ROLE READ-ONLY RUN COMPLETE; POSITION VALID; CRITIC BLOCKERS RECORDED
 **Run:** `SHEESH_CURRENT_SHOW_REDESIGN_001`
 **Read-only boundary:** `MA2_WRITES=0`
 **Artistic provenance:** `CODEX_ARTISTIC_INTERVENTION=NONE`
 
-## Result
+The earlier sections below preserve outcomes from preceding runs in this gate.
+The latest outcome superseding earlier blockers is recorded in
+“Position-context fix and completed controlled continuation” at the end.
+
+## Initial result (first run)
 
 The conditional live-Show runtime path is implemented. The saved Phase A
 snapshot normalized successfully, entered the context hash, and was recorded in
@@ -357,7 +361,7 @@ CODEX_ARTISTIC_INTERVENTION=NONE
 CAPABILITY_GAPS=POSITION_DESIGNER returned invalid JSON/wrong coordinate_system type/missing required fields across 3 bounded attempts; fixture capabilities and axis semantics remain UNKNOWN
 ```
 
-## Current blocker
+## Blocker at the preceding controlled restart (superseded below)
 
 `POSITION_DESIGNER_PROVIDER_OUTPUT_INVALID_AFTER_BOUNDED_RETRIES`
 
@@ -366,3 +370,190 @@ fingerprinted snapshot passing the existing structure, fixture-reference, and
 finite-coordinate validators. Only then can the unchanged Lighting Designer,
 Critic, and Finalizer stages continue. Do not normalize source identity,
 invent spatial fields, or begin Move3D writeback.
+
+## Position-context fix and completed controlled continuation
+
+The Position input was narrowed to deterministic, verified placement context.
+`position_context` contains the Show fingerprint, authoritative coordinate
+metadata, geometry-bearing fixture/subfixture refs with current XYZ and
+rotation, a backend-generated placement allow-list, protected refs, and
+limitations. It excludes Patch, Address, unrelated Show pools, and Fixture
+9999 from placement candidates. The Position contract requires the exact
+coordinate metadata object, every required top-level field, compact
+identity-and-geometry-only placements, and no executable or identity-mutation
+fields. The validator remains authoritative; no missing placement or artistic
+field is synthesized.
+
+Implementation commit: `eb534f5bd0f57b55e73fc64d226b9f3023863442`.
+It passed **570 tests** and `python main.py --self-check`, and was fast-forwarded
+to the USB repository before the real run.
+
+Previous failed Position evidence remains under
+`position_context_fix_archive/20260920T140448130212Z/`. Four identical stale
+copies remaining in active paths (`failure.json`, the old Position-03
+diagnostic, and Position-02/03 failed-response artifacts) were hash-verified
+against that archive and moved beneath its `superseded_active_records/`
+directory. No historical evidence was deleted; `run.json` is now the
+unambiguous active state.
+
+To preserve exact checkpoint identity, the run resumed at Position using the
+original request hash, original context hash, same snapshot fingerprint, and
+unchanged six-role order. The context builder used the historical committed
+project-control value in memory to reproduce the existing context hash; no
+request, snapshot, provider configuration, or committed project-control data
+was altered for the run. Researcher and Rig checkpoints were retained and
+verified before resume. Run completion was `2026-09-20T14:19:49Z`.
+
+```text
+RUN_ID=SHEESH_CURRENT_SHOW_REDESIGN_001
+RUN_STATUS=COMPLETE
+GIT_HEAD=eb534f5bd0f57b55e73fc64d226b9f3023863442
+REQUEST_HASH=e4fcdf2050900ba3bf8f8a458ba4c682c31fd5a3135a70f5b2415df0f774770c
+CONTEXT_HASH=5742435418da79b6681279801439fec37cf4abc8e18f8f543855eaf1c947950d
+CURRENT_SHOW_FINGERPRINT=b41d801b915cddfdd5017df787ad66b55941fbce415ab02ee8ec63acaa027bd5
+ROLE_EXECUTION_ORDER=RESEARCHER,RIG_DESIGNER,POSITION_DESIGNER,LIGHTING_DESIGNER,CRITIC,FINALIZER
+MA2_WRITES=0
+CODEX_ARTISTIC_INTERVENTION=NONE
+```
+
+### Runtime outcomes
+
+| Role | Result | Provider / attempts |
+|---|---|---|
+| Researcher | PASS; exact accepted checkpoint reused | OpenRouter slot 5; 1 recorded attempt |
+| Rig Designer | PASS; exact accepted checkpoint reused | OpenRouter slot 5; 1 recorded attempt |
+| Position Designer | PASS; 64 placements and 7 spatial groups | OpenRouter slot 5; 2 attempts. Both tried slots 1, 3, 5 in order. Slot 1 returned HTTP 503 and slot 3 timed out (~120 s); attempt 1 from slot 5 was invalid JSON (17 characters), attempt 2 passed. No normalization was applied. |
+| Lighting Designer | PASS; one accepted candidate | attempted slots 1, 3, 5; Gemini slot 1 returned HTTP 503, NVIDIA slot 3 (`z-ai/glm-5.3-flash`, LOW) passed, OpenRouter slot 5 returned invalid JSON (17 characters). Accepted slot 3. |
+| Critic | PASS; one accepted candidate | attempted slots 2, 3, 5; Groq slot 2 returned HTTP 403, NVIDIA slot 3 timed out, OpenRouter slot 5 passed. Accepted slot 5; severity `BLOCKER`. |
+| Finalizer | PASS | OpenRouter slot 5; 1 attempt. Final schema, evidence, and Position-artifact reference consistency passed. |
+
+Position context supplied 64 geometry resources and 64 allowed placement refs;
+Patch and Address fields were absent. Successful raw response text is not
+persisted by the sequential success path, so its raw character count is
+`NOT_RECORDED`; the rejected first response was recorded as 17 characters.
+The accepted Position artifact is in `steps/` with artifact SHA256
+`fb1f5ef01aa43dc06cf710e92a9c9301570528bbb2f9c342d8aa83d7b070f5e7`.
+
+The completed role artifacts passed runtime validation. A secret scan found no
+configured API key in run JSON. No MA transport, Resolver, Builder, or Show
+write was invoked.
+
+### Spatial handoff
+
+**ZEN OUTPUT:** Rig and Position describe seven regular row assignments
+(`ASSIGN_HYBRID_ROW`, `ASSIGN_BEAM_ROW`, `ASSIGN_SPOT_ROW`, `ASSIGN_WASH_ROW`,
+`ASSIGN_B_EYE_ROW`, `ASSIGN_STROBE_ROW`, `ASSIGN_LEDPAR_ROW`). Position
+contains 64 fixture/subfixture placements over X values -5.25 through 5.25,
+Y values -2 through 3, and Z values 1 through 8. All 64 rotations are
+`(0,0,0)`. Its text calls the X spacing 1.5 m, although supplied coordinate
+metadata explicitly says units and axis semantics are UNKNOWN. The
+`ASSIGN_*` values are provider-authored labels, not MA2 Groups; no placement
+write occurred.
+
+**VALIDATOR FACT:** All 64 proposed XYZ/rotation tuples exactly match the 64
+corresponding current geometry records. The snapshot has 65 geometry records
+including protected Fixture 9999; that protected fixture is absent from
+Position placements. Thus the accepted Position artifact proposes no actual
+geometry change. No axis direction, physical depth/height, stage-left/right,
+performer corridor, aiming, or optical relation is established by this numeric
+match.
+
+**CRITIC OUTPUT:** Critic classified the design `BLOCKER`, with 13 problems
+and 10 revision requests. It identified physical claims inferred from
+unknown axes/units and mounting, stable fixture-role assignments inferred
+from labels without current-fingerprint capability profiles, resource-count
+language, unverified strobe/subfixture output assumptions, absent
+aim/overlap evidence, weak hierarchy/negative-space/off-state logic,
+unsupported musical claims, and unclear `ASSIGN_*` versus numeric Group
+identity. These are the Critic's findings, not deterministic approval rules.
+
+**CODEX OBSERVATION (not a correction):** Position formalizes the same
+repeated parallel-row geometry already present in the scan; it does not move
+any fixture or express a new spatial arrangement. Critic output is preserved
+without edits. No attempt was made to improve the spatial or lighting design.
+
+### 空間輸出交接（繁體中文；保留 ZEN 原意，不代表人工認可）
+
+**ZEN OUTPUT：** Rig 將資源描述為七組平行直線列，並提出在相同數值
+`Y=3` 上疊列 SPOT (`Z=4`)、HYBRID (`Z=6`)、BEAM (`Z=8`)，另列出
+WASH (`Y=1,Z=7`)、B-EYE (`Y=0,Z=5`)、STROBE (`Y=-1,Z=3`) 與 LED PAR
+(`Y=-2,Z=1`)。Rig 將這些關係稱為深層／中層／前層、垂直堆疊、漸降
+剖面，並宣稱 1.5 m 間距、10.5 m 寬度及 STROBE 雙 subfixture 的密度／
+輸出效果。這些是 ZEN 的文字主張；掃描 metadata 沒有校準座標軸、單位、
+實際安裝方式或相應能力，不能視為已證實的物理舞台事實。
+
+Position 實際包含 64 筆 placement、7 個上述 `ASSIGN_*_ROW` 空間群組，
+涵蓋 56 個 fixture ID（STROBE 使用 8 組 subfixture 1/2）。X 數值為
+`-5.25,-3.75,-2.25,-0.75,0.75,2.25,3.75,5.25`，每個 X 各有 8 筆；數值上
+左右對稱。Y 分布為 `-2:8, -1:16, 0:8, 1:8, 3:24`；Z 分布為
+`1:8, 3:16, 4:8, 5:8, 6:8, 7:8, 8:8`。64 筆 rotation 都是 `(0,0,0)`。
+輸出沒有表達有意的不對稱，也沒有明確的 negative-space、crossing、
+convergence 或 performer corridor 決策；這裡的 Y/Z 分層僅是數值分布，
+不是已校準的深度或高度結論。Fixture 9999 未放入 placement；其餘 64 筆
+XYZ/rotation 均與掃描值完全相同，因此沒有 fixture 被提議移位。
+
+**VALIDATOR FACT：** allow-list/reference、fingerprint、finite XYZ、重複
+ref、protected fixture 與 command/mutation 檢查均通過。快照含 65 筆幾何
+記錄，其中一筆是受保護的 Fixture 9999；Position 提案只含 64 筆可用幾何
+ref。這只證明結構及身份一致，不證明實際可用性、物理布置或藝術適切性。
+
+**CRITIC OUTPUT：** Critic 的 `BLOCKER` 指出：把 UNKNOWN 軸／單位說成公尺、
+前後與高低；從 Group/FixtureType 標籤推定固定角色；對 STROBE 雙輸出、
+安裝、投射覆蓋及資源數量作無證據主張；缺乏瞄準／遮擋驗證、主次層級、
+暗區／負空間與可操作 handover。Critic 另要求澄清 `ASSIGN_*` 是否只是
+文件別名，以及提供能力與物理支撐驗證。這些是 Critic 的 artifact 內容，
+並非 Codex 新加的設計規則。
+
+**CODEX OBSERVATION：** 數值提案等於原幾何，視覺上是否為列狀、能否形成
+層次都需要 Stage/3D 與操作員檢視；在軸與單位未校準前，我不把它解讀成
+真正的「深／前／高」。ZEN 的 Position 輸出在本次只通過資料驗證，未帶來
+空間變更；沒有由 Codex 修補或重寫任何藝術內容。
+
+### Required outcome fields — completed run
+
+```text
+REPO_HEAD_BEFORE=46eaae12150ad646ca0bbe365d7f93727b6018d5
+REPO_HEAD_AFTER=eb534f5bd0f57b55e73fc64d226b9f3023863442
+FULL_TEST_STATUS=570_PASS
+SELF_CHECK=PASS
+MA2_WRITES=0
+CURRENT_SHOW_FINGERPRINT=b41d801b915cddfdd5017df787ad66b55941fbce415ab02ee8ec63acaa027bd5
+RUN_STATUS=COMPLETE
+RESEARCHER_RESULT=PASS (OpenRouter slot 5, checkpoint reused)
+RIG_ARTIFACT_VALID=PASS (checkpoint reused)
+POSITION_CONTEXT_RESOURCE_COUNT=64
+POSITION_ALLOWED_PLACEMENT_REF_COUNT=64
+POSITION_CONTEXT_PATCH_FIELDS_PRESENT=NO
+POSITION_CONTEXT_ADDRESS_FIELDS_PRESENT=NO
+POSITION_DESIGNER_ATTEMPTED_SLOTS=1,3,5 twice
+POSITION_DESIGNER_PROVIDER=OpenRouter slot 5
+POSITION_RAW_RESPONSE_CHARACTERS=17 on rejected attempt 1; successful raw text NOT_RECORDED
+POSITION_RAW_SCHEMA_PRESENT=YES on accepted output
+POSITION_STRUCTURAL_NORMALIZATION_APPLIED=NO
+POSITION_ARTIFACT_VALID=PASS
+POSITION_REFERENCES_VALID=PASS
+POSITION_PLACEMENT_COUNT=64
+LIGHTING_DESIGNER_RESULT=PASS
+LIGHTING_DESIGNER_RECEIVED_RIG_ARTIFACT=YES
+LIGHTING_DESIGNER_RECEIVED_POSITION_ARTIFACT=YES
+DESIGNER_ATTEMPTED_SLOTS=1,3,5
+DESIGNER_ACCEPTED_SLOTS=3
+DESIGNER_CANDIDATE_COUNT=1
+CRITIC_RESULT=PASS (valid critique; severity BLOCKER)
+CRITIC_ATTEMPTED_SLOTS=2,3,5
+CRITIC_ACCEPTED_SLOTS=5
+CRITIC_CANDIDATE_COUNT=1
+FINALIZER_RESULT=PASS
+FINALIZER_PROVIDER=OpenRouter slot 5
+FINAL_SCHEMA_VALID=YES
+SPATIAL_CONSISTENCY_VALID=YES
+EVIDENCE_VALID=YES
+SECRETS_LEAKED=NO
+CODEX_ARTISTIC_INTERVENTION=NONE
+CAPABILITY_GAPS=axis semantics, units, physical mounting and current-fingerprint fixture capabilities remain UNKNOWN; Critic blockers prevent treating this design as approval-ready
+```
+
+This completes the read-only artifact-generation gate, not artistic or
+operator approval. The next acceptance gate is human review of the complete
+ZEN artifacts and Critic findings. Spatial Resolver, Preview, Move3D Builder,
+writeback, readback, and rollback remain unauthorized and unimplemented here.

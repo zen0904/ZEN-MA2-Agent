@@ -5,26 +5,25 @@
     "id": "M2_EXPRESSIVE_CAPABILITY",
     "title": "Expressive Capability",
     "status": "ACTIVE",
-    "active_objective": "SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001 now has a Researcher-only exact canonical source-pair contract, verified by 565 tests. The controlled restart passed RESEARCHER and RIG_DESIGNER, then stopped at POSITION_DESIGNER after three bounded attempts: invalid JSON, a non-object coordinate_system, and missing required fields. The next acceptance condition is a valid Position artifact from the same fingerprinted snapshot, followed by the unchanged Lighting Designer/Critic/Finalizer path. MA2 writes remain disabled."
+    "active_objective": "SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001 implementation passed 570 tests and self-check. The exact fingerprint-bound run resumed at POSITION_DESIGNER, then completed Position, Lighting Designer, Critic, and Finalizer. Position passed validation but preserved the scanned geometry unchanged; Critic classified the resulting design BLOCKER. Await human visual/operator review of the complete read-only artifacts. No spatial writeback is authorized. MA2_WRITES=0."
   },
   "last_closed_task": {
-    "id": "SHEESH_CURRENT_SHOW_REDESIGN_PHASE_A_001",
-    "status": "CLOSED_BLOCKER_IDENTIFIED",
-    "result": "Read-only current Show snapshot completed. Scan-derived fingerprint b41d801b915cddfdd5017df787ad66b55941fbce415ab02ee8ec63acaa027bd5; 57 fixtures, 6 fixture types, 7 Groups, 65 subfixture geometry records, 27 Presets, 7 Sequences and 2 Executors. Geometry numeric XYZ/rotation is readable. No ZEN design roles ran and MA2_WRITES=0. Current runtime does not accept the fresh snapshot as first-class input and has no autonomous upstream spatial role before LIGHTING_DESIGNER."
+    "id": "SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001",
+    "status": "CLOSED_ARTIFACT_PIPELINE_COMPLETE_WITH_CRITIC_BLOCKERS",
+    "result": "Position context projection and typed contract passed 570 tests; exact Researcher/Rig checkpoints were safely resumed and all six roles completed read-only against fingerprint b41d801b915cddfdd5017df787ad66b55941fbce415ab02ee8ec63acaa027bd5. Position produced 64 valid placements, all exactly matching scanned XYZ/rotation. Critic returned severity BLOCKER with 13 problems and 10 revision requests. Final schema, spatial reference, and evidence validation passed. No MA2 path/writeback was invoked; MA2_WRITES=0."
   },
   "next_acceptance_gate": {
-    "id": "SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001",
+    "id": "SHEESH_ZEN_SPATIAL_ARTIFACT_HUMAN_REVIEW_001",
     "classification": "REQUIRED",
-    "status": "BLOCKED_PROVIDER_OUTPUT",
-    "why_it_matters": "The Researcher canonical-source blocker is resolved: the controlled restart passed Researcher and Rig Designer, but Position Designer did not produce an artifact accepted by its existing schema validator after three bounded attempts. Downstream lighting design cannot run truthfully without a validated Position artifact.",
+    "status": "AWAITING_HUMAN_REVIEW",
+    "why_it_matters": "All six read-only ZEN roles produced validated artifacts, but the Position artifact leaves scanned geometry unchanged and Critic classifies the proposal BLOCKER. Human visual/operator review must decide what, if anything, should happen next; validity is not artistic approval and does not authorize writeback.",
     "blocks_current_milestone": true,
     "dependencies": [
-      "ZEN_SHEESH_CURRENT_SHOW_REDESIGN_001.md",
+      "ZEN_SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001.md",
       "ZEN_SHEESH_CURRENT_SHOW_REDESIGN_PHASE_A_001.md",
-      "live current Show snapshot under the local experiment run",
-      "existing multi-agent runtime and provider router"
+      "fingerprinted current Show snapshot and six validated role artifacts under the portable run state"
     ],
-    "next_review_condition": "A Position Designer artifact for the exact current Show fingerprint passes existing required-field, fixture-reference, and finite-coordinate validation; then continue Lighting Designer, Critic, and Finalizer in order, preserving zero MA2 writes."
+    "next_review_condition": "Zen reviews the actual spatial and lighting artifacts, Critic blockers, and Stage/3D/operator context, then explicitly decides whether to request a bounded follow-up. Do not implement Resolver, Preview, Move3D Builder, or geometry writeback automatically."
   },
   "human_review_decisions": [
     {
@@ -70,7 +69,7 @@
     {
       "id": "SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001",
       "source": "ZEN_SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001.md",
-      "status": "RESEARCHER_SOURCE_CONTRACT_FIXED_RIG_VALID_POSITION_BLOCKED",
+      "status": "SIX_ROLE_READ_ONLY_PIPELINE_COMPLETE_CRITIC_BLOCKERS",
       "outcomes": [
         "LIVE_SNAPSHOT_NORMALIZED_AND_BOUND_TO_CONTEXT_HASH",
         "CONDITIONAL_SIX_ROLE_ORDER_RECORDED",
@@ -79,11 +78,14 @@
         "RIG_DESIGNER_ARTIFACT_VALID_AND_REFERENCES_PASS",
         "SPATIAL_SCHEMA_METADATA_NORMALIZATION_TESTED_FAIL_CLOSED",
         "CONTROLLED_RESTART_ARCHIVED_PRIOR_RUN_EVIDENCE_WITH_FOUR_ARCHIVES_RETAINED",
-        "POSITION_DESIGNER_OUTPUT_INVALID_AFTER_THREE_BOUNDED_ATTEMPTS",
-        "LIGHTING_DESIGNER_CRITIC_FINALIZER_NOT_RUN",
+        "COMPACT_POSITION_CONTEXT_EXCLUDES_PATCH_ADDRESS_AND_PROTECTED_PLACEMENT_REFS",
+        "POSITION_ARTIFACT_VALID_64_PLACEMENTS_MATCH_EXISTING_GEOMETRY",
+        "LIGHTING_DESIGNER_CRITIC_FINALIZER_COMPLETED",
+        "CRITIC_CLASSIFICATION_BLOCKER_13_PROBLEMS_10_REQUESTS",
+        "FINAL_SCHEMA_SPATIAL_CONSISTENCY_AND_EVIDENCE_PASS",
         "MA2_WRITES_ZERO"
       ],
-      "limitations": "Researcher and Rig Designer passed. Rig intent is not a per-fixture Position artifact; Position Designer failed JSON/schema validation after three attempts, so no placement is accepted and downstream roles did not run. Current-fingerprint fixture capabilities and coordinate-axis semantics remain UNKNOWN. Codex did not correct the Rig or Position content; no spatial writeback occurred."
+      "limitations": "All roles completed, but Position placements exactly reproduce the scanned 64 available geometry records; no geometry change is proposed. Position prose assigns units/physical meanings not established by the snapshot. Coordinate axes/units, physical mounting and current-fingerprint capability profiles remain UNKNOWN. Critic reports severity BLOCKER. Schema/provenance validity is not artistic approval. Codex did not edit ZEN artistic output; no spatial writeback occurred."
     },
     {
       "id": "TEST_SHOW_COLOR_PROVISIONING_001",
@@ -181,10 +183,10 @@
       "id": "CURRENT_SHOW_SPATIAL_EVIDENCE",
       "classification": "REQUIRED",
       "milestone": "M3_SHOW_RIG_ADAPTATION",
-      "status": "RIG_VALID_POSITION_DESIGNER_OUTPUT_BLOCKED",
-      "why_it_matters": "The read-only live Show snapshot, Researcher source contract, and Rig artifact validation are working. Position Designer returned invalid JSON or structurally invalid output in all three bounded attempts; without validated placements, downstream lighting design cannot continue.",
+      "status": "ARTIFACTS_COMPLETE_AWAITING_HUMAN_REVIEW",
+      "why_it_matters": "Read-only six-role pipeline completed and Position passed validation, but its 64 placements preserve scanned coordinates exactly and Critic identified blocking unsupported physical/capability claims and weak spatial/design substantiation.",
       "blocks_current_milestone": true,
-      "next_review_condition": "A Position Designer artifact for the unchanged current Show fingerprint passes validation; then resume the existing six-role sequence at Lighting Designer."
+      "next_review_condition": "Human visual/operator review of the actual Stage/3D and artifacts; decide explicitly whether further design-context evidence or a bounded follow-up is needed. No MA2 geometry writeback follows automatically."
     },
     {
       "id": "GENERIC_ZEN_SPATIAL_WRITE_ADAPTER",
@@ -278,7 +280,7 @@
     "production_designer": "UNCHANGED",
     "experimental_b3": "GUIDANCE_ASSISTED_AB_ONLY",
     "ab002_actions": "UNCHANGED",
-    "ma2_write_audit": "Phase A snapshot and both SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001 runs were read-only. The structural repair added no MA path. The controlled rerun accepted the snapshot but stopped at Researcher canonical source validation before any spatial role. No MA2 transport or write path was invoked; MA2_WRITES=0.",
+    "ma2_write_audit": "Phase A snapshot and SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001 runs were read-only. Position-context work added no MA path. The latest exact-hash resume completed all six design roles and artifact validators; no MA2 transport, Resolver, Builder, Stage geometry writeback, or Show write path was invoked. MA2_WRITES=0.",
     "test_show_mode": "WRITE_AUTHORIZATION_RETAINED_BUT_NOT_USED_DURING_CURRENT_READ_ONLY_RUNTIME_INTEGRATION_GATE",
     "fixture_9999": "UNTOUCHED",
     "zen_style_profile": "DEFERRED",
