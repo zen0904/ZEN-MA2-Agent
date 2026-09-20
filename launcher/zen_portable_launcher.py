@@ -184,14 +184,38 @@ def autonomous_design(request_file: Path) -> dict[str, object]:
     return result
 
 
-def multi_agent_design(request_file: Path, *, run_id: str | None = None, restart_run: bool = False) -> dict[str, object]:
+def multi_agent_design(
+    request_file: Path,
+    *,
+    run_id: str | None = None,
+    restart_run: bool = False,
+    current_show_snapshot_file: Path | None = None,
+    current_show_profile_file: Path | None = None,
+) -> dict[str, object]:
     if not request_file.is_file():
         raise SystemExit(f"Design request file does not exist: {request_file}")
     request = request_file.read_text(encoding="utf-8").strip()
     if not request:
         raise SystemExit("Design request file is empty.")
     sys.path.insert(0, str(repo()))
-    from zen_ma2_agent.llm import MultiAgentRunError, ProviderRouter, run_multi_agent_design
+    from zen_ma2_agent.llm import CurrentShowSnapshotInput, MultiAgentRunError, ProviderRouter, run_multi_agent_design
+
+    current_show_snapshot = None
+    if current_show_snapshot_file is not None:
+        if not current_show_snapshot_file.is_file():
+            raise SystemExit(f"Current Show snapshot does not exist: {current_show_snapshot_file}")
+        try:
+            snapshot_data = json.loads(current_show_snapshot_file.read_text(encoding="utf-8"))
+            profile_data = None
+            if current_show_profile_file is not None:
+                if not current_show_profile_file.is_file():
+                    raise SystemExit(f"Current Show profile does not exist: {current_show_profile_file}")
+                profile_data = json.loads(current_show_profile_file.read_text(encoding="utf-8"))
+            current_show_snapshot = CurrentShowSnapshotInput(snapshot_data, profile_data)
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise SystemExit(f"Current Show snapshot input is invalid: {type(exc).__name__}") from exc
+    elif current_show_profile_file is not None:
+        raise SystemExit("--current-show-profile requires --current-show-snapshot.")
 
     try:
         run = run_multi_agent_design(
@@ -200,6 +224,7 @@ def multi_agent_design(request_file: Path, *, run_id: str | None = None, restart
             repo_root=repo(),
             run_id=run_id,
             restart_run=restart_run,
+            current_show_snapshot=current_show_snapshot,
         )
     except MultiAgentRunError as exc:
         result = {
@@ -221,6 +246,7 @@ def multi_agent_design(request_file: Path, *, run_id: str | None = None, restart
         "final_output_hash": __import__("hashlib").sha256(
             json.dumps(run.final_design, ensure_ascii=False, sort_keys=True).encode("utf-8")
         ).hexdigest(),
+        "CURRENT_SHOW_FINGERPRINT": json.loads((run.run_path / "run.json").read_text(encoding="utf-8")).get("CURRENT_SHOW_FINGERPRINT"),
         "CODEX_ARTISTIC_INTERVENTION": "NONE",
     }
     _log("multi_agent_design", result)
@@ -290,8 +316,14 @@ def main() -> int:
     choice.add_argument("--knowledge-ingest", nargs=2, type=Path, metavar=("SOURCE_META", "SOURCE_TEXT"))
     parser.add_argument("--run-id")
     parser.add_argument("--restart-run", action="store_true")
+    parser.add_argument("--current-show-snapshot", type=Path)
+    parser.add_argument("--current-show-profile", type=Path)
     parser.add_argument("--knowledge-max-records", type=int, default=8)
     args = parser.parse_args()
+    if (args.current_show_snapshot or args.current_show_profile) and not args.multi_agent_design:
+        parser.error("--current-show-snapshot and --current-show-profile require --multi-agent-design.")
+    if args.current_show_profile and not args.current_show_snapshot:
+        parser.error("--current-show-profile requires --current-show-snapshot.")
     if args.git_status:
         result: dict[str, object] = git_status()
     elif args.update:
@@ -314,14 +346,20 @@ def main() -> int:
             parser.error("--run-id and --restart-run require --multi-agent-design.")
         result = autonomous_design(args.design_request)
     elif args.multi_agent_design:
-        result = multi_agent_design(args.multi_agent_design, run_id=args.run_id, restart_run=args.restart_run)
+        result = multi_agent_design(
+            args.multi_agent_design,
+            run_id=args.run_id,
+            restart_run=args.restart_run,
+            current_show_snapshot_file=args.current_show_snapshot,
+            current_show_profile_file=args.current_show_profile,
+        )
     elif args.knowledge_ingest:
         if args.run_id or args.restart_run:
             parser.error("--run-id and --restart-run are not valid with --knowledge-ingest.")
         result = knowledge_ingest(*args.knowledge_ingest, max_records=args.knowledge_max_records)
     else:
-        if args.run_id or args.restart_run:
-            parser.error("--run-id and --restart-run require --multi-agent-design.")
+        if args.run_id or args.restart_run or args.current_show_snapshot or args.current_show_profile:
+            parser.error("--run-id, --restart-run, and current Show snapshot options require --multi-agent-design.")
         result = git_status()
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0

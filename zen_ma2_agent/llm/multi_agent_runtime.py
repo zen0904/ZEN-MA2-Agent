@@ -10,7 +10,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import platform
+import re
 import shutil
 import subprocess
 import time
@@ -31,9 +33,17 @@ from .autonomous_designer import (
     validate_design_output,
 )
 from .router import ProviderRouter, ProviderSlot, ProviderUnavailable
+from .live_show_snapshot import (
+    CurrentShowSnapshotInput,
+    LiveShowSnapshotError,
+    normalize_current_show_snapshot,
+)
 
 
 ROLE_SEQUENCE = ("researcher", "lighting_designer", "critic", "finalizer")
+LIVE_SHOW_ROLE_SEQUENCE = (
+    "researcher", "rig_designer", "position_designer", "lighting_designer", "critic", "finalizer",
+)
 MAX_ROLE_ATTEMPTS = 3
 RUN_SCHEMA = "zen.multi_agent_run.v0.1"
 STEP_SCHEMA = "zen.multi_agent_step.v0.1"
@@ -143,6 +153,209 @@ def validate_critic_artifact(value: object) -> dict[str, object]:
     )
 
 
+_SPATIAL_FORBIDDEN_FIELDS = {
+    "patch", "address", "dmx_address", "fixture_type", "fixture_type_id",
+    "fixture_id_change", "fixture_type_change", "patch_change", "address_change",
+    "new_fixture", "new_fixtures", "fixture_mutations", "identity_mutations",
+}
+_CONSOLE_COMMAND_RE = re.compile(
+    r"^\s*(?:store|delete|assign|select|at|go|off|on|clearall|move3d|lua)\b"
+    r"|^\s*fixture\s+\d+(?:\.\d+)?\s+(?:at|move3d|store|delete|assign)\b",
+    re.IGNORECASE,
+)
+
+
+def _contains_spatial_command_or_mutation(value: object) -> bool:
+    if isinstance(value, dict):
+        return any(
+            str(key).casefold() in _SPATIAL_FORBIDDEN_FIELDS
+            or str(key).casefold() in FORBIDDEN_KEYS
+            or _contains_spatial_command_or_mutation(child)
+            for key, child in value.items()
+        )
+    if isinstance(value, list):
+        return any(_contains_spatial_command_or_mutation(child) for child in value)
+    if isinstance(value, str):
+        return value.lstrip().startswith("```") or bool(_CONSOLE_COMMAND_RE.match(value))
+    return False
+
+
+def _snapshot_identity_sets(snapshot: dict[str, object]) -> tuple[set[int], set[tuple[int, int]]]:
+    fixtures = snapshot.get("fixture_inventory", [])
+    fixture_ids = {
+        int(item["fixture_id"])
+        for item in fixtures
+        if isinstance(item, dict) and isinstance(item.get("fixture_id"), int)
+    }
+    subfixture_refs = {
+        (int(item["fixture_id"]), int(geometry["subfixture_id"]))
+        for item in fixtures if isinstance(item, dict)
+        for geometry in item.get("geometry", []) if isinstance(geometry, dict)
+        and isinstance(item.get("fixture_id"), int)
+        and isinstance(geometry.get("subfixture_id"), int)
+    }
+    return fixture_ids, subfixture_refs
+
+
+def _validate_embedded_fixture_refs(
+    value: object,
+    *,
+    fixture_ids: set[int],
+    subfixture_refs: set[tuple[int, int]],
+) -> None:
+    if isinstance(value, dict):
+        fixture_id = value.get("fixture_id")
+        if fixture_id is not None:
+            if isinstance(fixture_id, bool) or not isinstance(fixture_id, int) or fixture_id not in fixture_ids:
+                raise MultiAgentRunError("Spatial artifact references an unknown fixture identity.")
+            if fixture_id == 9999:
+                raise MultiAgentRunError("Fixture 9999 is protected and unavailable for artistic use.")
+            subfixture_id = value.get("subfixture_id")
+            if subfixture_id is not None and (
+                isinstance(subfixture_id, bool)
+                or not isinstance(subfixture_id, int)
+                or (fixture_id, subfixture_id) not in subfixture_refs
+            ):
+                raise MultiAgentRunError("Spatial artifact references an unknown fixture/subfixture identity.")
+        for key in ("fixture_ids", "resource_ids"):
+            rows = value.get(key)
+            if rows is not None:
+                if not isinstance(rows, list):
+                    raise MultiAgentRunError(f"Spatial artifact {key} must be an array.")
+                for item in rows:
+                    if isinstance(item, bool) or not isinstance(item, int) or item not in fixture_ids:
+                        raise MultiAgentRunError("Spatial artifact references an unknown fixture identity.")
+                    if item == 9999:
+                        raise MultiAgentRunError("Fixture 9999 is protected and unavailable for artistic use.")
+        for child in value.values():
+            _validate_embedded_fixture_refs(child, fixture_ids=fixture_ids, subfixture_refs=subfixture_refs)
+    elif isinstance(value, list):
+        for child in value:
+            _validate_embedded_fixture_refs(child, fixture_ids=fixture_ids, subfixture_refs=subfixture_refs)
+
+
+def validate_rig_design_artifact(value: object, snapshot: dict[str, object]) -> dict[str, object]:
+    artifact = _validate_object(
+        value,
+        schema="zen.multi_agent_rig_design.v0.1",
+        required=("show_fingerprint", "spatial_strategy", "resource_assignments", "spatial_relationships", "constraints", "uncertainties", "codex_artistic_intervention"),
+    )
+    if artifact.get("codex_artistic_intervention") != "NONE":
+        raise MultiAgentRunError("Rig design must set codex_artistic_intervention to NONE.")
+    if artifact.get("show_fingerprint") != snapshot.get("show_fingerprint"):
+        raise MultiAgentRunError("Rig design Show fingerprint does not match the live snapshot.")
+    if not isinstance(artifact.get("spatial_strategy"), (str, dict)) or not artifact.get("spatial_strategy"):
+        raise MultiAgentRunError("Rig design spatial_strategy must be a non-empty string or object.")
+    for field in ("resource_assignments", "spatial_relationships", "constraints", "uncertainties"):
+        if not isinstance(artifact.get(field), list):
+            raise MultiAgentRunError(f"Rig design {field} must be an array.")
+    if _contains_spatial_command_or_mutation(artifact):
+        raise MultiAgentRunError("Rig design contains a prohibited command or Show identity/patch mutation field.")
+    fixture_ids, subfixture_refs = _snapshot_identity_sets(snapshot)
+    for assignment in artifact["resource_assignments"]:
+        if not isinstance(assignment, dict) or not isinstance(assignment.get("resource_refs"), list):
+            raise MultiAgentRunError("Each rig resource assignment must contain a resource_refs array.")
+        for ref in assignment["resource_refs"]:
+            if not isinstance(ref, dict) or "fixture_id" not in ref:
+                raise MultiAgentRunError("Rig resource_refs must be fixture identity objects.")
+            _validate_embedded_fixture_refs(ref, fixture_ids=fixture_ids, subfixture_refs=subfixture_refs)
+    _validate_embedded_fixture_refs(artifact["spatial_relationships"], fixture_ids=fixture_ids, subfixture_refs=subfixture_refs)
+    return artifact
+
+
+def validate_position_design_artifact(value: object, snapshot: dict[str, object]) -> dict[str, object]:
+    artifact = _validate_object(
+        value,
+        schema="zen.multi_agent_position_design.v0.1",
+        required=("show_fingerprint", "coordinate_system", "spatial_groups", "placements", "constraints", "uncertainties", "codex_artistic_intervention"),
+    )
+    if artifact.get("codex_artistic_intervention") != "NONE":
+        raise MultiAgentRunError("Position design must set codex_artistic_intervention to NONE.")
+    fingerprint = snapshot.get("show_fingerprint")
+    if artifact.get("show_fingerprint") != fingerprint:
+        raise MultiAgentRunError("Position design Show fingerprint does not match the live snapshot.")
+    if not isinstance(artifact.get("coordinate_system"), dict):
+        raise MultiAgentRunError("Position design coordinate_system must be an object.")
+    for field in ("spatial_groups", "placements", "constraints", "uncertainties"):
+        if not isinstance(artifact.get(field), list):
+            raise MultiAgentRunError(f"Position design {field} must be an array.")
+    if _contains_spatial_command_or_mutation(artifact):
+        raise MultiAgentRunError("Position design contains a prohibited command or Show identity/patch mutation field.")
+    fixture_ids, subfixture_refs = _snapshot_identity_sets(snapshot)
+    _validate_embedded_fixture_refs(artifact["spatial_groups"], fixture_ids=fixture_ids, subfixture_refs=subfixture_refs)
+    seen: set[tuple[int, int]] = set()
+    for placement in artifact["placements"]:
+        if not isinstance(placement, dict):
+            raise MultiAgentRunError("Position placements must be objects.")
+        fixture_id = placement.get("fixture_id")
+        subfixture_id = placement.get("subfixture_id")
+        if (
+            isinstance(fixture_id, bool) or not isinstance(fixture_id, int)
+            or isinstance(subfixture_id, bool) or not isinstance(subfixture_id, int)
+        ):
+            raise MultiAgentRunError("Each placement must identify a fixture_id and subfixture_id.")
+        if fixture_id == 9999:
+            raise MultiAgentRunError("Fixture 9999 is protected and unavailable for placement.")
+        ref = (fixture_id, subfixture_id)
+        if ref not in subfixture_refs:
+            raise MultiAgentRunError("Position placement references an unknown geometry-bearing fixture/subfixture.")
+        if ref in seen:
+            raise MultiAgentRunError("Position design contains duplicate placement references.")
+        seen.add(ref)
+        if placement.get("show_fingerprint") != fingerprint:
+            raise MultiAgentRunError("Every placement must carry the matching current Show fingerprint.")
+        xyz = placement.get("xyz")
+        if not isinstance(xyz, dict):
+            raise MultiAgentRunError("Every placement requires an XYZ object.")
+        for axis in ("x", "y", "z"):
+            number = xyz.get(axis)
+            if isinstance(number, bool) or not isinstance(number, (int, float)) or not math.isfinite(float(number)):
+                raise MultiAgentRunError(f"Placement XYZ.{axis} must be finite numeric data.")
+        if "rotation" in placement:
+            rotation = placement["rotation"]
+            if not isinstance(rotation, dict):
+                raise MultiAgentRunError("Placement rotation must be an object when present.")
+            for axis in ("x", "y", "z"):
+                number = rotation.get(axis)
+                if isinstance(number, bool) or not isinstance(number, (int, float)) or not math.isfinite(float(number)):
+                    raise MultiAgentRunError(f"Placement rotation.{axis} must be finite numeric data.")
+    return artifact
+
+
+def validate_final_spatial_consistency(
+    final_artifact: dict[str, object],
+    position_artifact: dict[str, object],
+    show_fingerprint: str,
+) -> None:
+    expected_reference = {
+        "show_fingerprint": show_fingerprint,
+        "position_artifact_sha256": _sha256(position_artifact),
+    }
+    if final_artifact.get("position_design_reference") != expected_reference:
+        raise MultiAgentRunError("Finalizer position_design_reference does not identify the validated upstream Position Designer artifact.")
+    expected = {
+        (item["fixture_id"], item["subfixture_id"]): item["xyz"]
+        for item in position_artifact.get("placements", []) if isinstance(item, dict)
+    }
+
+    def visit(value: object) -> None:
+        if isinstance(value, dict):
+            if "fixture_id" in value and "subfixture_id" in value and "xyz" in value:
+                key = (value.get("fixture_id"), value.get("subfixture_id"))
+                if key not in expected or value.get("xyz") != expected[key]:
+                    raise MultiAgentRunError("Final design geometry contradicts the upstream Position Designer artifact.")
+                if value.get("show_fingerprint", show_fingerprint) != show_fingerprint:
+                    raise MultiAgentRunError("Final design geometry references a different Show fingerprint.")
+            for child in value.values():
+                visit(child)
+        elif isinstance(value, list):
+            for child in value:
+                visit(child)
+
+    visit(final_artifact.get("virtual_rig"))
+    visit(final_artifact.get("position_vocabulary"))
+
+
 ROLE_VALIDATORS: dict[str, Callable[[object], dict[str, object]]] = {
     "researcher": validate_research_artifact,
     "lighting_designer": validate_designer_artifact,
@@ -153,6 +366,8 @@ ROLE_VALIDATORS: dict[str, Callable[[object], dict[str, object]]] = {
 
 ROLE_ROUTER_NAMES = {
     "researcher": "RESEARCHER",
+    "rig_designer": "LIGHTING_DESIGNER",
+    "position_designer": "LIGHTING_DESIGNER",
     "lighting_designer": "LIGHTING_DESIGNER",
     "critic": "CRITIC",
     "finalizer": "FINALIZER",
@@ -208,6 +423,24 @@ ROLE_SYSTEM_PROMPTS = {
         "Do not use fixture-name recipes or energy-to-fixture-count rules. Return one compact JSON object only. Its first key must be schema with exact value "
         "zen.multi_agent_designer_draft.v0.1, followed by fields design_intent, visual_strategy, resource_considerations, uncertainties, "
         "codex_artistic_intervention. Do not emit executable commands. Set codex_artistic_intervention to NONE."
+    ),
+    "rig_designer": (
+        "ROLE: RIG_DESIGNER. Create the upstream spatial/resource organization for this exact current Show before lighting design. "
+        "Use only the supplied live Show snapshot and Researcher artifact. Fixture type and Group labels are identity evidence only, never artistic roles. "
+        "Treat coordinate axes as UNKNOWN unless the supplied snapshot explicitly verifies semantics; do not infer stage-left/right or performer zones. "
+        "Only reference real fixture/subfixture identities. Fixture 9999 is protected and unavailable. Do not claim unavailable fixture capabilities. "
+        "Do not alter fixture identity, type, Patch, Address, or Stage geometry. Return JSON only with schema zen.multi_agent_rig_design.v0.1 and fields "
+        "show_fingerprint, spatial_strategy, resource_assignments, spatial_relationships, constraints, uncertainties, codex_artistic_intervention. "
+        "Each resource_assignments item must contain resource_refs as objects with fixture_id and optional subfixture_id. "
+        "Emit no MA2 commands, Lua, shell, or executable text. Set codex_artistic_intervention to NONE."
+    ),
+    "position_designer": (
+        "ROLE: POSITION_DESIGNER. Turn the validated upstream Rig Designer artifact into concrete proposed test-show geometry; this is a proposal only, not a write. "
+        "Use only geometry-bearing fixture/subfixture identities from the exact supplied live snapshot and the supplied Rig Designer artifact. "
+        "Do not infer coordinate-axis semantics; preserve UNKNOWN where uncalibrated. Fixture 9999 is unavailable and must not be placed. "
+        "Return JSON only with schema zen.multi_agent_position_design.v0.1 and fields show_fingerprint, coordinate_system, spatial_groups, placements, constraints, uncertainties, codex_artistic_intervention. "
+        "Every placement must include fixture_id, subfixture_id, matching show_fingerprint, xyz {x,y,z}; include rotation {x,y,z} only when chosen and represented. "
+        "Coordinates must be finite numbers. Do not alter Patch, Address, fixture identity/type, or emit MA2 commands, Lua, shell, or executable text. Set codex_artistic_intervention to NONE."
     ),
     "critic": (
         "ROLE: CRITIC. Independently inspect the supplied draft against supplied constraints and identify strengths, problems with severity, "
@@ -342,8 +575,26 @@ def _role_context(
                 "source_provenance": role_registry,
             }
         }
-    if role_name == "lighting_designer":
+    live_snapshot = context.get("current_show_snapshot")
+    if role_name == "rig_designer":
+        if not isinstance(live_snapshot, dict):
+            raise MultiAgentRunError("RIG_DESIGNER requires a validated current Show snapshot.")
         return common | {
+            "current_show_snapshot": live_snapshot,
+            "research_artifact": completed["researcher"],
+            "owner_constraints": context.get("hard_constraints", []),
+        }
+    if role_name == "position_designer":
+        if not isinstance(live_snapshot, dict):
+            raise MultiAgentRunError("POSITION_DESIGNER requires a validated current Show snapshot.")
+        return common | {
+            "current_show_snapshot": live_snapshot,
+            "research_artifact": completed["researcher"],
+            "rig_design_artifact": completed["rig_designer"],
+            "owner_constraints": context.get("hard_constraints", []),
+        }
+    if role_name == "lighting_designer":
+        lighting_payload = common | {
             "research_artifact": completed["researcher"],
             "design_context": {
                 "fixture_technical_capability": categories.get("fixture_technical_capability", {}),
@@ -351,22 +602,36 @@ def _role_context(
                 "operator_contract": categories.get("operator_contract", {}),
             },
         }
+        if isinstance(live_snapshot, dict):
+            lighting_payload |= {
+                "current_show_snapshot": live_snapshot,
+                "rig_design_artifact": completed["rig_designer"],
+                "position_design_artifact": completed["position_designer"],
+            }
+        return lighting_payload
     if role_name == "critic":
         parallel_designers = candidate_sets.get("lighting_designer", [])
-        return common | {
+        critic_payload = common | {
             "research_artifact": completed["researcher"],
             "designer_draft": completed["lighting_designer"],
             "relevant_show_constraints": {
                 "fixture_technical_capability": categories.get("fixture_technical_capability", {}),
                 "rig_spatial_visual_affordance": categories.get("rig_spatial_visual_affordance", {}),
             },
-        } | (
+        }
+        if isinstance(live_snapshot, dict):
+            critic_payload |= {
+                "current_show_snapshot": live_snapshot,
+                "rig_design_artifact": completed["rig_designer"],
+                "position_design_artifact": completed["position_designer"],
+            }
+        return critic_payload | (
             {"designer_candidates": parallel_designers}
             if len(parallel_designers) > 1 else {}
         )
     parallel_designers = candidate_sets.get("lighting_designer", [])
     parallel_critics = candidate_sets.get("critic", [])
-    return common | {
+    finalizer_payload = common | {
         "research_artifact": _project_research_artifact(completed["researcher"]),
         "designer_draft": _project_artifact_fields(completed["lighting_designer"], FINALIZER_DESIGNER_FIELDS),
         "critic_artifact": _project_artifact_fields(completed["critic"], FINALIZER_CRITIC_FIELDS),
@@ -386,14 +651,32 @@ def _role_context(
             ]
         } if len(parallel_critics) > 1 else {}
     )
+    if isinstance(live_snapshot, dict):
+        # Spatial artifacts are canonical upstream authority. Pass their
+        # validated values unchanged; finalization may reference, not replace,
+        # the Position Designer proposal.
+        finalizer_payload |= {
+            "current_show_snapshot": live_snapshot,
+            "rig_design_artifact": completed["rig_designer"],
+            "position_design_artifact": completed["position_designer"],
+        }
+    return finalizer_payload
 
 
-def _read_completed_artifacts(run_id: str) -> dict[str, dict[str, object]]:
+def _read_completed_artifacts(
+    run_id: str,
+    role_sequence: tuple[str, ...] = ROLE_SEQUENCE,
+    expected_show_fingerprint: str | None = None,
+) -> dict[str, dict[str, object]]:
     completed: dict[str, dict[str, object]] = {}
-    for role_name in ROLE_SEQUENCE:
+    for role_name in role_sequence:
         envelope = read_step_artifact(run_id, role_name)
         if envelope is None:
             continue
+        if not isinstance(envelope, dict):
+            raise MultiAgentRunError(f"Checkpoint for {role_name} is malformed.")
+        if envelope.get("current_show_fingerprint") != expected_show_fingerprint:
+            raise MultiAgentRunError("Checkpoint Show fingerprint differs from this run input; use --restart-run to avoid mixing artifacts.")
         artifact = envelope.get("artifact") if isinstance(envelope, dict) else None
         if isinstance(artifact, dict):
             completed[role_name] = artifact
@@ -471,13 +754,77 @@ def _load_valid_final(path: Path) -> dict[str, object] | None:
 
 def _archive_for_restart(path: Path) -> None:
     """Preserve an explicit restart's prior evidence before regenerating it."""
-    existing = [path / name for name in ("run.json", "steps", "final_design.json", "failure.json") if (path / name).exists()]
+    existing = [
+        path / name
+        for name in ("run.json", "steps", "final_design.json", "failure.json", "diagnostics", "attempts")
+        if (path / name).exists()
+    ]
     if not existing:
         return
     archive = path / "restart_archive" / datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     archive.mkdir(parents=True, exist_ok=False)
     for item in existing:
         shutil.move(str(item), str(archive / item.name))
+
+
+def _bind_current_show_context(
+    context: dict[str, object],
+    snapshot: dict[str, object],
+) -> dict[str, object]:
+    """Make the supplied snapshot current truth and isolate mismatched cache."""
+    bound = dict(context)
+    categories = dict(bound.get("categories", {}))
+    fingerprint = str(snapshot["show_fingerprint"])
+    categories["fixture_technical_capability"] = {
+        "status": "UNKNOWN_FOR_CURRENT_FINGERPRINT",
+        "show_fingerprint": fingerprint,
+        "capabilities": [],
+        "reason": snapshot["technical_capabilities"]["reason"],
+    }
+    categories["rig_spatial_visual_affordance"] = {
+        "status": "LIVE_GEOMETRY_ONLY",
+        "show_fingerprint": fingerprint,
+        "coordinate_system": snapshot["coordinate_system"],
+        "fixture_count": snapshot["fixture_count"],
+        "geometry_record_count": snapshot["geometry_record_count"],
+        "group_count": snapshot["group_count"],
+        "semantic_positions": "NONE_VERIFIED",
+    }
+    # These cached inputs can belong to a different Show. Keep their existence
+    # as backend diagnostics only; do not let them appear as current facts.
+    categories["prior_case_artifacts"] = {
+        "status": "EXCLUDED_FROM_CURRENT_SHOW_CONTEXT",
+        "reason": "Cached case artifacts are not fingerprint-bound to this live snapshot.",
+    }
+    bound["categories"] = categories
+    bound["current_show_snapshot"] = snapshot
+
+    ledger = dict(bound.get("evidence_ledger", {}))
+    entries = list(ledger.get("entries", []))
+    source = {
+        "type": "PHASE_A_SAVED_READ_ONLY_CURRENT_SHOW_SNAPSHOT",
+        "show_fingerprint": fingerprint,
+        "source_artifact_hash": snapshot["source_artifact_hash"],
+    }
+    facts = [
+        ("fixture_inventory", f"The read-only current Show snapshot records {snapshot['fixture_count']} fixtures and {snapshot['group_count']} Groups."),
+        ("fixture_geometry", f"The read-only current Show snapshot records {snapshot['geometry_record_count']} fixture/subfixture geometry entries; axis semantics remain UNKNOWN."),
+        ("technical_capability_status", "No current-fingerprint verified fixture capability profiles are available to this run."),
+    ]
+    for name, summary in facts:
+        entries.append({
+            "evidence_ref": f"CURRENT_SHOW:{fingerprint}:{name}",
+            "kind": "VERIFIED_FACT",
+            "source": source,
+            "summary": summary,
+        })
+    ledger["entries"] = sorted(entries, key=lambda item: str(item.get("evidence_ref", "")))
+    ledger["available_verified_facts"] = [
+        *ledger.get("available_verified_facts", []),
+        *[ref for ref, _ in ((f"CURRENT_SHOW:{fingerprint}:{name}", summary) for name, summary in facts)],
+    ]
+    bound["evidence_ledger"] = ledger
+    return bound
 
 
 def _record_failure(path: Path, *, role_name: str, attempts: int, error: Exception) -> None:
@@ -633,6 +980,8 @@ def _write_single_role_provider_diagnostic(
     value["provider_routing"] = {
         "router_mode": router.mode,
         "role": ROLE_ROUTER_NAMES[role_name],
+        "semantic_role": role_name.upper(),
+        "provider_capability_role": ROLE_ROUTER_NAMES[role_name],
         "eligible_ordered_provider_candidates": [slot.safe_identity() for slot in eligible],
         "attempted_provider_slots": attempted_slots,
         "provider_attempts": rows,
@@ -662,14 +1011,16 @@ def _run_role(
     payload: dict[str, object],
     max_attempts: int,
     run_path: Path,
+    validator: Callable[[object], dict[str, object]] | None = None,
+    system_prompt: str | None = None,
 ) -> tuple[dict[str, object], ProviderSlot, int]:
-    validator = ROLE_VALIDATORS[role_name]
+    validator = validator or ROLE_VALIDATORS[role_name]
     last_error: Exception | None = None
     for attempt in range(1, max_attempts + 1):
         content = ""
         selected_slot: ProviderSlot | None = None
         provider_attempts: tuple[dict[str, object], ...] = ()
-        system = ROLE_SYSTEM_PROMPTS[role_name]
+        system = system_prompt or ROLE_SYSTEM_PROMPTS[role_name]
         if last_error is not None:
             system += f" Previous attempt failed validation: {last_error}. Correct only the structural issue and return JSON only." + RETRY_SAFETY_CONTRACT
         diagnostic_path: Path | None = None
@@ -748,6 +1099,7 @@ def _run_parallel_role_candidates(
     context: dict[str, object],
     run_path: Path,
     limit: int,
+    system_prompt: str | None = None,
 ) -> tuple[list[tuple[dict[str, object], ProviderSlot]], dict[str, object]]:
     """Run one role on independent providers and retain valid candidates.
 
@@ -756,7 +1108,7 @@ def _run_parallel_role_candidates(
     the caller falls back to the normal bounded retry path.
     """
     validator = ROLE_VALIDATORS[role_name]
-    system = ROLE_SYSTEM_PROMPTS[role_name]
+    system = system_prompt or ROLE_SYSTEM_PROMPTS[role_name]
     user = _canonical_json(payload)
     started = time.monotonic()
     diagnostic_path = _record_model_context_diagnostic(
@@ -821,6 +1173,8 @@ def _run_parallel_role_candidates(
         valid.append((artifact, slot))
 
     parallel_runtime: dict[str, object] = {
+        "semantic_role": role_name.upper(),
+        "provider_capability_role": ROLE_ROUTER_NAMES[role_name],
         "router_mode": router.mode,
         "configured_parallelism": router.parallelism,
         "parallel_role_scope": sorted(router.parallel_roles),
@@ -890,37 +1244,74 @@ def run_multi_agent_design(
     run_id: str | None = None,
     restart_run: bool = False,
     max_role_attempts: int = MAX_ROLE_ATTEMPTS,
+    current_show_snapshot: CurrentShowSnapshotInput | dict[str, object] | None = None,
 ) -> MultiAgentRun:
-    """Execute or safely resume the four-role local design pipeline.
+    """Execute or safely resume the conditional multi-agent design pipeline.
 
     Completed artifacts are never overwritten during a normal resume.  Passing
-    ``restart_run=True`` is the explicit opt-in for regenerating an existing
-    run id's checkpoints.
+    ``current_show_snapshot`` activates the six-role upstream spatial path.
+    Passing ``restart_run=True`` is the explicit opt-in for regenerating an
+    existing run id's checkpoints.
     """
     if not request.strip():
         raise ValueError("A non-empty user request is required.")
     if not 1 <= max_role_attempts <= MAX_ROLE_ATTEMPTS:
         raise ValueError(f"max_role_attempts must be from 1 to {MAX_ROLE_ATTEMPTS}.")
 
+    context = build_designer_context(repo_root)
+    normalized_snapshot: dict[str, object] | None = None
+    show_fingerprint: str | None = None
+    if current_show_snapshot is not None:
+        try:
+            normalized_snapshot = normalize_current_show_snapshot(current_show_snapshot)
+        except (LiveShowSnapshotError, TypeError, ValueError) as exc:
+            raise MultiAgentRunError(f"Current Show snapshot rejected: {exc}") from exc
+        show_fingerprint = str(normalized_snapshot["show_fingerprint"])
+        context = _bind_current_show_context(context, normalized_snapshot)
+    role_sequence = LIVE_SHOW_ROLE_SEQUENCE if normalized_snapshot is not None else ROLE_SEQUENCE
+    context_hash = _sha256(context)
+    request_hash = _sha256({"user_request": request})
     run_id = run_id or _new_run_id()
     path = _run_path(run_id)
     path.mkdir(parents=True, exist_ok=True)
     if restart_run:
         _archive_for_restart(path)
-    context = build_designer_context(repo_root)
-    context_hash = _sha256(context)
-    request_hash = _sha256({"user_request": request})
+    if normalized_snapshot is not None:
+        _write_json(path / "normalized_current_show_snapshot.json", normalized_snapshot)
     final_path = path / "final_design.json"
-    resume_point = find_resume_point(run_id, list(ROLE_SEQUENCE))
+    resume_point = find_resume_point(run_id, list(role_sequence))
     previous_state = _read_run_state(path)
+    step_dir = path / "steps"
+    checkpoint_files = sorted(step_dir.glob("*.json")) if step_dir.is_dir() else []
+    has_checkpoints = bool(checkpoint_files)
     if not restart_run and previous_state:
         if previous_state.get("REQUEST_HASH") not in (None, request_hash):
             raise MultiAgentRunError("Existing run id belongs to a different request; use a new run id or --restart-run.")
-        if previous_state.get("CONTEXT_HASH") not in (None, context_hash) and resume_point is not None:
-            raise MultiAgentRunError("Designer Context changed since this run started; use --restart-run to avoid mixing checkpoints.")
+        if has_checkpoints:
+            if previous_state.get("CURRENT_SHOW_FINGERPRINT") != show_fingerprint:
+                raise MultiAgentRunError("Existing checkpoints belong to a different current Show fingerprint; use --restart-run to avoid mixing artifacts.")
+            prior_order = previous_state.get("ROLE_EXECUTION_ORDER")
+            if prior_order != list(role_sequence):
+                raise MultiAgentRunError("Existing checkpoints were produced with a different role order; use --restart-run to avoid mixing artifacts.")
+            if previous_state.get("CONTEXT_HASH") != context_hash:
+                raise MultiAgentRunError("Designer Context changed since this run started; use --restart-run to avoid mixing checkpoints.")
+    if not restart_run and has_checkpoints:
+        checkpoint_roles = [item.stem for item in checkpoint_files]
+        if any(role not in role_sequence for role in checkpoint_roles):
+            raise MultiAgentRunError("Existing checkpoints contain roles outside this run's execution order; use --restart-run.")
+        checkpoint_role_set = set(checkpoint_roles)
+        expected_prefix = list(role_sequence[:len(checkpoint_roles)])
+        if [role for role in role_sequence if role in checkpoint_role_set] != expected_prefix:
+            raise MultiAgentRunError("Existing checkpoints are not a completed prefix of this role order; refusing an unsafe resume.")
     if not restart_run and resume_point is None:
         final_design = _load_valid_final(final_path)
         if final_design is not None:
+            if normalized_snapshot is not None:
+                position_envelope = read_step_artifact(run_id, "position_designer")
+                position_artifact = position_envelope.get("artifact") if isinstance(position_envelope, dict) else None
+                if not isinstance(position_artifact, dict):
+                    raise MultiAgentRunError("Completed live-Show run is missing its canonical Position Designer checkpoint.")
+                validate_final_spatial_consistency(final_design, position_artifact, show_fingerprint or "")
             return MultiAgentRun(run_id, context_hash, final_design, path, resumed_from=None)
         # A finalizer checkpoint without a valid final artifact is incomplete.
         resume_point = "finalizer"
@@ -932,7 +1323,11 @@ def run_multi_agent_design(
         "CONTEXT_HASH": context_hash,
         "REQUEST_HASH": request_hash,
         "HOST_OS": platform.system(),
-        "ROLE_EXECUTION_ORDER": list(ROLE_SEQUENCE),
+        "ROLE_EXECUTION_ORDER": list(role_sequence),
+        "CURRENT_SHOW_FINGERPRINT": show_fingerprint,
+        "CURRENT_SHOW_SNAPSHOT_SOURCE_HASH": normalized_snapshot.get("source_artifact_hash") if normalized_snapshot else None,
+        "LIVE_SHOW_SNAPSHOT_IN_CONTEXT": "YES" if normalized_snapshot else "NO",
+        "CURRENT_SHOW_CAPABILITY_STATUS": normalized_snapshot.get("technical_capabilities", {}).get("status") if normalized_snapshot else "NOT_SUPPLIED",
         "role_execution": [] if restart_run else list(previous_state.get("role_execution", [])),
         "LOCAL_MODEL_USED": "NO",
         "CLOUD_REQUIRED": "NO",
@@ -940,14 +1335,18 @@ def run_multi_agent_design(
         "status": "RUNNING",
         "started_at": datetime.now(timezone.utc).isoformat(),
     }
-    _write_run_state(path, state)
-    completed = {} if restart_run else _read_completed_artifacts(run_id)
+    completed = {} if restart_run else _read_completed_artifacts(
+        run_id,
+        role_sequence,
+        expected_show_fingerprint=show_fingerprint,
+    )
     candidate_sets = {} if restart_run else _read_candidate_sets(run_id)
-    started_from = ROLE_SEQUENCE[0] if restart_run else resume_point
-    active_role = started_from or ROLE_SEQUENCE[0]
+    _write_run_state(path, state)
+    started_from = role_sequence[0] if restart_run else resume_point
+    active_role = started_from or role_sequence[0]
 
     try:
-        for role_name in ROLE_SEQUENCE:
+        for role_name in role_sequence:
             if role_name in completed and not restart_run:
                 continue
             active_role = role_name
@@ -960,6 +1359,19 @@ def run_multi_agent_design(
             )
             parallel_results: list[tuple[dict[str, object], ProviderSlot]] = []
             parallel_runtime: dict[str, object] | None = None
+            system_prompt = ROLE_SYSTEM_PROMPTS[role_name]
+            if normalized_snapshot is not None and role_name == "lighting_designer":
+                system_prompt += (
+                    " For this live-Show case, treat the supplied validated Rig Designer and Position Designer artifacts as upstream authority. "
+                    "Begin lighting reasoning after the spatial proposal; do not replace or silently rewrite its geometry. "
+                    "FixtureType and Group labels are identity only, not artistic roles."
+                )
+            elif normalized_snapshot is not None and role_name == "critic":
+                system_prompt += (
+                    " For this live-Show case, inspect the exact Researcher, Rig Designer, Position Designer, and Lighting Designer artifacts. "
+                    "Check spatial/resource conflicts, unsupported capability, forced novelty, hierarchy/negative-space weakness, "
+                    "and operator/editability concerns. Critique without inventing replacement geometry or treating Group/FixtureType labels as roles."
+                )
             parallel_limit = router.parallel_limit(ROLE_ROUTER_NAMES[role_name])
             if role_name in {"lighting_designer", "critic"} and parallel_limit > 1:
                 parallel_results, parallel_runtime = _run_parallel_role_candidates(
@@ -969,6 +1381,7 @@ def run_multi_agent_design(
                     context=context,
                     run_path=path,
                     limit=parallel_limit,
+                    system_prompt=system_prompt,
                 )
 
             validated_candidates: list[tuple[dict[str, object], ProviderSlot]] = list(parallel_results)
@@ -978,12 +1391,39 @@ def run_multi_agent_design(
                 attempts = 1
                 candidate_sets[role_name] = [candidate for candidate, _ in validated_candidates]
             else:
+                role_validator: Callable[[object], dict[str, object]] | None = None
+                if role_name == "rig_designer" and normalized_snapshot is not None:
+                    role_validator = lambda value: validate_rig_design_artifact(value, normalized_snapshot)
+                elif role_name == "position_designer" and normalized_snapshot is not None:
+                    role_validator = lambda value: validate_position_design_artifact(value, normalized_snapshot)
+                elif role_name == "finalizer" and normalized_snapshot is not None:
+                    position_artifact = completed.get("position_designer")
+                    if not isinstance(position_artifact, dict):
+                        raise MultiAgentRunError("Finalizer requires the validated Position Designer artifact.")
+                    reference = {
+                        "show_fingerprint": show_fingerprint,
+                        "position_artifact_sha256": _sha256(position_artifact),
+                    }
+                    system_prompt += (
+                        " This live-Show run has canonical upstream spatial authority. Include a top-level position_design_reference "
+                        "exactly equal to " + _canonical_json(reference) + ". Do not replace or restate different fixture geometry. "
+                        "If virtual_rig or position_vocabulary includes exact fixture/subfixture XYZ, it must match the upstream Position Designer artifact."
+                    )
+
+                    def validate_live_final(value: object) -> dict[str, object]:
+                        final = validate_design_output(value)
+                        validate_final_spatial_consistency(final, position_artifact, show_fingerprint or "")
+                        return final
+
+                    role_validator = validate_live_final
                 artifact, slot, attempts = _run_role(
                     router,
                     role_name=role_name,
                     payload=payload,
                     max_attempts=max_role_attempts,
                     run_path=path,
+                    validator=role_validator,
+                    system_prompt=system_prompt,
                 )
                 artifact = _validate_artifact_evidence(role_name, artifact, context)
                 if slot.api_key and slot.api_key in _canonical_json(artifact):
@@ -1010,6 +1450,7 @@ def run_multi_agent_design(
                     for candidate, candidate_slot in validated_candidates
                 ] if role_name in {"lighting_designer", "critic"} else [],
                 "parallel_runtime": parallel_runtime,
+                "current_show_fingerprint": show_fingerprint,
                 "CODEX_ARTISTIC_INTERVENTION": "NONE",
             }
             write_step_artifact(run_id, role_name, envelope)
@@ -1031,6 +1472,8 @@ def run_multi_agent_design(
 
         final_design = completed["finalizer"]
         validate_design_output(final_design)
+        if normalized_snapshot is not None:
+            validate_final_spatial_consistency(final_design, completed["position_designer"], show_fingerprint or "")
         _write_json(final_path, final_design)
         state |= {
             "status": "COMPLETE",
