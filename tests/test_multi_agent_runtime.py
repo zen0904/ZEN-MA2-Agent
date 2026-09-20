@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import tempfile
 import unittest
@@ -95,6 +96,35 @@ class MultiAgentRuntimeTests(unittest.TestCase):
     def _router(self, responses, *, roles=(), mode="PRIMARY_ONLY"):
         adapter = _SequenceAdapter(responses)
         return ProviderRouter(mode, (self._local_slot(roles=roles),), adapter), adapter
+
+    def _run_parallel_validation_case(self, run_id, failed_response, *, failed_api_key="private-candidate-key"):
+        class Adapter:
+            def complete(_self, slot, *, system, user):
+                role = system.split(". ", 1)[0]
+                if role == "ROLE: RESEARCHER":
+                    return json.dumps(_research())
+                if role == "ROLE: LIGHTING_DESIGNER":
+                    return failed_response if slot.number == 1 else json.dumps(_draft())
+                if role == "ROLE: CRITIC":
+                    return json.dumps(_critic())
+                if role == "ROLE: FINALIZER":
+                    return json.dumps(_final())
+                raise AssertionError(role)
+
+        slots = (
+            ProviderSlot(1, "OPENAI_COMPATIBLE", "candidate-1", "https://one.example.test/v1", failed_api_key, ("LIGHTING_DESIGNER",), 5),
+            ProviderSlot(2, "OPENAI_COMPATIBLE", "candidate-2", "https://two.example.test/v1", "private-candidate-key-2", ("LIGHTING_DESIGNER",), 5),
+            ProviderSlot(3, "OPENAI_COMPATIBLE_LOCAL", "support", "http://127.0.0.1:8080/v1", "", ("RESEARCHER", "CRITIC", "FINALIZER"), 5),
+        )
+        router = ProviderRouter(
+            "FALLBACK", slots, Adapter(), parallelism=2,
+            parallel_roles=("LIGHTING_DESIGNER",),
+        )
+        run = run_multi_agent_design(
+            router, request="parallel validation diagnostic request", repo_root=self.repo_root,
+            run_id=run_id, max_role_attempts=1,
+        )
+        return run, failed_api_key
 
     def _run_single_role_with_provider_fallback(self, role_name, success_artifact):
         role = role_name.upper()
@@ -531,6 +561,63 @@ class MultiAgentRuntimeTests(unittest.TestCase):
             self.assertEqual(provenance["attempted_provider_slots"], [1, 2])
             self.assertEqual(provenance["accepted_provider_slots"], [1, 2])
         self.assertEqual(run.final_design["schema"], "zen.autonomous_design.v0.1")
+        self.assertFalse((run.run_path / "attempts").exists())
+
+    def test_parallel_invalid_json_diagnostic_is_exact_and_valid_peer_is_accepted(self):
+        response = "not-json"
+        run, _ = self._run_parallel_validation_case("parallel-invalid-json-candidate", response)
+        failure_path = run.run_path / "attempts" / "lighting_designer-parallel-slot01.json"
+        self.assertTrue(failure_path.is_file())
+        failed = json.loads(failure_path.read_text(encoding="utf-8"))
+        self.assertEqual(failed["role"], "lighting_designer")
+        self.assertEqual(failed["slot_number"], 1)
+        self.assertEqual(failed["response_sha256"], hashlib.sha256(response.encode("utf-8")).hexdigest())
+        self.assertEqual(failed["response_characters"], len(response))
+        self.assertEqual(failed["validation_error_type"], "MultiAgentRunError")
+        self.assertEqual(failed["validation_error"], "Provider response was not valid JSON.")
+        self.assertEqual(failed["candidate_status"], "OUTPUT_VALIDATION_FAILURE")
+        self.assertEqual(failed["secret_check"], "PASS")
+        self.assertEqual(failed["raw_response"], response)
+        self.assertEqual(failed["CODEX_ARTISTIC_INTERVENTION"], "NONE")
+
+        parallel = json.loads((run.run_path / "diagnostics" / "lighting_designer-parallel.json").read_text(encoding="utf-8"))
+        first = next(item for item in parallel["provider_attempts"] if item["slot_number"] == 1)
+        self.assertEqual(first["validation_error_type"], failed["validation_error_type"])
+        self.assertEqual(first["validation_error"], failed["validation_error"])
+        self.assertEqual(parallel["parallel_runtime"]["accepted_provider_slots"], [2])
+        candidates = read_step_artifact("parallel-invalid-json-candidate", "lighting_designer")["candidate_artifacts"]
+        self.assertEqual(len(candidates), 1)
+        self.assertEqual(candidates[0]["provider"]["slot"], 2)
+        self.assertFalse((run.run_path / "attempts" / "lighting_designer-parallel-slot02.json").exists())
+
+    def test_parallel_wrong_schema_diagnostic_preserves_exact_validator_error(self):
+        response = json.dumps({"schema": "wrong.role.schema", "design_intent": {}})
+        run, _ = self._run_parallel_validation_case("parallel-wrong-schema-candidate", response)
+        expected = "Role output schema must be zen.multi_agent_designer_draft.v0.1."
+        failed = json.loads((run.run_path / "attempts" / "lighting_designer-parallel-slot01.json").read_text(encoding="utf-8"))
+        self.assertEqual(failed["validation_error"], expected)
+        self.assertEqual(failed["validation_error_type"], "MultiAgentRunError")
+        parallel = json.loads((run.run_path / "diagnostics" / "lighting_designer-parallel.json").read_text(encoding="utf-8"))
+        first = next(item for item in parallel["provider_attempts"] if item["slot_number"] == 1)
+        self.assertEqual(first["validation_error"], expected)
+        self.assertEqual(first["candidate_status"], "OUTPUT_VALIDATION_FAILURE")
+
+    def test_parallel_failed_candidate_containing_api_key_never_persists_raw_response(self):
+        secret = "private-candidate-key"
+        response = json.dumps({"schema": "wrong.role.schema", "echo": secret})
+        run, _ = self._run_parallel_validation_case(
+            "parallel-secret-failed-candidate", response, failed_api_key=secret,
+        )
+        failure_path = run.run_path / "attempts" / "lighting_designer-parallel-slot01.json"
+        failed = json.loads(failure_path.read_text(encoding="utf-8"))
+        self.assertEqual(failed["secret_check"], "FAIL")
+        self.assertEqual(failed["candidate_status"], "SECRET_REJECTION")
+        self.assertNotIn("raw_response", failed)
+        self.assertNotIn(secret, failure_path.read_text(encoding="utf-8"))
+        parallel = json.loads((run.run_path / "diagnostics" / "lighting_designer-parallel.json").read_text(encoding="utf-8"))
+        first = next(item for item in parallel["provider_attempts"] if item["slot_number"] == 1)
+        self.assertEqual(first["secret_check"], "FAIL")
+        self.assertNotIn(secret, json.dumps(parallel))
 
     def test_parallel_stage_diagnostics_survive_fallback_and_classify_failures(self):
         from collections import Counter

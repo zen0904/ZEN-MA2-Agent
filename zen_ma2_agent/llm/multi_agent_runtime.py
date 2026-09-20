@@ -39,6 +39,7 @@ RUN_SCHEMA = "zen.multi_agent_run.v0.1"
 STEP_SCHEMA = "zen.multi_agent_step.v0.1"
 FAILURE_SCHEMA = "zen.multi_agent_failure.v0.1"
 ATTEMPT_SCHEMA = "zen.multi_agent_attempt_diagnostic.v0.1"
+PARALLEL_CANDIDATE_ATTEMPT_SCHEMA = "zen.multi_agent_parallel_candidate_diagnostic.v0.1"
 
 
 class MultiAgentRunError(RuntimeError):
@@ -517,6 +518,43 @@ def _record_attempt_diagnostic(
     })
 
 
+def _bounded_validation_error(error: Exception, *, api_key: str) -> str:
+    message = str(error)
+    if api_key:
+        message = message.replace(api_key, "[REDACTED]")
+    return message[:500]
+
+
+def _record_parallel_candidate_failure(
+    path: Path,
+    *,
+    role_name: str,
+    slot: ProviderSlot,
+    content: str,
+    error: Exception,
+) -> tuple[bool, str]:
+    """Persist one transport-successful parallel response rejected by its role validator."""
+    secret_leaked = bool(slot.api_key and slot.api_key in content)
+    validation_error = _bounded_validation_error(error, api_key=slot.api_key)
+    diagnostic: dict[str, object] = {
+        "schema": PARALLEL_CANDIDATE_ATTEMPT_SCHEMA,
+        "role": role_name,
+        "provider": slot.safe_identity(),
+        "slot_number": slot.number,
+        "response_sha256": hashlib.sha256(content.encode("utf-8")).hexdigest(),
+        "response_characters": len(content),
+        "validation_error_type": type(error).__name__,
+        "validation_error": validation_error,
+        "candidate_status": "SECRET_REJECTION" if secret_leaked else "OUTPUT_VALIDATION_FAILURE",
+        "secret_check": "FAIL" if secret_leaked else "PASS",
+        "CODEX_ARTISTIC_INTERVENTION": "NONE",
+    }
+    if not secret_leaked:
+        diagnostic["raw_response"] = content
+    _write_json(path / "attempts" / f"{role_name}-parallel-slot{slot.number:02}.json", diagnostic)
+    return secret_leaked, validation_error
+
+
 def _record_model_context_diagnostic(
     path: Path,
     *,
@@ -750,7 +788,19 @@ def _run_parallel_role_candidates(
             artifact = validator(_parse_json(content))
         except (MultiAgentRunError, DesignValidationError) as exc:
             diagnostic["role_output_validation"] = "FAIL"
-            if diagnostic["secret_check"] == "FAIL":
+            secret_leaked, validation_error = _record_parallel_candidate_failure(
+                run_path,
+                role_name=role_name,
+                slot=slot,
+                content=content,
+                error=exc,
+            )
+            diagnostic["response_sha256"] = hashlib.sha256(content.encode("utf-8")).hexdigest()
+            diagnostic["response_characters"] = len(content)
+            diagnostic["validation_error_type"] = type(exc).__name__
+            diagnostic["validation_error"] = validation_error
+            diagnostic["secret_check"] = "FAIL" if secret_leaked else "PASS"
+            if secret_leaked:
                 diagnostic["candidate_status"] = "SECRET_REJECTION"
             continue
         diagnostic["role_output_validation"] = "PASS"
