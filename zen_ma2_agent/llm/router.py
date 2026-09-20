@@ -230,15 +230,45 @@ class OpenAICompatibleHTTPAdapter:
 
 
 class ProviderRouter:
-    def __init__(self, mode: str, slots: Iterable[ProviderSlot], adapter: OpenAICompatibleHTTPAdapter | None = None):
+    def __init__(
+        self,
+        mode: str,
+        slots: Iterable[ProviderSlot],
+        adapter: OpenAICompatibleHTTPAdapter | None = None,
+        *,
+        parallelism: int = 1,
+        parallel_roles: Iterable[str] = (),
+    ):
+        if not 1 <= parallelism <= 4:
+            raise ValueError("parallelism must be from 1 to 4.")
         self.mode = mode
         self.slots = tuple(slots)
         self.adapter = adapter or OpenAICompatibleHTTPAdapter()
+        self.parallelism = parallelism
+        self.parallel_roles = frozenset(role.strip().upper() for role in parallel_roles if role.strip())
 
     @classmethod
     def from_portable_config(cls, path: Path | None = None) -> "ProviderRouter":
         mode, slots = load_provider_slots(path)
-        return cls(mode, slots)
+        values = _read_private_env(path)
+        try:
+            parallelism = int(values.get("ZEN_PROVIDER_PARALLELISM", "1"))
+        except ValueError as exc:
+            raise ValueError("ZEN_PROVIDER_PARALLELISM must be an integer.") from exc
+        roles = tuple(
+            role.strip().upper()
+            for role in values.get("ZEN_PROVIDER_PARALLEL_ROLES", "").split(",")
+            if role.strip()
+        )
+        return cls(mode, slots, parallelism=parallelism, parallel_roles=roles)
+
+    def parallel_limit(self, role: str) -> int:
+        normalized = role.upper()
+        if self.parallelism <= 1:
+            return 1
+        if self.parallel_roles and normalized not in self.parallel_roles:
+            return 1
+        return min(self.parallelism, len(self.candidates(normalized)) or 1)
 
     def configured_slots(self) -> tuple[ProviderSlot, ...]:
         return tuple(slot for slot in self.slots if slot.configured)
