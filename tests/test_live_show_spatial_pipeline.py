@@ -14,10 +14,12 @@ from zen_ma2_agent.llm.live_show_snapshot import CurrentShowSnapshotInput, norma
 from zen_ma2_agent.llm.multi_agent_runtime import (
     LIVE_SHOW_ROLE_SEQUENCE,
     MultiAgentRunError,
+    ResearchSourceContractError,
     ROLE_SYSTEM_PROMPTS,
     _sha256,
     normalize_role_envelope,
     run_multi_agent_design,
+    validate_research_source_contract,
     validate_final_spatial_consistency,
     validate_position_design_artifact,
     validate_rig_design_artifact,
@@ -186,6 +188,34 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
         self.assertEqual(rig_diag["provider_routing"]["provider_capability_role"], "LIGHTING_DESIGNER")
         self.assertEqual(rig_diag["structural_normalization"], {"applied": False, "fields_added": []})
         self.assertFalse((run.run_path / "attempts" / "rig_designer-01.json").exists())
+
+    def test_current_show_facts_are_evidence_refs_not_research_sources(self):
+        class CurrentShowEvidenceAdapter(_RoleAdapter):
+            def complete(inner_self, slot, *, system, user):
+                if system.split(". ", 1)[0] == "ROLE: RESEARCHER":
+                    evidence_ref = f"CURRENT_SHOW:{inner_self.snapshot['show_fingerprint']}:fixture_inventory"
+                    return json.dumps(_research() | {"evidence_refs": [evidence_ref]})
+                return super(CurrentShowEvidenceAdapter, inner_self).complete(slot, system=system, user=user)
+
+        adapter = CurrentShowEvidenceAdapter(self.normalized)
+        run = run_multi_agent_design(
+            self._router(adapter),
+            request="BABYMONSTER - SHEESH",
+            repo_root=self.repo_root,
+            run_id="live-show-evidence-separation",
+            current_show_snapshot=self.input,
+        )
+        researcher = json.loads((run.run_path / "steps" / "researcher.json").read_text(encoding="utf-8"))["artifact"]
+        diagnostic = json.loads((run.run_path / "diagnostics" / "researcher-01.json").read_text(encoding="utf-8"))
+        evidence_ref = f"CURRENT_SHOW:{self.normalized['show_fingerprint']}:fixture_inventory"
+        self.assertEqual(researcher["evidence_refs"], [evidence_ref])
+        self.assertEqual(researcher["sources"], [])
+        self.assertEqual(diagnostic["RESEARCHER_EVIDENCE_REFS_VALID"], "PASS")
+        self.assertEqual(diagnostic["RESEARCHER_SOURCE_CONTRACT_VALID"], "PASS")
+        self.assertEqual(diagnostic["RESEARCHER_CANONICAL_SOURCE_RESOLUTION"], "PASS")
+        with self.assertRaises(ResearchSourceContractError):
+            validate_research_source_contract([evidence_ref], [])
+        self.assertEqual(run.final_design["schema"], "zen.autonomous_design.v0.1")
 
     def test_spatial_role_prompts_require_exact_first_schema_key(self):
         self.assertIn(

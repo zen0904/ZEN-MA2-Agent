@@ -80,6 +80,26 @@ class EvidenceValidationError(MultiAgentRunError):
     """Raised when a structurally valid artifact violates canonical evidence."""
 
 
+class ResearchEvidenceRefsValidationError(EvidenceValidationError):
+    """Researcher evidence_refs do not resolve through the canonical ledger."""
+
+
+class ResearchSourceContractError(EvidenceValidationError):
+    """Researcher sources violate the backend-provided exact-pair contract."""
+
+    def __init__(self, message: str, classification: str) -> None:
+        super().__init__(message)
+        self.classification = classification
+
+
+class ResearchCanonicalSourceResolutionError(EvidenceValidationError):
+    """Canonical source resolver rejected a structurally allowed source pair."""
+
+    def __init__(self, message: str, classification: str = "CANONICAL_SOURCE_RESOLUTION_ERROR") -> None:
+        super().__init__(message)
+        self.classification = classification
+
+
 @dataclass(frozen=True)
 class MultiAgentRun:
     run_id: str
@@ -466,14 +486,25 @@ RETRY_SAFETY_CONTRACT = (
     " Validation repair must be structural, not artistic invention."
 )
 
+RESEARCH_SOURCE_RETRY_CONTRACT = (
+    " Your previous sources value was invalid. Copy source identity objects exactly from research_context.allowed_source_refs, "
+    "or return an empty sources array. Do not use evidence_refs, summaries, titles, URLs, or prose as source identities. "
+    "Do not change valid observations merely to satisfy this repair."
+)
+
 
 ROLE_SYSTEM_PROMPTS = {
     "researcher": (
         "ROLE: RESEARCHER. Build a compact, provenance-bearing Evidence Pack from only the supplied request and context. "
         "Do not fabricate live research or sources. When no retrieved source is supplied, use research_status OFFLINE_CACHED_CONTEXT. "
-        "If evidence_refs or sources are included, use only identities present in the supplied evidence_ledger; never author canonical source metadata. "
-        "Return one compact JSON object only. Its first key must be schema with exact value zen.multi_agent_research.v0.1, followed by fields research_status, subject, sources, "
+        "Return exactly one JSON object. Its first key must be \"schema\" with exact value \"zen.multi_agent_research.v0.1\". "
+        "Required fields are research_status, subject, sources, "
         "transferable_design_observations, constraints, uncertainties, codex_artistic_intervention. "
+        "SOURCES CONTRACT: sources is an array. Every item must be copied exactly from research_context.allowed_source_refs as an object containing only source_id and record_id. "
+        "Do not transform, summarize, reconstruct, or manufacture source identities or metadata. Never put evidence_ref values, summaries, titles, URLs, or prose in sources. "
+        "If no allowed canonical source is needed, return \"sources\": []. "
+        "EVIDENCE CONTRACT: evidence_refs is separate from sources. If used, copy exact evidence_ref strings from evidence_ledger[].evidence_ref. "
+        "Verified current Show facts belong in evidence_refs, not sources. "
         "Do not emit MA2, Telnet, Lua, shell, or executable commands. Set codex_artistic_intervention to NONE."
     ),
     "lighting_designer": (
@@ -542,6 +573,80 @@ def project_role_source_registry(full_registry: dict[str, object], selected_reco
     selected_ids = {str(record.get("source_id")) for record in selected_records}
     sources = [source for source in full_registry.get("sources", []) if isinstance(source, dict) and source.get("source_id") in selected_ids]
     return {"schema": full_registry.get("schema", "zen.external_lighting_knowledge_source_registry.v0.1"), "registry_id": full_registry.get("registry_id", ""), "sources": sorted(sources, key=lambda item: str(item.get("source_id", "")))}
+
+
+def _project_allowed_source_refs(selected_records: list[dict[str, object]]) -> list[dict[str, str]]:
+    """Expose only exact canonical identity pairs for the selected records."""
+    return [
+        {"source_id": str(record["source_id"]), "record_id": str(record["record_id"])}
+        for record in selected_records
+        if isinstance(record.get("source_id"), str)
+        and record.get("source_id")
+        and isinstance(record.get("record_id"), str)
+        and record.get("record_id")
+    ]
+
+
+def validate_research_source_contract(
+    sources: object,
+    allowed_source_refs: object,
+) -> list[dict[str, str]]:
+    """Require Researcher citations to be exact backend-issued identity pairs."""
+    if not isinstance(allowed_source_refs, list) or any(
+        not isinstance(pair, dict)
+        or set(pair) != {"source_id", "record_id"}
+        or not isinstance(pair.get("source_id"), str)
+        or not pair.get("source_id")
+        or not isinstance(pair.get("record_id"), str)
+        or not pair.get("record_id")
+        for pair in allowed_source_refs
+    ):
+        raise MultiAgentRunError("Backend Researcher allowed_source_refs are malformed.")
+    if not isinstance(sources, list):
+        raise ResearchSourceContractError(
+            "Researcher sources must be an array of exact canonical source identity objects.",
+            "NON_CANONICAL_SOURCE_SHAPE",
+        )
+    if not sources:
+        return []
+    allowed_pairs = {(pair["source_id"], pair["record_id"]) for pair in allowed_source_refs}
+    allowed_records_by_source: dict[str, set[str]] = {}
+    for source_id, record_id in allowed_pairs:
+        allowed_records_by_source.setdefault(source_id, set()).add(record_id)
+    accepted: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for item in sources:
+        if (
+            not isinstance(item, dict)
+            or set(item) != {"source_id", "record_id"}
+            or not isinstance(item.get("source_id"), str)
+            or not item.get("source_id")
+            or not isinstance(item.get("record_id"), str)
+            or not item.get("record_id")
+        ):
+            raise ResearchSourceContractError(
+                "Researcher sources must contain only exact source_id/record_id objects from allowed_source_refs.",
+                "NON_CANONICAL_SOURCE_SHAPE",
+            )
+        pair = (item["source_id"], item["record_id"])
+        if pair in seen:
+            raise ResearchSourceContractError(
+                "Researcher sources contain a duplicate canonical identity pair.",
+                "SOURCE_PAIR_NOT_ALLOWED",
+            )
+        seen.add(pair)
+        if pair not in allowed_pairs:
+            if pair[0] in allowed_records_by_source:
+                raise ResearchSourceContractError(
+                    "Researcher paired an allowed source_id with a different record_id.",
+                    "SOURCE_RECORD_MISMATCH",
+                )
+            raise ResearchSourceContractError(
+                "Researcher source identity pair is not present in allowed_source_refs.",
+                "SOURCE_PAIR_NOT_ALLOWED",
+            )
+        accepted.append({"source_id": pair[0], "record_id": pair[1]})
+    return accepted
 
 
 def _project_artifact_fields(artifact: dict[str, object], fields: tuple[str, ...]) -> dict[str, object]:
@@ -635,6 +740,7 @@ def _role_context(
             "research_context": {
                 "professional_lighting_design_knowledge": knowledge_context,
                 "source_provenance": role_registry,
+                "allowed_source_refs": _project_allowed_source_refs(selected_records),
             }
         }
     live_snapshot = context.get("current_show_snapshot")
@@ -764,28 +870,97 @@ def _read_candidate_sets(run_id: str) -> dict[str, list[dict[str, object]]]:
     return candidate_sets
 
 
-def _validate_artifact_evidence(role_name: str, artifact: dict[str, object], context: dict[str, object]) -> dict[str, object]:
+def _validate_artifact_evidence(
+    role_name: str,
+    artifact: dict[str, object],
+    context: dict[str, object],
+    *,
+    allowed_source_refs: list[dict[str, str]] | None = None,
+) -> dict[str, object]:
     """Bind every role's optional evidence refs to the canonical runtime ledger."""
     ledger = context.get("evidence_ledger", {})
     refs = artifact.get("evidence_refs", [])
     if refs is None:
         refs = []
     if not isinstance(refs, list) or any(not isinstance(ref, str) for ref in refs):
-        raise EvidenceValidationError(f"{role_name} evidence_refs must be a list of strings.")
+        error_type = ResearchEvidenceRefsValidationError if role_name == "researcher" else EvidenceValidationError
+        raise error_type(f"{role_name} evidence_refs must be a list of strings.")
     try:
         validate_evidence_refs(refs, ledger)
     except ValueError as exc:
-        raise EvidenceValidationError(str(exc)) from exc
+        error_type = ResearchEvidenceRefsValidationError if role_name == "researcher" else EvidenceValidationError
+        raise error_type(str(exc)) from exc
     if role_name == "researcher":
+        # Validate exact backend-issued pairs before the full canonical resolver.
+        # Provenance is never inferred, coerced, or silently repaired here.
+        pairs = allowed_source_refs if allowed_source_refs is not None else []
+        valid_sources = validate_research_source_contract(artifact.get("sources", []), pairs)
         try:
             artifact["resolved_sources"] = resolve_research_sources(
-                sources=artifact.get("sources", []),
+                sources=valid_sources,
                 source_registry=context.get("categories", {}).get("source_provenance", {}),
                 records=context.get("canonical_knowledge_records", []),
             )
         except (KeyError, TypeError, ValueError) as exc:
-            raise EvidenceValidationError(str(exc)) from exc
+            classification = "SOURCE_RECORD_MISMATCH" if "identity mismatch" in str(exc) else "CANONICAL_SOURCE_RESOLUTION_ERROR"
+            raise ResearchCanonicalSourceResolutionError(str(exc), classification) from exc
     return artifact
+
+
+def _researcher_source_diagnostic_values(
+    artifact: object,
+    allowed_source_refs: object,
+    *,
+    error: Exception | None = None,
+) -> dict[str, object]:
+    """Return bounded source-contract diagnostics without registry contents."""
+    allowed_count = len(allowed_source_refs) if isinstance(allowed_source_refs, list) else 0
+    sources = artifact.get("sources") if isinstance(artifact, dict) else None
+    output_count = len(sources) if isinstance(sources, list) else None
+    if isinstance(sources, list) and not sources:
+        raw_shape = "EMPTY_ARRAY"
+    elif isinstance(sources, list) and all(
+        isinstance(item, dict)
+        and set(item) == {"source_id", "record_id"}
+        and isinstance(item.get("source_id"), str)
+        and isinstance(item.get("record_id"), str)
+        for item in sources
+    ):
+        raw_shape = "CANONICAL_PAIR_ARRAY"
+    elif isinstance(sources, list):
+        raw_shape = "NON_CANONICAL_SOURCE_SHAPE"
+    else:
+        raw_shape = "MISSING_OR_NON_ARRAY"
+
+    if isinstance(error, ResearchSourceContractError):
+        source_contract, canonical_resolution = "FAIL", "NOT_RUN"
+        failure_class = error.classification
+        evidence_refs = "PASS"
+    elif isinstance(error, ResearchCanonicalSourceResolutionError):
+        source_contract, canonical_resolution = "PASS", "FAIL"
+        failure_class = error.classification
+        evidence_refs = "PASS"
+    elif isinstance(error, ResearchEvidenceRefsValidationError):
+        source_contract, canonical_resolution = "NOT_RUN", "NOT_RUN"
+        failure_class = "INVALID_EVIDENCE_REFS"
+        evidence_refs = "FAIL"
+    elif error is not None:
+        source_contract, canonical_resolution = "NOT_RUN", "NOT_RUN"
+        failure_class = None
+        evidence_refs = "NOT_RUN"
+    else:
+        source_contract, canonical_resolution = "PASS", "PASS"
+        failure_class = None
+        evidence_refs = "PASS"
+    return {
+        "RESEARCHER_ALLOWED_SOURCE_REF_COUNT": allowed_count,
+        "RESEARCHER_OUTPUT_SOURCE_COUNT": output_count,
+        "RESEARCHER_RAW_SOURCE_SHAPE": raw_shape,
+        "RESEARCHER_SOURCE_CONTRACT_VALID": source_contract,
+        "RESEARCHER_CANONICAL_SOURCE_RESOLUTION": canonical_resolution,
+        "RESEARCHER_EVIDENCE_REFS_VALID": evidence_refs,
+        "RESEARCHER_SOURCE_FAILURE_CLASS": failure_class,
+    }
 
 
 def _write_json(path: Path, value: object) -> None:
@@ -912,6 +1087,7 @@ def _record_attempt_diagnostic(
     provider_elapsed_seconds: float | None = None,
     failure_class: str = "OUTPUT_VALIDATION",
     structural_normalization: dict[str, object] | None = None,
+    researcher_diagnostics: dict[str, object] | None = None,
 ) -> None:
     """Keep an agent-owned failed response for local validation diagnosis."""
     secret_leaked = bool(api_key and api_key in content)
@@ -931,6 +1107,8 @@ def _record_attempt_diagnostic(
     }
     if not secret_leaked:
         diagnostic["raw_response"] = content
+    if researcher_diagnostics:
+        diagnostic.update(researcher_diagnostics)
     _write_json(path / "attempts" / f"{role_name}-{attempt:02}.json", diagnostic)
 
 
@@ -1017,7 +1195,7 @@ def _record_model_context_diagnostic(
 ) -> Path:
     metadata = payload.get("role_context_metadata", {})
     diagnostic_path = path / "diagnostics" / (diagnostic_name or f"{role_name}-{attempt:02}.json")
-    _write_json(diagnostic_path, {
+    diagnostic: dict[str, object] = {
         "schema": "zen.model_context_diagnostic.v0.1",
         "role": role_name,
         "attempt": attempt,
@@ -1033,11 +1211,25 @@ def _record_model_context_diagnostic(
         "failure_class": failure_class,
         "structural_normalization": _empty_structural_normalization(),
         "secrets_included": False,
-    })
+    }
+    if role_name == "researcher":
+        research_context = payload.get("research_context", {})
+        allowed_source_refs = research_context.get("allowed_source_refs", []) if isinstance(research_context, dict) else []
+        diagnostic.update(_researcher_source_diagnostic_values({}, allowed_source_refs))
+        diagnostic["RESEARCHER_SOURCE_CONTRACT_VALID"] = "NOT_RUN"
+        diagnostic["RESEARCHER_CANONICAL_SOURCE_RESOLUTION"] = "NOT_RUN"
+        diagnostic["RESEARCHER_EVIDENCE_REFS_VALID"] = "NOT_RUN"
+    _write_json(diagnostic_path, diagnostic)
     return diagnostic_path
 
 
-def _update_model_context_diagnostic(path: Path, *, provider_elapsed_seconds: float, failure_class: str) -> None:
+def _update_model_context_diagnostic(
+    path: Path,
+    *,
+    provider_elapsed_seconds: float,
+    failure_class: str,
+    extra: dict[str, object] | None = None,
+) -> None:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
@@ -1046,6 +1238,8 @@ def _update_model_context_diagnostic(path: Path, *, provider_elapsed_seconds: fl
         return
     value["provider_elapsed_seconds"] = round(provider_elapsed_seconds, 3)
     value["failure_class"] = failure_class
+    if extra:
+        value.update(extra)
     _write_json(path, value)
 
 
@@ -1156,12 +1350,24 @@ def _run_role(
     last_error: Exception | None = None
     for attempt in range(1, max_attempts + 1):
         content = ""
+        parsed: object | None = None
         selected_slot: ProviderSlot | None = None
         provider_attempts: tuple[dict[str, object], ...] = ()
         structural_normalization = _empty_structural_normalization()
         system = system_prompt or ROLE_SYSTEM_PROMPTS[role_name]
         if last_error is not None:
             system += f" Previous attempt failed validation: {last_error}. Correct only the structural issue and return JSON only." + RETRY_SAFETY_CONTRACT
+            if role_name == "researcher" and isinstance(
+                last_error,
+                (ResearchSourceContractError, ResearchCanonicalSourceResolutionError),
+            ):
+                system += RESEARCH_SOURCE_RETRY_CONTRACT
+        research_context = payload.get("research_context", {})
+        allowed_source_refs = (
+            research_context.get("allowed_source_refs", [])
+            if isinstance(research_context, dict)
+            else []
+        )
         diagnostic_path: Path | None = None
         started = time.monotonic()
         try:
@@ -1184,12 +1390,43 @@ def _run_role(
             _update_model_context_diagnostic(path=diagnostic_path, provider_elapsed_seconds=elapsed, failure_class="SUCCESS")
             try:
                 parsed = _parse_json(content)
+                if role_name == "researcher":
+                    source_diagnostics = _researcher_source_diagnostic_values(parsed, allowed_source_refs)
+                    source_diagnostics.update({
+                        "RESEARCHER_SOURCE_CONTRACT_VALID": "NOT_RUN",
+                        "RESEARCHER_CANONICAL_SOURCE_RESOLUTION": "NOT_RUN",
+                        "RESEARCHER_EVIDENCE_REFS_VALID": "NOT_RUN",
+                    })
+                    _update_model_context_diagnostic(
+                        path=diagnostic_path,
+                        provider_elapsed_seconds=elapsed,
+                        failure_class="SUCCESS",
+                        extra=source_diagnostics,
+                    )
                 normalized, structural_normalization = normalize_role_envelope(role_name, parsed)
                 _update_structural_normalization_diagnostic(diagnostic_path, structural_normalization)
                 artifact = validator(normalized)
             except (MultiAgentRunError, DesignValidationError) as exc:
-                _update_model_context_diagnostic(path=diagnostic_path, provider_elapsed_seconds=elapsed, failure_class="OUTPUT_VALIDATION")
+                researcher_diagnostics = (
+                    _researcher_source_diagnostic_values(parsed, allowed_source_refs, error=exc)
+                    if role_name == "researcher" and parsed is not None
+                    else None
+                )
+                _update_model_context_diagnostic(
+                    path=diagnostic_path,
+                    provider_elapsed_seconds=elapsed,
+                    failure_class="OUTPUT_VALIDATION",
+                    extra=researcher_diagnostics,
+                )
                 raise exc
+            if role_name == "researcher":
+                researcher_diagnostics = _researcher_source_diagnostic_values(parsed, allowed_source_refs)
+                _update_model_context_diagnostic(
+                    path=diagnostic_path,
+                    provider_elapsed_seconds=elapsed,
+                    failure_class="SUCCESS",
+                    extra=researcher_diagnostics,
+                )
             _write_single_role_provider_diagnostic(
                 diagnostic_path,
                 role_name=role_name,
@@ -1212,9 +1449,19 @@ def _run_role(
             return artifact, slot, attempt
         except (ProviderUnavailable, MultiAgentRunError, DesignValidationError) as exc:
             elapsed = time.monotonic() - started
+            researcher_diagnostics = (
+                _researcher_source_diagnostic_values(parsed, allowed_source_refs, error=exc)
+                if role_name == "researcher" and parsed is not None
+                else None
+            )
             if diagnostic_path is not None:
                 classification = _failure_class(exc)
-                _update_model_context_diagnostic(path=diagnostic_path, provider_elapsed_seconds=elapsed, failure_class=classification)
+                _update_model_context_diagnostic(
+                    path=diagnostic_path,
+                    provider_elapsed_seconds=elapsed,
+                    failure_class=classification,
+                    extra=researcher_diagnostics,
+                )
                 if isinstance(exc, ProviderUnavailable):
                     provider_attempts = tuple(getattr(exc, "provider_attempts", ()))
                 _write_single_role_provider_diagnostic(
@@ -1242,6 +1489,7 @@ def _run_role(
                     provider_elapsed_seconds=elapsed,
                     failure_class=_failure_class(exc),
                     structural_normalization=structural_normalization,
+                    researcher_diagnostics=researcher_diagnostics,
                 )
             if _failure_class(exc) == "TRANSPORT_TIMEOUT":
                 break
@@ -1581,7 +1829,18 @@ def run_multi_agent_design(
 
                 def validate_role_with_evidence(value: object) -> dict[str, object]:
                     validated = schema_validator(value)
-                    return _validate_artifact_evidence(role_name, validated, context)
+                    researcher_context = payload.get("research_context", {})
+                    allowed_refs = (
+                        researcher_context.get("allowed_source_refs", [])
+                        if role_name == "researcher" and isinstance(researcher_context, dict)
+                        else None
+                    )
+                    return _validate_artifact_evidence(
+                        role_name,
+                        validated,
+                        context,
+                        allowed_source_refs=allowed_refs,
+                    )
 
                 artifact, slot, attempts = _run_role(
                     router,

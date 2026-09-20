@@ -11,7 +11,16 @@ from pathlib import Path
 from unittest.mock import patch
 
 from zen_ma2_agent.llm.autonomous_designer import build_designer_context
-from zen_ma2_agent.llm.multi_agent_runtime import MultiAgentRunError, _role_context, _run_role, run_multi_agent_design
+from zen_ma2_agent.llm.multi_agent_runtime import (
+    MultiAgentRunError,
+    ResearchSourceContractError,
+    ROLE_SYSTEM_PROMPTS,
+    _role_context,
+    _run_role,
+    _validate_artifact_evidence,
+    run_multi_agent_design,
+    validate_research_source_contract,
+)
 from zen_ma2_agent.llm.router import ProviderRouter, ProviderSlot, ProviderUnavailable
 from zen_ma2_agent.run_checkpoints import read_step_artifact
 
@@ -367,24 +376,120 @@ class MultiAgentRuntimeTests(unittest.TestCase):
         self.assertEqual(selected["role_output_validation"], "PASS")
         self.assertEqual(selected["evidence_validation"], "FAIL")
         self.assertEqual(selected["candidate_status"], "EVIDENCE_VALIDATION_FAILURE")
+        self.assertEqual(diagnostic["RESEARCHER_SOURCE_CONTRACT_VALID"], "FAIL")
+        self.assertEqual(diagnostic["RESEARCHER_CANONICAL_SOURCE_RESOLUTION"], "NOT_RUN")
+        self.assertEqual(diagnostic["RESEARCHER_SOURCE_FAILURE_CLASS"], "NON_CANONICAL_SOURCE_SHAPE")
+        self.assertIn("Copy source identity objects exactly from research_context.allowed_source_refs", adapter.calls[1][1])
         success = json.loads((run.run_path / "diagnostics" / "researcher-02.json").read_text(encoding="utf-8"))
         selected_success = success["provider_routing"]["provider_attempts"][-1]
         self.assertEqual(selected_success["evidence_validation"], "PASS")
         self.assertEqual(run.final_design["schema"], "zen.autonomous_design.v0.1")
 
     def test_valid_research_source_and_knowledge_reference_are_resolved_by_runtime(self):
-        import pathlib
-        pack = json.loads((pathlib.Path(__file__).resolve().parents[1] / "data/external_lighting_knowledge_pack_001.json").read_text(encoding="utf-8"))
-        record = pack["records"][0]
+        context = build_designer_context(self.repo_root)
+        researcher_payload = _role_context("researcher", request="synthetic request", context=context, completed={})
+        pair = researcher_payload["research_context"]["allowed_source_refs"][0]
         research = _research() | {
-            "sources": [{"source_id": record["source_id"], "record_id": record["record_id"]}],
-            "evidence_refs": [record["record_id"]],
+            "sources": [pair],
+            "evidence_refs": [pair["record_id"]],
         }
         router, _ = self._router([research, _draft(), _critic(), _final()])
         run = run_multi_agent_design(router, request="synthetic request", repo_root=self.repo_root, run_id="valid-evidence")
         stored = read_step_artifact("valid-evidence", "researcher")["artifact"]
-        self.assertEqual(stored["resolved_sources"][0]["source_id"], record["source_id"])
+        self.assertEqual(stored["resolved_sources"][0]["source_id"], pair["source_id"])
+        diagnostic = json.loads((run.run_path / "diagnostics" / "researcher-01.json").read_text(encoding="utf-8"))
+        self.assertEqual(diagnostic["RESEARCHER_SOURCE_CONTRACT_VALID"], "PASS")
+        self.assertEqual(diagnostic["RESEARCHER_CANONICAL_SOURCE_RESOLUTION"], "PASS")
+        self.assertEqual(diagnostic["RESEARCHER_EVIDENCE_REFS_VALID"], "PASS")
         self.assertEqual(run.final_design["schema"], "zen.autonomous_design.v0.1")
+
+    def test_researcher_without_selected_sources_accepts_empty_sources(self):
+        context = build_designer_context(self.repo_root)
+        context["canonical_knowledge_records"] = []
+        context["evidence_ledger"] = {"entries": [], "available_verified_facts": []}
+        payload = _role_context("researcher", request="no sources selected", context=context, completed={})
+        allowed = payload["research_context"]["allowed_source_refs"]
+        self.assertEqual(allowed, [])
+        artifact = _validate_artifact_evidence(
+            "researcher", _research(), context, allowed_source_refs=allowed
+        )
+        self.assertEqual(artifact["resolved_sources"], [])
+
+    def test_researcher_contract_exposes_exact_selected_canonical_pairs(self):
+        context = build_designer_context(self.repo_root)
+        payload = _role_context("researcher", request="hierarchy and contrast", context=context, completed={})
+        allowed = payload["research_context"]["allowed_source_refs"]
+        metadata = payload["role_context_metadata"]
+        selected_record_ids = set(metadata["selected_knowledge_ids"])
+        selected_source_ids = set(metadata["selected_source_ids"])
+        expected_pairs = {
+            (record["source_id"], record["record_id"])
+            for record in context["canonical_knowledge_records"]
+            if record.get("record_id") in selected_record_ids
+            and record.get("source_id")
+        }
+        self.assertTrue(allowed)
+        self.assertTrue(all(set(pair) == {"source_id", "record_id"} for pair in allowed))
+        self.assertTrue(all(pair["record_id"] in selected_record_ids for pair in allowed))
+        self.assertTrue(all(pair["source_id"] in selected_source_ids for pair in allowed))
+        self.assertEqual({(pair["source_id"], pair["record_id"]) for pair in allowed}, expected_pairs)
+        prompt = ROLE_SYSTEM_PROMPTS["researcher"]
+        self.assertIn('first key must be "schema" with exact value "zen.multi_agent_research.v0.1"', prompt)
+        self.assertIn("Never put evidence_ref values, summaries, titles, URLs, or prose in sources", prompt)
+        self.assertIn("Verified current Show facts belong in evidence_refs, not sources", prompt)
+
+    def test_researcher_source_contract_rejects_noncanonical_shapes_and_pairs(self):
+        allowed = [
+            {"source_id": "CANONICAL-1", "record_id": "RECORD-1"},
+            {"source_id": "CANONICAL-2", "record_id": "RECORD-2"},
+        ]
+        invalid_values = [
+            ([{"evidence_ref": "CURRENT_SHOW:abc:fixture_inventory", "summary": "verified"}], "NON_CANONICAL_SOURCE_SHAPE"),
+            (["CURRENT_SHOW:abc:fixture_inventory"], "NON_CANONICAL_SOURCE_SHAPE"),
+            (["a source summary in prose"], "NON_CANONICAL_SOURCE_SHAPE"),
+            ([{"source_id": "UNKNOWN", "record_id": "RECORD-1"}], "SOURCE_PAIR_NOT_ALLOWED"),
+            ([{"source_id": "CANONICAL-1", "record_id": "UNKNOWN"}], "SOURCE_RECORD_MISMATCH"),
+            ([{"source_id": "CANONICAL-1", "record_id": "RECORD-2"}], "SOURCE_RECORD_MISMATCH"),
+            ([allowed[0], allowed[0]], "SOURCE_PAIR_NOT_ALLOWED"),
+        ]
+        for sources, expected_class in invalid_values:
+            with self.subTest(sources=sources):
+                with self.assertRaises(ResearchSourceContractError) as raised:
+                    validate_research_source_contract(sources, allowed)
+                self.assertEqual(raised.exception.classification, expected_class)
+        self.assertEqual(validate_research_source_contract([], allowed), [])
+
+    def test_invalid_researcher_sources_are_not_normalized_and_raw_response_is_preserved(self):
+        invalid = _research() | {
+            "sources": [{"evidence_ref": "CURRENT_SHOW:abc:fixture_inventory", "summary": "verified inventory"}],
+        }
+        raw_response = json.dumps(invalid)
+        router, adapter = self._router([raw_response, _research(), _draft(), _critic(), _final()])
+        run = run_multi_agent_design(
+            router,
+            request="source contract repair",
+            repo_root=self.repo_root,
+            run_id="research-source-raw-preserved",
+            max_role_attempts=2,
+        )
+        first_attempt = json.loads((run.run_path / "attempts" / "researcher-01.json").read_text(encoding="utf-8"))
+        self.assertEqual(first_attempt["raw_response"], raw_response)
+        self.assertEqual(first_attempt["RESEARCHER_RAW_SOURCE_SHAPE"], "NON_CANONICAL_SOURCE_SHAPE")
+        self.assertEqual(first_attempt["RESEARCHER_SOURCE_CONTRACT_VALID"], "FAIL")
+        self.assertEqual(read_step_artifact("research-source-raw-preserved", "researcher")["attempts"], 2)
+        self.assertIn("Do not use evidence_refs, summaries, titles, URLs, or prose as source identities", adapter.calls[1][1])
+
+    def test_researcher_empty_sources_are_backward_compatible_with_bounded_diagnostics(self):
+        router, adapter = self._router([_research(), _draft(), _critic(), _final()])
+        run = run_multi_agent_design(router, request="no external source needed", repo_root=self.repo_root, run_id="empty-sources")
+        payload = json.loads(adapter.calls[0][2])
+        diagnostic = json.loads((run.run_path / "diagnostics" / "researcher-01.json").read_text(encoding="utf-8"))
+        self.assertEqual(read_step_artifact("empty-sources", "researcher")["artifact"]["sources"], [])
+        self.assertEqual(diagnostic["RESEARCHER_ALLOWED_SOURCE_REF_COUNT"], len(payload["research_context"]["allowed_source_refs"]))
+        self.assertEqual(diagnostic["RESEARCHER_OUTPUT_SOURCE_COUNT"], 0)
+        self.assertEqual(diagnostic["RESEARCHER_SOURCE_CONTRACT_VALID"], "PASS")
+        self.assertEqual(diagnostic["RESEARCHER_CANONICAL_SOURCE_RESOLUTION"], "PASS")
+        self.assertNotIn("source_provenance", json.dumps(diagnostic))
 
     def test_role_context_uses_deterministic_knowledge_projection_without_blind_truncation(self):
         router, adapter = self._router([_research(), _draft(), _critic(), _final()])
