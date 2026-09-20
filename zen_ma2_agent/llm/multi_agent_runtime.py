@@ -211,12 +211,12 @@ ROLE_SYSTEM_PROMPTS = {
         "ROLE: CRITIC. Independently inspect the supplied draft against supplied constraints and identify strengths, problems with severity, "
         "and a severity classification with actionable revision_requests. Check unsupported features, repetitive/mechanical choices, weak hierarchy, missing negative space, "
         "Use evidence_refs only when they exist in the supplied evidence_ledger. "
-        "handover/editability risks, and conflicts with known Show constraints. Do not rubber-stamp the draft. Return one compact JSON object only. Its first key must be schema with exact value "
+        "handover/editability risks, and conflicts with known Show constraints. If designer_candidates is supplied, compare all candidates and identify the strongest valid elements rather than assuming the primary draft is best. Do not rubber-stamp the draft. Return one compact JSON object only. Its first key must be schema with exact value "
         "zen.multi_agent_critic.v0.1, followed by fields strengths, problems, severity, revision_requests, codex_artistic_intervention. "
         "Do not emit executable commands. Set codex_artistic_intervention to NONE."
     ),
     "finalizer": (
-        "ROLE: FINALIZER. Produce the corrected final autonomous design using the supplied request, bounded context, research, draft, and critique. "
+        "ROLE: FINALIZER. Produce the corrected final autonomous design using the supplied request, bounded context, research, draft, and critique. If designer_candidates or critic_candidates are supplied, synthesize only their strongest valid, evidence-supported elements; candidate presence does not make a claim true. "
         "Return exactly one compact JSON object. Its first key must be schema with exact value zen.autonomous_design.v0.1. Required fields are schema, design_intent, visual_strategy, "
         "virtual_rig, position_vocabulary, main_sequence, free_cue_layer, evidence_trace, codex_artistic_intervention. "
         "Retain uncertainty rather than inventing facts. Never emit MA2, Telnet, Lua, shell, or executable commands. "
@@ -287,7 +287,15 @@ def _project_finalization_context(context: dict[str, object]) -> dict[str, objec
     }
 
 
-def _role_context(role_name: str, *, request: str, context: dict[str, object], completed: dict[str, dict[str, object]]) -> dict[str, object]:
+def _role_context(
+    role_name: str,
+    *,
+    request: str,
+    context: dict[str, object],
+    completed: dict[str, dict[str, object]],
+    candidate_sets: dict[str, list[dict[str, object]]] | None = None,
+) -> dict[str, object]:
+    candidate_sets = candidate_sets or {}
     categories = context.get("categories", {})
     # Retrieval is role-specific over the complete backend corpus.  The prior
     # generic 12-record seed is intentionally not used as a model-facing pool.
@@ -342,6 +350,7 @@ def _role_context(role_name: str, *, request: str, context: dict[str, object], c
         return common | {
             "research_artifact": completed["researcher"],
             "designer_draft": completed["lighting_designer"],
+            "designer_candidates": candidate_sets.get("lighting_designer", [completed["lighting_designer"]]),
             "relevant_show_constraints": {
                 "fixture_technical_capability": categories.get("fixture_technical_capability", {}),
                 "rig_spatial_visual_affordance": categories.get("rig_spatial_visual_affordance", {}),
@@ -350,7 +359,15 @@ def _role_context(role_name: str, *, request: str, context: dict[str, object], c
     return common | {
         "research_artifact": _project_research_artifact(completed["researcher"]),
         "designer_draft": _project_artifact_fields(completed["lighting_designer"], FINALIZER_DESIGNER_FIELDS),
+        "designer_candidates": [
+            _project_artifact_fields(item, FINALIZER_DESIGNER_FIELDS)
+            for item in candidate_sets.get("lighting_designer", [completed["lighting_designer"]])
+        ],
         "critic_artifact": _project_artifact_fields(completed["critic"], FINALIZER_CRITIC_FIELDS),
+        "critic_candidates": [
+            _project_artifact_fields(item, FINALIZER_CRITIC_FIELDS)
+            for item in candidate_sets.get("critic", [completed["critic"]])
+        ],
         "finalization_context": _project_finalization_context(context),
     }
 
@@ -365,6 +382,25 @@ def _read_completed_artifacts(run_id: str) -> dict[str, dict[str, object]]:
         if isinstance(artifact, dict):
             completed[role_name] = artifact
     return completed
+
+
+def _read_candidate_sets(run_id: str) -> dict[str, list[dict[str, object]]]:
+    candidate_sets: dict[str, list[dict[str, object]]] = {}
+    for role_name in ("lighting_designer", "critic"):
+        envelope = read_step_artifact(run_id, role_name)
+        if not isinstance(envelope, dict):
+            continue
+        raw = envelope.get("candidate_artifacts")
+        if not isinstance(raw, list):
+            continue
+        artifacts = [
+            item.get("artifact")
+            for item in raw
+            if isinstance(item, dict) and isinstance(item.get("artifact"), dict)
+        ]
+        if artifacts:
+            candidate_sets[role_name] = artifacts
+    return candidate_sets
 
 
 def _validate_artifact_evidence(role_name: str, artifact: dict[str, object], context: dict[str, object]) -> dict[str, object]:
@@ -585,6 +621,71 @@ def _run_role(
     raise failure from last_error
 
 
+def _run_parallel_role_candidates(
+    router: ProviderRouter,
+    *,
+    role_name: str,
+    payload: dict[str, object],
+    run_path: Path,
+    limit: int,
+) -> list[tuple[dict[str, object], ProviderSlot]]:
+    """Run one role on independent providers and retain valid candidates.
+
+    This is candidate generation only. Every output still passes the same role
+    validator and later evidence validation. If all parallel candidates fail,
+    the caller falls back to the normal bounded retry path.
+    """
+    validator = ROLE_VALIDATORS[role_name]
+    system = ROLE_SYSTEM_PROMPTS[role_name]
+    user = _canonical_json(payload)
+    started = time.monotonic()
+    diagnostic_path = _record_model_context_diagnostic(
+        run_path,
+        role_name=role_name,
+        attempt=1,
+        system=system,
+        user=user,
+        payload=payload,
+    )
+    try:
+        completions = router.complete_parallel(
+            role=ROLE_ROUTER_NAMES[role_name],
+            system=system,
+            user=user,
+            limit=limit,
+        )
+    except ProviderUnavailable as exc:
+        _update_model_context_diagnostic(
+            path=diagnostic_path,
+            provider_elapsed_seconds=time.monotonic() - started,
+            failure_class=_failure_class(exc),
+        )
+        return []
+
+    valid: list[tuple[dict[str, object], ProviderSlot]] = []
+    for content, slot in completions:
+        try:
+            artifact = validator(_parse_json(content))
+        except (MultiAgentRunError, DesignValidationError) as exc:
+            _record_attempt_diagnostic(
+                run_path,
+                role_name=role_name,
+                attempt=slot.number,
+                content=content,
+                error=exc,
+                provider_elapsed_seconds=time.monotonic() - started,
+                failure_class="OUTPUT_VALIDATION",
+            )
+            continue
+        valid.append((artifact, slot))
+    _update_model_context_diagnostic(
+        path=diagnostic_path,
+        provider_elapsed_seconds=time.monotonic() - started,
+        failure_class="SUCCESS" if valid else "OUTPUT_VALIDATION",
+    )
+    return valid
+
+
 def _new_run_id() -> str:
     return f"zen-{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}-{uuid4().hex[:10]}"
 
@@ -649,6 +750,7 @@ def run_multi_agent_design(
     }
     _write_run_state(path, state)
     completed = {} if restart_run else _read_completed_artifacts(run_id)
+    candidate_sets = {} if restart_run else _read_candidate_sets(run_id)
     started_from = ROLE_SEQUENCE[0] if restart_run else resume_point
     active_role = started_from or ROLE_SEQUENCE[0]
 
@@ -657,17 +759,49 @@ def run_multi_agent_design(
             if role_name in completed and not restart_run:
                 continue
             active_role = role_name
-            payload = _role_context(role_name, request=request, context=context, completed=completed)
-            artifact, slot, attempts = _run_role(
-                router,
-                role_name=role_name,
-                payload=payload,
-                max_attempts=max_role_attempts,
-                run_path=path,
+            payload = _role_context(
+                role_name,
+                request=request,
+                context=context,
+                completed=completed,
+                candidate_sets=candidate_sets,
             )
-            artifact = _validate_artifact_evidence(role_name, artifact, context)
-            if slot.api_key and slot.api_key in _canonical_json(artifact):
-                raise MultiAgentRunError("Role artifact contained a provider secret and was rejected.")
+            parallel_results: list[tuple[dict[str, object], ProviderSlot]] = []
+            parallel_limit = router.parallel_limit(ROLE_ROUTER_NAMES[role_name])
+            if role_name in {"lighting_designer", "critic"} and parallel_limit > 1:
+                parallel_results = _run_parallel_role_candidates(
+                    router,
+                    role_name=role_name,
+                    payload=payload,
+                    run_path=path,
+                    limit=parallel_limit,
+                )
+
+            if parallel_results:
+                validated_candidates: list[tuple[dict[str, object], ProviderSlot]] = []
+                for candidate, candidate_slot in parallel_results:
+                    candidate = _validate_artifact_evidence(role_name, candidate, context)
+                    if candidate_slot.api_key and candidate_slot.api_key in _canonical_json(candidate):
+                        raise MultiAgentRunError("Role artifact contained a provider secret and was rejected.")
+                    validated_candidates.append((candidate, candidate_slot))
+                artifact, slot = validated_candidates[0]
+                attempts = 1
+                candidate_sets[role_name] = [candidate for candidate, _ in validated_candidates]
+            else:
+                artifact, slot, attempts = _run_role(
+                    router,
+                    role_name=role_name,
+                    payload=payload,
+                    max_attempts=max_role_attempts,
+                    run_path=path,
+                )
+                artifact = _validate_artifact_evidence(role_name, artifact, context)
+                if slot.api_key and slot.api_key in _canonical_json(artifact):
+                    raise MultiAgentRunError("Role artifact contained a provider secret and was rejected.")
+                validated_candidates = [(artifact, slot)]
+                if role_name in {"lighting_designer", "critic"}:
+                    candidate_sets[role_name] = [artifact]
+
             envelope = {
                 "schema": STEP_SCHEMA,
                 "role": role_name,
@@ -677,6 +811,14 @@ def run_multi_agent_design(
                 "local_model": _is_local(slot),
                 "artifact_hash": _sha256(artifact),
                 "artifact": artifact,
+                "candidate_artifacts": [
+                    {
+                        "provider": candidate_slot.safe_identity(),
+                        "artifact_hash": _sha256(candidate),
+                        "artifact": candidate,
+                    }
+                    for candidate, candidate_slot in validated_candidates
+                ] if role_name in {"lighting_designer", "critic"} else [],
                 "CODEX_ARTISTIC_INTERVENTION": "NONE",
             }
             write_step_artifact(run_id, role_name, envelope)
@@ -685,6 +827,8 @@ def run_multi_agent_design(
             state["role_execution"] = list(state.get("role_execution", [])) + [{
                 "role": role_name,
                 "provider": slot.safe_identity(),
+                "providers": [candidate_slot.safe_identity() for _, candidate_slot in validated_candidates],
+                "parallel_candidates": len(validated_candidates),
                 "attempts": attempts,
                 "artifact_hash": envelope["artifact_hash"],
             }]
