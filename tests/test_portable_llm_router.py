@@ -129,6 +129,33 @@ class PortableLLMRouterTests(unittest.TestCase):
         self.assertEqual(content, "{}")
         self.assertNotIn("response_format", captured["body"])
 
+
+    def test_parallel_fanout_returns_results_in_router_preference_order(self):
+        class ParallelAdapter:
+            def complete(self, slot, *, system, user):
+                import time
+                if slot.number == 1:
+                    time.sleep(0.03)
+                return f"slot-{slot.number}"
+
+        slots = (
+            ProviderSlot(1, "OPENAI_COMPATIBLE", "a", "https://a.example.test/v1", "k", ("CRITIC",), 5, priority=10, cost_class="FREE"),
+            ProviderSlot(2, "OPENAI_COMPATIBLE", "b", "https://b.example.test/v1", "k", ("CRITIC",), 5, priority=20, cost_class="FREE"),
+        )
+        router = ProviderRouter("FREE_FIRST", slots, ParallelAdapter(), parallelism=2, parallel_roles=("CRITIC",))
+        results = router.complete_parallel(role="CRITIC", system="s", user="u", limit=2)
+        self.assertEqual([slot.number for _, slot in results], [1, 2])
+        self.assertEqual([content for content, _ in results], ["slot-1", "slot-2"])
+
+    def test_parallel_limit_is_role_scoped(self):
+        slots = (
+            ProviderSlot(1, "OPENAI_COMPATIBLE", "a", "https://a.example.test/v1", "k", (), 5, cost_class="FREE"),
+            ProviderSlot(2, "OPENAI_COMPATIBLE", "b", "https://b.example.test/v1", "k", (), 5, cost_class="FREE"),
+        )
+        router = ProviderRouter("FREE_FIRST", slots, _Adapter({1: "a", 2: "b"}), parallelism=2, parallel_roles=("CRITIC",))
+        self.assertEqual(router.parallel_limit("CRITIC"), 2)
+        self.assertEqual(router.parallel_limit("LIGHTING_DESIGNER"), 1)
+
     def test_design_rejects_raw_command_fields(self):
         output = {key: {} for key in ("design_intent", "visual_strategy", "virtual_rig", "position_vocabulary", "main_sequence", "free_cue_layer", "evidence_trace")}
         output |= {"schema": SCHEMA, "ma2_commands": ["Store Sequence 1"]}
