@@ -1,8 +1,8 @@
 # SHEESH Live Snapshot Upstream Spatial Runtime 001
 
-**Status:** IMPLEMENTED; REAL RUN BLOCKED AT `RIG_DESIGNER`  
-**Run:** `SHEESH_CURRENT_SHOW_REDESIGN_001`  
-**Read-only boundary:** `MA2_WRITES=0`  
+**Status:** IMPLEMENTED; REAL RUN BLOCKED AT `RIG_DESIGNER`
+**Run:** `SHEESH_CURRENT_SHOW_REDESIGN_001`
+**Read-only boundary:** `MA2_WRITES=0`
 **Artistic provenance:** `CODEX_ARTISTIC_INTERVENTION=NONE`
 
 ## Result
