@@ -1,5 +1,26 @@
 # ZEN MA2 Agent Status Report 002 (supersedes ZEN_MA2_AGENT_STATUS_REPORT.md for current status)
 
+> **Current-state supersession (2026-09-20):** This report is still useful as
+> historical audit evidence, but several implementation statements below have
+> been superseded by committed repository state. Before acting on any "missing"
+> item in this file, check `data/zen_project_control.json`,
+> `ZEN_MULTI_PROVIDER_PARALLEL_POOL_001.md`, and the actual code.
+>
+> Current committed truths include:
+>
+> - the bounded four-role runtime `RESEARCHER -> LIGHTING_DESIGNER -> CRITIC -> FINALIZER` exists;
+> - Designer and Critic can generate bounded parallel candidates across
+>   independent providers;
+> - the Provider Router supports expandable slots, `FREE_FIRST`, priorities,
+>   role routing, and a lightweight local fallback;
+> - the legacy PySide6/mobile UI is retired; OpenClaw is the intended operator UI;
+> - the autonomous design artifact still has **no production-authorized direct
+>   MA write path**; Safety / Resolver / deterministic Builder boundaries remain;
+> - the current project gate is the one recorded in
+>   `data/zen_project_control.json`, presently
+>   `SHEESH_TEST_SHOW_VISUAL_OPERATOR_REVIEW_001`.
+>
+
 Assessment date: 2026-09-13
 Assessment implementation HEAD at time of writing: `94e0bed` (main)
 
