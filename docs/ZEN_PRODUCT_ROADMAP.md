@@ -74,31 +74,41 @@ not production readiness.
 
 ```text
 CURRENT_MILESTONE: M2 — EXPRESSIVE CAPABILITY
-ACTIVE_OBJECTIVE: Use Zen's visual and operator feedback from the real editable
-  SHEESH Test Show to refine this bounded case; do not promote it to production
-  behavior.
-CURRENT_BLOCKER / REVIEW GATE:
-  SHEESH_TEST_SHOW_VISUAL_OPERATOR_REVIEW_001
-CURRENT_TEST_ARTIFACT:
-  Sequence 901 / Page 1 Executor 201 / ZEN_SHEESH_TEST
-NEXT EVIDENCE:
-  cue, color, composition, Stage/3D, transition, and operator feedback
+ACTIVE_EXPERIMENT:
+  SHEESH_CURRENT_SHOW_REDESIGN_001
+OWNER_AUTHORIZATION:
+  CURRENT LOADED FINGERPRINTED TEST SHOW MAY BE REDESIGNED
+ORDER:
+  CURRENT SHOW SNAPSHOT
+  -> VERIFIED FIXTURE / GROUP / CAPABILITY / GEOMETRY STATE
+  -> ZEN SPATIAL / STAGE VIEW DESIGN
+  -> ZEN SHEESH DESIGN
+  -> CRITIC
+  -> FINALIZER
+  -> VERIFIED SUPPORTED TEST-SHOW WRITEBACK ONLY
+STOP CONDITION:
+  IF A REQUIRED SPATIAL OR AUTONOMOUS WRITE PATH DOES NOT EXIST,
+  REPORT CAPABILITY GAP; DO NOT INVENT RAW MA COMMANDS
 ```
 
-The multi-provider Designer infrastructure may now produce experimental
-candidate artifacts for comparison, including parallel Designer/Critic
-candidates. That infrastructure does **not** bypass the current human visual
-review gate and does not authorize production MA writes.
+Zen's explicit 2026-09-20 owner decision supersedes the earlier
+`SHEESH_TEST_SHOW_VISUAL_OPERATOR_REVIEW_001` hold-before-overwrite gate for
+this fingerprinted Test Show. The earlier SHEESH baseline remains comparison
+evidence, not the template for the new design.
 
-M1 remains an ongoing learning track. M2 currently has a real editable SHEESH
-Test Show with 13 owned Color presets, a provisional stage layout, Sequence 901
-with 15 Cues, and Executor 1.201. No Timecode was written because no actual
-audio file was available.
+The high-value evidence is no longer another provider/synthetic test. It is
+whether ZEN can consume a real current rig, create a coherent spatial design
+upstream of song design, produce a SHEESH artifact through the existing
+multi-provider runtime, and safely realize the portions for which the
+repository already has a verified bounded write path.
 
-The next high-value product evidence is operator review, not another
-infrastructure layer. New AI-generated SHEESH candidates may be generated as
-experimental comparison artifacts, but the existing Test Show should not be
-silently overwritten before review.
+The prior Test Show build proves a bounded `Move3D` write/read-back technique
+for this fixture set. It does not by itself prove that the autonomous
+`zen.autonomous_design.v0.1` path has a generic spatial Resolver/Builder.
+That boundary must be inspected, and missing capability must fail closed.
+
+See `ZEN_SHEESH_CURRENT_SHOW_REDESIGN_001.md` for the exact experiment
+contract and report fields.
 
 ## Ongoing tracks — non-interrupting by default
 
