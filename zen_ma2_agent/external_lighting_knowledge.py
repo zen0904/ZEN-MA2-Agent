@@ -28,6 +28,7 @@ EVIDENCE_CLASSIFICATIONS = {
 SOURCE_TYPES = {
     "CONSOLE_DOCUMENTATION", "FIXTURE_STANDARD_DOCUMENTATION",
     "MANUFACTURER_EDUCATION", "PROFESSIONAL_TRADE_PRESS", "CASE_REFERENCE",
+    "MANUFACTURER_CASE_REFERENCE",
     "COMMUNITY_DISCUSSION", "USER_WORKFLOW_EVIDENCE",
 }
 TOPICS = {
@@ -184,7 +185,7 @@ def build_pack(registry: dict[str, Any], raw: dict[str, Any]) -> dict[str, Any]:
         source_type = sources_by_id[item["source_id"]]["source_type"]
         if source_type == "COMMUNITY_DISCUSSION" and item["evidence_classification"] != "COMMUNITY_PRACTICE":
             raise ValueError("Community material cannot be silently classified as authoritative knowledge.")
-        if source_type == "CASE_REFERENCE" and item["evidence_classification"] == "GENERAL_DESIGN_KNOWLEDGE":
+        if source_type in {"CASE_REFERENCE", "MANUFACTURER_CASE_REFERENCE"} and item["evidence_classification"] == "GENERAL_DESIGN_KNOWLEDGE":
             raise ValueError("A case reference cannot silently become general design knowledge.")
     _walk_safe(raw)
     return {

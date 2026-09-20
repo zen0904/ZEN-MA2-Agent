@@ -67,6 +67,14 @@ class ExternalLightingKnowledgeTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             build_pack(self.registry, bad)
 
+        manufacturer_case = next(item for item in self.raw["records"] if item["source_id"] == "CLAYPAKY_DEFTONES_NEGATIVE_SPACE")
+        self.assertEqual(manufacturer_case["evidence_classification"], "CASE_CONTEXT")
+        self.assertEqual(manufacturer_case["knowledge_kind"], "DESCRIPTIVE")
+        bad = dict(self.raw)
+        bad["records"] = [dict(manufacturer_case, evidence_classification="GENERAL_DESIGN_KNOWLEDGE")]
+        with self.assertRaises(ValueError):
+            build_pack(self.registry, bad)
+
         bad = dict(self.raw)
         bad["records"] = [dict(self.raw["records"][0], knowledge_kind="PRESCRIPTIVE_REQUIREMENT")]
         with self.assertRaises(ValueError):

@@ -15,7 +15,7 @@ The Finalizer now receives structural projections, without LLM summarization or 
 - Critic: `strengths`, `problems`, `severity`, `revision_requests`, and `evidence_refs`.
 - Finalization context: verified fixture capability, bounded rig/spatial evidence, and workflow/MA2 handover constraints. Product narrative and duplicated hard-constraint/ledger copies are not repeated here.
 
-Finalizer retrieval remains deterministic from the complete canonical store, with a bounded seven-record selection because three upstream artifacts are already present. The complete 140-record knowledge store, full Evidence Ledger, and full source registry remain in runtime context for validation and provenance resolution; they are not model-facing Finalizer data.
+Finalizer retrieval remains deterministic from the complete canonical store, with a bounded selection because three upstream artifacts are already present. At the original 140-record store size, the selection was seven records. After the canonical pack expanded, the six-record Finalizer cap keeps the projection within the established payload budget. The complete canonical knowledge store, full Evidence Ledger, and full source registry remain in runtime context for validation and provenance resolution; they are not model-facing Finalizer data.
 
 The synthetic 140-record regression fixture measured:
 
@@ -24,6 +24,8 @@ The synthetic 140-record regression fixture measured:
 | previous full-envelope shape | 80,973 |
 | projected Finalizer shape | 23,383 |
 | reduction | 71.12% |
+
+After the canonical pack expanded to 229 records, the unchanged seven-record selection measured 24,529 bytes. The bounded six-record projection measures 23,102 bytes for the same synthetic upstream artifacts and request.
 
 The historical Smoke 002 payload sizes above remain the production-like baseline; its failed responses did not leave completed role artifacts from which a post-run exact projected payload could be reconstructed.
 

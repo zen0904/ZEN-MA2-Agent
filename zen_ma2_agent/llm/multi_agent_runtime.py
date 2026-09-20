@@ -157,6 +157,7 @@ ROLE_ROUTER_NAMES = {
     "finalizer": "FINALIZER",
 }
 ROLE_KNOWLEDGE_LIMIT = 8
+FINALIZER_ROLE_KNOWLEDGE_LIMIT = 6
 
 FINALIZER_RESEARCH_FIELDS = (
     "research_status",
@@ -303,10 +304,10 @@ def _role_context(
     # Retrieval is role-specific over the complete backend corpus.  The prior
     # generic 12-record seed is intentionally not used as a model-facing pool.
     canonical_records = context.get("canonical_knowledge_records", [])
-    # Finalization already receives three upstream artifacts; one fewer
-    # knowledge record keeps its model-facing context bounded without changing
-    # retrieval scoring or the canonical backend corpus.
-    role_limit = ROLE_KNOWLEDGE_LIMIT - 1 if role_name == "finalizer" else ROLE_KNOWLEDGE_LIMIT
+    # Finalization already receives three upstream artifacts; keep its
+    # selected knowledge smaller so the model-facing projection remains under
+    # the established payload budget as the canonical store grows.
+    role_limit = FINALIZER_ROLE_KNOWLEDGE_LIMIT if role_name == "finalizer" else ROLE_KNOWLEDGE_LIMIT
     selected_records = retrieve_records(canonical_records, role=ROLE_ROUTER_NAMES[role_name], request=request, current_context=context, limit=role_limit, max_records_per_topic=2)
     role_knowledge = project_records(selected_records)
     selected_ids = [str(item["record_id"]) for item in selected_records]
