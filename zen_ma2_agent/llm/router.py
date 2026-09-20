@@ -11,6 +11,7 @@ import json
 import os
 import socket
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -242,7 +243,7 @@ class ProviderRouter:
     def configured_slots(self) -> tuple[ProviderSlot, ...]:
         return tuple(slot for slot in self.slots if slot.configured)
 
-    def _candidates(self, role: str) -> tuple[ProviderSlot, ...]:
+    def candidates(self, role: str) -> tuple[ProviderSlot, ...]:
         configured = tuple(slot for slot in self.slots if slot.configured and slot.supports(role))
         if self.mode == "PRIMARY_ONLY":
             return configured[:1]
@@ -270,7 +271,7 @@ class ProviderRouter:
         ))
 
     def complete(self, *, role: str, system: str, user: str) -> tuple[str, ProviderSlot]:
-        candidates = self._candidates(role)
+        candidates = self.candidates(role)
         if not candidates:
             raise ProviderUnavailable(f"No configured provider slot is eligible for role {role.upper()}.")
         failures: list[str] = []
@@ -282,3 +283,54 @@ class ProviderRouter:
                 if self.mode == "PRIMARY_ONLY":
                     break
         raise ProviderUnavailable("; ".join(failures) or "No eligible provider completed the request.")
+
+    def complete_parallel(
+        self,
+        *,
+        role: str,
+        system: str,
+        user: str,
+        limit: int = 2,
+    ) -> tuple[tuple[str, ProviderSlot], ...]:
+        """Fan one bounded role request out to independent eligible providers.
+
+        Results are returned in deterministic router preference order rather
+        than completion order. One provider failing does not cancel other
+        providers. This method only distributes model inference; it does not
+        merge, validate, or authorize artistic output.
+        """
+        if not 1 <= limit <= 4:
+            raise ValueError("parallel provider limit must be from 1 to 4.")
+        candidates = self.candidates(role)[:limit]
+        if not candidates:
+            raise ProviderUnavailable(f"No configured provider slot is eligible for role {role.upper()}.")
+        if len(candidates) == 1:
+            content, slot = self.complete(role=role, system=system, user=user)
+            return ((content, slot),)
+
+        results: dict[int, tuple[str, ProviderSlot]] = {}
+        failures: dict[int, str] = {}
+        with ThreadPoolExecutor(max_workers=len(candidates), thread_name_prefix="zen-provider") as executor:
+            future_to_slot = {
+                executor.submit(self.adapter.complete, slot, system=system, user=user): slot
+                for slot in candidates
+            }
+            for future in as_completed(future_to_slot):
+                slot = future_to_slot[future]
+                try:
+                    results[slot.number] = (future.result(), slot)
+                except ProviderUnavailable as exc:
+                    failures[slot.number] = str(exc)
+                except Exception as exc:
+                    # Adapter implementations are not allowed to tear down the
+                    # router pool because one provider library misbehaved.
+                    failures[slot.number] = f"{type(exc).__name__}"
+
+        ordered = tuple(results[slot.number] for slot in candidates if slot.number in results)
+        if ordered:
+            return ordered
+        detail = "; ".join(
+            f"slot {slot.number}: {failures.get(slot.number, 'unavailable')}"
+            for slot in candidates
+        )
+        raise ProviderUnavailable(detail or "No parallel provider completed the request.")
