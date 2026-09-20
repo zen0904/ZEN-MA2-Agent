@@ -841,6 +841,36 @@
       "copyright_policy": "METADATA_AND_DERIVED_EXTRACTS_ONLY",
       "source_bias": "Personal workflow and visual-quality evidence from a prior color-only multi-song test; not an industry-wide rule.",
       "notes": "Owner observed that a roughly 12-song color-only output felt too formulaic because song differences were mostly parameter/color substitutions. Owner explicitly does not want either all songs to look the same or forced difference for its own sake."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_source.v0.1",
+      "source_id": "LIVE_DESIGN_KISS_END_ROAD_CUE_RESTRAINT",
+      "source_type": "MANUFACTURER_CASE_REFERENCE",
+      "publisher": "Live Design / Elation Professional",
+      "title": "Elation Dartz For KISS End of the Road World Tour",
+      "url": "https://www.livedesignonline.com/news/elation-dartz-for-kiss-end-road-world-tour",
+      "publication_date": "2019-04-12",
+      "version": null,
+      "retrieved_at": "2026-09-20",
+      "authority": "MANUFACTURER_PUBLISHED_DESIGNER_CASE_REFERENCE",
+      "copyright_policy": "METADATA_AND_DERIVED_EXTRACTS_ONLY",
+      "source_bias": "Manufacturer-supported case promotes equipment; only direct designer statements about rehearsal-driven cue simplification are suitable as conditional design evidence.",
+      "notes": "Useful for over-programming detection and rehearsal-based cue subtraction."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_source.v0.1",
+      "source_id": "LIVE_DESIGN_BILLIE_EILISH_2019_DREAMS_NIGHTMARES",
+      "source_type": "CASE_REFERENCE",
+      "publisher": "Live Design",
+      "title": "How Billie Eilish's Design Team Turned Her Dreams (and Nightmares) Into Realities",
+      "url": "https://www.livedesignonline.com/concerts/how-billie-eilish-s-design-team-turned-her-dreams-and-nightmares-into-realities",
+      "publication_date": "2019-07-18",
+      "version": null,
+      "retrieved_at": "2026-09-20",
+      "authority": "PROFESSIONAL_TOUR_CASE_REFERENCE",
+      "copyright_policy": "METADATA_AND_DERIVED_EXTRACTS_ONLY",
+      "source_bias": "Artist-specific production with heavy video and timecode; detailed rhythmic accenting is contextual and not a rule to hit every beat.",
+      "notes": "Useful for song-persona identity, selective micro-detail accenting, and continuing refinement through deeper listening."
     }
   ]
 }
