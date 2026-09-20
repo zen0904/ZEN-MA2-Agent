@@ -6471,6 +6471,94 @@
       "related_console_capabilities": [],
       "source_provenance": "PLSN_JACK_WHITE_BLUE_WORLD: tour profile describes an exclusively blue-and-white visual language supporting a large, variable repertoire.",
       "summary": "Another anti-template counterexample: a narrow recurring palette can unify a show even when song content and live order vary."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk008_user_rejects_color_swap_templates",
+      "source_id": "ZEN_USER_MULTI_SONG_ANTI_TEMPLATE_FEEDBACK_001",
+      "topic": "COLOR_RELATIONSHIPS",
+      "normalized_claim": "In a prior roughly twelve-song color-only test, ZEN judged the output too formulaic because many songs appeared to reuse the same structural treatment while mainly substituting colors or small parameters.",
+      "evidence_classification": "USER_PREFERENCE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "ZEN_PERSONALIZATION_LAYER_MULTI_SONG_COLOR_DESIGN",
+      "exclusions": [
+        "Does not prove the same failure exists in the current multi-provider runtime.",
+        "Does not prohibit palette reuse across songs."
+      ],
+      "confidence": "HIGH",
+      "promotion_state": "CONTEXT_DEPENDENT",
+      "conflicts": [
+        "Intentional repeated structure can be valid when it functions as a chapter, motif or callback."
+      ],
+      "related_design_concepts": [
+        "anti_template",
+        "song_identity",
+        "palette",
+        "variation"
+      ],
+      "related_console_capabilities": [
+        "color",
+        "dimmer"
+      ],
+      "source_provenance": "ZEN_USER_MULTI_SONG_ANTI_TEMPLATE_FEEDBACK_001: direct owner feedback from a prior multi-song color-only design test.",
+      "summary": "Avoid treating hue substitution as sufficient evidence that a song has its own visual identity."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk008_user_similarity_and_difference_both_contextual",
+      "source_id": "ZEN_USER_MULTI_SONG_ANTI_TEMPLATE_FEEDBACK_001",
+      "topic": "REPEATED_SECTION_DEVELOPMENT",
+      "normalized_claim": "ZEN explicitly does not want every song to look the same and also does not want every song forced to look different; similarity and difference should both be justified by the music, set context and show-level visual language.",
+      "evidence_classification": "USER_PREFERENCE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "ZEN_PERSONALIZATION_LAYER_MULTI_SONG_SHOW_REASONING",
+      "exclusions": [
+        "Does not define a numeric diversity target.",
+        "Does not require every song to contain a unique mechanism."
+      ],
+      "confidence": "HIGH",
+      "promotion_state": "CONTEXT_DEPENDENT",
+      "conflicts": [
+        "None at the preference level; specific cases still determine which relationship is appropriate."
+      ],
+      "related_design_concepts": [
+        "continuity",
+        "development",
+        "contrast",
+        "callback",
+        "forced_novelty"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "ZEN_USER_MULTI_SONG_ANTI_TEMPLATE_FEEDBACK_001: direct owner clarification of desired multi-song variety.",
+      "summary": "The target is intentional relationship between songs, not maximum sameness or maximum difference."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk008_user_song_identity_with_shared_language",
+      "source_id": "ZEN_USER_MULTI_SONG_ANTI_TEMPLATE_FEEDBACK_001",
+      "topic": "VISUAL_HIERARCHY",
+      "normalized_claim": "ZEN wants each song to have a meaningful identity while the whole set can still share one recognizable design language; song identity should be supported by real visual reasoning rather than a superficial color swap.",
+      "evidence_classification": "USER_PREFERENCE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "ZEN_PERSONALIZATION_LAYER_SHOW_LANGUAGE",
+      "exclusions": [
+        "Does not require every song to differ in hierarchy.",
+        "Does not make show coherence more important than a justified song-specific break."
+      ],
+      "confidence": "HIGH",
+      "promotion_state": "CONTEXT_DEPENDENT",
+      "conflicts": [
+        "A deliberately fragmented show concept may use stronger discontinuity when context supports it."
+      ],
+      "related_design_concepts": [
+        "show_language",
+        "song_identity",
+        "coherence",
+        "anti_template"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "ZEN_USER_MULTI_SONG_ANTI_TEMPLATE_FEEDBACK_001: direct owner statement on desired relationship between song identity and show language.",
+      "summary": "Personalization target: one coherent show language containing songs that still feel intentionally distinct."
     }
   ]
 }
