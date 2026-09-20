@@ -826,6 +826,21 @@
       "copyright_policy": "METADATA_AND_DERIVED_EXTRACTS_ONLY",
       "source_bias": "Artist-specific touring concept with an intentionally narrow blue-and-white language; not a universal palette strategy.",
       "notes": "Useful for proving that a whole-show restricted palette can coexist with improvisation and song-level variation."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_source.v0.1",
+      "source_id": "ZEN_USER_MULTI_SONG_ANTI_TEMPLATE_FEEDBACK_001",
+      "source_type": "USER_WORKFLOW_EVIDENCE",
+      "publisher": "ZEN MA2 Agent project owner",
+      "title": "Human feedback: multi-song color design should avoid template substitution without forcing novelty",
+      "url": "https://github.com/zen0904/ZEN-MA2-Agent",
+      "publication_date": null,
+      "version": "Human-confirmed project evidence",
+      "retrieved_at": "2026-09-20",
+      "authority": "USER_CONFIRMED_CASE_EVIDENCE",
+      "copyright_policy": "METADATA_AND_DERIVED_EXTRACTS_ONLY",
+      "source_bias": "Personal workflow and visual-quality evidence from a prior color-only multi-song test; not an industry-wide rule.",
+      "notes": "Owner observed that a roughly 12-song color-only output felt too formulaic because song differences were mostly parameter/color substitutions. Owner explicitly does not want either all songs to look the same or forced difference for its own sake."
     }
   ]
 }
