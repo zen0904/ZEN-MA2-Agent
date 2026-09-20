@@ -74,39 +74,31 @@ not production readiness.
 
 ```text
 CURRENT_MILESTONE: M2 — EXPRESSIVE CAPABILITY
-ACTIVE_OBJECTIVE: Decide the permitted, operator-compatible provenance boundary
-  for supplying a future Color resource after safe inventory verified none in
-  the current Existing Show.
-CURRENT_BLOCKER: `SHOW_BOUND_COLOR_PRESET_APPLICABILITY_VERIFICATION_001` is
-  `UNSUPPORTED`: fresh fingerprint-matched inventory returned five Focus
-  presets and no Color preset object. Fixture COLOR capability and generic
-  CALL_PRESET syntax do not supply a resource or applicability proof.
-NEXT_ACCEPTANCE_GATE: `COLOR_RESOURCE_PROVISIONING_BOUNDARY_REVIEW_001`
-  records which future resource provenance paths may be considered, without
-  creating a Preset, selecting a palette, assigning a role, or changing a Show.
+ACTIVE_OBJECTIVE: Use Zen's visual and operator feedback from the real editable
+  SHEESH Test Show to refine this bounded case; do not promote it to production
+  behavior.
+CURRENT_BLOCKER / REVIEW GATE:
+  SHEESH_TEST_SHOW_VISUAL_OPERATOR_REVIEW_001
+CURRENT_TEST_ARTIFACT:
+  Sequence 901 / Page 1 Executor 201 / ZEN_SHEESH_TEST
+NEXT EVIDENCE:
+  cue, color, composition, Stage/3D, transition, and operator feedback
 ```
 
-M1 has delivered bounded Design Intent, provenance, and shadow external
-knowledge sufficient for real expressive experiments. It remains an ongoing
-learning track, but it is not the current implementation gate. M2 has one
-verified, real typed density mechanism. Human review closed A/B 002 as
-`TECHNICAL_EXPRESSIVE_PATH_PROVEN`, while explicitly recording
-`ARTISTIC_GENERALIZATION_NOT_APPLICABLE`,
-`NEUTRAL_ALLOCATOR_EXPERIMENTAL_ONLY`, and
-`DENSITY_IS_CONTEXT_DEPENDENT_DIMENSION`. It neither approves nor rejects
-Density as a design dimension; it prevents the observed neutral allocator from
-becoming a design strategy.
+The multi-provider Designer infrastructure may now produce experimental
+candidate artifacts for comparison, including parallel Designer/Critic
+candidates. That infrastructure does **not** bypass the current human visual
+review gate and does not authorize production MA writes.
 
-The following bounded Color evidence gate is closed as `UNSUPPORTED`: the
-fresh, fingerprint-matched Existing Show has no discoverable Color preset pool
-object. This does not reject Color as an expressive dimension. It prevents
-fixture channel capability or a generic action shape from masquerading as an
-action-ready Current Show resource.
+M1 remains an ongoing learning track. M2 currently has a real editable SHEESH
+Test Show with 13 owned Color presets, a provisional stage layout, Sequence 901
+with 15 Cues, and Executor 1.201. No Timecode was written because no actual
+audio file was available.
 
-The Current Show visual relationship intake is optional case evidence. Its
-unknown fields do not block this gate, and it must not become a mandatory
-questionnaire. Use it only when a later case genuinely needs confirmed visual
-relationships.
+The next high-value product evidence is operator review, not another
+infrastructure layer. New AI-generated SHEESH candidates may be generated as
+experimental comparison artifacts, but the existing Test Show should not be
+silently overwritten before review.
 
 ## Ongoing tracks — non-interrupting by default
 
