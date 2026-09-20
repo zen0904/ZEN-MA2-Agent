@@ -6191,6 +6191,286 @@
       "related_console_capabilities": [],
       "source_provenance": "LIVE_DESIGN_ISABELLA_BYRD_RESTRAINT: designer explains using a narrow warm/cool white range to differentiate rapid shifts in time and emotional space.",
       "summary": "Case evidence that visual structure can be communicated with small disciplined changes instead of maximal differentiation."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk007_springsteen_variation_on_theme",
+      "source_id": "PLSN_SPRINGSTEEN_VARIATIONS_THEME",
+      "topic": "REPEATED_SECTION_DEVELOPMENT",
+      "normalized_claim": "The Springsteen touring team describes preserving visual ideas that already work while deliberately creating variations rather than rubber-stamping the previous version, providing direct evidence for development within a stable aesthetic.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "LONG_FORM_ROCK_TOUR_VARIATION_CASE",
+      "exclusions": [
+        "Does not require every repeated idea to change.",
+        "Does not define how large a variation must be for another artist or song."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Some productions intentionally use exact repetition as a recognizable motif or callback."
+      ],
+      "related_design_concepts": [
+        "variation_on_theme",
+        "development",
+        "show_language",
+        "continuity"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "PLSN_SPRINGSTEEN_VARIATIONS_THEME: designer interview describing retaining proven ideas while avoiding a rubber-stamp repeat.",
+      "summary": "Direct professional evidence that coherence and variation can coexist: keep the successful theme, change its implementation when the material calls for it."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk007_springsteen_song_recipe_multidimensional",
+      "source_id": "PLSN_SPRINGSTEEN_VARIATIONS_THEME",
+      "topic": "VISUAL_HIERARCHY",
+      "normalized_claim": "The Springsteen design creates song-specific combinations of wash focus, gobo focus, key-light treatment and backlight while remaining inside one production aesthetic, showing that song identity can come from multiple visual dimensions rather than palette substitution alone.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "LONG_FORM_ROCK_TOUR_SONG_IDENTITY_CASE",
+      "exclusions": [
+        "Does not require every song to differ in all listed dimensions.",
+        "Does not prescribe those exact mechanisms for a smaller or different rig."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "A deliberately minimal show may hold several mechanisms constant across many songs and vary only one meaningful dimension."
+      ],
+      "related_design_concepts": [
+        "song_identity",
+        "visual_fingerprint",
+        "focus",
+        "variation"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "PLSN_SPRINGSTEEN_VARIATIONS_THEME: case describes different focus, gobo and key/backlight combinations song by song.",
+      "summary": "Shows that a distinct song recipe can be multi-dimensional while the overall show still reads as one aesthetic."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk007_karolg_chapter_palette_continuity",
+      "source_id": "PLSN_KAROL_G_MANANA_SERÁ_BONITO",
+      "topic": "COLOR_RELATIONSHIPS",
+      "normalized_claim": "The Karol G Mañana Será Bonito production keeps entire story sections, including many consecutive songs, inside tightly restricted color families, demonstrating that intentional multi-song palette continuity can strengthen a chapter rather than indicate design repetition.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "STADIUM_POP_NARRATIVE_CHAPTER_CASE",
+      "exclusions": [
+        "Does not prescribe blue, pink or any fixed palette for other productions.",
+        "Does not imply every show should be divided into color-coded chapters."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Other shows may need stronger palette contrast song by song because narrative, branding or media content changes more frequently."
+      ],
+      "related_design_concepts": [
+        "chapter_coherence",
+        "palette_family",
+        "continuity",
+        "story_arc"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "PLSN_KAROL_G_MANANA_SERÁ_BONITO: designer explains extended blue and pink story sections with highly restricted palettes.",
+      "summary": "Important anti-template counterexample: several songs can intentionally share a palette when the shared chapter is the design idea."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk007_karolg_variety_inside_restricted_palette",
+      "source_id": "PLSN_KAROL_G_MANANA_SERÁ_BONITO",
+      "topic": "COLOR_RELATIONSHIPS",
+      "normalized_claim": "Within Karol G's restricted chapter palettes, the designer relies on timing, intensity and small shade differences to create distinction, showing that variation can occur inside one color family instead of requiring a new hue for every song.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "STADIUM_POP_RESTRICTED_PALETTE_VARIATION_CASE",
+      "exclusions": [
+        "Does not establish numeric saturation targets for another rig.",
+        "Does not imply color-only variation is sufficient when other design dimensions are available."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Some songs earn a hard palette break because the musical or narrative state genuinely changes."
+      ],
+      "related_design_concepts": [
+        "shade_development",
+        "timing",
+        "intensity",
+        "palette_restraint"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "PLSN_KAROL_G_MANANA_SERÁ_BONITO: interview describes creating distinction with timing, intensity and fine shade control inside restricted color sections.",
+      "summary": "Supports nuanced color reasoning: difference can live in shade, intensity and timing, not just hue changes."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk007_adele_whole_show_restricted_palette",
+      "source_id": "PLSN_ADELE_LIVE_2016",
+      "topic": "COLOR_RELATIONSHIPS",
+      "normalized_claim": "The Adele Live 2016 design used almost no saturated color across the show yet maintained visual variety through other scenic, video and lighting dimensions, demonstrating that palette restriction does not inherently make a multi-song show visually repetitive.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "ARENA_POP_RESTRICTED_COLOR_LANGUAGE_CASE",
+      "exclusions": [
+        "Does not prescribe white light as a superior default.",
+        "Does not imply saturated color should normally be avoided."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Color-driven artists or productions may legitimately use wide palette variation as a major part of identity."
+      ],
+      "related_design_concepts": [
+        "show_language",
+        "palette_restraint",
+        "multidimensional_variety",
+        "identity"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "PLSN_ADELE_LIVE_2016: Patrick Woodroffe describes an intentionally near-white-light show supported by strong scenic/video variation.",
+      "summary": "Shows that show-level identity can stay extremely narrow in color while songs still differ through other dimensions."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk007_adele_reserved_color_event",
+      "source_id": "PLSN_ADELE_LIVE_2016",
+      "topic": "CONTRAST",
+      "normalized_claim": "Because saturated color was largely withheld in Adele Live 2016, the rare decision to use strong color gained substantially more impact, illustrating how withholding a mechanism can create headroom for a later exceptional event.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "ARENA_POP_RESTRAINT_CONTRAST_CASE",
+      "exclusions": [
+        "Does not prescribe saving saturated color for one specific song.",
+        "Does not mean rarity alone makes an effect artistically appropriate."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "A production may build impact through density, movement, scale or focus rather than palette rarity."
+      ],
+      "related_design_concepts": [
+        "withholding",
+        "headroom",
+        "contrast",
+        "exception"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "PLSN_ADELE_LIVE_2016: case explains that limited saturated color made the rare strong-color choice much more impactful.",
+      "summary": "Adds a set-level headroom principle: restraint can make a later visual mechanism feel genuinely exceptional."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk007_buble_show_language_with_song_character",
+      "source_id": "LIVE_DESIGN_MICHAEL_BUBLE_COOL_SUMMER",
+      "topic": "VISUAL_HIERARCHY",
+      "normalized_claim": "The Michael Bublé production aims for one coherent visual language across lighting, video, scenery, texture and movement while still deriving each song's movement and texture from that song's character, directly separating show identity from song identity.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "FESTIVAL_TOUR_SHOW_LANGUAGE_CASE",
+      "exclusions": [
+        "Does not prescribe a two-color limit or Art Deco aesthetic for other productions.",
+        "Does not require all visual departments to contribute equally in every song."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Some concept shows intentionally fracture the visual language between chapters or acts."
+      ],
+      "related_design_concepts": [
+        "show_language",
+        "song_character",
+        "coherence",
+        "multimedia"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LIVE_DESIGN_MICHAEL_BUBLE_COOL_SUMMER: designer explicitly describes unified show language while tying movement and texture to each song's character.",
+      "summary": "Direct evidence for the target architecture: one production language can contain genuinely different song treatments."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk007_buble_callback_visual_motif",
+      "source_id": "LIVE_DESIGN_MICHAEL_BUBLE_COOL_SUMMER",
+      "topic": "REPEATED_SECTION_DEVELOPMENT",
+      "normalized_claim": "The Bublé production establishes an atmospheric silhouette language in the opening and intentionally returns to that language later, showing that repeated visual material can function as a callback rather than accidental template reuse.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "FESTIVAL_TOUR_VISUAL_CALLBACK_CASE",
+      "exclusions": [
+        "Does not prescribe silhouette as a recurring motif.",
+        "Does not establish how often a callback should recur."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "A show may choose not to repeat any strong visual motif if continual evolution better serves the concept."
+      ],
+      "related_design_concepts": [
+        "callback",
+        "motif",
+        "continuity",
+        "recognition"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LIVE_DESIGN_MICHAEL_BUBLE_COOL_SUMMER: designer notes the opening fog/silhouette language returning later in the show.",
+      "summary": "Distinguishes purposeful reuse from laziness: a repeated idea can create memory and coherence when it returns intentionally."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk007_buble_scale_as_identity_dimension",
+      "source_id": "LIVE_DESIGN_MICHAEL_BUBLE_COOL_SUMMER",
+      "topic": "DENSITY",
+      "normalized_claim": "The Bublé design moves from large full-production pictures to highly reduced silhouette or small-pool moments, showing that song and section identity can come from changes in visual scale and information density without requiring unrelated palettes or effects.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "FESTIVAL_TOUR_SCALE_CONTRAST_CASE",
+      "exclusions": [
+        "Does not require every set to alternate large and small looks.",
+        "Does not define fixture-count or intensity thresholds for visual scale."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Some productions intentionally maintain a consistently intimate or consistently maximal scale."
+      ],
+      "related_design_concepts": [
+        "scale",
+        "density",
+        "restraint",
+        "hierarchy"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LIVE_DESIGN_MICHAEL_BUBLE_COOL_SUMMER: designer describes the show moving between enormous stage pictures and highly reduced performer-focused moments.",
+      "summary": "Adds scale and information density as song-identity dimensions, reducing dependence on color changes for variety."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk007_jackwhite_restricted_palette_show_identity",
+      "source_id": "PLSN_JACK_WHITE_BLUE_WORLD",
+      "topic": "COLOR_RELATIONSHIPS",
+      "normalized_claim": "The Jack White Supply Chain Issues design uses blue and white as a deliberate whole-show visual language while supporting a highly variable live repertoire, demonstrating that a strong recurring palette can function as identity rather than as evidence that songs are visually identical.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "IMPROVISATIONAL_ROCK_RESTRICTED_PALETTE_CASE",
+      "exclusions": [
+        "Does not prove every song in the production had a distinct lighting treatment.",
+        "Does not prescribe monochromatic branding for other artists."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Artists whose identity depends on changing narrative worlds may need a broader palette."
+      ],
+      "related_design_concepts": [
+        "show_identity",
+        "restricted_palette",
+        "improvisation",
+        "coherence"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "PLSN_JACK_WHITE_BLUE_WORLD: tour profile describes an exclusively blue-and-white visual language supporting a large, variable repertoire.",
+      "summary": "Another anti-template counterexample: a narrow recurring palette can unify a show even when song content and live order vary."
     }
   ]
 }
