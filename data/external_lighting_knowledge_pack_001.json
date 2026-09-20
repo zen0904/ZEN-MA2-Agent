@@ -6559,6 +6559,176 @@
       "related_console_capabilities": [],
       "source_provenance": "ZEN_USER_MULTI_SONG_ANTI_TEMPLATE_FEEDBACK_001: direct owner statement on desired relationship between song identity and show language.",
       "summary": "Personalization target: one coherent show language containing songs that still feel intentionally distinct."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk009_labrinth_layered_energy_build",
+      "source_id": "LIVE_DESIGN_LABRINTH_COACHELLA_2026",
+      "topic": "ENERGY_PROGRESSION",
+      "normalized_claim": "Tom Sutherland describes building Labrinth's visual energy by starting with a scene and adding elements progressively rather than continuously increasing intensity or accenting every cue, showing that energy growth can come from layering and controlled release.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "FESTIVAL_SCENE_BASED_ENERGY_BUILD_CASE",
+      "exclusions": [
+        "Does not require additive layering in every song.",
+        "Does not imply intensity increase is an inferior energy mechanism."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Some songs benefit from abrupt contrast, immediate impact, or rhythmic punctuation instead of gradual layering."
+      ],
+      "related_design_concepts": [
+        "energy_progression",
+        "layering",
+        "restraint",
+        "release"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LIVE_DESIGN_LABRINTH_COACHELLA_2026: designer explains a scene-first, layer-by-layer development approach.",
+      "summary": "Adds a non-template energy strategy: progression can be built by introducing visual layers rather than simply making every section brighter."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk009_kiss_strip_overprogramming_after_rehearsal",
+      "source_id": "LIVE_DESIGN_KISS_END_ROAD_CUE_RESTRAINT",
+      "topic": "RHYTHMIC_PUNCTUATION",
+      "normalized_claim": "The KISS End of the Road team initially programmed complex timing on nearly every beat, then stripped much of it back after rehearsals showed that the full production picture was stronger with simpler cueing.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "ARENA_ROCK_REHEARSAL_CUE_REDUCTION_CASE",
+      "exclusions": [
+        "Does not imply beat-level cueing is generally undesirable.",
+        "Does not establish how much cue density another production should remove."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Highly detailed electronic or choreographed material may legitimately require dense beat-specific programming."
+      ],
+      "related_design_concepts": [
+        "overprogramming",
+        "rehearsal",
+        "subtraction",
+        "rhythmic_punctuation"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LIVE_DESIGN_KISS_END_ROAD_CUE_RESTRAINT: designers describe simplifying heavily embellished cueing after seeing the full show in rehearsal.",
+      "summary": "Strong Critic evidence that excessive musical synchronization can make a show worse and should be removable after full-picture review."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk009_kiss_simple_cues_support_whole_picture",
+      "source_id": "LIVE_DESIGN_KISS_END_ROAD_CUE_RESTRAINT",
+      "topic": "NEGATIVE_SPACE_RESTRAINT",
+      "normalized_claim": "For the KISS production, the designers concluded that simple cueing which accents the music without over-embellishment better allowed the band's theatrics, scenic motion and overall production picture to read together.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "ARENA_ROCK_FULL_PRODUCTION_RESTRAINT_CASE",
+      "exclusions": [
+        "Does not prescribe simple cueing for all rock music.",
+        "Does not mean lighting should avoid visible effects when they are part of the production identity."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Lighting-led shows may intentionally make dense effects a primary visual subject."
+      ],
+      "related_design_concepts": [
+        "restraint",
+        "whole_picture",
+        "production_hierarchy",
+        "cue_density"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LIVE_DESIGN_KISS_END_ROAD_CUE_RESTRAINT: designer statements after rehearsal-driven simplification.",
+      "summary": "Adds full-production context to restraint: a cue can be musically correct yet still be visually unnecessary."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk009_billie_specific_sound_accent",
+      "source_id": "LIVE_DESIGN_BILLIE_EILISH_2019_DREAMS_NIGHTMARES",
+      "topic": "RHYTHMIC_PUNCTUATION",
+      "normalized_claim": "The Billie Eilish 2019 programming used lighting accents for specific intricate sounds and production details, showing that rhythmic punctuation can respond to meaningful sonic events rather than applying the same accent pattern to every beat.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "ELECTRONIC_POP_MICRO_DETAIL_PUNCTUATION_CASE",
+      "exclusions": [
+        "Does not prescribe timecode or beat-heavy lighting for other artists.",
+        "Does not imply every audible detail should receive a lighting event."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Scene-based or intentionally still designs may choose not to visualize small sonic details."
+      ],
+      "related_design_concepts": [
+        "micro_detail",
+        "punctuation",
+        "sound_design",
+        "timing"
+      ],
+      "related_console_capabilities": [
+        "timecode"
+      ],
+      "source_provenance": "LIVE_DESIGN_BILLIE_EILISH_2019_DREAMS_NIGHTMARES: programmer describes accenting specific intricate sampled sounds in the music.",
+      "summary": "Supports selective sonic-detail punctuation instead of generic beat chasing."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk009_billie_loud_and_subtle_both_matter",
+      "source_id": "LIVE_DESIGN_BILLIE_EILISH_2019_DREAMS_NIGHTMARES",
+      "topic": "ENERGY_PROGRESSION",
+      "normalized_claim": "The Billie Eilish team treats both pounding moments and subtle production details as important, demonstrating that visual energy design should preserve dynamic contrast instead of mapping all significance to maximum output.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "ELECTRONIC_POP_DYNAMIC_DUALITY_CASE",
+      "exclusions": [
+        "Does not define a required loud-versus-subtle ratio.",
+        "Does not prescribe a specific fixture or intensity treatment for subtle material."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Some deliberately maximal performances may sustain high visual energy for extended periods."
+      ],
+      "related_design_concepts": [
+        "dynamic_range",
+        "duality",
+        "subtlety",
+        "impact"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LIVE_DESIGN_BILLIE_EILISH_2019_DREAMS_NIGHTMARES: case describes programming attention to both loud beats and subtle sonic details.",
+      "summary": "Adds dynamic-range reasoning so low-output or subtle states can remain significant parts of the energy arc."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk009_billie_deeper_listening_refines_show",
+      "source_id": "LIVE_DESIGN_BILLIE_EILISH_2019_DREAMS_NIGHTMARES",
+      "topic": "REPEATED_SECTION_DEVELOPMENT",
+      "normalized_claim": "The Billie Eilish programmer describes continuing to listen more deeply to the music over time and adding newly discovered visual details, showing that a show can be refined through repeated listening rather than treated as finished after first-pass programming.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "TOURING_ITERATIVE_MUSIC_LISTENING_CASE",
+      "exclusions": [
+        "Does not justify adding more cues merely because time is available.",
+        "Does not imply every later discovery should be implemented."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Further additions should be rejected when they reduce clarity or duplicate an already effective idea."
+      ],
+      "related_design_concepts": [
+        "iteration",
+        "listening",
+        "refinement",
+        "detail"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LIVE_DESIGN_BILLIE_EILISH_2019_DREAMS_NIGHTMARES: programmer describes ongoing listening and adding newly perceived details during the tour.",
+      "summary": "Supports iterative refinement driven by better musical understanding, with Critic restraint still required."
     }
   ]
 }
