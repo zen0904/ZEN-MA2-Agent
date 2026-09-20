@@ -80,8 +80,11 @@ commands fail closed.
    design. Spatial design must use only verified existing fixtures and must not
    invent capability.
 6. Feed the verified spatial result into the ZEN SHEESH design run.
-7. Run `RESEARCHER -> LIGHTING_DESIGNER -> CRITIC -> FINALIZER` through the
-   existing ZEN provider runtime. No coding-agent artistic edits are permitted.
+7. Run the existing ZEN provider runtime. Without a live snapshot, use
+   `RESEARCHER -> LIGHTING_DESIGNER -> CRITIC -> FINALIZER`. With a current-Show
+   snapshot that passes runtime validation, use the read-only upstream spatial
+   route `RESEARCHER -> RIG_DESIGNER -> POSITION_DESIGNER -> LIGHTING_DESIGNER
+   -> CRITIC -> FINALIZER`. No coding-agent artistic edits are permitted.
 8. Validate schema, evidence and secret boundaries.
 9. Write only the parts for which an already-supported safe ZEN/Test-Show write
    path exists.
@@ -190,3 +193,19 @@ The evidence target is whether ZEN can inspect a real existing rig, produce a
 coherent spatial design from that rig, use that spatial design as upstream
 context for SHEESH, survive Critic/Finalizer, and safely realize every supported
 portion in the authorized Test Show without coding-agent artistic intervention.
+
+## Live snapshot runtime gate — 2026-09-20
+
+Runtime support for the conditional six-role, read-only live-Show route is
+implemented and committed. It accepts the saved Phase A snapshot explicitly,
+binds its fingerprint into context and checkpoints, validates RIG/POS artifacts,
+and preserves the no-snapshot four-role behavior. No Move3D writeback or other
+MA2 path is included.
+
+The first real run using the saved Phase A snapshot is recorded in
+`ZEN_SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001.md`. The snapshot and
+Researcher stage were accepted, but the run stopped at `RIG_DESIGNER` after
+three bounded attempts because every successful response omitted the required
+`schema` identity. No Rig or Position proposal was accepted, no downstream
+Lighting Designer/Critic/Finalizer role ran, and MA2 writes remained zero. This
+is provider-output evidence, not an artistic judgment about a spatial proposal.

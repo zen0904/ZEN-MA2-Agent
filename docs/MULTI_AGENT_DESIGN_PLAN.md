@@ -3,10 +3,10 @@
 Status: the bounded four-role MVP (`RESEARCHER -> LIGHTING_DESIGNER -> CRITIC
 -> FINALIZER`) is implemented in `zen_ma2_agent.llm.multi_agent_runtime`.
 It is portable, sequential, checkpointed, and ends at a validated
-`zen.autonomous_design.v0.1` artifact. The remaining roles below are still
-plan-only; neither the MVP nor this document implements a Resolver/Builder or
-any MA2 write path. This remains the agreed target shape so later work extends
-the same pipeline rather than inventing a different one.
+`zen.autonomous_design.v0.1` artifact. A separate conditional live-Show route
+is implemented below. The other roles in the longer-term target pipeline
+remain plan-only; this document does not implement a Resolver/Builder or any
+MA2 write path.
 
 ## Current inference/deployment boundary
 
@@ -48,6 +48,44 @@ cache, preprocessing, and orchestration unless later measurements prove a
 different allocation useful.
 
 See `ZEN_MULTI_PROVIDER_PARALLEL_POOL_001.md` for the current implementation.
+
+## Conditional live-Show spatial route (read-only)
+
+When a caller explicitly supplies a validated current-Show snapshot, the
+runtime executes:
+
+```text
+RESEARCHER
+-> RIG_DESIGNER
+-> POSITION_DESIGNER
+-> LIGHTING_DESIGNER
+-> CRITIC
+-> FINALIZER
+```
+
+Without that input, the existing four-role route remains unchanged. The
+snapshot is caller-supplied; the LLM module does not scan MA2 or read a
+machine-specific path. Its normalized content and Show fingerprint are part
+of the context hash and run metadata, and checkpoint resume rejects a
+different fingerprint or role order. Cached Show evidence whose fingerprint
+does not match is excluded from current truth. Unverified current-fingerprint
+capabilities and coordinate-axis semantics remain `UNKNOWN`. Fixture 9999
+may be visible in inventory evidence but is marked unavailable for artistic
+assignment and placement.
+
+`RIG_DESIGNER` and `POSITION_DESIGNER` are semantic roles routed through the
+existing `LIGHTING_DESIGNER` provider-eligibility bucket. Their artifacts are
+independently validated against the live inventory and fingerprint; these
+roles run sequentially and do not require private provider-role configuration
+changes. `LIGHTING_DESIGNER`, `CRITIC`, and `FINALIZER` receive the validated
+upstream spatial artifacts according to their role contracts. Finalization
+must reference the canonical Position Designer artifact and may not silently
+contradict its exact fixture/subfixture coordinates.
+
+This route is design-artifact generation only. It does not call MA2, Resolver,
+or Builder, and it does not write geometry. A provider artifact that fails
+schema, inventory, evidence, or safety validation stops the route at that
+role; downstream roles do not run.
 
 ## Role pipeline and dependency order
 
