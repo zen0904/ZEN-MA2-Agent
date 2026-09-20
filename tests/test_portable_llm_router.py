@@ -54,6 +54,81 @@ class PortableLLMRouterTests(unittest.TestCase):
             _, slots = load_provider_slots(path)
         self.assertEqual(slots[0].timeout_seconds, 900)
 
+
+    def test_provider_pool_can_expand_beyond_three_slots(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "providers.private.env"
+            path.write_text(
+                "ZEN_PROVIDER_MODE=FREE_FIRST\n"
+                "ZEN_PROVIDER_SLOT_COUNT=8\n"
+                "ZEN_PROVIDER_8_TYPE=OPENAI_COMPATIBLE\n"
+                "ZEN_PROVIDER_8_MODEL=cloud-model\n"
+                "ZEN_PROVIDER_8_BASE_URL=https://example.test/v1\n"
+                "ZEN_PROVIDER_8_API_KEY=key\n"
+                "ZEN_PROVIDER_8_COST_CLASS=FREE\n",
+                encoding="utf-8",
+            )
+            mode, slots = load_provider_slots(path)
+        self.assertEqual(mode, "FREE_FIRST")
+        self.assertEqual(len(slots), 8)
+        self.assertTrue(slots[7].configured)
+        self.assertEqual(slots[7].cost_class, "FREE")
+
+    def test_free_first_prefers_free_role_provider_then_local_fallback(self):
+        free = ProviderSlot(
+            2, "OPENAI_COMPATIBLE", "cloud", "https://example.test/v1", "key",
+            ("CRITIC",), 10, priority=20, cost_class="FREE",
+        )
+        local = ProviderSlot(
+            1, "OPENAI_COMPATIBLE_LOCAL", "local", "http://127.0.0.1:8080/v1", "",
+            (), 10, priority=1, cost_class="LOCAL",
+        )
+        paid = ProviderSlot(
+            3, "OPENAI_COMPATIBLE", "paid", "https://paid.example.test/v1", "key",
+            ("CRITIC",), 10, priority=1, cost_class="PAID",
+        )
+        adapter = _Adapter({2: ProviderUnavailable("quota"), 1: "{}", 3: "never"})
+        router = ProviderRouter("FREE_FIRST", (local, free, paid), adapter)
+        content, chosen = router.complete(role="CRITIC", system="s", user="u")
+        self.assertEqual(content, "{}")
+        self.assertEqual(chosen.number, 1)
+
+    def test_routed_uses_priority_within_role_specific_slots(self):
+        slow = ProviderSlot(
+            1, "OPENAI_COMPATIBLE", "a", "https://a.example.test/v1", "key",
+            ("DESIGNER",), 10, priority=50,
+        )
+        preferred = ProviderSlot(
+            2, "OPENAI_COMPATIBLE", "b", "https://b.example.test/v1", "key",
+            ("DESIGNER",), 10, priority=10,
+        )
+        router = ProviderRouter("ROUTED", (slow, preferred), _Adapter({1: "wrong", 2: "ok"}))
+        content, chosen = router.complete(role="DESIGNER", system="s", user="u")
+        self.assertEqual(content, "ok")
+        self.assertEqual(chosen.number, 2)
+
+    def test_slot_can_disable_provider_specific_json_mode(self):
+        slot = ProviderSlot(
+            1, "OPENAI_COMPATIBLE", "test", "https://example.test/v1", "key",
+            (), 10, response_format="NONE",
+        )
+
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *_): return False
+            def read(self):
+                return b'{"choices":[{"message":{"content":"{}"}}]}'
+
+        captured = {}
+        def opener(request, timeout):
+            captured["body"] = json.loads(request.data.decode("utf-8"))
+            return Response()
+
+        with patch("zen_ma2_agent.llm.router.urlopen", side_effect=opener):
+            content = OpenAICompatibleHTTPAdapter().complete(slot, system="s", user="u")
+        self.assertEqual(content, "{}")
+        self.assertNotIn("response_format", captured["body"])
+
     def test_design_rejects_raw_command_fields(self):
         output = {key: {} for key in ("design_intent", "visual_strategy", "virtual_rig", "position_vocabulary", "main_sequence", "free_cue_layer", "evidence_trace")}
         output |= {"schema": SCHEMA, "ma2_commands": ["Store Sequence 1"]}
