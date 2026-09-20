@@ -7,14 +7,16 @@ For substantial work, read these in order:
 2. `docs/CODING_AGENT_COLLABORATION.md` -- required if you are Claude Code or
    Codex: how the two coexist on this repo, and which tasks need the project
    owner present versus which are safe to run unattended.
-3. `docs/MULTI_AGENT_DESIGN_PLAN.md` -- the agreed (not yet implemented)
-   sequential-role design pipeline, if the current task touches the
-   autonomous Designer.
-4. `docs/ZEN_PRODUCT_CONSTITUTION.md`
-5. `docs/ZEN_WORKFLOW_CONTRACT.md`
-6. The relevant console document, normally `docs/MA2_PROGRAMMING_INTELLIGENCE.md`
-7. `docs/CONTINUOUS_LEARNING_POLICY.md` when researching or learning
-8. Only reports and fixtures directly relevant to the current task
+3. `docs/MULTI_AGENT_DESIGN_PLAN.md` -- the implemented four-role Designer
+   pipeline and its current multi-provider extension boundary, if the task
+   touches autonomous design.
+4. `ZEN_MULTI_PROVIDER_PARALLEL_POOL_001.md` -- current provider-pool,
+   FREE_FIRST, parallel Designer/Critic, and lightweight-local-fallback state.
+5. `docs/ZEN_PRODUCT_CONSTITUTION.md`
+6. `docs/ZEN_WORKFLOW_CONTRACT.md`
+7. The relevant console document, normally `docs/MA2_PROGRAMMING_INTELLIGENCE.md`
+8. `docs/CONTINUOUS_LEARNING_POLICY.md` when researching or learning
+9. Only reports and fixtures directly relevant to the current task
 
 For a continuation, also read `docs/ZEN_DEVELOPMENT_WORKFLOW.md`,
 `docs/ZEN_PRODUCT_ROADMAP.md`, and `data/zen_project_control.json`. They state
