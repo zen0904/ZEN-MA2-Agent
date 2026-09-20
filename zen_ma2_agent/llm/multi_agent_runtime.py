@@ -347,29 +347,40 @@ def _role_context(
             },
         }
     if role_name == "critic":
+        parallel_designers = candidate_sets.get("lighting_designer", [])
         return common | {
             "research_artifact": completed["researcher"],
             "designer_draft": completed["lighting_designer"],
-            "designer_candidates": candidate_sets.get("lighting_designer", [completed["lighting_designer"]]),
             "relevant_show_constraints": {
                 "fixture_technical_capability": categories.get("fixture_technical_capability", {}),
                 "rig_spatial_visual_affordance": categories.get("rig_spatial_visual_affordance", {}),
             },
-        }
+        } | (
+            {"designer_candidates": parallel_designers}
+            if len(parallel_designers) > 1 else {}
+        )
+    parallel_designers = candidate_sets.get("lighting_designer", [])
+    parallel_critics = candidate_sets.get("critic", [])
     return common | {
         "research_artifact": _project_research_artifact(completed["researcher"]),
         "designer_draft": _project_artifact_fields(completed["lighting_designer"], FINALIZER_DESIGNER_FIELDS),
-        "designer_candidates": [
-            _project_artifact_fields(item, FINALIZER_DESIGNER_FIELDS)
-            for item in candidate_sets.get("lighting_designer", [completed["lighting_designer"]])
-        ],
         "critic_artifact": _project_artifact_fields(completed["critic"], FINALIZER_CRITIC_FIELDS),
-        "critic_candidates": [
-            _project_artifact_fields(item, FINALIZER_CRITIC_FIELDS)
-            for item in candidate_sets.get("critic", [completed["critic"]])
-        ],
         "finalization_context": _project_finalization_context(context),
-    }
+    } | (
+        {
+            "designer_candidates": [
+                _project_artifact_fields(item, FINALIZER_DESIGNER_FIELDS)
+                for item in parallel_designers
+            ]
+        } if len(parallel_designers) > 1 else {}
+    ) | (
+        {
+            "critic_candidates": [
+                _project_artifact_fields(item, FINALIZER_CRITIC_FIELDS)
+                for item in parallel_critics
+            ]
+        } if len(parallel_critics) > 1 else {}
+    )
 
 
 def _read_completed_artifacts(run_id: str) -> dict[str, dict[str, object]]:
