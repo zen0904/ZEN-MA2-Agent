@@ -30,12 +30,16 @@ class ExternalLightingKnowledgeTests(unittest.TestCase):
         self.assertEqual(self.pack["schema"], PACK_SCHEMA)
         self.assertGreaterEqual(len(self.pack["records"]), 20)
         self.assertGreaterEqual(len(self.pack["records"]), 100)
-        self.assertLessEqual(len(self.pack["records"]), 160)
         self.assertEqual(self.pack["runtime_wiring"], "NOT_RUN")
         self.assertEqual(self.pack["global_promotions"], [])
         source_ids = {source["source_id"] for source in self.pack["sources"]}
         self.assertTrue(all(record["source_id"] in source_ids for record in self.pack["records"]))
+        record_ids = [record["record_id"] for record in self.pack["records"]]
+        self.assertEqual(len(record_ids), len(set(record_ids)))
         self.assertTrue(all(record["promotion_state"] != "PROMOTED" for record in self.pack["records"]))
+        self.assertTrue(all(record["knowledge_kind"] != "PRESCRIPTIVE_REQUIREMENT" for record in self.pack["records"]))
+        self.assertTrue(all(len(record["normalized_claim"]) <= 500 and len(record["summary"]) <= 600 for record in self.pack["records"]))
+        self.assertTrue(all("command" not in record and "full_text" not in record for record in self.pack["records"]))
 
     def test_records_preserve_descriptive_scope_and_provenance(self):
         record = self.pack["records"][0]

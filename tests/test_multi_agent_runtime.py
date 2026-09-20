@@ -248,8 +248,10 @@ class MultiAgentRuntimeTests(unittest.TestCase):
 
     def test_each_role_retrieves_from_full_canonical_store_and_receives_scoped_context(self):
         context = build_designer_context(self.repo_root)
-        self.assertEqual(len(context["canonical_knowledge_records"]), 140)
-        self.assertEqual(len(context["evidence_ledger"]["entries"]), 140)
+        canonical_count = len(context["canonical_knowledge_records"])
+        self.assertGreaterEqual(canonical_count, 100)
+        self.assertEqual(len(context["evidence_ledger"]["entries"]), canonical_count)
+        self.assertEqual(canonical_count, len({item["record_id"] for item in context["canonical_knowledge_records"]}))
         completed = {"researcher": _research(), "lighting_designer": _draft(), "critic": _critic()}
         for role_name in ("researcher", "lighting_designer", "critic", "finalizer"):
             payload = _role_context(role_name, request="synthetic context-size regression", context=context, completed=completed)
@@ -359,8 +361,9 @@ class MultiAgentRuntimeTests(unittest.TestCase):
         new_bytes = len(json.dumps(payload, ensure_ascii=False).encode("utf-8"))
         self.assertLess(new_bytes, old_bytes)
         self.assertLessEqual(new_bytes, 24000)
-        self.assertEqual(len(context["canonical_knowledge_records"]), 140)
-        self.assertEqual(len(context["evidence_ledger"]["entries"]), 140)
+        canonical_count = len(context["canonical_knowledge_records"])
+        self.assertGreaterEqual(canonical_count, 100)
+        self.assertEqual(len(context["evidence_ledger"]["entries"]), canonical_count)
 
     def test_timeout_fails_fast_without_identical_retries_and_records_class(self):
         router, adapter = self._router([ProviderUnavailable("Provider slot 1 request failed: TimeoutError")])

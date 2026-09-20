@@ -123,6 +123,16 @@ def provider_self_test() -> dict[str, object]:
     return payload
 
 
+def provider_pool_status() -> dict[str, object]:
+    """Report provider-pool readiness without probing or exposing secrets."""
+    sys.path.insert(0, str(repo()))
+    from zen_ma2_agent.llm import ProviderRouter
+
+    result = ProviderRouter.from_portable_config().pool_readiness()
+    _log("provider_pool_status", result)
+    return result
+
+
 def ma2_connectivity(config_path: Path | None = None, socket_factory=socket.create_connection) -> dict[str, object]:
     """Perform a no-command TCP reachability check for the current host's MA2.
 
@@ -217,6 +227,55 @@ def multi_agent_design(request_file: Path, *, run_id: str | None = None, restart
     return result
 
 
+def knowledge_ingest(source_meta_file: Path, source_text_file: Path, *, max_records: int = 8) -> dict[str, object]:
+    """Stage a bounded, review-first extraction from caller-supplied source text.
+
+    The launcher never fetches URLs.  Source metadata and transient text must
+    be supplied by an already-approved research/discovery layer.
+    """
+    if not source_meta_file.is_file():
+        raise SystemExit(f"Knowledge source metadata does not exist: {source_meta_file}")
+    if not source_text_file.is_file():
+        raise SystemExit(f"Knowledge source text does not exist: {source_text_file}")
+    try:
+        source = json.loads(source_meta_file.read_text(encoding="utf-8"))
+        source_text = source_text_file.read_text(encoding="utf-8")
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise SystemExit(f"Knowledge ingestion input is invalid: {type(exc).__name__}") from exc
+    sys.path.insert(0, str(repo()))
+    from zen_ma2_agent.knowledge_ingestion import extract_knowledge_candidates, stage_ingestion_batch
+    from zen_ma2_agent.knowledge_store import load_canonical_store
+    from zen_ma2_agent.llm import ProviderRouter
+
+    store = load_canonical_store(
+        repo() / "data" / "external_lighting_knowledge_source_registry_001.json",
+        repo() / "data" / "external_lighting_knowledge_pack_001.json",
+    )
+    batch, slot = extract_knowledge_candidates(
+        ProviderRouter.from_portable_config(),
+        source=source,
+        source_text=source_text,
+        canonical_records=store["records"],
+        max_records=max_records,
+    )
+    path = stage_ingestion_batch(batch)
+    result = {
+        "KNOWLEDGE_INGESTION": "STAGED_NEEDS_REVIEW",
+        "batch_path": str(path),
+        "batch_id": batch["batch_id"],
+        "source_id": batch["source"]["source_id"],
+        "record_count": len(batch["records"]),
+        "duplicate_candidate_count": len(batch["duplicate_candidates"]),
+        "provider": slot.safe_identity(),
+        "source_text_stored": False,
+        "canonical_write_performed": False,
+        "ma2_write_performed": False,
+        "CODEX_ARTISTIC_INTERVENTION": "NONE",
+    }
+    _log("knowledge_ingest", result)
+    return result
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="ZEN USB portable launcher")
     choice = parser.add_mutually_exclusive_group()
@@ -224,11 +283,14 @@ def main() -> int:
     choice.add_argument("--update", action="store_true")
     choice.add_argument("--push", action="store_true")
     choice.add_argument("--provider-self-test", action="store_true")
+    choice.add_argument("--provider-pool-status", action="store_true")
     choice.add_argument("--ma2-connectivity", action="store_true")
     choice.add_argument("--design-request", type=Path)
     choice.add_argument("--multi-agent-design", type=Path)
+    choice.add_argument("--knowledge-ingest", nargs=2, type=Path, metavar=("SOURCE_META", "SOURCE_TEXT"))
     parser.add_argument("--run-id")
     parser.add_argument("--restart-run", action="store_true")
+    parser.add_argument("--knowledge-max-records", type=int, default=8)
     args = parser.parse_args()
     if args.git_status:
         result: dict[str, object] = git_status()
@@ -243,6 +305,8 @@ def main() -> int:
             result = git_status(fetch=False) | {"push": "OK" if pushed.returncode == 0 else "GIT_PUSH_AVAILABLE_NO"}
     elif args.provider_self_test:
         result = provider_self_test()
+    elif args.provider_pool_status:
+        result = provider_pool_status()
     elif args.ma2_connectivity:
         result = ma2_connectivity()
     elif args.design_request:
@@ -251,6 +315,10 @@ def main() -> int:
         result = autonomous_design(args.design_request)
     elif args.multi_agent_design:
         result = multi_agent_design(args.multi_agent_design, run_id=args.run_id, restart_run=args.restart_run)
+    elif args.knowledge_ingest:
+        if args.run_id or args.restart_run:
+            parser.error("--run-id and --restart-run are not valid with --knowledge-ingest.")
+        result = knowledge_ingest(*args.knowledge_ingest, max_records=args.knowledge_max_records)
     else:
         if args.run_id or args.restart_run:
             parser.error("--run-id and --restart-run require --multi-agent-design.")

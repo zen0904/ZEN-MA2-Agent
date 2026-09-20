@@ -75,6 +75,19 @@ def _contains_forbidden_key(value: object) -> bool:
     return False
 
 
+def _contains_secret(value: object, secret: str) -> bool:
+    """Detect a configured provider secret before a candidate can be staged."""
+    if not secret:
+        return False
+    if isinstance(value, str):
+        return secret in value
+    if isinstance(value, dict):
+        return any(_contains_secret(key, secret) or _contains_secret(child, secret) for key, child in value.items())
+    if isinstance(value, list):
+        return any(_contains_secret(child, secret) for child in value)
+    return False
+
+
 def _record_id(source_id: str, topic: str, claim: str) -> str:
     digest = hashlib.sha256((source_id + "\n" + topic + "\n" + claim).encode("utf-8")).hexdigest()[:16]
     return "auto_" + digest
@@ -193,7 +206,14 @@ def extract_knowledge_candidates(
         "source_text": source_text,
     })
     content, slot = router.complete(role="RESEARCHER", system=system, user=user)
+    # The provider response is transient.  Reject a response containing the
+    # configured credential before parsing or staging anything, so a secret
+    # cannot enter a batch, diagnostic, or duplicate-review record.
+    if slot.api_key and slot.api_key in content:
+        raise KnowledgeIngestionError("Knowledge extractor response contained a provider secret.")
     payload = _parse_json_object(content)
+    if _contains_secret(payload, slot.api_key):
+        raise KnowledgeIngestionError("Knowledge extractor response contained a provider secret.")
     records = validate_extraction_payload(payload, source_id=canonical_source["source_id"], max_records=max_records)
     duplicates = _duplicate_review(canonical_records or [], records)
     content_hash = hashlib.sha256(source_text.encode("utf-8")).hexdigest()

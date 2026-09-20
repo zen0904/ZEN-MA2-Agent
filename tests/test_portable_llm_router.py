@@ -174,6 +174,26 @@ class PortableLLMRouterTests(unittest.TestCase):
         self.assertEqual(router.parallel_limit("CRITIC"), 2)
         self.assertEqual(router.parallel_limit("LIGHTING_DESIGNER"), 1)
 
+    def test_provider_pool_readiness_is_key_free_and_reports_role_parallelism(self):
+        slots = (
+            ProviderSlot(1, "OPENAI_COMPATIBLE_LOCAL", "local", "http://127.0.0.1:8080/v1", "", ("LIGHTING_DESIGNER", "CRITIC"), 5, cost_class="LOCAL"),
+            ProviderSlot(2, "OPENAI_COMPATIBLE", "free", "https://example.test/v1", "secret", ("LIGHTING_DESIGNER", "CRITIC"), 5, cost_class="FREE"),
+        )
+        router = ProviderRouter("FREE_FIRST", slots, _Adapter({1: "{}", 2: "{}"}), parallelism=2, parallel_roles=("LIGHTING_DESIGNER", "CRITIC"))
+        diagnostic = router.pool_readiness(health_by_slot={1: True, 2: False}, failure_by_slot={2: "TRANSPORT_ERROR"})
+        self.assertFalse(diagnostic["secrets_included"])
+        self.assertEqual(diagnostic["roles"]["LIGHTING_DESIGNER"]["healthy_independent_slots"], 1)
+        self.assertFalse(diagnostic["roles"]["LIGHTING_DESIGNER"]["parallelism_satisfied"])
+        self.assertNotIn('"api_key":', json.dumps(diagnostic))
+        self.assertNotIn("secret-token", json.dumps(diagnostic))
+        self.assertEqual(diagnostic["slots"][1]["failure_class"], "TRANSPORT_ERROR")
+
+    def test_provider_pool_unknown_health_does_not_claim_ready(self):
+        slot = ProviderSlot(1, "OPENAI_COMPATIBLE_LOCAL", "local", "http://127.0.0.1:8080/v1", "", (), 5, cost_class="LOCAL")
+        diagnostic = ProviderRouter("PRIMARY_ONLY", (slot,), _Adapter({1: "{}"})).pool_readiness()
+        self.assertEqual(diagnostic["roles"]["CRITIC"]["status"], "UNKNOWN")
+        self.assertEqual(diagnostic["slots"][0]["healthy"], "UNKNOWN")
+
     def test_design_rejects_raw_command_fields(self):
         output = {key: {} for key in ("design_intent", "visual_strategy", "virtual_rig", "position_vocabulary", "main_sequence", "free_cue_layer", "evidence_trace")}
         output |= {"schema": SCHEMA, "ma2_commands": ["Store Sequence 1"]}

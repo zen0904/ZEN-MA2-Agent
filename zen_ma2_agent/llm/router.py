@@ -273,6 +273,72 @@ class ProviderRouter:
     def configured_slots(self) -> tuple[ProviderSlot, ...]:
         return tuple(slot for slot in self.slots if slot.configured)
 
+    def pool_readiness(
+        self,
+        *,
+        health_by_slot: dict[int, bool | str] | None = None,
+        failure_by_slot: dict[int, str] | None = None,
+        roles: Iterable[str] = ("RESEARCHER", "LIGHTING_DESIGNER", "CRITIC", "FINALIZER"),
+    ) -> dict[str, object]:
+        """Return a key-free, read-only provider-pool readiness projection.
+
+        Health is deliberately UNKNOWN unless a caller supplies an external
+        probe result; constructing this diagnostic never makes provider calls.
+        """
+        health_by_slot = health_by_slot or {}
+        failure_by_slot = failure_by_slot or {}
+        roles = tuple(str(role).upper() for role in roles)
+        slot_rows: list[dict[str, object]] = []
+        for slot in self.slots:
+            configured = slot.configured
+            health = health_by_slot.get(slot.number, "UNKNOWN") if configured else False
+            if isinstance(health, str):
+                health = health.upper()
+            failure = failure_by_slot.get(slot.number)
+            if failure is None:
+                failure = "NOT_CONFIGURED" if not configured else ("NOT_TESTED" if health == "UNKNOWN" else "NONE")
+            eligible_roles = [str(role).upper() for role in roles if slot.supports(str(role))]
+            slot_rows.append({
+                "identity": slot.safe_identity(),
+                "configured": configured,
+                "healthy": health,
+                "eligible_roles": eligible_roles,
+                "cost_class": slot.cost_class,
+                "failure_class": failure,
+            })
+
+        role_rows: dict[str, dict[str, object]] = {}
+        for role in roles:
+            normalized = str(role).upper()
+            eligible = self.candidates(normalized)
+            required = self.parallelism if self.parallelism > 1 and normalized in self.parallel_roles else 1
+            known_health = [health_by_slot.get(slot.number) for slot in eligible]
+            healthy_count = sum(value is True or value == "ONLINE" for value in known_health)
+            if not known_health:
+                status = "NOT_READY"
+            elif not health_by_slot or all(value in (None, "UNKNOWN") for value in known_health):
+                status = "UNKNOWN"
+            elif healthy_count >= required:
+                status = "READY"
+            else:
+                status = "INSUFFICIENT_HEALTHY_PROVIDERS"
+            role_rows[normalized] = {
+                "configured_parallelism": required,
+                "eligible_configured_slots": [slot.number for slot in eligible],
+                "healthy_independent_slots": healthy_count,
+                "parallelism_satisfied": healthy_count >= required if health_by_slot else "UNKNOWN",
+                "status": status,
+            }
+        return {
+            "schema": "zen.provider_pool_readiness.v0.1",
+            "mode": self.mode,
+            "parallelism": self.parallelism,
+            "parallel_roles": sorted(self.parallel_roles),
+            "slots": slot_rows,
+            "roles": role_rows,
+            "secrets_included": False,
+        }
+
     def candidates(self, role: str) -> tuple[ProviderSlot, ...]:
         configured = tuple(slot for slot in self.slots if slot.configured and slot.supports(role))
         if self.mode == "PRIMARY_ONLY":

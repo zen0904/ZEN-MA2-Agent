@@ -276,8 +276,11 @@ def _project_finalization_context(context: dict[str, object]) -> dict[str, objec
         # workflow and console handover constraints, while the full documents
         # remain available in backend context for validation/audit.
         operator_contract = {
+            # The full MA2 intelligence document is backend knowledge, not a
+            # required finalizer input.  Keeping the stable workflow contract
+            # avoids duplicating console prose while preserving handover rules.
             key: operator_contract[key]
-            for key in ("workflow_contract", "ma2_programming_intelligence")
+            for key in ("workflow_contract",)
             if key in operator_contract
         }
     return {
