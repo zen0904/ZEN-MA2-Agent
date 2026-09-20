@@ -86,6 +86,7 @@ REVISION_READINESS_CATEGORIES = (
 )
 
 _STAGE_ASSERTION_FIELDS = (
+    "operator_asserted_viewpoint",
     "operator_asserted_audience_direction",
     "operator_asserted_stage_left_right",
     "operator_asserted_upstage_downstage",

@@ -310,8 +310,20 @@ class SpatialReviewTests(unittest.TestCase):
                     "asserted_by": "OPERATOR",
                     "show_fingerprint": FINGERPRINT,
                 },
+                "operator_asserted_viewpoint": {
+                    "value": "FACING_STAGE",
+                    "source_type": "OPERATOR_SUPPLIED_ANNOTATION",
+                    "asserted_by": "OPERATOR",
+                    "show_fingerprint": FINGERPRINT,
+                },
                 "operator_asserted_audience_direction": annotation,
                 "operator_assertions": {
+                    "operator_asserted_viewpoint": {
+                        "source_type": "OPERATOR_SUPPLIED_ANNOTATION",
+                        "asserted_by": "OPERATOR",
+                        "show_fingerprint": FINGERPRINT,
+                        "value": "FACING_STAGE",
+                    },
                     "operator_asserted_audience_direction": dict(annotation),
                     "notes": {
                         "source_type": "OPERATOR_SUPPLIED_ANNOTATION",
@@ -331,6 +343,7 @@ class SpatialReviewTests(unittest.TestCase):
                 evidence, expected_show_fingerprint=FINGERPRINT, evidence_root=Path(directory)
             )
         self.assertEqual(result["source_type"], "OPERATOR_SUPPLIED_STAGE_VIEW_IMAGE")
+        self.assertEqual(result["operator_asserted_viewpoint"]["value"], "FACING_STAGE")
         self.assertEqual(result["operator_annotations_status"], "PROVENANCE_SEPARATE_FROM_IMAGE")
         self.assertEqual(result["visual_observations"][0]["evidence_class"], "VISUAL_OBSERVATION")
         self.assertFalse(result["visual_observations"][0]["verified_physical_fact"])
