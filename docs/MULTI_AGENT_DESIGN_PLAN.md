@@ -131,9 +131,17 @@ revision roles; code does not derive geometry from Critic prose. At most two
 `BLOCKED_AFTER_REVISION_LIMIT`. Zero coordinate change is reported as evidence
 but is not a deterministic failure rule. Finalizer receives the latest role
 artifacts and blocked/passed review state; all write eligibility remains
-`NO`. Unknown calibration facts are valid evidence but block this experiment
-when physical frame/axis/units, Stage view, performer/audience orientation,
-mounting, or current-fingerprint capability facts are still missing.
+`NO`. Calibration distinguishes official MA2 software coordinate concepts
+from current-Show venue/sign mapping and from operator-supplied facts. A live
+revision remains blocked when Show identity, sufficient venue-coordinate
+orientation, stage/performance-area context, or exact current-fingerprint
+capability evidence is missing. Exact fixture Pos units, an image artifact,
+obstruction/truss detail, and orientation writeability are not universally
+required when other verified evidence supports a meaningful read-only
+proposal. An operator-supplied Stage View image has a fingerprinted,
+provenance-separated input schema; visual observations are not automatically
+verified physical facts. Pan/Tilt direction notes are Show-scoped and never
+fill XYZ sign mappings.
 
 ### Researcher provenance boundary
 

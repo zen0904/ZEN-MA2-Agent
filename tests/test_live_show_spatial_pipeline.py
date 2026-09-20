@@ -27,7 +27,12 @@ from zen_ma2_agent.llm.multi_agent_runtime import (
     validate_rig_design_artifact,
 )
 from zen_ma2_agent.llm.router import ProviderRouter, ProviderSlot, ProviderUnavailable
-from zen_ma2_agent.llm.spatial_review import CALIBRATION_FACT_FIELDS
+from zen_ma2_agent.llm.spatial_review import (
+    CALIBRATION_FACT_FIELDS,
+    CALIBRATION_SCHEMA,
+    MA2_COORDINATE_CONCEPTS,
+    MA2_FIXTURE_TRANSFORM_SEMANTICS,
+)
 
 
 FINGERPRINT = "a" * 64
@@ -242,17 +247,24 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
 
     def _completed_calibration(self, run_id: str) -> dict[str, object]:
         facts = {field: "UNKNOWN" for field in CALIBRATION_FACT_FIELDS}
-        for field in (
-            "COORDINATE_FRAME_VERIFIED", "X_AXIS_SEMANTICS", "Y_AXIS_SEMANTICS",
-            "Z_AXIS_SEMANTICS", "COORDINATE_UNITS_VERIFIED", "STAGE_VIEW_IMAGE_AVAILABLE",
-            "STAGE_BOUNDS_KNOWN", "PERFORMER_ZONE_KNOWN", "AUDIENCE_DIRECTION_KNOWN",
-            "UPSTAGE_DOWNSTAGE_KNOWN", "STAGE_LEFT_RIGHT_KNOWN",
-            "FIXTURE_MOUNTING_POSITIONS_KNOWN", "FIXTURE_ORIENTATION_READABLE",
-            "CURRENT_FINGERPRINT_CAPABILITY_PROFILES_AVAILABLE",
-        ):
-            facts[field] = "VERIFIED"
+        facts.update(MA2_COORDINATE_CONCEPTS)
+        facts.update({
+            "COORDINATE_FRAME_VERIFIED": "PARTIAL",
+            "CURRENT_SHOW_FINGERPRINT_MATCHES_LIVE_SCAN": "VERIFIED",
+            "GEOMETRY_BEARING_RESOURCES_AVAILABLE": "VERIFIED",
+            "PROTECTED_RESOURCES_IDENTIFIED": "VERIFIED",
+            "CURRENT_SHOW_X_SIGN_MAPPING": "OPERATOR_VERIFIED_POSITIVE_X_STAGE_LEFT",
+            "CURRENT_SHOW_Y_SIGN_MAPPING": "OPERATOR_VERIFIED_NEGATIVE_Y_AUDIENCE",
+            "CURRENT_SHOW_Z_SIGN_MAPPING": "OPERATOR_VERIFIED_POSITIVE_Z_UP",
+            "AUDIENCE_DIRECTION_KNOWN": "OPERATOR_VERIFIED",
+            "STAGE_LEFT_RIGHT_KNOWN": "OPERATOR_VERIFIED",
+            "UPSTAGE_DOWNSTAGE_KNOWN": "OPERATOR_VERIFIED",
+            "STAGE_BOUNDS_KNOWN": "KNOWN_FROM_OPERATOR_STAGE_PLAN",
+            "PERFORMER_ZONE_KNOWN": "KNOWN_FROM_OPERATOR_STAGE_PLAN",
+            "CURRENT_FINGERPRINT_CAPABILITY_PROFILES_AVAILABLE": "SHOW_BOUND_VERIFIED",
+        })
         return {
-            "schema": "zen.sheesh_spatial_fact_calibration.v0.1",
+            "schema": CALIBRATION_SCHEMA,
             "gate_id": "SHEESH_SPATIAL_FACT_CALIBRATION_001",
             "show_fingerprint": FINGERPRINT,
             "source_artifacts": {
@@ -261,12 +273,47 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
             },
             "facts": facts,
             "fact_evidence": {
-                field: (
-                    "Synthetic test evidence explicitly marks this fact verified."
-                    if facts[field] == "VERIFIED"
-                    else "UNKNOWN in the synthetic test fixture."
-                )
+                field: "Synthetic evidence with explicit scope; unknown remains unknown."
                 for field in CALIBRATION_FACT_FIELDS
+            },
+            "software_coordinate_semantics": {
+                "values": dict(MA2_COORDINATE_CONCEPTS),
+                "fixture_transform": dict(MA2_FIXTURE_TRANSFORM_SEMANTICS),
+                "sources": [
+                    {
+                        "title": "grandMA2 XYZ coordinate help",
+                        "url": "https://help.malighting.com/grandMA2/en/help/key_xyz.html",
+                        "scope": "Software coordinate concepts only; not venue mapping or fixture-position units.",
+                    },
+                    {
+                        "title": "grandMA2 fixture position help",
+                        "url": "https://help.malighting.com/grandMA2/en/help/key_patch_position_fixtures.html",
+                        "scope": "Fixture Pos/Rot and Stage/Object axis controls; not venue signs or Pos units.",
+                    },
+                ],
+            },
+            "geometry_evidence": {
+                "geometry_bearing_resource_count": 2,
+                "protected_fixture_ids": [9999],
+            },
+            "current_live_machine_observation": {"show_fingerprint": FINGERPRINT},
+            "show_bound_capability_profiles": {"profiles": [{
+                "show_fingerprint": FINGERPRINT,
+                "fixture_id": 101,
+                "confidence": "SHOW_BOUND_VERIFIED",
+                "observed_attributes": ["DIM"],
+            }]},
+            "current_show_venue_mapping_evidence": {
+                "show_fingerprint": FINGERPRINT,
+                "source_type": "OPERATOR_SUPPLIED_CURRENT_SHOW_COORDINATE_MAPPING",
+                "independent_of_pan_tilt": True,
+                "independent_of_software_convention": True,
+                "source_reference": "synthetic operator stage-plan annotation",
+                "mappings": {
+                    "CURRENT_SHOW_X_SIGN_MAPPING": facts["CURRENT_SHOW_X_SIGN_MAPPING"],
+                    "CURRENT_SHOW_Y_SIGN_MAPPING": facts["CURRENT_SHOW_Y_SIGN_MAPPING"],
+                    "CURRENT_SHOW_Z_SIGN_MAPPING": facts["CURRENT_SHOW_Z_SIGN_MAPPING"],
+                },
             },
             "CODEX_ARTISTIC_INTERVENTION": "NONE",
         }
@@ -382,15 +429,34 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
 
         adapter = NoCallAdapter()
         unknown = {
-            "schema": "zen.sheesh_spatial_fact_calibration.v0.1",
+            "schema": CALIBRATION_SCHEMA,
             "gate_id": "SHEESH_SPATIAL_FACT_CALIBRATION_001",
             "show_fingerprint": FINGERPRINT,
             "source_artifacts": {
                 "run_id": "missing-run-not-reached",
                 "normalized_snapshot_source_hash": self.normalized["source_artifact_hash"],
             },
-            "facts": {field: "UNKNOWN" for field in CALIBRATION_FACT_FIELDS},
+            "facts": {**{field: "UNKNOWN" for field in CALIBRATION_FACT_FIELDS}, **MA2_COORDINATE_CONCEPTS},
             "fact_evidence": {field: "UNKNOWN in the synthetic test fixture." for field in CALIBRATION_FACT_FIELDS},
+            "software_coordinate_semantics": {
+                "values": dict(MA2_COORDINATE_CONCEPTS),
+                "fixture_transform": dict(MA2_FIXTURE_TRANSFORM_SEMANTICS),
+                "sources": [
+                    {
+                        "title": "grandMA2 XYZ coordinate help",
+                        "url": "https://help.malighting.com/grandMA2/en/help/key_xyz.html",
+                        "scope": "Software coordinate concepts only; not venue mapping or fixture-position units.",
+                    },
+                    {
+                        "title": "grandMA2 fixture position help",
+                        "url": "https://help.malighting.com/grandMA2/en/help/key_patch_position_fixtures.html",
+                        "scope": "Fixture Pos/Rot and Stage/Object axis controls; not venue signs or Pos units.",
+                    },
+                ],
+            },
+            "geometry_evidence": {"geometry_bearing_resource_count": 2, "protected_fixture_ids": [9999]},
+            "current_live_machine_observation": {"show_fingerprint": FINGERPRINT},
+            "show_bound_capability_profiles": {"profiles": []},
             "CODEX_ARTISTIC_INTERVENTION": "NONE",
         }
         with self.assertRaisesRegex(MultiAgentRunError, "BLOCKED_MISSING_EVIDENCE"):

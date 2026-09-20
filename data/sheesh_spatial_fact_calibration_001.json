@@ -1,5 +1,5 @@
 {
-  "schema": "zen.sheesh_spatial_fact_calibration.v0.1",
+  "schema": "zen.sheesh_spatial_fact_calibration.v0.2",
   "gate_id": "SHEESH_SPATIAL_FACT_CALIBRATION_001",
   "status": "BLOCKED_MISSING_EVIDENCE",
   "show_fingerprint": "b41d801b915cddfdd5017df787ad66b55941fbce415ab02ee8ec63acaa027bd5",
@@ -13,72 +13,181 @@
     "position_artifact_sha256": "fb1f5ef01aa43dc06cf710e92a9c9301570528bbb2f9c342d8aa83d7b070f5e7",
     "critic_artifact_sha256": "0dab7856d8dfe6c5aab884806970180af7fe110a422ad6f8e0babbda14afe8f5"
   },
+  "evidence_categories": {
+    "SOFTWARE_COORDINATE_SEMANTICS": "MA2 software definitions only; not Show sign mapping or venue orientation.",
+    "CURRENT_SHOW_MACHINE_FACTS": "Facts read from fingerprint-bound Phase A snapshot or current read-only scanner, with identity match stated explicitly.",
+    "VENUE_OPERATOR_FACTS": "Operator assertions scoped to the current Test Show; not universal MA2 rules."
+  },
+  "software_coordinate_semantics": {
+    "values": {
+      "MA2_X_AXIS_CONCEPT": "HORIZONTAL_STAGE_COORDINATE",
+      "MA2_Y_AXIS_CONCEPT": "TOWARD_AWAY_FROM_AUDIENCE_DIMENSION",
+      "MA2_Z_AXIS_CONCEPT": "VERTICAL_STAGE_COORDINATE"
+    },
+    "fixture_transform": {
+      "fixture_position_fields": ["Pos X", "Pos Y", "Pos Z"],
+      "fixture_position_scope": "POSITION_IN_MA2_3D_ENVIRONMENT",
+      "fixture_rotation_fields": ["Rot X", "Rot Y", "Rot Z"],
+      "fixture_rotation_scope": "ROTATION_IN_MA2_3D_ENVIRONMENT",
+      "stage_setup_axis_modes": ["STAGE_AXIS", "OBJECT_AXIS"],
+      "venue_sign_mapping": "NOT_ESTABLISHED_BY_SOFTWARE_CONVENTION",
+      "fixture_position_units": "NOT_ESTABLISHED_BY_REVIEWED_FIELD_SPECIFIC_SOURCE"
+    },
+    "sources": [
+      {
+        "title": "XYZ",
+        "publisher": "MA Lighting grandMA2 Help",
+        "url": "https://help.malighting.com/grandMA2/en/help/key_xyz.html",
+        "scope": "States virtual-channel Stage X horizontal, Stage Y toward/away from audience, and Stage Z vertical. Does not establish signed venue mapping for this Show."
+      },
+      {
+        "title": "Position fixtures in virtual 3D stage",
+        "publisher": "MA Lighting grandMA2 Help",
+        "url": "https://help.malighting.com/grandMA2/en/help/key_patch_position_fixtures.html",
+        "scope": "Fixture Pos X/Y/Z and Rot X/Y/Z act in the MA2 3D environment; Stage Axis and Object Axis are distinct controls. The reviewed text does not establish units for the exact fixture Pos fields or this venue's sign mapping."
+      }
+    ]
+  },
   "facts": {
     "COORDINATE_FRAME_VERIFIED": "PARTIAL",
-    "X_AXIS_SEMANTICS": "UNKNOWN",
-    "Y_AXIS_SEMANTICS": "UNKNOWN",
-    "Z_AXIS_SEMANTICS": "UNKNOWN",
+    "CURRENT_SHOW_FINGERPRINT_MATCHES_LIVE_SCAN": "NO",
+    "GEOMETRY_BEARING_RESOURCES_AVAILABLE": "VERIFIED",
+    "PROTECTED_RESOURCES_IDENTIFIED": "VERIFIED",
+    "MA2_X_AXIS_CONCEPT": "HORIZONTAL_STAGE_COORDINATE",
+    "MA2_Y_AXIS_CONCEPT": "TOWARD_AWAY_FROM_AUDIENCE_DIMENSION",
+    "MA2_Z_AXIS_CONCEPT": "VERTICAL_STAGE_COORDINATE",
+    "CURRENT_SHOW_X_SIGN_MAPPING": "UNKNOWN",
+    "CURRENT_SHOW_Y_SIGN_MAPPING": "UNKNOWN",
+    "CURRENT_SHOW_Z_SIGN_MAPPING": "UNKNOWN",
     "COORDINATE_UNITS_VERIFIED": "UNKNOWN",
     "STAGE_VIEW_CAPTURE_SUPPORTED": "NO",
+    "STAGE_VIEW_EVIDENCE_INPUT_SUPPORTED": "YES",
     "STAGE_VIEW_IMAGE_AVAILABLE": "NO",
     "STAGE_BOUNDS_KNOWN": "UNKNOWN",
     "PERFORMER_ZONE_KNOWN": "UNKNOWN",
-    "AUDIENCE_DIRECTION_KNOWN": "UNKNOWN",
-    "UPSTAGE_DOWNSTAGE_KNOWN": "UNKNOWN",
-    "STAGE_LEFT_RIGHT_KNOWN": "UNKNOWN",
+    "AUDIENCE_DIRECTION_KNOWN": "OPERATOR_VERIFIED_PAN_TILT_REFERENCE_ONLY",
+    "UPSTAGE_DOWNSTAGE_KNOWN": "PARTIAL_OPERATOR_TILT_POSITIVE_UPSTAGE_OR_INWARD",
+    "STAGE_LEFT_RIGHT_KNOWN": "OPERATOR_VERIFIED_PAN_REFERENCE_ONLY",
     "FIXTURE_MOUNTING_POSITIONS_KNOWN": "UNKNOWN",
     "FIXTURE_ORIENTATION_WRITABLE": "NOT_TESTED",
     "FIXTURE_ORIENTATION_READABLE": "PARTIAL_NUMERIC_ROTATION_ONLY",
     "OBSTRUCTION_DATA_AVAILABLE": "NOT_AVAILABLE",
     "TRUSS_OR_SUPPORT_GEOMETRY_AVAILABLE": "NOT_AVAILABLE",
-    "CURRENT_FINGERPRINT_CAPABILITY_PROFILES_AVAILABLE": "NO"
+    "CURRENT_FINGERPRINT_CAPABILITY_PROFILES_AVAILABLE": "NO",
+    "PAN_TILT_ORIENTATION_SEMANTICS": "OPERATOR_VERIFIED",
+    "OPERATOR_PAN_TILT_CALIBRATION": "VERIFIED_BY_OPERATOR"
   },
   "fact_evidence": {
-    "COORDINATE_FRAME_VERIFIED": "Phase A records numeric fixture/subfixture geometry from MA2_FIXTURE_OBJECT_PROPERTY. The scanner frame is identified, but no venue-facing semantic mapping was captured.",
-    "X_AXIS_SEMANTICS": "UNKNOWN in normalized snapshot; verify_real_stage_axis.py explicitly requires independent Stage View visual evidence before semantic labels.",
-    "Y_AXIS_SEMANTICS": "UNKNOWN in normalized snapshot; no visual or venue mapping evidence is present.",
-    "Z_AXIS_SEMANTICS": "UNKNOWN in normalized snapshot; numeric values do not establish physical height or units.",
-    "COORDINATE_UNITS_VERIFIED": "UNKNOWN; no source in the saved Phase A artifacts assigns physical units.",
-    "STAGE_VIEW_CAPTURE_SUPPORTED": "NO supported read-only Stage View capture interface was found in the repository/runtime; no raw command was attempted.",
-    "STAGE_VIEW_IMAGE_AVAILABLE": "NO image/screenshot artifact exists beside the saved Phase A snapshot and Show profile.",
-    "STAGE_BOUNDS_KNOWN": "UNKNOWN physical stage boundaries. Numeric coordinate extents are not venue/stage bounds.",
-    "PERFORMER_ZONE_KNOWN": "UNKNOWN; no performer-zone evidence was captured.",
-    "AUDIENCE_DIRECTION_KNOWN": "UNKNOWN; no audience-facing orientation evidence was captured.",
-    "UPSTAGE_DOWNSTAGE_KNOWN": "UNKNOWN; no venue orientation evidence was captured.",
-    "STAGE_LEFT_RIGHT_KNOWN": "UNKNOWN; no Stage View or audience-axis calibration was captured.",
-    "FIXTURE_MOUNTING_POSITIONS_KNOWN": "UNKNOWN; the scan records numeric coordinates, not physical mounting/support points.",
-    "FIXTURE_ORIENTATION_WRITABLE": "NOT_TESTED; this gate is read-only and does not authorize orientation/geometry writes.",
-    "FIXTURE_ORIENTATION_READABLE": "PARTIAL_NUMERIC_ROTATION_ONLY; rotation values are present in scanned rows, but their physical orientation semantics are unverified.",
-    "OBSTRUCTION_DATA_AVAILABLE": "NOT_AVAILABLE in the scanned snapshot/profile.",
-    "TRUSS_OR_SUPPORT_GEOMETRY_AVAILABLE": "NOT_AVAILABLE in the scanned snapshot/profile.",
-    "CURRENT_FINGERPRINT_CAPABILITY_PROFILES_AVAILABLE": "NO; Show profile marks fixture_type_profiles UNAVAILABLE and normalized current-fingerprint capability status UNKNOWN_FOR_CURRENT_FINGERPRINT."
+    "COORDINATE_FRAME_VERIFIED": "The Phase A scanner records numeric fixture/subfixture Pos and Rot fields in its identified MA2 3D coordinate frame; physical venue axes, signs, and units are not implied.",
+    "CURRENT_SHOW_FINGERPRINT_MATCHES_LIVE_SCAN": "NO. Phase A fingerprint is b41d801b915cddfdd5017df787ad66b55941fbce415ab02ee8ec63acaa027bd5; the later local scanner identity is 145be3835bf8d23cf4cb416535a7313d90240077954594e33c4c995337023340. The exact-identity guard stopped FixtureType export before it ran.",
+    "GEOMETRY_BEARING_RESOURCES_AVAILABLE": "The fingerprint-bound Phase A snapshot contains 64 accepted non-protected fixture geometry placements; original 65 records include protected Fixture 9999.",
+    "PROTECTED_RESOURCES_IDENTIFIED": "Phase A marks Fixture 9999 PROTECTED_UNAVAILABLE; it is excluded from artistic placement resources.",
+    "MA2_X_AXIS_CONCEPT": "Official MA Lighting grandMA2 XYZ help defines Stage X as horizontal. This is software semantics only.",
+    "MA2_Y_AXIS_CONCEPT": "Official MA Lighting grandMA2 XYZ help defines Stage Y as toward/away from audience. This does not define a current-Show sign.",
+    "MA2_Z_AXIS_CONCEPT": "Official MA Lighting grandMA2 XYZ help defines Stage Z as vertical. This does not define physical height units for scanned fixture Pos fields.",
+    "CURRENT_SHOW_X_SIGN_MAPPING": "UNKNOWN. Neither generic MA2 semantics nor the supplied Pan/Tilt convention establishes a signed fixture Pos X mapping for this Show.",
+    "CURRENT_SHOW_Y_SIGN_MAPPING": "UNKNOWN. Neither generic MA2 semantics nor the supplied Pan/Tilt convention establishes a signed fixture Pos Y mapping for this Show.",
+    "CURRENT_SHOW_Z_SIGN_MAPPING": "UNKNOWN. Neither generic MA2 semantics nor the supplied Pan/Tilt convention establishes a signed fixture Pos Z mapping for this Show.",
+    "COORDINATE_UNITS_VERIFIED": "UNKNOWN. The reviewed official Fixture Position help did not explicitly assign units to the exact scanned fixture Pos X/Y/Z fields; units of other MA2 XYZ features are not extrapolated.",
+    "STAGE_VIEW_CAPTURE_SUPPORTED": "NO supported read-only Stage View image-capture method exists in the inspected ZEN scanner path; no undocumented command was attempted.",
+    "STAGE_VIEW_EVIDENCE_INPUT_SUPPORTED": "YES. A versioned, explicit operator-supplied image artifact can be validated by fingerprint, path containment, media signature, and SHA-256; it does not itself promote visual observations to physical facts.",
+    "STAGE_VIEW_IMAGE_AVAILABLE": "NO operator-supplied Stage View image is present in this calibration artifact.",
+    "STAGE_BOUNDS_KNOWN": "UNKNOWN. Fixture coordinate extrema are not stage bounds.",
+    "PERFORMER_ZONE_KNOWN": "UNKNOWN. Fixture coordinates do not identify the performance area.",
+    "AUDIENCE_DIRECTION_KNOWN": "The operator verified negative tilt as audience-facing within the current Show Pan/Tilt convention only. This does not map the Stage View or Pos X/Y/Z frame.",
+    "UPSTAGE_DOWNSTAGE_KNOWN": "PARTIAL only: positive tilt is described as upstage OR inward, which does not disambiguate upstage and cannot map to Pos Y or another XYZ sign.",
+    "STAGE_LEFT_RIGHT_KNOWN": "The operator verified Pan negative as stage right and Pan positive as stage left when facing the stage from the audience. This applies only to Pan orientation, not Pos X sign.",
+    "FIXTURE_MOUNTING_POSITIONS_KNOWN": "UNKNOWN. Fixture-object coordinates do not establish physical mounting/support positions.",
+    "FIXTURE_ORIENTATION_WRITABLE": "NOT_TESTED; this gate is read-only and does not authorize orientation or geometry writes.",
+    "FIXTURE_ORIENTATION_READABLE": "PARTIAL_NUMERIC_ROTATION_ONLY; Phase A contains numeric Rot X/Y/Z without venue-facing interpretation.",
+    "OBSTRUCTION_DATA_AVAILABLE": "NOT_AVAILABLE in the inspected current Show snapshot and profile.",
+    "TRUSS_OR_SUPPORT_GEOMETRY_AVAILABLE": "NOT_AVAILABLE in the inspected current Show snapshot and profile.",
+    "CURRENT_FINGERPRINT_CAPABILITY_PROFILES_AVAILABLE": "NO for the Phase A fingerprint. A supported loopback onPC FixtureType profile reader exists, but its whole-Show identity precondition failed against the current local scan; no mismatched profile was bound.",
+    "PAN_TILT_ORIENTATION_SEMANTICS": "Operator-supplied and verified for this current Test Show convention only; it is not a universal grandMA2 rule and is explicitly independent of XYZ sign mapping.",
+    "OPERATOR_PAN_TILT_CALIBRATION": "Explicit operator instruction supplied for this SHEESH Test Show calibration gate; it is not promoted as a global MA2 convention."
+  },
+  "operator_supplied_pan_tilt_calibration": {
+    "source_type": "OPERATOR_SUPPLIED_CALIBRATION",
+    "status": "OPERATOR_VERIFIED",
+    "gate_id": "SHEESH_SPATIAL_FACT_CALIBRATION_001",
+    "show_fingerprint": "b41d801b915cddfdd5017df787ad66b55941fbce415ab02ee8ec63acaa027bd5",
+    "scope": "Current SHEESH Test Show and this operator's Pan/Tilt convention only; not a universal grandMA2 rule.",
+    "directions": {
+      "TILT_NEGATIVE_DIRECTION": "AUDIENCE",
+      "TILT_POSITIVE_DIRECTION": "UPSTAGE_OR_INWARD",
+      "PAN_NEGATIVE_DIRECTION": "STAGE_RIGHT_WHEN_FACING_STAGE_FROM_AUDIENCE",
+      "PAN_POSITIVE_DIRECTION": "STAGE_LEFT_WHEN_FACING_STAGE_FROM_AUDIENCE"
+    },
+    "xyz_sign_mapping_inferred": false,
+    "universal_ma2_rule": false
+  },
+  "stage_view_evidence_input": {
+    "supported": true,
+    "schema": "zen.operator_stage_view_evidence.v0.1",
+    "source_type": "OPERATOR_SUPPLIED_STAGE_VIEW_IMAGE",
+    "requires_show_fingerprint": true,
+    "requires_captured_at_with_timezone": true,
+    "requires_image_hash_and_media_signature": true,
+    "operator_assertions_have_separate_provenance": true,
+    "visual_observation_class": "VISUAL_OBSERVATION",
+    "visual_observation_auto_verified": false,
+    "artifact": null
+  },
+  "current_live_machine_observation": {
+    "identity_kind": "SCANNED_SHOW_PROFILE_FINGERPRINT",
+    "show_fingerprint": "145be3835bf8d23cf4cb416535a7313d90240077954594e33c4c995337023340",
+    "confidence": "PARTIAL",
+    "fixture_count": 57,
+    "group_count": 7,
+    "preset_count": 19,
+    "fixture_type_label_count": 6,
+    "onpc_version": "3.9.60.65",
+    "matches_calibration_show_fingerprint": false,
+    "fixture_type_export_preflight": "CURRENT_SHOW_IDENTITY_MISMATCH_EXPORT_NOT_ATTEMPTED",
+    "source_method": "Existing read-only State scanner plus scripts/verify_show_bound_fixture_type_binding.py preflight"
   },
   "geometry_evidence": {
+    "geometry_bearing_resource_count": 64,
     "scanned_geometry_records_including_protected_fixture": 65,
     "accepted_position_placements_excluding_fixture_9999": 64,
+    "protected_fixture_ids": [9999],
     "placements_equal_to_scanned_xyz": "64/64",
     "rotations_equal_to_scanned_values": "64/64",
     "geometry_delta_from_snapshot": "ZERO",
     "fixture_9999": "PROTECTED_UNAVAILABLE"
   },
+  "show_bound_capability_profiles": {
+    "schema": "zen.show_bound_fixture_capability_profiles.v0.1",
+    "show_fingerprint": "b41d801b915cddfdd5017df787ad66b55941fbce415ab02ee8ec63acaa027bd5",
+    "profiles": [],
+    "protected_fixture_ids": [9999],
+    "capability_profile_count": 0,
+    "source": "EXISTING_LOOPBACK_ONPC_FIXTURE_TYPE_PROFILE_PROVIDER",
+    "acquisition_status": "NOT_ATTEMPTED_IDENTITY_MISMATCH"
+  },
   "revision_readiness": {
     "status": "BLOCKED_MISSING_EVIDENCE",
     "ready": false,
-    "blocking_facts": [
-      "COORDINATE_FRAME_VERIFIED",
-      "X_AXIS_SEMANTICS",
-      "Y_AXIS_SEMANTICS",
-      "Z_AXIS_SEMANTICS",
+    "blocking_categories": [
+      "CURRENT_SHOW_IDENTITY",
+      "VENUE_COORDINATE_ORIENTATION",
+      "STAGE_AND_PERFORMER_CONTEXT",
+      "CURRENT_SHOW_CAPABILITIES"
+    ],
+    "checks": {
+      "CURRENT_SHOW_IDENTITY": false,
+      "GEOMETRY_AND_PROTECTED_RESOURCES": true,
+      "MA2_COORDINATE_CONCEPTS": true,
+      "VENUE_COORDINATE_ORIENTATION": false,
+      "STAGE_AND_PERFORMER_CONTEXT": false,
+      "CURRENT_SHOW_CAPABILITIES": false
+    },
+    "non_blocking_limitations": [
       "COORDINATE_UNITS_VERIFIED",
-      "STAGE_VIEW_IMAGE_AVAILABLE",
-      "STAGE_BOUNDS_KNOWN",
-      "PERFORMER_ZONE_KNOWN",
-      "AUDIENCE_DIRECTION_KNOWN",
-      "UPSTAGE_DOWNSTAGE_KNOWN",
-      "STAGE_LEFT_RIGHT_KNOWN",
-      "FIXTURE_MOUNTING_POSITIONS_KNOWN",
-      "FIXTURE_ORIENTATION_READABLE",
-      "CURRENT_FINGERPRINT_CAPABILITY_PROFILES_AVAILABLE"
+      "OBSTRUCTION_DATA_AVAILABLE",
+      "TRUSS_OR_SUPPORT_GEOMETRY_AVAILABLE",
+      "FIXTURE_ORIENTATION_WRITABLE",
+      "STAGE_VIEW_IMAGE_AVAILABLE"
     ]
   },
   "owner_review": {
@@ -88,5 +197,6 @@
     "critic_blocker_accepted": "YES"
   },
   "MA2_WRITES": 0,
+  "PROVIDER_ARTISTIC_CALLS": 0,
   "CODEX_ARTISTIC_INTERVENTION": "NONE"
 }

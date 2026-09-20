@@ -5,7 +5,7 @@
     "id": "M2_EXPRESSIVE_CAPABILITY",
     "title": "Expressive Capability",
     "status": "ACTIVE",
-    "active_objective": "Owner review rejected the technically valid but artistically unaccepted SHEESH Position artifact for revision; its 64 placements and rotations exactly reproduce scanned geometry, and the accepted Critic BLOCKER is preserved. Read-only spatial fact calibration found coordinate axes/units, Stage View image, bounds, performer/audience orientation, mounting and current-fingerprint capabilities missing. The bounded two-cycle ZEN revision runtime is implemented but must not run until calibration evidence satisfies its gate. No writeback is approved; MA2_WRITES=0."
+    "active_objective": "Owner review rejected the technically valid but artistically unaccepted SHEESH Position artifact for revision; its 64 placements and rotations exactly reproduce scanned geometry, and the accepted Critic BLOCKER is preserved. Calibration now separates sourced MA2 software axis concepts and operator-verified Pan/Tilt convention from venue XYZ sign mapping. The current live scanner identity mismatches the Phase A fingerprint, so no FixtureType export/profile was bound. XYZ signs, stage/performance context and fingerprint-bound capabilities remain blocking. The bounded two-cycle ZEN revision runtime must not run until readiness passes. No writeback is approved; MA2_WRITES=0."
   },
   "last_closed_task": {
     "id": "SHEESH_ZEN_SPATIAL_ARTIFACT_HUMAN_REVIEW_001_AND_SPATIAL_FACT_CALIBRATION_001",
@@ -16,7 +16,7 @@
     "id": "SHEESH_SPATIAL_FACT_CALIBRATION_001",
     "classification": "REQUIRED",
     "status": "BLOCKED_MISSING_EVIDENCE",
-    "why_it_matters": "The owner rejected the current Position artifact for revision and accepted the Critic BLOCKER. Calibration verified only the existence of numeric scanned coordinates and numeric rotations; axis semantics, units, visual Stage View, physical bounds, performer/audience orientation, mounting positions and current-fingerprint capability profiles remain unknown or unavailable.",
+    "why_it_matters": "The owner rejected the current Position artifact for revision and accepted the Critic BLOCKER. Calibration now records MA2 software X/Y/Z concepts separately from venue sign mapping and records the operator's Show-scoped Pan/Tilt convention without deriving XYZ signs. The Phase A fingerprint does not match the current local scanner identity, so current-fingerprint FixtureType profiles were not exported or bound. XYZ sign mapping, stage/performance context and exact Show capability profiles remain blocking; fixture-object Pos units remain unknown.",
     "blocks_current_milestone": true,
     "dependencies": [
       "ZEN_SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001.md",
@@ -24,7 +24,7 @@
       "data/sheesh_spatial_fact_calibration_001.json",
       "fingerprinted current Show snapshot and six validated role artifacts under the portable run state"
     ],
-    "next_review_condition": "Supply verified, fingerprint-bound physical coordinate semantics and units, a human-visible Stage View image, stage/performance/audience orientation and mounting evidence, and current-fingerprint capability profiles. Then reevaluate calibration readiness before any ZEN revision inference. No spatial writeback is authorized."
+    "next_review_condition": "Supply independent current-Show XYZ sign mapping evidence (not derived from Pan/Tilt or generic MA2 semantics), enough venue orientation plus stage bounds/performance-zone evidence to interpret placements, and exact current-fingerprint FixtureType capability profiles. The current local Show identity must match the Phase A fingerprint or the calibration must be explicitly rebound through a separately approved fresh snapshot process. An operator-supplied Stage View evidence artifact is supported but not required when equivalent verified evidence exists. Reevaluate readiness before any ZEN revision inference. No spatial writeback is authorized."
   },
   "human_review_decisions": [
     {
@@ -111,14 +111,16 @@
         "OWNER_REVIEW_REJECT_FOR_REVISION_RECORDED",
         "PHASE_A_SNAPSHOT_AND_PROFILE_HASH_BOUND",
         "NUMERIC_GEOMETRY_AND_ROTATION_READABLE_ONLY",
-        "STAGE_VIEW_CAPTURE_UNSUPPORTED_AND_IMAGE_UNAVAILABLE",
-        "AXIS_UNITS_PERFORMER_AUDIENCE_AND_MOUNTING_SEMANTICS_UNKNOWN",
-        "CURRENT_FINGERPRINT_CAPABILITY_PROFILES_UNAVAILABLE",
+        "OFFICIAL_MA2_SOFTWARE_XYZ_CONCEPTS_RECORDED_SEPARATELY_FROM_SHOW_MAPPING",
+        "OPERATOR_PAN_TILT_CONVENTION_VERIFIED_AND_EXPLICITLY_NOT_MAPPED_TO_XYZ",
+        "CURRENT_SHOW_IDENTITY_MISMATCH_BLOCKED_FIXTURETYPE_EXPORT",
+        "CURRENT_SHOW_XYZ_SIGN_MAPPING_STAGE_BOUNDS_PERFORMER_ZONE_AND_CAPABILITY_PROFILES_STILL_BLOCKING",
+        "STAGE_VIEW_OPERATOR_EVIDENCE_INPUT_SUPPORTED_IMAGE_NOT_SUPPLIED",
         "REVISION_LOOP_CODE_PATH_FAILS_CLOSED_WHILE_FACTS_UNKNOWN",
         "NO_NEW_PROVIDER_RUN",
         "MA2_WRITES_ZERO"
       ],
-      "limitations": "UNKNOWN and PARTIAL facts are retained. Numeric coordinate extents do not establish physical bounds or units. Orientation is numerically readable only; orientation writeability was not tested because no write is authorized. A new ZEN revision must wait for the listed key evidence."
+      "limitations": "MA2 software concepts, current-Show machine facts, and operator/venue facts are separate namespaces. Official MA2 documentation does not supply this Show's XYZ sign mapping or exact scanned fixture Pos units. Operator Pan/Tilt directions are scoped to this Test Show and do not establish any XYZ sign. The supported loopback FixtureType export path was gated by the different live scanner identity and did not run; profiles remain unavailable for the Phase A fingerprint. UNKNOWN and PARTIAL remain valid. A new ZEN revision must wait for sufficient independent, fingerprint-bound placement and capability evidence."
     },
     {
       "id": "TEST_SHOW_COLOR_PROVISIONING_001",
@@ -217,14 +219,14 @@
       "classification": "REQUIRED",
       "milestone": "M3_SHOW_RIG_ADAPTATION",
       "status": "REJECTED_BY_OWNER_CALIBRATION_BLOCKED",
-      "why_it_matters": "Owner rejected the Position artifact for revision and accepted the Critic BLOCKER. All 64 placements and rotations equal the scan. Physical coordinate semantics, Stage View, performer/audience orientation, mounting and current-fingerprint capability evidence are insufficient for a meaningful ZEN revision.",
+      "why_it_matters": "Owner rejected the Position artifact for revision and accepted the Critic BLOCKER. All 64 placements and rotations equal the scan. MA2 software axis concepts are now known, while current-Show XYZ sign mapping, stage/performance context and exact-fingerprint capability evidence remain insufficient for a meaningful ZEN revision.",
       "blocks_current_milestone": true,
       "dependencies": [
         "SHEESH_SPATIAL_FACT_CALIBRATION_001",
         "fingerprint-bound current Show and capability evidence",
         "human-visible Stage View and venue orientation evidence"
       ],
-      "next_review_condition": "Satisfy the calibration readiness facts, then let ZEN run at most two provider-authored revision cycles. No automatic repair or MA2 writeback follows."
+      "next_review_condition": "Satisfy the calibration readiness facts with independent, Show-bound evidence, then let ZEN run at most two provider-authored revision cycles. No automatic repair or MA2 writeback follows."
     },
     {
       "id": "GENERIC_ZEN_SPATIAL_WRITE_ADAPTER",
