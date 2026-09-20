@@ -766,6 +766,66 @@
       "copyright_policy": "METADATA_AND_DERIVED_EXTRACTS_ONLY",
       "source_bias": "Theatre-oriented interview; restraint and rule-breaking concepts are transferable only as conditional design reasoning.",
       "notes": "Useful for deliberate constraint, narrow palette and breaking self-imposed rules for impact."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_source.v0.1",
+      "source_id": "PLSN_SPRINGSTEEN_VARIATIONS_THEME",
+      "source_type": "CASE_REFERENCE",
+      "publisher": "PLSN",
+      "title": "Bruce Springsteen and the E Street Band",
+      "url": "https://plsn.com/articles/designer-insight/bruce-springsteen-and-the-e-street-band/",
+      "publication_date": "2023-03-13",
+      "version": null,
+      "retrieved_at": "2026-09-20",
+      "authority": "PROFESSIONAL_DESIGNER_INTERVIEW_CASE_REFERENCE",
+      "copyright_policy": "METADATA_AND_DERIVED_EXTRACTS_ONLY",
+      "source_bias": "One long-form touring case; useful for variation-on-theme and song-specific recipe reasoning, not a universal requirement that every song be visually unique.",
+      "notes": "Directly relevant to show-level variety without abandoning a consistent aesthetic."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_source.v0.1",
+      "source_id": "PLSN_KAROL_G_MANANA_SERÁ_BONITO",
+      "source_type": "CASE_REFERENCE",
+      "publisher": "PLSN",
+      "title": "Karol G 'Mañana Será Bonito Tour'",
+      "url": "https://plsn.com/articles/designer-insight/karol-g-manana-sera-bonito-tour/",
+      "publication_date": "2023-11-08",
+      "version": null,
+      "retrieved_at": "2026-09-20",
+      "authority": "PROFESSIONAL_DESIGNER_INTERVIEW_CASE_REFERENCE",
+      "copyright_policy": "METADATA_AND_DERIVED_EXTRACTS_ONLY",
+      "source_bias": "Large stadium pop narrative case; chapter palette strategy is contextual and should not be generalized into fixed K-pop or pop rules.",
+      "notes": "Useful for multi-song chapter coherence inside a restricted palette and variation through intensity, timing and shade."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_source.v0.1",
+      "source_id": "PLSN_ADELE_LIVE_2016",
+      "source_type": "CASE_REFERENCE",
+      "publisher": "PLSN",
+      "title": "Adele Live 2016 Tour",
+      "url": "https://plsn.com/articles/designer-insights/adele-live-2016-tour/",
+      "publication_date": "2016-07-06",
+      "version": null,
+      "retrieved_at": "2026-09-20",
+      "authority": "PROFESSIONAL_DESIGNER_INTERVIEW_CASE_REFERENCE",
+      "copyright_policy": "METADATA_AND_DERIVED_EXTRACTS_ONLY",
+      "source_bias": "One artist-specific design with unusually restricted color; restraint is evidence of a valid strategy, not a rule against saturated color.",
+      "notes": "Useful for show identity through restriction and preserving rare saturated color for stronger impact."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_source.v0.1",
+      "source_id": "PLSN_JACK_WHITE_BLUE_WORLD",
+      "source_type": "CASE_REFERENCE",
+      "publisher": "PLSN",
+      "title": "Jack White's Blue, Blue World",
+      "url": "https://plsn.com/archives/june-2022/jack-whites-blue-blue-world/",
+      "publication_date": "2022-05-26",
+      "version": null,
+      "retrieved_at": "2026-09-20",
+      "authority": "PROFESSIONAL_TOUR_CASE_REFERENCE",
+      "copyright_policy": "METADATA_AND_DERIVED_EXTRACTS_ONLY",
+      "source_bias": "Artist-specific touring concept with an intentionally narrow blue-and-white language; not a universal palette strategy.",
+      "notes": "Useful for proving that a whole-show restricted palette can coexist with improvisation and song-level variation."
     }
   ]
 }
