@@ -5310,6 +5310,286 @@
       "related_console_capabilities": [],
       "source_provenance": "PLSN_FANTASIA_BACK_TO_ME_CASE: case description of contrasting period-specific visual treatments.",
       "summary": "Case evidence that meaningful contrast may change focus, movement and palette together instead of simply adding output."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk004_soyoun_story_support",
+      "source_id": "LATAMSTAGE_SOYOUN_LEE_CRUSH_WONDEREGO",
+      "topic": "VISUAL_HIERARCHY",
+      "normalized_claim": "Soyoun Lee describes lighting as a tool for helping an artist communicate story and narrative while showcasing performance and atmosphere, placing the artist's message ahead of technical spectacle.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "KPOP_ARENA_ARTIST_NARRATIVE_CASE",
+      "exclusions": [
+        "Does not prescribe one focal hierarchy for all artists.",
+        "Does not imply technology should always remain visually subtle."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Some productions intentionally make lighting or technology a dominant part of the artistic concept."
+      ],
+      "related_design_concepts": [
+        "artist_story",
+        "visual_hierarchy",
+        "audience_attention",
+        "atmosphere"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LATAMSTAGE_SOYOUN_LEE_CRUSH_WONDEREGO: direct designer/programmer interview on the Wonderego arena production.",
+      "summary": "K-pop case evidence that lighting decisions should begin with the artist's story and performance rather than fixture capability."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk004_soyoun_less_fixture_more_versatility",
+      "source_id": "LATAMSTAGE_SOYOUN_LEE_CRUSH_WONDEREGO",
+      "topic": "RESOURCE_HEADROOM",
+      "normalized_claim": "Soyoun Lee states that impactful lighting does not require excessive fixture counts and favors a balanced rig where fewer lights are thoroughly maximized for versatility and multifunctionality.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "KPOP_ARENA_RESOURCE_STRATEGY_CASE",
+      "exclusions": [
+        "Does not prescribe a small rig.",
+        "Does not imply fewer fixtures are always cheaper, safer or visually stronger."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Large-scale concepts can legitimately require many fixtures for coverage, redundancy, geometry or audience scale."
+      ],
+      "related_design_concepts": [
+        "resource_headroom",
+        "versatility",
+        "restraint",
+        "multifunctionality"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LATAMSTAGE_SOYOUN_LEE_CRUSH_WONDEREGO: designer interview discussing balanced fixture use and versatility.",
+      "summary": "K-pop case evidence against equating professional impact with maximum fixture quantity."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk004_soyoun_geometry_resonance",
+      "source_id": "LATAMSTAGE_SOYOUN_LEE_CRUSH_WONDEREGO",
+      "topic": "LAYERING_DEPTH",
+      "normalized_claim": "The Wonderego lighting design echoed the set's angular geometry with overhead truss and lighting surfaces, using spatial relationships to reinforce the scenic concept and add resonance and depth.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "KPOP_ARENA_SCENIC_GEOMETRY_CASE",
+      "exclusions": [
+        "Does not prescribe matching truss shape to scenery.",
+        "Does not establish current Show geometry without verified spatial evidence."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Lighting geometry may intentionally contrast with scenic geometry when the concept benefits from tension or separation."
+      ],
+      "related_design_concepts": [
+        "geometry",
+        "layering",
+        "depth",
+        "scenic_relationship"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LATAMSTAGE_SOYOUN_LEE_CRUSH_WONDEREGO: case description of lighting truss geometry responding to the set design.",
+      "summary": "Case evidence that lighting placement can reinforce scenic form and depth rather than behaving as an unrelated equipment layer."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk004_soyoun_console_fluency_creativity",
+      "source_id": "LATAMSTAGE_SOYOUN_LEE_CRUSH_WONDEREGO",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "Soyoun Lee reports that deeper console fluency improved both programming efficiency and creative possibilities, suggesting that technical mastery is valuable when it reduces friction between an idea and an editable implementation.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "PROFESSIONAL_DESIGNER_PROGRAMMER_WORKFLOW_CASE",
+      "exclusions": [
+        "The cited workflow used grandMA3-specific features and must not be treated as proof of grandMA2 feature behavior.",
+        "Does not imply more complex console techniques are inherently more creative."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Simple native workflows can be artistically superior when advanced tooling adds unnecessary complexity."
+      ],
+      "related_design_concepts": [
+        "console_fluency",
+        "creative_iteration",
+        "efficiency",
+        "editability"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LATAMSTAGE_SOYOUN_LEE_CRUSH_WONDEREGO: interview discussing the relationship between programming technique and creative iteration.",
+      "summary": "Professional evidence that console knowledge should serve faster, more flexible realization of ideas, not become an end in itself."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk004_twice_360_audience_geometry",
+      "source_id": "MOMENT_FACTORY_TWICE_THIS_IS_FOR",
+      "topic": "FOCUS_VISUAL_ATTENTION",
+      "normalized_claim": "TWICE's This Is For tour was designed as a 360-degree arena experience so performers could connect with fans from every angle, making audience geometry and all-around sightlines part of the production design problem.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "KPOP_360_ARENA_CASE",
+      "exclusions": [
+        "Does not imply every arena production should use a 360-degree stage.",
+        "Does not define lighting positions or performer focus for another venue."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "End-stage, thrust or asymmetric layouts can better serve other performance concepts."
+      ],
+      "related_design_concepts": [
+        "audience_geometry",
+        "focus",
+        "sightlines",
+        "fan_engagement"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "MOMENT_FACTORY_TWICE_THIS_IS_FOR: production-design studio case description of the 360-degree arena concept.",
+      "summary": "K-pop case evidence that audience placement and sightlines can shape the visual strategy before fixture choices are made."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk004_twice_multimedia_layers",
+      "source_id": "MOMENT_FACTORY_TWICE_THIS_IS_FOR",
+      "topic": "LAYERING_DEPTH",
+      "normalized_claim": "The TWICE production combined an evolving stage with LED surfaces, overhead cubes, IMAG and real-time visual content, showing that lighting design must reason within a multi-layer visual system rather than optimize one department in isolation.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "KPOP_360_MULTIMEDIA_ARENA_CASE",
+      "exclusions": [
+        "Does not prescribe LED-heavy production design.",
+        "Does not establish which department should dominate in another show."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Lighting-led productions can intentionally minimize or omit video layers."
+      ],
+      "related_design_concepts": [
+        "multimedia",
+        "layering",
+        "visual_hierarchy",
+        "integration"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "MOMENT_FACTORY_TWICE_THIS_IS_FOR: production description of integrated stage, multimedia and real-time visuals.",
+      "summary": "K-pop case evidence for evaluating lighting as one layer in a larger visual composition."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk004_blackpink_cross_department_looks",
+      "source_id": "STRANGELOOP_BLACKPINK_COACHELLA_2023",
+      "topic": "VISUAL_HIERARCHY",
+      "normalized_claim": "BLACKPINK's 2023 Coachella visual content was developed collaboratively across creative direction, choreography, stage design and lighting direction, supporting a cross-department approach to member-specific and performance-specific looks.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "KPOP_HEADLINE_FESTIVAL_COLLABORATION_CASE",
+      "exclusions": [
+        "The source does not document the detailed lighting rationale behind each look.",
+        "Does not establish a fixed BLACKPINK or K-pop visual recipe."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Smaller shows may combine roles or make effective visual decisions without the same departmental structure."
+      ],
+      "related_design_concepts": [
+        "collaboration",
+        "performer_identity",
+        "visual_hierarchy",
+        "choreography"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "STRANGELOOP_BLACKPINK_COACHELLA_2023: production-studio portfolio documenting collaboration with lighting, stage and creative teams.",
+      "summary": "Case evidence that major K-pop looks emerge from coordinated departments rather than lighting acting independently."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk004_bts_keylight_not_flatten_picture",
+      "source_id": "ROSS_WILLIAMS_BTS_ARIRANG_2026",
+      "topic": "FOCUS_VISUAL_ATTENTION",
+      "normalized_claim": "The BTS Arirang broadcast key-light brief required the performers to stay clean and camera-readable without flattening the architecture, scenic lighting, audience energy or wider visual language.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "KPOP_GLOBAL_BROADCAST_KEYLIGHT_CASE",
+      "exclusions": [
+        "Does not prescribe broadcast exposure values or followspot levels.",
+        "Does not imply camera readability always outranks intentional silhouette or obscurity."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Non-broadcast concert moments may intentionally prioritize atmosphere over consistent close-up exposure."
+      ],
+      "related_design_concepts": [
+        "performer_focus",
+        "camera_readability",
+        "visual_hierarchy",
+        "environment"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "ROSS_WILLIAMS_BTS_ARIRANG_2026: professional lighting-director case study on BTS broadcast key lighting.",
+      "summary": "K-pop broadcast case evidence for balancing performer readability with preservation of the larger stage picture."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk004_bts_rehearsal_integration",
+      "source_id": "ROSS_WILLIAMS_BTS_ARIRANG_2026",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "The BTS Arirang team refined lighting through band rehearsals and final onsite programming while integrating camera direction, playback, scenery and audience moments, showing why a professional file must remain adaptable through rehearsal.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "KPOP_GLOBAL_BROADCAST_REHEARSAL_CASE",
+      "exclusions": [
+        "Does not justify avoidable incompleteness before rehearsal.",
+        "Does not prescribe the same staffing or control architecture for smaller shows."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Highly repeated touring shows may require fewer structural changes after the first validated production period."
+      ],
+      "related_design_concepts": [
+        "rehearsal",
+        "adaptability",
+        "cross_department_integration",
+        "handover"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "ROSS_WILLIAMS_BTS_ARIRANG_2026: first-person case study of rehearsal and onsite refinement.",
+      "summary": "Professional evidence that editable programming supports the real design process, which continues when all production layers meet onsite."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk004_bts_division_of_responsibility",
+      "source_id": "ROSS_WILLIAMS_BTS_ARIRANG_2026",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "The BTS broadcast used a shared control environment with clear separation between key lighting, programmed looks and wider effects, illustrating that system architecture can preserve responsibility boundaries while multiple programmers and control platforms cooperate.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "LARGE_BROADCAST_MULTI_PROGRAMMER_CASE",
+      "exclusions": [
+        "Does not prescribe Hog/MA mixed control or multiple programmers.",
+        "Does not establish how ZEN should partition authority without its own safety contract."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Small productions may be clearer and safer with one operator and one control surface."
+      ],
+      "related_design_concepts": [
+        "responsibility_boundary",
+        "control_architecture",
+        "collaboration",
+        "reliability"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "ROSS_WILLIAMS_BTS_ARIRANG_2026: case study describing divided responsibilities within a shared lighting-control environment.",
+      "summary": "Case evidence that complex shows benefit from explicit control responsibilities instead of one undifferentiated automation layer."
     }
   ]
 }
