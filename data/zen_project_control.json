@@ -5,26 +5,26 @@
     "id": "M2_EXPRESSIVE_CAPABILITY",
     "title": "Expressive Capability",
     "status": "ACTIVE",
-    "active_objective": "Use the fingerprinted editable current MA2 Test Show for SHEESH_CURRENT_SHOW_REDESIGN_001: snapshot the real Show, let ZEN design Stage/3D spatial geometry upstream of SHEESH lighting design, and write back only through verified supported Test-Show paths."
+    "active_objective": "Continue SHEESH_CURRENT_SHOW_REDESIGN_001 from the verified read-only Phase A snapshot. The immediate blocker is to make the live Show snapshot a validated ZEN runtime input and produce an upstream spatial artifact before LIGHTING_DESIGNER, with MA2 writes remaining disabled."
   },
   "last_closed_task": {
-    "id": "REAL_MA2_TEST_SHOW_SHEESH_BUILD_001",
-    "status": "BUILT_AWAITING_REDESIGN_EXPERIMENT",
-    "result": "TEST_SHOW_MODE real-console build verified: 13 owned Color presets, provisional TEST_STAGE_LAYOUT_SHEESH_001, Sequence 901 with 15 Cues, and Page 1 Executor 201 / ZEN_SHEESH_TEST. No Timecode was written because no actual audio file was available."
+    "id": "SHEESH_CURRENT_SHOW_REDESIGN_PHASE_A_001",
+    "status": "CLOSED_BLOCKER_IDENTIFIED",
+    "result": "Read-only current Show snapshot completed. Scan-derived fingerprint b41d801b915cddfdd5017df787ad66b55941fbce415ab02ee8ec63acaa027bd5; 57 fixtures, 6 fixture types, 7 Groups, 65 subfixture geometry records, 27 Presets, 7 Sequences and 2 Executors. Geometry numeric XYZ/rotation is readable. No ZEN design roles ran and MA2_WRITES=0. Current runtime does not accept the fresh snapshot as first-class input and has no autonomous upstream spatial role before LIGHTING_DESIGNER."
   },
   "next_acceptance_gate": {
-    "id": "SHEESH_CURRENT_SHOW_REDESIGN_001",
+    "id": "SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001",
     "classification": "REQUIRED",
     "status": "CURRENT",
-    "why_it_matters": "Zen explicitly authorized the currently loaded fingerprinted Test Show for a bounded redesign experiment. The high-value evidence is now whether ZEN can read the real rig, create its own spatial design before song design, and safely realize supported portions without coding-agent artistic intervention.",
+    "why_it_matters": "ZEN cannot truthfully redesign the current rig until the freshly scanned Show state is a validated runtime input and a ZEN-owned spatial artifact exists upstream of LIGHTING_DESIGNER. Solving writeback first would bypass the actual design blocker.",
     "blocks_current_milestone": true,
     "dependencies": [
       "ZEN_SHEESH_CURRENT_SHOW_REDESIGN_001.md",
-      "ZEN_REAL_MA2_TEST_SHOW_SHEESH_BUILD_001.md",
-      "fingerprinted currently loaded Test Show",
-      "existing ZEN four-role provider runtime"
+      "ZEN_SHEESH_CURRENT_SHOW_REDESIGN_PHASE_A_001.md",
+      "live current Show snapshot under the local experiment run",
+      "existing multi-agent runtime and provider router"
     ],
-    "next_review_condition": "Complete the current-Show snapshot and ZEN spatial/SHEESH run; write only supported safe portions; report any spatial/autonomous write capability gap instead of inventing raw MA commands."
+    "next_review_condition": "A read-only real SHEESH run consumes the live snapshot, produces an independently schema-validated upstream spatial/rig artifact, proves LIGHTING_DESIGNER received that artifact, completes downstream Critic/Finalizer validation as applicable, and performs zero MA2 writes."
   },
   "human_review_decisions": [
     {
@@ -54,6 +54,19 @@
     }
   ],
   "evidence_results": [
+    {
+      "id": "SHEESH_CURRENT_SHOW_PHASE_A_SNAPSHOT_001",
+      "source": "ZEN_SHEESH_CURRENT_SHOW_REDESIGN_PHASE_A_001.md",
+      "status": "CLOSED_BLOCKER_IDENTIFIED",
+      "outcomes": [
+        "CURRENT_SHOW_SCAN_FINGERPRINT_CAPTURED",
+        "LIVE_FIXTURE_GROUP_AND_GEOMETRY_STATE_READABLE",
+        "NO_UPSTREAM_ZEN_SPATIAL_DESIGN_STAGE_WITH_LIVE_SHOW_SNAPSHOT",
+        "NO_GENERIC_ZEN_SPATIAL_WRITE_ADAPTER",
+        "MA2_WRITES_ZERO"
+      ],
+      "limitations": "Fingerprint confidence is PARTIAL rather than a native Show UUID. Stage/3D screen appearance was not captured. Numeric geometry is evidence only and carries no inferred artistic or stage-axis semantics."
+    },
     {
       "id": "TEST_SHOW_COLOR_PROVISIONING_001",
       "source": "ZEN_REAL_MA2_TEST_SHOW_SHEESH_BUILD_001.md",
@@ -95,11 +108,11 @@
       "why_it_matters": "SHEESH_CURRENT_SHOW_REDESIGN_001 now requires ZEN to reason from verified current-Show resources into a spatial design without fixed fixture-role assumptions.",
       "blocks_current_milestone": false,
       "dependencies": [
-        "current Show snapshot",
+        "live current Show snapshot",
         "verified geometry/capability evidence",
-        "ZEN spatial artifact"
+        "validated upstream ZEN spatial artifact"
       ],
-      "next_review_condition": "The redesign experiment proves which spatial inputs/artifacts and write adapters actually exist or exposes the first concrete blocker."
+      "next_review_condition": "The live snapshot is consumed by the runtime and a schema-valid upstream spatial artifact is produced before Lighting Designer."
     },
     {
       "id": "COLOR_EXPRESSIVE_ACTION_PATH",
@@ -108,7 +121,7 @@
       "status": "TEST_SHOW_PROVISIONED_ACTIVE_REDESIGN_CASE",
       "why_it_matters": "The bounded editable 13-color native MA2 Test Show palette remains test data available to the current SHEESH redesign experiment, not permanent design truth.",
       "blocks_current_milestone": false,
-      "next_review_condition": "Review the new ZEN-produced SHEESH artifact and any supported writeback; no production promotion follows automatically."
+      "next_review_condition": "Review the new ZEN-produced SHEESH artifact and any later supported writeback; no production promotion follows automatically."
     },
     {
       "id": "MOVEMENT_TEXTURE_ACTION_GRAMMAR",
@@ -150,10 +163,19 @@
       "id": "CURRENT_SHOW_SPATIAL_EVIDENCE",
       "classification": "REQUIRED",
       "milestone": "M3_SHOW_RIG_ADAPTATION",
-      "status": "ACTIVE_SHEESH_REDESIGN_CASE",
-      "why_it_matters": "The current experiment explicitly requires a read-only original geometry snapshot and verified fixture/capability evidence before ZEN proposes new Test Show geometry.",
+      "status": "SNAPSHOT_COMPLETE_RUNTIME_INTEGRATION_BLOCKED",
+      "why_it_matters": "The read-only live Show snapshot is now available; the remaining blocker is making it a validated runtime input and producing a ZEN-owned upstream spatial artifact.",
       "blocks_current_milestone": true,
-      "next_review_condition": "Snapshot, spatial artifact and write-path capability report are produced for SHEESH_CURRENT_SHOW_REDESIGN_001."
+      "next_review_condition": "SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001 passes with zero MA2 writes."
+    },
+    {
+      "id": "GENERIC_ZEN_SPATIAL_WRITE_ADAPTER",
+      "classification": "REQUIRED_LATER",
+      "milestone": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
+      "status": "DEFERRED_UNTIL_SPATIAL_ARTIFACT_PROVEN",
+      "why_it_matters": "The old bounded Move3D test path is not a generic Resolver/Builder for autonomous spatial output. Building it before proving the spatial artifact would couple two unknowns.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "A live-snapshot-driven ZEN spatial artifact is schema-valid, reviewed and demonstrably consumed by Lighting Designer."
     },
     {
       "id": "FIXTURE_MARKET_LEARNING",
@@ -238,8 +260,8 @@
     "production_designer": "UNCHANGED",
     "experimental_b3": "GUIDANCE_ASSISTED_AB_ONLY",
     "ab002_actions": "UNCHANGED",
-    "ma2_write_audit": "TEST_SHOW_MODE_WRITE_ALLOWED only for fingerprinted current Test Show, this SHEESH_CURRENT_SHOW_REDESIGN_001 experiment and explicitly Agent-owned objects; production writes remain preview/approval gated",
-    "test_show_mode": "WRITE_ALLOWED_FOR_FINGERPRINTED_CURRENT_TEST_SHOW_SHEESH_CURRENT_SHOW_REDESIGN_001_WITH_FAIL_CLOSED_UNSUPPORTED_PATHS",
+    "ma2_write_audit": "SHEESH_CURRENT_SHOW_REDESIGN_PHASE_A_001 verified zero writes. Current implementation gate remains read-only until live snapshot ingestion and upstream ZEN spatial artifact generation are proven.",
+    "test_show_mode": "WRITE_AUTHORIZATION_RETAINED_BUT_NOT_USED_DURING_CURRENT_READ_ONLY_RUNTIME_INTEGRATION_GATE",
     "fixture_9999": "UNTOUCHED",
     "zen_style_profile": "DEFERRED",
     "real_venue_validation": "WAIT_FOR_REAL_CASE",
