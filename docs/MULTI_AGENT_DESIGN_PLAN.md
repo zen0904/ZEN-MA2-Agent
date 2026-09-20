@@ -95,6 +95,41 @@ Rules that apply to every role:
 - `FINALIZER`'s output is the only thing that gets validated against
   `zen.autonomous_design.v0.1` and handed to the (not yet built) Resolver.
 
+## Intake authority and feasibility
+
+Real production inputs may be incomplete, approximate or technically impossible.
+
+Use `docs/DESIGN_INTAKE_AND_FEASIBILITY.md` when the design request includes
+audio, song metadata, arrangement notes, cue sheets, choreography notes,
+student/client requests or sparse/open-ended briefs.
+
+The important distinction is:
+
+```text
+what the requester wants
+!=
+what the current production can literally realize
+```
+
+External cue sheets are not executable truth by default. A later intake /
+Designer implementation should preserve provenance and distinguish request
+authority from technical feasibility so the system can preserve intent while
+adapting an impossible or weak mechanism.
+
+Examples of expected reasoning outcomes include:
+
+```text
+PRESERVE
+ADAPT
+NOT_USED
+UNRESOLVED
+```
+
+No future implementation may invent missing rig capability merely to satisfy a
+written cue request. Conversely, sparse or absent input must not force the
+Designer to refuse creative work; it may produce an explicitly bounded
+artistic proposal when constraints allow.
+
 ## Show-level identity and anti-template review
 
 Multi-song design must not reduce to one song template with changed parameter
