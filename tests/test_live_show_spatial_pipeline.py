@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import hashlib
 import json
 import math
 import os
@@ -13,7 +14,9 @@ from zen_ma2_agent.llm.live_show_snapshot import CurrentShowSnapshotInput, norma
 from zen_ma2_agent.llm.multi_agent_runtime import (
     LIVE_SHOW_ROLE_SEQUENCE,
     MultiAgentRunError,
+    ROLE_SYSTEM_PROMPTS,
     _sha256,
+    normalize_role_envelope,
     run_multi_agent_design,
     validate_final_spatial_consistency,
     validate_position_design_artifact,
@@ -181,6 +184,192 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
         self.assertEqual(rig_diag["role"], "rig_designer")
         self.assertEqual(rig_diag["provider_routing"]["semantic_role"], "RIG_DESIGNER")
         self.assertEqual(rig_diag["provider_routing"]["provider_capability_role"], "LIGHTING_DESIGNER")
+        self.assertEqual(rig_diag["structural_normalization"], {"applied": False, "fields_added": []})
+        self.assertFalse((run.run_path / "attempts" / "rig_designer-01.json").exists())
+
+    def test_spatial_role_prompts_require_exact_first_schema_key(self):
+        self.assertIn(
+            'first key must be "schema" with exact value "zen.multi_agent_rig_design.v0.1"',
+            ROLE_SYSTEM_PROMPTS["rig_designer"],
+        )
+        self.assertIn(
+            'first key must be "schema" with exact value "zen.multi_agent_position_design.v0.1"',
+            ROLE_SYSTEM_PROMPTS["position_designer"],
+        )
+
+    def test_rig_missing_only_schema_is_normalized_then_validated(self):
+        raw = _rig(self.normalized)
+        del raw["schema"]
+
+        normalized, audit = normalize_role_envelope("rig_designer", raw)
+
+        self.assertTrue(audit["applied"])
+        self.assertEqual(audit["fields_added"], ["schema"])
+        self.assertEqual(next(iter(normalized)), "schema")
+        self.assertEqual(dict(list(normalized.items())[1:]), raw)
+        self.assertEqual(validate_rig_design_artifact(normalized, self.normalized), normalized)
+
+    def test_position_missing_only_schema_is_normalized_then_validated(self):
+        raw = _position(self.normalized)
+        del raw["schema"]
+
+        normalized, audit = normalize_role_envelope("position_designer", raw)
+
+        self.assertTrue(audit["applied"])
+        self.assertEqual(audit["schema_value"], "zen.multi_agent_position_design.v0.1")
+        self.assertEqual(next(iter(normalized)), "schema")
+        self.assertEqual(dict(list(normalized.items())[1:]), raw)
+        self.assertEqual(validate_position_design_artifact(normalized, self.normalized), normalized)
+
+    def test_wrong_or_malformed_spatial_schema_is_never_replaced(self):
+        for role_name, artifact, validator in (
+            ("rig_designer", _rig(self.normalized), validate_rig_design_artifact),
+            ("position_designer", _position(self.normalized), validate_position_design_artifact),
+        ):
+            for wrong_schema in ("wrong.schema", None, ""):
+                with self.subTest(role=role_name, schema=wrong_schema):
+                    raw = dict(artifact)
+                    raw["schema"] = wrong_schema
+                    normalized, audit = normalize_role_envelope(role_name, raw)
+                    self.assertIs(normalized, raw)
+                    self.assertFalse(audit["applied"])
+                    with self.assertRaisesRegex(MultiAgentRunError, "schema"):
+                        validator(normalized, self.normalized)
+
+    def test_missing_other_required_spatial_field_blocks_normalization(self):
+        cases = (
+            ("rig_designer", _rig(self.normalized), "spatial_strategy", validate_rig_design_artifact),
+            ("rig_designer", _rig(self.normalized), "resource_assignments", validate_rig_design_artifact),
+            ("position_designer", _position(self.normalized), "placements", validate_position_design_artifact),
+        )
+        for role_name, artifact, missing, validator in cases:
+            with self.subTest(role=role_name, missing=missing):
+                del artifact["schema"]
+                del artifact[missing]
+                normalized, audit = normalize_role_envelope(role_name, artifact)
+                self.assertFalse(audit["applied"])
+                with self.assertRaises(MultiAgentRunError):
+                    validator(normalized, self.normalized)
+
+    def test_codex_intervention_contract_blocks_spatial_normalization(self):
+        for role_name, artifact, validator in (
+            ("rig_designer", _rig(self.normalized), validate_rig_design_artifact),
+            ("position_designer", _position(self.normalized), validate_position_design_artifact),
+        ):
+            for value in (None, "ARTISTIC_EDIT"):
+                with self.subTest(role=role_name, value=value):
+                    del artifact["schema"]
+                    if value is None:
+                        artifact.pop("codex_artistic_intervention")
+                    else:
+                        artifact["codex_artistic_intervention"] = value
+                    normalized, audit = normalize_role_envelope(role_name, artifact)
+                    self.assertFalse(audit["applied"])
+                    with self.assertRaises(MultiAgentRunError):
+                        validator(normalized, self.normalized)
+                    artifact = _rig(self.normalized) if role_name == "rig_designer" else _position(self.normalized)
+
+    def test_spatial_reference_validation_still_runs_after_schema_normalization(self):
+        for fixture_id, message in ((777, "unknown fixture"), (9999, "9999")):
+            raw = _rig(self.normalized, fixture_id=fixture_id)
+            del raw["schema"]
+            normalized, audit = normalize_role_envelope("rig_designer", raw)
+            self.assertTrue(audit["applied"])
+            with self.assertRaisesRegex(MultiAgentRunError, message):
+                validate_rig_design_artifact(normalized, self.normalized)
+        for fixture_id, message in ((777, "unknown geometry-bearing"), (9999, "9999")):
+            raw = _position(self.normalized, placements=[{
+                "fixture_id": fixture_id,
+                "subfixture_id": 1,
+                "show_fingerprint": FINGERPRINT,
+                "xyz": {"x": 0, "y": 0, "z": 0},
+            }])
+            del raw["schema"]
+            normalized, audit = normalize_role_envelope("position_designer", raw)
+            self.assertTrue(audit["applied"])
+            with self.assertRaisesRegex(MultiAgentRunError, message):
+                validate_position_design_artifact(normalized, self.normalized)
+
+    def test_pipeline_preserves_raw_response_when_spatial_schema_is_normalized(self):
+        class MissingSchemaAdapter(_RoleAdapter):
+            def complete(inner_self, slot, *, system, user):
+                payload = json.loads(user)
+                role = system.split(". ", 1)[0]
+                inner_self.calls.append((role, payload))
+                if role == "ROLE: RESEARCHER":
+                    return json.dumps(_research())
+                if role == "ROLE: RIG_DESIGNER":
+                    artifact = _rig(payload["current_show_snapshot"])
+                    del artifact["schema"]
+                    return json.dumps(artifact)
+                if role == "ROLE: POSITION_DESIGNER":
+                    artifact = _position(payload["current_show_snapshot"])
+                    del artifact["schema"]
+                    return json.dumps(artifact)
+                if role == "ROLE: LIGHTING_DESIGNER":
+                    return json.dumps(_draft())
+                if role == "ROLE: CRITIC":
+                    return json.dumps(_critic())
+                if role == "ROLE: FINALIZER":
+                    return json.dumps(_final(payload["position_design_artifact"]))
+                raise AssertionError(role)
+
+        adapter = MissingSchemaAdapter(self.normalized)
+        run = run_multi_agent_design(
+            self._router(adapter), request="schema normalization audit", repo_root=self.repo_root,
+            run_id="spatial-schema-normalization", current_show_snapshot=self.input,
+        )
+
+        for role_name in ("rig_designer", "position_designer"):
+            step = json.loads((run.run_path / "steps" / f"{role_name}.json").read_text(encoding="utf-8"))
+            diagnostic = json.loads((run.run_path / "diagnostics" / f"{role_name}-01.json").read_text(encoding="utf-8"))
+            attempt = json.loads((run.run_path / "attempts" / f"{role_name}-01.json").read_text(encoding="utf-8"))
+            self.assertTrue(step["structural_normalization"]["applied"])
+            self.assertTrue(diagnostic["structural_normalization"]["applied"])
+            self.assertTrue(attempt["structural_normalization"]["applied"])
+            self.assertNotIn("schema", json.loads(attempt["raw_response"]))
+            self.assertEqual(
+                attempt["response_sha256"],
+                hashlib.sha256(attempt["raw_response"].encode("utf-8")).hexdigest(),
+            )
+            self.assertIn("schema", step["artifact"])
+
+    def test_structural_normalization_raw_response_remains_secret_safe(self):
+        secret = "private-spatial-provider-key"
+
+        class SecretAdapter:
+            def complete(inner_self, slot, *, system, user):
+                payload = json.loads(user)
+                if system.startswith("ROLE: RESEARCHER"):
+                    return json.dumps(_research())
+                if system.startswith("ROLE: RIG_DESIGNER"):
+                    artifact = _rig(payload["current_show_snapshot"])
+                    del artifact["schema"]
+                    artifact["spatial_strategy"] = secret
+                    return json.dumps(artifact)
+                raise AssertionError(system)
+
+        slot = ProviderSlot(1, "OPENAI_COMPATIBLE", "secret-test", "https://example.test/v1", secret, (), 5)
+        with self.assertRaisesRegex(MultiAgentRunError, "provider secret"):
+            run_multi_agent_design(
+                ProviderRouter("PRIMARY_ONLY", (slot,), SecretAdapter()),
+                request="secret-safe normalization", repo_root=self.repo_root,
+                run_id="spatial-schema-secret-guard", current_show_snapshot=self.input,
+            )
+        attempt_path = Path(self.temp.name) / "projects" / "runs" / "spatial-schema-secret-guard" / "attempts" / "rig_designer-01.json"
+        attempt = json.loads(attempt_path.read_text(encoding="utf-8"))
+        self.assertEqual(attempt["secret_check"], "FAIL")
+        self.assertNotIn("raw_response", attempt)
+        self.assertNotIn(secret, json.dumps(attempt))
+
+    def test_existing_schema_valid_spatial_outputs_are_unchanged(self):
+        for role_name, artifact in (
+            ("rig_designer", _rig(self.normalized)),
+            ("position_designer", _position(self.normalized)),
+        ):
+            normalized, audit = normalize_role_envelope(role_name, artifact)
+            self.assertIs(normalized, artifact)
+            self.assertEqual(audit, {"applied": False, "fields_added": []})
 
     def test_legacy_four_role_path_remains_compatible_without_live_snapshot(self):
         class FourRoleAdapter:

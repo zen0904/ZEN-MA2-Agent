@@ -50,6 +50,26 @@ STEP_SCHEMA = "zen.multi_agent_step.v0.1"
 FAILURE_SCHEMA = "zen.multi_agent_failure.v0.1"
 ATTEMPT_SCHEMA = "zen.multi_agent_attempt_diagnostic.v0.1"
 PARALLEL_CANDIDATE_ATTEMPT_SCHEMA = "zen.multi_agent_parallel_candidate_diagnostic.v0.1"
+RIG_DESIGN_SCHEMA = "zen.multi_agent_rig_design.v0.1"
+POSITION_DESIGN_SCHEMA = "zen.multi_agent_position_design.v0.1"
+RIG_DESIGN_REQUIRED_FIELDS = (
+    "show_fingerprint",
+    "spatial_strategy",
+    "resource_assignments",
+    "spatial_relationships",
+    "constraints",
+    "uncertainties",
+    "codex_artistic_intervention",
+)
+POSITION_DESIGN_REQUIRED_FIELDS = (
+    "show_fingerprint",
+    "coordinate_system",
+    "spatial_groups",
+    "placements",
+    "constraints",
+    "uncertainties",
+    "codex_artistic_intervention",
+)
 
 
 class MultiAgentRunError(RuntimeError):
@@ -131,6 +151,42 @@ def _validate_object(value: object, *, schema: str, required: tuple[str, ...]) -
     if value.get("codex_artistic_intervention") not in (None, "NONE"):
         raise MultiAgentRunError("Role output must preserve CODEX_ARTISTIC_INTERVENTION = NONE.")
     return value
+
+
+def _empty_structural_normalization() -> dict[str, object]:
+    return {"applied": False, "fields_added": []}
+
+
+def normalize_role_envelope(
+    role_name: str,
+    value: object,
+) -> tuple[object, dict[str, object]]:
+    """Add only absent spatial-role schema metadata when the envelope is complete.
+
+    This is deliberately narrower than validation.  It does not repair a
+    malformed schema or synthesize any spatial/artistic field, and the normal
+    role validator remains the authority after this projection.
+    """
+    contracts = {
+        "rig_designer": (RIG_DESIGN_SCHEMA, RIG_DESIGN_REQUIRED_FIELDS),
+        "position_designer": (POSITION_DESIGN_SCHEMA, POSITION_DESIGN_REQUIRED_FIELDS),
+    }
+    contract = contracts.get(role_name)
+    audit = _empty_structural_normalization()
+    if contract is None or not isinstance(value, dict) or "schema" in value:
+        return value, audit
+    schema, required = contract
+    if any(field not in value for field in required):
+        return value, audit
+    if value.get("codex_artistic_intervention") != "NONE":
+        return value, audit
+    normalized = {"schema": schema, **value}
+    return normalized, {
+        "applied": True,
+        "fields_added": ["schema"],
+        "reason": "MISSING_ROLE_SCHEMA_METADATA",
+        "schema_value": schema,
+    }
 
 
 def validate_research_artifact(value: object) -> dict[str, object]:
@@ -241,8 +297,8 @@ def _validate_embedded_fixture_refs(
 def validate_rig_design_artifact(value: object, snapshot: dict[str, object]) -> dict[str, object]:
     artifact = _validate_object(
         value,
-        schema="zen.multi_agent_rig_design.v0.1",
-        required=("show_fingerprint", "spatial_strategy", "resource_assignments", "spatial_relationships", "constraints", "uncertainties", "codex_artistic_intervention"),
+        schema=RIG_DESIGN_SCHEMA,
+        required=RIG_DESIGN_REQUIRED_FIELDS,
     )
     if artifact.get("codex_artistic_intervention") != "NONE":
         raise MultiAgentRunError("Rig design must set codex_artistic_intervention to NONE.")
@@ -270,8 +326,8 @@ def validate_rig_design_artifact(value: object, snapshot: dict[str, object]) -> 
 def validate_position_design_artifact(value: object, snapshot: dict[str, object]) -> dict[str, object]:
     artifact = _validate_object(
         value,
-        schema="zen.multi_agent_position_design.v0.1",
-        required=("show_fingerprint", "coordinate_system", "spatial_groups", "placements", "constraints", "uncertainties", "codex_artistic_intervention"),
+        schema=POSITION_DESIGN_SCHEMA,
+        required=POSITION_DESIGN_REQUIRED_FIELDS,
     )
     if artifact.get("codex_artistic_intervention") != "NONE":
         raise MultiAgentRunError("Position design must set codex_artistic_intervention to NONE.")
@@ -433,7 +489,8 @@ ROLE_SYSTEM_PROMPTS = {
         "Use only the supplied live Show snapshot and Researcher artifact. Fixture type and Group labels are identity evidence only, never artistic roles. "
         "Treat coordinate axes as UNKNOWN unless the supplied snapshot explicitly verifies semantics; do not infer stage-left/right or performer zones. "
         "Only reference real fixture/subfixture identities. Fixture 9999 is protected and unavailable. Do not claim unavailable fixture capabilities. "
-        "Do not alter fixture identity, type, Patch, Address, or Stage geometry. Return JSON only with schema zen.multi_agent_rig_design.v0.1 and fields "
+        "Do not alter fixture identity, type, Patch, Address, or Stage geometry. Return exactly one JSON object. "
+        "Its first key must be \"schema\" with exact value \"zen.multi_agent_rig_design.v0.1\". Then include the required fields "
         "show_fingerprint, spatial_strategy, resource_assignments, spatial_relationships, constraints, uncertainties, codex_artistic_intervention. "
         "Each resource_assignments item must contain resource_refs as objects with fixture_id and optional subfixture_id. "
         "Emit no MA2 commands, Lua, shell, or executable text. Set codex_artistic_intervention to NONE."
@@ -442,7 +499,8 @@ ROLE_SYSTEM_PROMPTS = {
         "ROLE: POSITION_DESIGNER. Turn the validated upstream Rig Designer artifact into concrete proposed test-show geometry; this is a proposal only, not a write. "
         "Use only geometry-bearing fixture/subfixture identities from the exact supplied live snapshot and the supplied Rig Designer artifact. "
         "Do not infer coordinate-axis semantics; preserve UNKNOWN where uncalibrated. Fixture 9999 is unavailable and must not be placed. "
-        "Return JSON only with schema zen.multi_agent_position_design.v0.1 and fields show_fingerprint, coordinate_system, spatial_groups, placements, constraints, uncertainties, codex_artistic_intervention. "
+        "Return exactly one JSON object. Its first key must be \"schema\" with exact value \"zen.multi_agent_position_design.v0.1\". "
+        "Then include the required fields show_fingerprint, coordinate_system, spatial_groups, placements, constraints, uncertainties, codex_artistic_intervention. "
         "Every placement must include fixture_id, subfixture_id, matching show_fingerprint, xyz {x,y,z}; include rotation {x,y,z} only when chosen and represented. "
         "Coordinates must be finite numbers. Do not alter Patch, Address, fixture identity/type, or emit MA2 commands, Lua, shell, or executable text. Set codex_artistic_intervention to NONE."
     ),
@@ -853,6 +911,7 @@ def _record_attempt_diagnostic(
     api_key: str = "",
     provider_elapsed_seconds: float | None = None,
     failure_class: str = "OUTPUT_VALIDATION",
+    structural_normalization: dict[str, object] | None = None,
 ) -> None:
     """Keep an agent-owned failed response for local validation diagnosis."""
     secret_leaked = bool(api_key and api_key in content)
@@ -866,6 +925,39 @@ def _record_attempt_diagnostic(
         "validation_error": _bounded_validation_error(error, api_key=api_key),
         "provider_elapsed_seconds": provider_elapsed_seconds,
         "failure_class": failure_class,
+        "structural_normalization": structural_normalization or _empty_structural_normalization(),
+        "secret_check": "FAIL" if secret_leaked else "PASS",
+        "CODEX_ARTISTIC_INTERVENTION": "NONE",
+    }
+    if not secret_leaked:
+        diagnostic["raw_response"] = content
+    _write_json(path / "attempts" / f"{role_name}-{attempt:02}.json", diagnostic)
+
+
+def _record_structural_normalization_diagnostic(
+    path: Path,
+    *,
+    role_name: str,
+    attempt: int,
+    content: str,
+    api_key: str,
+    provider_elapsed_seconds: float,
+    structural_normalization: dict[str, object],
+) -> None:
+    """Audit a successful metadata-only normalization without altering raw evidence."""
+    secret_leaked = bool(api_key and api_key in content)
+    diagnostic: dict[str, object] = {
+        "schema": ATTEMPT_SCHEMA,
+        "role": role_name,
+        "attempt": attempt,
+        "response_sha256": hashlib.sha256(content.encode("utf-8")).hexdigest(),
+        "response_characters": len(content),
+        "validation_error_type": None,
+        "validation_error": None,
+        "provider_elapsed_seconds": round(provider_elapsed_seconds, 3),
+        "failure_class": "SUCCESS",
+        "candidate_status": "STRUCTURALLY_NORMALIZED_VALID_ROLE_OUTPUT",
+        "structural_normalization": structural_normalization,
         "secret_check": "FAIL" if secret_leaked else "PASS",
         "CODEX_ARTISTIC_INTERVENTION": "NONE",
     }
@@ -939,6 +1031,7 @@ def _record_model_context_diagnostic(
         "payload_utf8_bytes": len((system + user).encode("utf-8")),
         "provider_elapsed_seconds": provider_elapsed_seconds,
         "failure_class": failure_class,
+        "structural_normalization": _empty_structural_normalization(),
         "secrets_included": False,
     })
     return diagnostic_path
@@ -954,6 +1047,35 @@ def _update_model_context_diagnostic(path: Path, *, provider_elapsed_seconds: fl
     value["provider_elapsed_seconds"] = round(provider_elapsed_seconds, 3)
     value["failure_class"] = failure_class
     _write_json(path, value)
+
+
+def _update_structural_normalization_diagnostic(
+    path: Path,
+    structural_normalization: dict[str, object],
+) -> None:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return
+    if not isinstance(value, dict):
+        return
+    value["structural_normalization"] = structural_normalization
+    _write_json(path, value)
+
+
+def _read_structural_normalization_diagnostic(
+    path: Path,
+    *,
+    role_name: str,
+    attempt: int,
+) -> dict[str, object]:
+    diagnostic_path = path / "diagnostics" / f"{role_name}-{attempt:02}.json"
+    try:
+        value = json.loads(diagnostic_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return _empty_structural_normalization()
+    normalization = value.get("structural_normalization") if isinstance(value, dict) else None
+    return normalization if isinstance(normalization, dict) else _empty_structural_normalization()
 
 
 def _write_single_role_provider_diagnostic(
@@ -1036,6 +1158,7 @@ def _run_role(
         content = ""
         selected_slot: ProviderSlot | None = None
         provider_attempts: tuple[dict[str, object], ...] = ()
+        structural_normalization = _empty_structural_normalization()
         system = system_prompt or ROLE_SYSTEM_PROMPTS[role_name]
         if last_error is not None:
             system += f" Previous attempt failed validation: {last_error}. Correct only the structural issue and return JSON only." + RETRY_SAFETY_CONTRACT
@@ -1060,7 +1183,10 @@ def _run_role(
             elapsed = time.monotonic() - started
             _update_model_context_diagnostic(path=diagnostic_path, provider_elapsed_seconds=elapsed, failure_class="SUCCESS")
             try:
-                artifact = validator(_parse_json(content))
+                parsed = _parse_json(content)
+                normalized, structural_normalization = normalize_role_envelope(role_name, parsed)
+                _update_structural_normalization_diagnostic(diagnostic_path, structural_normalization)
+                artifact = validator(normalized)
             except (MultiAgentRunError, DesignValidationError) as exc:
                 _update_model_context_diagnostic(path=diagnostic_path, provider_elapsed_seconds=elapsed, failure_class="OUTPUT_VALIDATION")
                 raise exc
@@ -1073,6 +1199,16 @@ def _run_role(
                 role_output_validation="PASS",
                 evidence_validation="PASS" if evidence_validation_enabled else "NOT_RUN",
             )
+            if structural_normalization["applied"]:
+                _record_structural_normalization_diagnostic(
+                    run_path,
+                    role_name=role_name,
+                    attempt=attempt,
+                    content=content,
+                    api_key=selected_slot.api_key,
+                    provider_elapsed_seconds=elapsed,
+                    structural_normalization=structural_normalization,
+                )
             return artifact, slot, attempt
         except (ProviderUnavailable, MultiAgentRunError, DesignValidationError) as exc:
             elapsed = time.monotonic() - started
@@ -1105,6 +1241,7 @@ def _run_role(
                     api_key=selected_slot.api_key if selected_slot is not None else "",
                     provider_elapsed_seconds=elapsed,
                     failure_class=_failure_class(exc),
+                    structural_normalization=structural_normalization,
                 )
             if _failure_class(exc) == "TRANSPORT_TIMEOUT":
                 break
@@ -1408,6 +1545,7 @@ def run_multi_agent_design(
                 )
 
             validated_candidates: list[tuple[dict[str, object], ProviderSlot]] = list(parallel_results)
+            structural_normalization = _empty_structural_normalization()
 
             if validated_candidates:
                 artifact, slot = validated_candidates[0]
@@ -1455,6 +1593,11 @@ def run_multi_agent_design(
                     system_prompt=system_prompt,
                     evidence_validation_enabled=True,
                 )
+                structural_normalization = _read_structural_normalization_diagnostic(
+                    path,
+                    role_name=role_name,
+                    attempt=attempts,
+                )
                 if slot.api_key and slot.api_key in _canonical_json(artifact):
                     raise MultiAgentRunError("Role artifact contained a provider secret and was rejected.")
                 validated_candidates = [(artifact, slot)]
@@ -1479,6 +1622,7 @@ def run_multi_agent_design(
                     for candidate, candidate_slot in validated_candidates
                 ] if role_name in {"lighting_designer", "critic"} else [],
                 "parallel_runtime": parallel_runtime,
+                "structural_normalization": structural_normalization,
                 "current_show_fingerprint": show_fingerprint,
                 "CODEX_ARTISTIC_INTERVENTION": "NONE",
             }
@@ -1494,6 +1638,7 @@ def run_multi_agent_design(
                 "providers": [candidate_slot.safe_identity() for _, candidate_slot in validated_candidates],
                 "parallel_candidates": len(validated_candidates),
                 "parallel_runtime": parallel_runtime,
+                "structural_normalization": structural_normalization,
                 "attempts": attempts,
                 "artifact_hash": envelope["artifact_hash"],
             }]
