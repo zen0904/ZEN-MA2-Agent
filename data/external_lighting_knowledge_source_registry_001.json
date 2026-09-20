@@ -556,6 +556,66 @@
       "copyright_policy": "METADATA_AND_DERIVED_EXTRACTS_ONLY",
       "source_bias": "One artist-specific tour with period-based visual sections; palette and movement choices are narrative case evidence, not genre rules.",
       "notes": "Useful for section-specific visual language, focus, color and movement reasoning."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_source.v0.1",
+      "source_id": "LATAMSTAGE_SOYOUN_LEE_CRUSH_WONDEREGO",
+      "source_type": "CASE_REFERENCE",
+      "publisher": "LATAMSTAGE",
+      "title": "Having a crush on grandMA3",
+      "url": "https://latamstage.com/en/having_a_crush_on_grandma3/",
+      "publication_date": "2024-02-23",
+      "version": null,
+      "retrieved_at": "2026-09-20",
+      "authority": "PROFESSIONAL_DESIGNER_PROGRAMMER_INTERVIEW_CASE_REFERENCE",
+      "copyright_policy": "METADATA_AND_DERIVED_EXTRACTS_ONLY",
+      "source_bias": "Interview is tied to one Crush arena production and grandMA3 workflow; design reasoning is transferable only where separated from MA3-specific feature semantics.",
+      "notes": "Direct interview with Lite Factory designer/programmer Soyoun Lee on narrative, rig restraint, spatial composition and console workflow."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_source.v0.1",
+      "source_id": "MOMENT_FACTORY_TWICE_THIS_IS_FOR",
+      "source_type": "CASE_REFERENCE",
+      "publisher": "Moment Factory",
+      "title": "TWICE, This is For World Tour",
+      "url": "https://momentfactory.com/products/twice-this-is-for-world-tour",
+      "publication_date": null,
+      "version": "2025 world-tour project page",
+      "retrieved_at": "2026-09-20",
+      "authority": "PRODUCTION_DESIGN_STUDIO_CASE_REFERENCE",
+      "copyright_policy": "METADATA_AND_DERIVED_EXTRACTS_ONLY",
+      "source_bias": "Studio portfolio material presents its own production positively and describes a large-budget 360-degree arena case; details are not universal K-pop rules.",
+      "notes": "Useful for 360-degree audience geometry, multimedia layering and artist-vision integration."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_source.v0.1",
+      "source_id": "STRANGELOOP_BLACKPINK_COACHELLA_2023",
+      "source_type": "CASE_REFERENCE",
+      "publisher": "Strangeloop Studios",
+      "title": "BLACKPINK - Coachella 2023 Concert Visuals",
+      "url": "https://strangeloop-studios.com/projects/concert-visuals/blackpink/",
+      "publication_date": "2023-04-22",
+      "version": null,
+      "retrieved_at": "2026-09-20",
+      "authority": "PRODUCTION_STUDIO_CASE_REFERENCE",
+      "copyright_policy": "METADATA_AND_DERIVED_EXTRACTS_ONLY",
+      "source_bias": "Visual-content studio portfolio; collaboration details are useful but do not independently establish lighting design rationale.",
+      "notes": "Useful as evidence of coordinated visual-content, creative, choreography, stage and lighting collaboration in a major K-pop performance."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_source.v0.1",
+      "source_id": "ROSS_WILLIAMS_BTS_ARIRANG_2026",
+      "source_type": "CASE_REFERENCE",
+      "publisher": "Ross Williams Lighting",
+      "title": "BTS THE COMEBACK LIVE | ARIRANG",
+      "url": "https://www.ross-williams.co.uk/case-studies/bts-the-comeback-live-arirang/",
+      "publication_date": null,
+      "version": "2026 case study",
+      "retrieved_at": "2026-09-20",
+      "authority": "PROFESSIONAL_LIGHTING_DIRECTOR_CASE_REFERENCE",
+      "copyright_policy": "METADATA_AND_DERIVED_EXTRACTS_ONLY",
+      "source_bias": "First-person professional case study focused on key lighting and broadcast delivery for one high-profile production; not a universal concert workflow.",
+      "notes": "Useful for performer readability, broadcast exposure, rehearsal refinement and division-of-responsibility evidence."
     }
   ]
 }
