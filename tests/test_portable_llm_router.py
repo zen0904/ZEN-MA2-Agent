@@ -165,6 +165,53 @@ class PortableLLMRouterTests(unittest.TestCase):
         self.assertEqual([slot.number for _, slot in results], [1, 2])
         self.assertEqual([content for content, _ in results], ["slot-1", "slot-2"])
 
+    def test_parallel_target_backfills_later_candidates_after_provider_failure(self):
+        class BackfillAdapter:
+            def __init__(self):
+                self.calls = []
+
+            def complete(self, slot, *, system, user):
+                self.calls.append(slot.number)
+                if slot.number == 1:
+                    raise ProviderUnavailable("Provider slot 1 request failed: HTTPError 503 sensitive-value")
+                return f"slot-{slot.number}"
+
+        slots = tuple(
+            ProviderSlot(number, "OPENAI_COMPATIBLE", f"model-{number}", "https://example.test/v1", f"key-{number}", ("CRITIC",), 5, priority=number, cost_class="FREE")
+            for number in (1, 2, 3)
+        )
+        adapter = BackfillAdapter()
+        router = ProviderRouter("FREE_FIRST", slots, adapter, parallelism=2, parallel_roles=("CRITIC",))
+
+        results = router.complete_parallel(role="CRITIC", system="s", user="u", limit=2)
+
+        self.assertEqual([slot.number for _content, slot in results], [2, 3])
+        self.assertEqual(sorted(adapter.calls), [1, 2, 3])
+
+    def test_parallel_attempt_details_are_bounded_and_secret_free(self):
+        class FailureAdapter:
+            def complete(self, slot, *, system, user):
+                if slot.number == 1:
+                    raise ProviderUnavailable("Provider slot 1 request failed: HTTPError 503 secret-value")
+                return f"slot-{slot.number}"
+
+        slots = tuple(
+            ProviderSlot(number, "OPENAI_COMPATIBLE", f"model-{number}", "https://example.test/v1", f"secret-key-{number}", ("CRITIC",), 5, priority=number, cost_class="FREE")
+            for number in (1, 2, 3)
+        )
+        router = ProviderRouter("FREE_FIRST", slots, FailureAdapter(), parallelism=2, parallel_roles=("CRITIC",))
+        results, attempts = router.complete_parallel_with_diagnostics(role="CRITIC", system="s", user="u", limit=2)
+
+        self.assertEqual([slot.number for _content, slot in results], [2, 3])
+        self.assertEqual([item["slot_number"] for item in attempts], [1, 2, 3])
+        self.assertEqual(attempts[0]["transport_status"], "FAILURE")
+        self.assertEqual(attempts[0]["failure_class"], "TRANSPORT_FAILURE")
+        self.assertEqual(attempts[0]["failure_reason"], "HTTPError 503")
+        self.assertEqual([item["attempt_order"] for item in attempts], [1, 2, 3])
+        encoded = json.dumps(attempts)
+        self.assertNotIn("secret-key-", encoded)
+        self.assertNotIn("secret-value", encoded)
+
     def test_parallel_limit_is_role_scoped(self):
         slots = (
             ProviderSlot(1, "OPENAI_COMPATIBLE", "a", "https://a.example.test/v1", "k", (), 5, cost_class="FREE"),

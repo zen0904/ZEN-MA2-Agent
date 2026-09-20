@@ -440,7 +440,133 @@ class MultiAgentRuntimeTests(unittest.TestCase):
         execution = {item["role"]: item for item in state["role_execution"]}
         self.assertEqual(execution["lighting_designer"]["parallel_candidates"], 2)
         self.assertEqual(execution["critic"]["parallel_candidates"], 2)
+        for role in ("lighting_designer", "critic"):
+            provenance = execution[role]["parallel_runtime"]
+            self.assertEqual(provenance["configured_parallelism"], 2)
+            self.assertEqual(provenance["requested_successful_candidate_count"], 2)
+            self.assertEqual(provenance["attempted_provider_slots"], [1, 2])
+            self.assertEqual(provenance["accepted_provider_slots"], [1, 2])
         self.assertEqual(run.final_design["schema"], "zen.autonomous_design.v0.1")
+
+    def test_parallel_stage_diagnostics_survive_fallback_and_classify_failures(self):
+        from collections import Counter
+        from threading import Lock
+
+        class DiagnosticAdapter:
+            def __init__(self):
+                self.calls = Counter()
+                self.lock = Lock()
+
+            def complete(self, slot, *, system, user):
+                role = system.split(". ", 1)[0]
+                with self.lock:
+                    self.calls[(role, slot.number)] += 1
+                    call_number = self.calls[(role, slot.number)]
+                if role == "ROLE: RESEARCHER":
+                    return json.dumps(_research())
+                if role == "ROLE: LIGHTING_DESIGNER":
+                    if slot.number == 1:
+                        raise ProviderUnavailable("Provider slot 1 request failed: HTTPError 503 secret-value")
+                    if slot.number == 2 and call_number == 1:
+                        return "not-json"
+                    draft = _draft()
+                    if slot.number == 3:
+                        draft["evidence_refs"] = ["UNKNOWN_PARALLEL_EVIDENCE"]
+                    return json.dumps(draft)
+                if role == "ROLE: CRITIC":
+                    return json.dumps(_critic())
+                if role == "ROLE: FINALIZER":
+                    return json.dumps(_final())
+                raise AssertionError(role)
+
+        slots = (
+            ProviderSlot(1, "OPENAI_COMPATIBLE", "provider-1", "https://one.example.test/v1", "secret-one", ("LIGHTING_DESIGNER",), 5),
+            ProviderSlot(2, "OPENAI_COMPATIBLE", "provider-2", "https://two.example.test/v1", "secret-two", ("LIGHTING_DESIGNER",), 5),
+            ProviderSlot(3, "OPENAI_COMPATIBLE", "provider-3", "https://three.example.test/v1", "secret-three", ("LIGHTING_DESIGNER",), 5),
+            ProviderSlot(4, "OPENAI_COMPATIBLE_LOCAL", "support", "http://127.0.0.1:8080/v1", "", ("RESEARCHER", "CRITIC", "FINALIZER"), 5),
+        )
+        router = ProviderRouter(
+            "FALLBACK", slots, DiagnosticAdapter(), parallelism=2,
+            parallel_roles=("LIGHTING_DESIGNER", "CRITIC"),
+        )
+
+        run = run_multi_agent_design(
+            router, request="diagnostic synthetic request", repo_root=self.repo_root,
+            run_id="parallel-diagnostic-fallback", max_role_attempts=1,
+        )
+
+        diagnostic_root = run.run_path / "diagnostics"
+        parallel_path = diagnostic_root / "lighting_designer-parallel.json"
+        fallback_path = diagnostic_root / "lighting_designer-01.json"
+        self.assertTrue(parallel_path.is_file())
+        self.assertTrue(fallback_path.is_file())
+        parallel = json.loads(parallel_path.read_text(encoding="utf-8"))
+        fallback = json.loads(fallback_path.read_text(encoding="utf-8"))
+        attempts = parallel["provider_attempts"]
+        self.assertEqual([item["slot_number"] for item in attempts], [1, 2, 3])
+        self.assertEqual(attempts[0]["candidate_status"], "TRANSPORT_FAILURE")
+        self.assertEqual(attempts[0]["failure_reason"], "HTTPError 503")
+        self.assertEqual(attempts[1]["role_output_validation"], "FAIL")
+        self.assertEqual(attempts[1]["candidate_status"], "OUTPUT_VALIDATION_FAILURE")
+        self.assertEqual(attempts[2]["role_output_validation"], "PASS")
+        self.assertEqual(attempts[2]["evidence_validation"], "FAIL")
+        self.assertEqual(attempts[2]["candidate_status"], "EVIDENCE_VALIDATION_FAILURE")
+        self.assertEqual(parallel["parallel_runtime"]["attempted_provider_slots"], [1, 2, 3])
+        self.assertEqual(parallel["parallel_runtime"]["accepted_provider_slots"], [])
+        self.assertEqual(fallback["failure_class"], "SUCCESS")
+        self.assertEqual(read_step_artifact("parallel-diagnostic-fallback", "lighting_designer")["attempts"], 1)
+        self.assertEqual(run.final_design["schema"], "zen.autonomous_design.v0.1")
+        for path in run.run_path.rglob("*"):
+            if path.is_file():
+                contents = path.read_text(encoding="utf-8")
+                self.assertNotIn("secret-one", contents)
+                self.assertNotIn("secret-two", contents)
+                self.assertNotIn("secret-three", contents)
+                self.assertNotIn("secret-value", contents)
+
+    def test_parallel_secret_rejection_is_recorded_without_persisting_credential(self):
+        class SecretAdapter:
+            def complete(self, slot, *, system, user):
+                role = system.split(". ", 1)[0]
+                if role == "ROLE: RESEARCHER":
+                    return json.dumps(_research())
+                if role == "ROLE: LIGHTING_DESIGNER":
+                    draft = _draft()
+                    if slot.number == 1:
+                        draft["design_intent"] = {"private_echo": slot.api_key}
+                    return json.dumps(draft)
+                if role == "ROLE: CRITIC":
+                    return json.dumps(_critic())
+                if role == "ROLE: FINALIZER":
+                    return json.dumps(_final())
+                raise AssertionError(role)
+
+        slots = (
+            ProviderSlot(1, "OPENAI_COMPATIBLE", "provider-1", "https://one.example.test/v1", "credential-unique-one", ("LIGHTING_DESIGNER",), 5, priority=1, cost_class="FREE"),
+            ProviderSlot(2, "OPENAI_COMPATIBLE", "provider-2", "https://two.example.test/v1", "credential-unique-two", ("LIGHTING_DESIGNER",), 5, priority=2, cost_class="FREE"),
+            ProviderSlot(3, "OPENAI_COMPATIBLE_LOCAL", "support", "http://127.0.0.1:8080/v1", "", ("RESEARCHER", "CRITIC", "FINALIZER"), 5),
+        )
+        router = ProviderRouter(
+            "FREE_FIRST", slots, SecretAdapter(), parallelism=2,
+            parallel_roles=("LIGHTING_DESIGNER", "CRITIC"),
+        )
+
+        run = run_multi_agent_design(
+            router, request="secret diagnostic synthetic request", repo_root=self.repo_root,
+            run_id="parallel-secret-diagnostic", max_role_attempts=1,
+        )
+
+        diagnostic = json.loads((run.run_path / "diagnostics" / "lighting_designer-parallel.json").read_text(encoding="utf-8"))
+        attempts = diagnostic["provider_attempts"]
+        self.assertEqual(attempts[0]["candidate_status"], "SECRET_REJECTION")
+        self.assertEqual(attempts[0]["secret_check"], "FAIL")
+        self.assertEqual(attempts[1]["candidate_status"], "VALID_CANDIDATE")
+        self.assertEqual(diagnostic["parallel_runtime"]["accepted_provider_slots"], [2])
+        for path in run.run_path.rglob("*"):
+            if path.is_file():
+                contents = path.read_text(encoding="utf-8")
+                self.assertNotIn("credential-unique-one", contents)
+                self.assertNotIn("credential-unique-two", contents)
 
     def test_invalid_final_schema_fails_closed_without_final_design_or_ma2_write(self):
         invalid_final = _final() | {"ma2_commands": ["forbidden"]}

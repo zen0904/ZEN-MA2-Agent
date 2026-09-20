@@ -14,6 +14,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
+from time import monotonic
 from typing import Iterable
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -388,45 +389,129 @@ class ProviderRouter:
         user: str,
         limit: int = 2,
     ) -> tuple[tuple[str, ProviderSlot], ...]:
-        """Fan one bounded role request out to independent eligible providers.
+        """Return up to ``limit`` transport successes in preference order."""
+        results, attempts = self.complete_parallel_with_diagnostics(
+            role=role,
+            system=system,
+            user=user,
+            limit=limit,
+        )
+        if not results:
+            failures = [
+                f"slot {item['slot_number']}: {item['failure_reason']}"
+                for item in attempts
+                if item["transport_status"] == "FAILURE"
+            ]
+            raise ProviderUnavailable("; ".join(failures) or "No eligible provider completed the request.")
+        return results
 
-        Results are returned in deterministic router preference order rather
-        than completion order. One provider failing does not cancel other
-        providers. This method only distributes model inference; it does not
-        merge, validate, or authorize artistic output.
+    def complete_parallel_with_diagnostics(
+        self,
+        *,
+        role: str,
+        system: str,
+        user: str,
+        limit: int = 2,
+    ) -> tuple[tuple[tuple[str, ProviderSlot], ...], tuple[dict[str, object], ...]]:
+        """Collect bounded transport successes and key-free per-provider outcomes.
+
+        ``limit`` is the desired number of successful provider responses, not
+        the size of the first slice of the eligible pool. Attempts preserve
+        router preference order, backfill later candidates after failures, and
+        never call a candidate more than once in this stage. Each batch is
+        bounded by configured ``parallelism``. Returned completions and
+        diagnostics are deterministic even when requests finish out of order.
         """
         if not 1 <= limit <= 4:
             raise ValueError("parallel provider limit must be from 1 to 4.")
-        candidates = self.candidates(role)[:limit]
+        candidates = self.candidates(role)
         if not candidates:
             raise ProviderUnavailable(f"No configured provider slot is eligible for role {role.upper()}.")
-        if len(candidates) == 1:
-            content, slot = self.complete(role=role, system=system, user=user)
-            return ((content, slot),)
-
+        desired_successes = min(limit, len(candidates))
+        concurrency = min(self.parallelism, desired_successes)
         results: dict[int, tuple[str, ProviderSlot]] = {}
-        failures: dict[int, str] = {}
-        with ThreadPoolExecutor(max_workers=len(candidates), thread_name_prefix="zen-provider") as executor:
-            future_to_slot = {
-                executor.submit(self.adapter.complete, slot, system=system, user=user): slot
-                for slot in candidates
-            }
-            for future in as_completed(future_to_slot):
-                slot = future_to_slot[future]
-                try:
-                    results[slot.number] = (future.result(), slot)
-                except ProviderUnavailable as exc:
-                    failures[slot.number] = str(exc)
-                except Exception as exc:
-                    # Adapter implementations are not allowed to tear down the
-                    # router pool because one provider library misbehaved.
-                    failures[slot.number] = f"{type(exc).__name__}"
+        diagnostics: dict[int, dict[str, object]] = {}
+        next_index = 0
+        attempt_order = 0
 
-        ordered = tuple(results[slot.number] for slot in candidates if slot.number in results)
-        if ordered:
-            return ordered
-        detail = "; ".join(
-            f"slot {slot.number}: {failures.get(slot.number, 'unavailable')}"
-            for slot in candidates
+        def invoke(slot: ProviderSlot) -> tuple[str | None, float, Exception | None]:
+            started = monotonic()
+            try:
+                return self.adapter.complete(slot, system=system, user=user), monotonic() - started, None
+            except Exception as exc:  # isolate provider and adapter failures
+                return None, monotonic() - started, exc
+
+        while len(results) < desired_successes and next_index < len(candidates):
+            remaining = desired_successes - len(results)
+            batch = candidates[next_index: next_index + min(concurrency, remaining)]
+            indexed_batch: list[tuple[int, ProviderSlot]] = []
+            for slot in batch:
+                attempt_order += 1
+                indexed_batch.append((attempt_order, slot))
+            next_index += len(batch)
+
+            with ThreadPoolExecutor(max_workers=len(batch), thread_name_prefix="zen-provider") as executor:
+                future_to_attempt = {
+                    executor.submit(invoke, slot): (order, slot)
+                    for order, slot in indexed_batch
+                }
+                completed: dict[int, tuple[str | None, float, Exception | None]] = {}
+                for future in as_completed(future_to_attempt):
+                    order, _slot = future_to_attempt[future]
+                    try:
+                        completed[order] = future.result()
+                    except Exception as exc:  # defensive: invoke normally captures this
+                        completed[order] = (None, 0.0, exc)
+
+            for order, slot in indexed_batch:
+                content, elapsed, error = completed[order]
+                if error is None and isinstance(content, str) and content.strip():
+                    results[slot.number] = (content, slot)
+                    diagnostics[slot.number] = {
+                        "slot_number": slot.number,
+                        "provider_identity": slot.safe_identity(),
+                        "attempt_order": order,
+                        "transport_status": "SUCCESS",
+                        "failure_class": "NONE",
+                        "failure_reason": None,
+                        "provider_elapsed_seconds": round(elapsed, 3),
+                    }
+                else:
+                    failure_class, failure_reason = _parallel_failure_diagnostic(error, content)
+                    diagnostics[slot.number] = {
+                        "slot_number": slot.number,
+                        "provider_identity": slot.safe_identity(),
+                        "attempt_order": order,
+                        "transport_status": "FAILURE",
+                        "failure_class": failure_class,
+                        "failure_reason": failure_reason,
+                        "provider_elapsed_seconds": round(elapsed, 3),
+                    }
+
+        ordered_results = tuple(results[slot.number] for slot in candidates if slot.number in results)
+        ordered_diagnostics = tuple(
+            sorted(diagnostics.values(), key=lambda row: int(row["attempt_order"]))
         )
-        raise ProviderUnavailable(detail or "No parallel provider completed the request.")
+        return ordered_results, ordered_diagnostics
+
+
+def _parallel_failure_diagnostic(error: Exception | None, content: str | None) -> tuple[str, str]:
+    """Classify a failed call without persisting provider error text or secrets."""
+    if error is None:
+        return "PROVIDER_ERROR", "EMPTY_PROVIDER_RESPONSE"
+    if isinstance(error, ProviderUnavailable):
+        message = str(error).casefold()
+        http_match = re.search(r"httperror\s+(\d{3})", message)
+        if http_match:
+            return "TRANSPORT_FAILURE", f"HTTPError {http_match.group(1)}"
+        if any(marker in message for marker in ("timeout", "timed out", "socket.timeout")):
+            return "TRANSPORT_FAILURE", "TIMEOUT"
+        if any(marker in message for marker in ("urlerror", "connectionerror", "connection refused", "connection failed")):
+            return "TRANSPORT_FAILURE", "CONNECTION_ERROR"
+        if "no chat completion content" in message:
+            return "PROVIDER_ERROR", "NO_CHAT_COMPLETION_CONTENT"
+        if "empty chat completion content" in message:
+            return "PROVIDER_ERROR", "EMPTY_CHAT_COMPLETION"
+        return "PROVIDER_ERROR", "PROVIDER_UNAVAILABLE"
+    # Never serialize arbitrary exception text; it can contain request details.
+    return "PROVIDER_ERROR", type(error).__name__[:80]

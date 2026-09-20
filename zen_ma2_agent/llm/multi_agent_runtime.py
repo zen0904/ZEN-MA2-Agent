@@ -527,9 +527,10 @@ def _record_model_context_diagnostic(
     payload: dict[str, object],
     provider_elapsed_seconds: float | None = None,
     failure_class: str = "PENDING",
+    diagnostic_name: str | None = None,
 ) -> Path:
     metadata = payload.get("role_context_metadata", {})
-    diagnostic_path = path / "diagnostics" / f"{role_name}-{attempt:02}.json"
+    diagnostic_path = path / "diagnostics" / (diagnostic_name or f"{role_name}-{attempt:02}.json")
     _write_json(diagnostic_path, {
         "schema": "zen.model_context_diagnostic.v0.1",
         "role": role_name,
@@ -641,9 +642,10 @@ def _run_parallel_role_candidates(
     *,
     role_name: str,
     payload: dict[str, object],
+    context: dict[str, object],
     run_path: Path,
     limit: int,
-) -> list[tuple[dict[str, object], ProviderSlot]]:
+) -> tuple[list[tuple[dict[str, object], ProviderSlot]], dict[str, object]]:
     """Run one role on independent providers and retain valid candidates.
 
     This is candidate generation only. Every output still passes the same role
@@ -661,44 +663,104 @@ def _run_parallel_role_candidates(
         system=system,
         user=user,
         payload=payload,
+        diagnostic_name=f"{role_name}-parallel.json",
     )
-    try:
-        completions = router.complete_parallel(
-            role=ROLE_ROUTER_NAMES[role_name],
-            system=system,
-            user=user,
-            limit=limit,
-        )
-    except ProviderUnavailable as exc:
-        _update_model_context_diagnostic(
-            path=diagnostic_path,
-            provider_elapsed_seconds=time.monotonic() - started,
-            failure_class=_failure_class(exc),
-        )
-        return []
-
+    eligible_candidates = router.candidates(ROLE_ROUTER_NAMES[role_name])
+    completions, provider_attempts = router.complete_parallel_with_diagnostics(
+        role=ROLE_ROUTER_NAMES[role_name],
+        system=system,
+        user=user,
+        limit=limit,
+    )
     valid: list[tuple[dict[str, object], ProviderSlot]] = []
     for content, slot in completions:
+        diagnostic = next(
+            item for item in provider_attempts if item.get("slot_number") == slot.number
+        )
+        diagnostic["role_output_validation"] = "NOT_RUN"
+        diagnostic["evidence_validation"] = "NOT_RUN"
+        diagnostic["secret_check"] = "FAIL" if slot.api_key and slot.api_key in content else "PASS"
+        diagnostic["candidate_status"] = "OUTPUT_VALIDATION_FAILURE"
         try:
             artifact = validator(_parse_json(content))
         except (MultiAgentRunError, DesignValidationError) as exc:
-            _record_attempt_diagnostic(
-                run_path,
-                role_name=role_name,
-                attempt=slot.number,
-                content=content,
-                error=exc,
-                provider_elapsed_seconds=time.monotonic() - started,
-                failure_class="OUTPUT_VALIDATION",
-            )
+            diagnostic["role_output_validation"] = "FAIL"
+            if diagnostic["secret_check"] == "FAIL":
+                diagnostic["candidate_status"] = "SECRET_REJECTION"
             continue
+        diagnostic["role_output_validation"] = "PASS"
+        secret_leaked = bool(slot.api_key and (slot.api_key in content or slot.api_key in _canonical_json(artifact)))
+        diagnostic["secret_check"] = "FAIL" if secret_leaked else "PASS"
+        try:
+            _validate_artifact_evidence(role_name, artifact, context)
+            diagnostic["evidence_validation"] = "PASS"
+        except MultiAgentRunError:
+            diagnostic["evidence_validation"] = "FAIL"
+        if secret_leaked:
+            diagnostic["candidate_status"] = "SECRET_REJECTION"
+            continue
+        if diagnostic["evidence_validation"] == "FAIL":
+            diagnostic["candidate_status"] = "EVIDENCE_VALIDATION_FAILURE"
+            continue
+        diagnostic["candidate_status"] = "VALID_CANDIDATE"
         valid.append((artifact, slot))
-    _update_model_context_diagnostic(
-        path=diagnostic_path,
+
+    parallel_runtime: dict[str, object] = {
+        "router_mode": router.mode,
+        "configured_parallelism": router.parallelism,
+        "parallel_role_scope": sorted(router.parallel_roles),
+        "eligible_ordered_provider_candidates": [slot.safe_identity() for slot in eligible_candidates],
+        "requested_successful_candidate_count": min(limit, len(eligible_candidates)),
+        "attempted_provider_slots": [int(item["slot_number"]) for item in provider_attempts],
+        "accepted_provider_slots": [slot.number for _artifact, slot in valid],
+    }
+    for diagnostic in provider_attempts:
+        if diagnostic.get("transport_status") == "FAILURE":
+            diagnostic["role_output_validation"] = "NOT_RUN"
+            diagnostic["evidence_validation"] = "NOT_RUN"
+            diagnostic["secret_check"] = "NOT_RUN"
+            diagnostic["candidate_status"] = (
+                "TRANSPORT_FAILURE"
+                if diagnostic.get("failure_class") == "TRANSPORT_FAILURE"
+                else "PROVIDER_ERROR"
+            )
+    _write_parallel_stage_diagnostic(
+        diagnostic_path,
+        parallel_runtime=parallel_runtime,
+        provider_attempts=provider_attempts,
         provider_elapsed_seconds=time.monotonic() - started,
-        failure_class="SUCCESS" if valid else "OUTPUT_VALIDATION",
+        failure_class=(
+            "SUCCESS" if valid
+            else "CANDIDATE_VALIDATION_FAILURE" if any(item.get("transport_status") == "SUCCESS" for item in provider_attempts)
+            else "PROVIDER_TRANSPORT_FAILURE" if provider_attempts
+            else "NO_PROVIDER_ATTEMPTS"
+        ),
     )
-    return valid
+    return valid, parallel_runtime
+
+
+def _write_parallel_stage_diagnostic(
+    path: Path,
+    *,
+    parallel_runtime: dict[str, object],
+    provider_attempts: tuple[dict[str, object], ...],
+    provider_elapsed_seconds: float,
+    failure_class: str,
+) -> None:
+    try:
+        diagnostic = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        diagnostic = {}
+    if not isinstance(diagnostic, dict):
+        diagnostic = {}
+    diagnostic.update({
+        "provider_elapsed_seconds": round(provider_elapsed_seconds, 3),
+        "failure_class": failure_class,
+        "parallel_runtime": parallel_runtime,
+        "provider_attempts": list(provider_attempts),
+        "secrets_included": False,
+    })
+    _write_json(path, diagnostic)
 
 
 def _new_run_id() -> str:
@@ -782,26 +844,19 @@ def run_multi_agent_design(
                 candidate_sets=candidate_sets,
             )
             parallel_results: list[tuple[dict[str, object], ProviderSlot]] = []
+            parallel_runtime: dict[str, object] | None = None
             parallel_limit = router.parallel_limit(ROLE_ROUTER_NAMES[role_name])
             if role_name in {"lighting_designer", "critic"} and parallel_limit > 1:
-                parallel_results = _run_parallel_role_candidates(
+                parallel_results, parallel_runtime = _run_parallel_role_candidates(
                     router,
                     role_name=role_name,
                     payload=payload,
+                    context=context,
                     run_path=path,
                     limit=parallel_limit,
                 )
 
-            validated_candidates: list[tuple[dict[str, object], ProviderSlot]] = []
-            if parallel_results:
-                for candidate, candidate_slot in parallel_results:
-                    try:
-                        candidate = _validate_artifact_evidence(role_name, candidate, context)
-                    except MultiAgentRunError:
-                        continue
-                    if candidate_slot.api_key and candidate_slot.api_key in _canonical_json(candidate):
-                        continue
-                    validated_candidates.append((candidate, candidate_slot))
+            validated_candidates: list[tuple[dict[str, object], ProviderSlot]] = list(parallel_results)
 
             if validated_candidates:
                 artifact, slot = validated_candidates[0]
@@ -839,6 +894,7 @@ def run_multi_agent_design(
                     }
                     for candidate, candidate_slot in validated_candidates
                 ] if role_name in {"lighting_designer", "critic"} else [],
+                "parallel_runtime": parallel_runtime,
                 "CODEX_ARTISTIC_INTERVENTION": "NONE",
             }
             write_step_artifact(run_id, role_name, envelope)
@@ -852,6 +908,7 @@ def run_multi_agent_design(
                 "provider": slot.safe_identity(),
                 "providers": [candidate_slot.safe_identity() for _, candidate_slot in validated_candidates],
                 "parallel_candidates": len(validated_candidates),
+                "parallel_runtime": parallel_runtime,
                 "attempts": attempts,
                 "artifact_hash": envelope["artifact_hash"],
             }]
