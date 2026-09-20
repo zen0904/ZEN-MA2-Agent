@@ -130,6 +130,24 @@ class PortableLLMRouterTests(unittest.TestCase):
         self.assertNotIn("response_format", captured["body"])
 
 
+
+    def test_portable_config_loads_parallelism_and_role_scope(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "providers.private.env"
+            path.write_text(
+                "ZEN_PROVIDER_MODE=FREE_FIRST\n"
+                "ZEN_PROVIDER_PARALLELISM=2\n"
+                "ZEN_PROVIDER_PARALLEL_ROLES=LIGHTING_DESIGNER,CRITIC\n"
+                "ZEN_PROVIDER_1_TYPE=OPENAI_COMPATIBLE_LOCAL\n"
+                "ZEN_PROVIDER_1_MODEL=local\n"
+                "ZEN_PROVIDER_1_BASE_URL=http://127.0.0.1:8080/v1\n",
+                encoding="utf-8",
+            )
+            router = ProviderRouter.from_portable_config(path)
+        self.assertEqual(router.parallelism, 2)
+        self.assertEqual(router.parallel_limit("LIGHTING_DESIGNER"), 1)
+        self.assertIn("CRITIC", router.parallel_roles)
+
     def test_parallel_fanout_returns_results_in_router_preference_order(self):
         class ParallelAdapter:
             def complete(self, slot, *, system, user):
