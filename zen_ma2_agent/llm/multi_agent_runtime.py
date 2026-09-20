@@ -562,6 +562,50 @@ def _update_model_context_diagnostic(path: Path, *, provider_elapsed_seconds: fl
     _write_json(path, value)
 
 
+def _write_single_role_provider_diagnostic(
+    path: Path,
+    *,
+    role_name: str,
+    router: ProviderRouter,
+    provider_attempts: tuple[dict[str, object], ...],
+    selected_slot: ProviderSlot | None,
+    role_output_validation: str,
+) -> None:
+    """Persist sequential router fallback evidence beside the role attempt."""
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return
+    if not isinstance(value, dict):
+        return
+    eligible = router.candidates(ROLE_ROUTER_NAMES[role_name])
+    rows: list[dict[str, object]] = []
+    for attempt in provider_attempts:
+        row = dict(attempt)
+        if selected_slot is not None and row.get("slot_number") == selected_slot.number:
+            row["role_output_validation"] = role_output_validation
+            row["candidate_status"] = (
+                "OUTPUT_VALIDATION_FAILURE"
+                if role_output_validation == "FAIL"
+                else "VALID_ROLE_OUTPUT"
+            )
+        rows.append(row)
+    attempted_slots = [int(row["slot_number"]) for row in rows if isinstance(row.get("slot_number"), int)]
+    first_eligible = eligible[0].number if eligible else None
+    value["provider_routing"] = {
+        "router_mode": router.mode,
+        "role": ROLE_ROUTER_NAMES[role_name],
+        "eligible_ordered_provider_candidates": [slot.safe_identity() for slot in eligible],
+        "attempted_provider_slots": attempted_slots,
+        "provider_attempts": rows,
+        "selected_successful_slot": selected_slot.number if selected_slot is not None else None,
+        "fallback_attempted": len(attempted_slots) > 1,
+        "fallback_used": selected_slot is not None and selected_slot.number != first_eligible,
+    }
+    value["secrets_included"] = False
+    _write_json(path, value)
+
+
 def _failure_class(error: Exception) -> str:
     if isinstance(error, ProviderUnavailable):
         message = str(error).casefold()
@@ -585,6 +629,8 @@ def _run_role(
     last_error: Exception | None = None
     for attempt in range(1, max_attempts + 1):
         content = ""
+        selected_slot: ProviderSlot | None = None
+        provider_attempts: tuple[dict[str, object], ...] = ()
         system = ROLE_SYSTEM_PROMPTS[role_name]
         if last_error is not None:
             system += f" Previous attempt failed validation: {last_error}. Correct only the structural issue and return JSON only." + RETRY_SAFETY_CONTRACT
@@ -600,11 +646,12 @@ def _run_role(
                 user=user,
                 payload=payload,
             )
-            content, slot = router.complete(
+            content, slot, provider_attempts = router.complete_with_diagnostics(
                 role=ROLE_ROUTER_NAMES[role_name],
                 system=system,
                 user=user,
             )
+            selected_slot = slot
             elapsed = time.monotonic() - started
             _update_model_context_diagnostic(path=diagnostic_path, provider_elapsed_seconds=elapsed, failure_class="SUCCESS")
             try:
@@ -612,12 +659,30 @@ def _run_role(
             except (MultiAgentRunError, DesignValidationError) as exc:
                 _update_model_context_diagnostic(path=diagnostic_path, provider_elapsed_seconds=elapsed, failure_class="OUTPUT_VALIDATION")
                 raise exc
+            _write_single_role_provider_diagnostic(
+                diagnostic_path,
+                role_name=role_name,
+                router=router,
+                provider_attempts=provider_attempts,
+                selected_slot=selected_slot,
+                role_output_validation="PASS",
+            )
             return artifact, slot, attempt
         except (ProviderUnavailable, MultiAgentRunError, DesignValidationError) as exc:
             elapsed = time.monotonic() - started
             if diagnostic_path is not None:
                 classification = _failure_class(exc)
                 _update_model_context_diagnostic(path=diagnostic_path, provider_elapsed_seconds=elapsed, failure_class=classification)
+                if isinstance(exc, ProviderUnavailable):
+                    provider_attempts = tuple(getattr(exc, "provider_attempts", ()))
+                _write_single_role_provider_diagnostic(
+                    diagnostic_path,
+                    role_name=role_name,
+                    router=router,
+                    provider_attempts=provider_attempts,
+                    selected_slot=selected_slot,
+                    role_output_validation="FAIL" if selected_slot is not None and content else "NOT_RUN",
+                )
             last_error = exc
             if content:
                 _record_attempt_diagnostic(

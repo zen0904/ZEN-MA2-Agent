@@ -25,6 +25,17 @@ from ..portable import portable_state_path
 class ProviderUnavailable(RuntimeError):
     """A safe, key-free explanation that a slot could not serve a request."""
 
+    def __init__(
+        self,
+        message: str,
+        *,
+        provider_attempts: Iterable[dict[str, object]] = (),
+    ) -> None:
+        super().__init__(message)
+        # Runtime callers may preserve these bounded rows in their run
+        # diagnostics.  They intentionally contain safe identities only.
+        self.provider_attempts = tuple(provider_attempts)
+
 
 @dataclass(frozen=True)
 class ProviderSlot:
@@ -368,18 +379,68 @@ class ProviderRouter:
         ))
 
     def complete(self, *, role: str, system: str, user: str) -> tuple[str, ProviderSlot]:
+        content, slot, _attempts = self.complete_with_diagnostics(
+            role=role,
+            system=system,
+            user=user,
+        )
+        return content, slot
+
+    def complete_with_diagnostics(
+        self,
+        *,
+        role: str,
+        system: str,
+        user: str,
+    ) -> tuple[str, ProviderSlot, tuple[dict[str, object], ...]]:
+        """Run normal ordered fallback and return secret-free attempt evidence.
+
+        This preserves ``complete`` routing semantics: candidates are tried in
+        the same order, PRIMARY_ONLY still stops after its first candidate,
+        and the first transport-successful response is returned unchanged.
+        """
         candidates = self.candidates(role)
         if not candidates:
             raise ProviderUnavailable(f"No configured provider slot is eligible for role {role.upper()}.")
         failures: list[str] = []
-        for slot in candidates:
+        attempts: list[dict[str, object]] = []
+        for attempt_order, slot in enumerate(candidates, start=1):
+            started = monotonic()
             try:
-                return self.adapter.complete(slot, system=system, user=user), slot
+                content = self.adapter.complete(slot, system=system, user=user)
             except ProviderUnavailable as exc:
                 failures.append(f"slot {slot.number}: {exc}")
+                failure_class, failure_reason = _parallel_failure_diagnostic(exc, None)
+                attempts.append({
+                    "slot_number": slot.number,
+                    "provider_identity": slot.safe_identity(),
+                    "attempt_order": attempt_order,
+                    "transport_status": "FAILURE",
+                    "failure_class": failure_class,
+                    "failure_reason": failure_reason,
+                    "provider_elapsed_seconds": round(monotonic() - started, 3),
+                    "role_output_validation": "NOT_RUN",
+                    "candidate_status": "TRANSPORT_FAILURE" if failure_class == "TRANSPORT_FAILURE" else "PROVIDER_ERROR",
+                })
                 if self.mode == "PRIMARY_ONLY":
                     break
-        raise ProviderUnavailable("; ".join(failures) or "No eligible provider completed the request.")
+                continue
+            attempts.append({
+                "slot_number": slot.number,
+                "provider_identity": slot.safe_identity(),
+                "attempt_order": attempt_order,
+                "transport_status": "SUCCESS",
+                "failure_class": "NONE",
+                "failure_reason": None,
+                "provider_elapsed_seconds": round(monotonic() - started, 3),
+                "role_output_validation": "NOT_RUN",
+                "candidate_status": "TRANSPORT_SUCCESS",
+            })
+            return content, slot, tuple(attempts)
+        raise ProviderUnavailable(
+            "; ".join(failures) or "No eligible provider completed the request.",
+            provider_attempts=attempts,
+        )
 
     def complete_parallel(
         self,

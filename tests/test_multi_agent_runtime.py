@@ -10,7 +10,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from zen_ma2_agent.llm.autonomous_designer import build_designer_context
-from zen_ma2_agent.llm.multi_agent_runtime import MultiAgentRunError, _role_context, run_multi_agent_design
+from zen_ma2_agent.llm.multi_agent_runtime import MultiAgentRunError, _role_context, _run_role, run_multi_agent_design
 from zen_ma2_agent.llm.router import ProviderRouter, ProviderSlot, ProviderUnavailable
 from zen_ma2_agent.run_checkpoints import read_step_artifact
 
@@ -95,6 +95,90 @@ class MultiAgentRuntimeTests(unittest.TestCase):
     def _router(self, responses, *, roles=(), mode="PRIMARY_ONLY"):
         adapter = _SequenceAdapter(responses)
         return ProviderRouter(mode, (self._local_slot(roles=roles),), adapter), adapter
+
+    def _run_single_role_with_provider_fallback(self, role_name, success_artifact):
+        role = role_name.upper()
+        slots = tuple(
+            ProviderSlot(
+                number=number,
+                provider_type="OPENAI_COMPATIBLE",
+                model=f"provider-{number}",
+                base_url=f"https://provider-{number}.example.test/v1",
+                api_key=f"private-credential-{number}",
+                roles=(role,),
+                timeout_seconds=5,
+            )
+            for number in (1, 2, 3)
+        )
+        adapter = _SequenceAdapter([
+            ProviderUnavailable("Provider slot 1 request failed: HTTPError 503 private-credential-1"),
+            ProviderUnavailable("Provider slot 2 request failed: HTTPError 429 private-credential-2"),
+            success_artifact,
+        ])
+        router = ProviderRouter("FALLBACK", slots, adapter, parallelism=1)
+        run_path = Path(self.temp.name) / "projects" / "runs" / f"{role_name}-fallback"
+        run_path.mkdir(parents=True, exist_ok=True)
+        artifact, selected, attempts = _run_role(
+            router,
+            role_name=role_name,
+            payload={"evidence_ledger": {"entries": []}},
+            max_attempts=1,
+            run_path=run_path,
+        )
+        diagnostic = json.loads((run_path / "diagnostics" / f"{role_name}-01.json").read_text(encoding="utf-8"))
+        return router, adapter, artifact, selected, attempts, diagnostic
+
+    def test_researcher_fallback_preserves_all_ordered_provider_attempts(self):
+        router, adapter, artifact, selected, attempts, diagnostic = self._run_single_role_with_provider_fallback(
+            "researcher", _research()
+        )
+        routing = diagnostic["provider_routing"]
+        self.assertEqual([slot.number for slot in router.candidates("RESEARCHER")], [1, 2, 3])
+        self.assertEqual([call[0] for call in adapter.calls], [1, 2, 3])
+        self.assertEqual(selected.number, 3)
+        self.assertEqual(attempts, 1)
+        self.assertEqual(artifact["schema"], "zen.multi_agent_research.v0.1")
+        self.assertEqual(
+            [row["slot"] for row in routing["eligible_ordered_provider_candidates"]],
+            [1, 2, 3],
+        )
+        self.assertEqual(routing["attempted_provider_slots"], [1, 2, 3])
+        self.assertEqual(routing["selected_successful_slot"], 3)
+        self.assertTrue(routing["fallback_used"])
+        self.assertEqual([row["transport_status"] for row in routing["provider_attempts"]], ["FAILURE", "FAILURE", "SUCCESS"])
+        self.assertEqual([row["failure_reason"] for row in routing["provider_attempts"][:2]], ["HTTPError 503", "HTTPError 429"])
+        self.assertTrue(all(isinstance(row["provider_elapsed_seconds"], (int, float)) for row in routing["provider_attempts"]))
+
+    def test_finalizer_fallback_preserves_same_provider_provenance(self):
+        router, adapter, artifact, selected, _attempts, diagnostic = self._run_single_role_with_provider_fallback(
+            "finalizer", _final()
+        )
+        routing = diagnostic["provider_routing"]
+        self.assertEqual([call[0] for call in adapter.calls], [1, 2, 3])
+        self.assertEqual(selected.number, 3)
+        self.assertEqual(artifact["schema"], "zen.autonomous_design.v0.1")
+        self.assertEqual([row["slot_number"] for row in routing["provider_attempts"]], [1, 2, 3])
+        self.assertEqual(routing["selected_successful_slot"], 3)
+        self.assertTrue(routing["fallback_used"])
+
+    def test_single_role_fallback_success_does_not_erase_prior_failures(self):
+        _router, _adapter, _artifact, _selected, _attempts, diagnostic = self._run_single_role_with_provider_fallback(
+            "researcher", _research()
+        )
+        attempts = diagnostic["provider_routing"]["provider_attempts"]
+        self.assertEqual([row["failure_reason"] for row in attempts[:2]], ["HTTPError 503", "HTTPError 429"])
+        self.assertEqual(attempts[2]["candidate_status"], "VALID_ROLE_OUTPUT")
+        self.assertEqual(diagnostic["failure_class"], "SUCCESS")
+
+    def test_single_role_fallback_diagnostics_never_include_credentials(self):
+        for role_name, artifact in (("researcher", _research()), ("finalizer", _final())):
+            _router, _adapter, _artifact, _selected, _attempts, diagnostic = self._run_single_role_with_provider_fallback(
+                role_name, artifact
+            )
+            encoded = json.dumps(diagnostic)
+            for secret in ("private-credential-1", "private-credential-2", "private-credential-3"):
+                self.assertNotIn(secret, encoded)
+            self.assertNotIn('"api_key":', encoded)
 
     def test_four_roles_execute_in_order_and_write_portable_artifacts(self):
         router, adapter = self._router([_research(), _draft(), _critic(), _final()])
