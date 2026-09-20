@@ -49,6 +49,7 @@ class ProviderSlot:
     priority: int = 100
     cost_class: str = "UNKNOWN"
     response_format: str = "JSON_OBJECT"
+    reasoning_effort: str | None = None
 
     #: Provider types that are expected to run without any credential (a
     #: local OpenAI-compatible server such as Ollama or llama.cpp).  Cloud
@@ -57,6 +58,15 @@ class ProviderSlot:
     LOCAL_TYPES = frozenset({"OPENAI_COMPATIBLE_LOCAL"})
     COST_CLASSES = frozenset({"FREE", "LOCAL", "PAID", "UNKNOWN"})
     RESPONSE_FORMATS = frozenset({"JSON_OBJECT", "NONE"})
+    REASONING_EFFORTS = frozenset({"LOW", "MEDIUM", "HIGH", "MAX"})
+
+    def __post_init__(self) -> None:
+        configured = (self.reasoning_effort or "").strip().upper()
+        if configured and configured not in self.REASONING_EFFORTS:
+            raise ValueError(
+                f"Provider {self.number} reasoning effort must be LOW, MEDIUM, HIGH, or MAX."
+            )
+        object.__setattr__(self, "reasoning_effort", configured or None)
 
     @property
     def configured(self) -> bool:
@@ -81,6 +91,7 @@ class ProviderSlot:
             "priority": self.priority,
             "cost_class": self.cost_class,
             "response_format": self.response_format,
+            "reasoning_effort": self.reasoning_effort,
         }
 
 
@@ -165,6 +176,7 @@ def load_provider_slots(path: Path | None = None) -> tuple[str, tuple[ProviderSl
             priority=priority,
             cost_class=cost_class,
             response_format=response_format,
+            reasoning_effort=values.get(prefix + "REASONING_EFFORT", ""),
         ))
     return mode, tuple(slots)
 
@@ -215,6 +227,8 @@ class OpenAICompatibleHTTPAdapter:
         }
         if slot.response_format == "JSON_OBJECT":
             body_payload["response_format"] = {"type": "json_object"}
+        if slot.reasoning_effort is not None:
+            body_payload["reasoning_effort"] = slot.reasoning_effort.lower()
         body = json.dumps(body_payload).encode("utf-8")
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
         # A local, key-free server should not receive a bogus Bearer header;

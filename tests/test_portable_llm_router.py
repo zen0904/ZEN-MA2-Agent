@@ -129,6 +129,92 @@ class PortableLLMRouterTests(unittest.TestCase):
         self.assertEqual(content, "{}")
         self.assertNotIn("response_format", captured["body"])
 
+    def test_unset_reasoning_effort_omits_parameter_and_preserves_existing_body(self):
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *_): return False
+            def read(self): return b'{"choices":[{"message":{"content":"{}"}}]}'
+
+        captured = {}
+        def opener(request, timeout):
+            captured["body"] = json.loads(request.data.decode("utf-8"))
+            return Response()
+
+        slot = ProviderSlot(
+            1, "OPENAI_COMPATIBLE_LOCAL", "test", "http://127.0.0.1:8080/v1", "", (), 5,
+            reasoning_effort=" ",
+        )
+        with patch("zen_ma2_agent.llm.router.urlopen", side_effect=opener):
+            OpenAICompatibleHTTPAdapter().complete(slot, system="s", user="u")
+        self.assertEqual(
+            captured["body"],
+            {
+                "model": "test",
+                "messages": [
+                    {"role": "system", "content": "s"},
+                    {"role": "user", "content": "u"},
+                ],
+                "temperature": 0.2,
+                "response_format": {"type": "json_object"},
+            },
+        )
+        self.assertNotIn("reasoning_effort", captured["body"])
+
+    def test_private_config_loads_and_normalizes_reasoning_effort(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "providers.private.env"
+            path.write_text(
+                "ZEN_PROVIDER_1_TYPE=OPENAI_COMPATIBLE_LOCAL\n"
+                "ZEN_PROVIDER_1_MODEL=test\n"
+                "ZEN_PROVIDER_1_BASE_URL=http://127.0.0.1:8080/v1\n"
+                "ZEN_PROVIDER_1_REASONING_EFFORT=low\n",
+                encoding="utf-8",
+            )
+            _, slots = load_provider_slots(path)
+        self.assertEqual(slots[0].reasoning_effort, "LOW")
+        self.assertEqual(slots[0].safe_identity()["reasoning_effort"], "LOW")
+
+    def test_reasoning_effort_is_normalized_in_request(self):
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *_): return False
+            def read(self): return b'{"choices":[{"message":{"content":"{}"}}]}'
+
+        slot = ProviderSlot(
+            1, "OPENAI_COMPATIBLE_LOCAL", "test", "http://127.0.0.1:8080/v1", "", (), 5,
+            reasoning_effort="LOW",
+        )
+        captured = {}
+        def opener(request, timeout):
+            captured["body"] = json.loads(request.data.decode("utf-8"))
+            return Response()
+
+        with patch("zen_ma2_agent.llm.router.urlopen", side_effect=opener):
+            OpenAICompatibleHTTPAdapter().complete(slot, system="s", user="u")
+        self.assertEqual(captured["body"]["reasoning_effort"], "low")
+
+    def test_invalid_reasoning_effort_fails_private_config_loading(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "providers.private.env"
+            path.write_text(
+                "ZEN_PROVIDER_1_TYPE=OPENAI_COMPATIBLE_LOCAL\n"
+                "ZEN_PROVIDER_1_MODEL=test\n"
+                "ZEN_PROVIDER_1_BASE_URL=http://127.0.0.1:8080/v1\n"
+                "ZEN_PROVIDER_1_REASONING_EFFORT=EXTREME\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "reasoning effort"):
+                load_provider_slots(path)
+
+    def test_reasoning_effort_is_in_safe_identity_without_credentials(self):
+        slot = ProviderSlot(
+            1, "OPENAI_COMPATIBLE", "model", "https://example.test/v1", "credential-secret", (), 5,
+            reasoning_effort="low",
+        )
+        identity = slot.safe_identity()
+        self.assertEqual(identity["reasoning_effort"], "LOW")
+        self.assertNotIn("credential-secret", json.dumps(identity))
+
 
 
     def test_portable_config_loads_parallelism_and_role_scope(self):
