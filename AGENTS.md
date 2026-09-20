@@ -10,6 +10,9 @@ For substantial work, read these in order:
 3. `docs/MULTI_AGENT_DESIGN_PLAN.md` -- the implemented four-role Designer
    pipeline and its current multi-provider extension boundary, if the task
    touches autonomous design.
+   - If the task touches multi-song variety, song identity, repeated visual
+     structure, callbacks, or anti-template review, also read
+     `docs/SHOW_LEVEL_VISUAL_IDENTITY.md`.
 4. `ZEN_MULTI_PROVIDER_PARALLEL_POOL_001.md` -- current provider-pool,
    FREE_FIRST, parallel Designer/Critic, and lightweight-local-fallback state.
 5. `docs/ZEN_PRODUCT_CONSTITUTION.md`
