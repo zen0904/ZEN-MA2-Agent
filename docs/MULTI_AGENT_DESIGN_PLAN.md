@@ -97,6 +97,25 @@ or Builder, and it does not write geometry. A provider artifact that fails
 schema, inventory, evidence, or safety validation stops the route at that
 role; downstream roles do not run.
 
+### Researcher provenance boundary
+
+Researcher model context includes a deterministic `research_context.allowed_source_refs`
+projection containing exact `{source_id, record_id}` pairs from that role's
+selected canonical knowledge records. `sources` may contain only exact copies
+of those objects. `evidence_refs` is a separate namespace containing exact
+`evidence_ledger[].evidence_ref` values; verified current-Show facts belong in
+`evidence_refs`, never in `sources`. An empty `sources` array is valid when no
+canonical external source is being cited.
+
+Before canonical source resolution, runtime rejects non-object/string source
+claims, extra metadata, unknown or mismatched pairs, and duplicates. It never
+maps prose/evidence refs back to source identity or silently discards invalid
+claims. The existing full canonical source resolver remains the final
+authority. A bounded Researcher retry may ask for exact allowed pairs or an
+empty array without asking the model to change valid observations; raw response
+and secret-safe validation diagnostics remain distinct from the accepted role
+artifact.
+
 ## Role pipeline and dependency order
 
 ```

@@ -5,7 +5,7 @@
     "id": "M2_EXPRESSIVE_CAPABILITY",
     "title": "Expressive Capability",
     "status": "ACTIVE",
-    "active_objective": "SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001 now has an exact spatial schema contract and bounded metadata-only normalization, verified by 559 tests. The controlled real rerun is blocked earlier at RESEARCHER: transport-successful outputs used non-canonical source identity shapes and failed provenance validation after three bounded attempts. The next acceptance condition is a canonically sourced Researcher artifact, followed by the unchanged Rig/Position path. MA2 writes remain disabled."
+    "active_objective": "SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001 now has a Researcher-only exact canonical source-pair contract, verified by 565 tests. The controlled restart passed RESEARCHER and RIG_DESIGNER, then stopped at POSITION_DESIGNER after three bounded attempts: invalid JSON, a non-object coordinate_system, and missing required fields. The next acceptance condition is a valid Position artifact from the same fingerprinted snapshot, followed by the unchanged Lighting Designer/Critic/Finalizer path. MA2 writes remain disabled."
   },
   "last_closed_task": {
     "id": "SHEESH_CURRENT_SHOW_REDESIGN_PHASE_A_001",
@@ -16,7 +16,7 @@
     "id": "SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001",
     "classification": "REQUIRED",
     "status": "BLOCKED_PROVIDER_OUTPUT",
-    "why_it_matters": "The spatial schema-only blocker is repaired without adding artistic content, but the controlled rerun stopped at RESEARCHER because provider outputs did not use canonical source identities. No spatial artifact was produced, so downstream design still cannot run truthfully.",
+    "why_it_matters": "The Researcher canonical-source blocker is resolved: the controlled restart passed Researcher and Rig Designer, but Position Designer did not produce an artifact accepted by its existing schema validator after three bounded attempts. Downstream lighting design cannot run truthfully without a validated Position artifact.",
     "blocks_current_milestone": true,
     "dependencies": [
       "ZEN_SHEESH_CURRENT_SHOW_REDESIGN_001.md",
@@ -24,7 +24,7 @@
       "live current Show snapshot under the local experiment run",
       "existing multi-agent runtime and provider router"
     ],
-    "next_review_condition": "A Researcher artifact passes canonical source resolution through the existing bounded runtime path; then continue Rig Designer, Position Designer, Lighting Designer, Critic and Finalizer in order, preserving zero MA2 writes."
+    "next_review_condition": "A Position Designer artifact for the exact current Show fingerprint passes existing required-field, fixture-reference, and finite-coordinate validation; then continue Lighting Designer, Critic, and Finalizer in order, preserving zero MA2 writes."
   },
   "human_review_decisions": [
     {
@@ -70,18 +70,20 @@
     {
       "id": "SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001",
       "source": "ZEN_SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001.md",
-      "status": "SPATIAL_SCHEMA_CONTRACT_HARDENED_REAL_RERUN_BLOCKED_AT_RESEARCHER",
+      "status": "RESEARCHER_SOURCE_CONTRACT_FIXED_RIG_VALID_POSITION_BLOCKED",
       "outcomes": [
         "LIVE_SNAPSHOT_NORMALIZED_AND_BOUND_TO_CONTEXT_HASH",
         "CONDITIONAL_SIX_ROLE_ORDER_RECORDED",
-        "FIRST_RUN_RESEARCHER_ARTIFACT_VALIDATED",
+        "RESEARCHER_ALLOWED_SOURCE_PAIRS_PROJECTED_AND_VALIDATED",
+        "RESEARCHER_CANONICAL_RESOLUTION_AND_EVIDENCE_REFS_PASS",
+        "RIG_DESIGNER_ARTIFACT_VALID_AND_REFERENCES_PASS",
         "SPATIAL_SCHEMA_METADATA_NORMALIZATION_TESTED_FAIL_CLOSED",
-        "CONTROLLED_RESTART_ARCHIVED_PRIOR_RUN_EVIDENCE",
-        "RESEARCHER_NON_CANONICAL_SOURCE_IDENTITY_AFTER_THREE_ATTEMPTS",
-        "POSITION_AND_DOWNSTREAM_ROLES_NOT_RUN",
+        "CONTROLLED_RESTART_ARCHIVED_PRIOR_RUN_EVIDENCE_WITH_FOUR_ARCHIVES_RETAINED",
+        "POSITION_DESIGNER_OUTPUT_INVALID_AFTER_THREE_BOUNDED_ATTEMPTS",
+        "LIGHTING_DESIGNER_CRITIC_FINALIZER_NOT_RUN",
         "MA2_WRITES_ZERO"
       ],
-      "limitations": "No spatial proposal was produced in the controlled rerun because Researcher did not pass canonical source resolution. The schema normalizer was not reached by a real spatial role and its correctness is established by deterministic tests only. Current-fingerprint fixture capabilities and coordinate-axis semantics remain UNKNOWN. Provider output failure is not an artistic assessment."
+      "limitations": "Researcher and Rig Designer passed. Rig intent is not a per-fixture Position artifact; Position Designer failed JSON/schema validation after three attempts, so no placement is accepted and downstream roles did not run. Current-fingerprint fixture capabilities and coordinate-axis semantics remain UNKNOWN. Codex did not correct the Rig or Position content; no spatial writeback occurred."
     },
     {
       "id": "TEST_SHOW_COLOR_PROVISIONING_001",
@@ -179,10 +181,10 @@
       "id": "CURRENT_SHOW_SPATIAL_EVIDENCE",
       "classification": "REQUIRED",
       "milestone": "M3_SHOW_RIG_ADAPTATION",
-      "status": "RUNTIME_INPUT_READY_RESEARCHER_PROVENANCE_BLOCKED",
-      "why_it_matters": "The read-only live Show snapshot and spatial schema contract are ready; the controlled rerun is blocked because Researcher outputs used non-canonical source identity shapes after three bounded attempts.",
+      "status": "RIG_VALID_POSITION_DESIGNER_OUTPUT_BLOCKED",
+      "why_it_matters": "The read-only live Show snapshot, Researcher source contract, and Rig artifact validation are working. Position Designer returned invalid JSON or structurally invalid output in all three bounded attempts; without validated placements, downstream lighting design cannot continue.",
       "blocks_current_milestone": true,
-      "next_review_condition": "A canonical-source-valid Researcher artifact is produced through the existing provider route, followed by Rig Designer and the remaining roles in order with zero MA2 writes."
+      "next_review_condition": "A Position Designer artifact for the unchanged current Show fingerprint passes validation; then resume the existing six-role sequence at Lighting Designer."
     },
     {
       "id": "GENERIC_ZEN_SPATIAL_WRITE_ADAPTER",

@@ -215,11 +215,154 @@ RIG_DESIGNER、POSITION_DESIGNER 與後續角色都沒有執行。故目前不�
 Fixture 9999、Patch、Address、Fixture ID/Type、Preset、Sequence、Executor
 與 Stage geometry 均未觸碰。
 
-## Remaining blocker
+## Previous blocker (resolved by source-contract fix)
 
 `RESEARCHER_PROVIDER_OUTPUT_NON_CANONICAL_SOURCE_IDENTITY_AFTER_BOUNDED_RETRIES`
+was the blocker in the preceding controlled run. Runtime commit
+`146d323039765dc9b678993e6404bf9bba2eb611` added a Researcher-only exact
+`allowed_source_refs` projection, strict source-pair validation, and a
+structural-only retry instruction. It does not infer or rewrite provenance.
 
-需要 Researcher 先輸出 canonical source identity，或在沒有可引用 source 時
-保留空 `sources`，並通過現有 provenance validator；之後才可進入已修復的
-Rig/Position 結構契約。此報告不授權 Codex 修補 Researcher 內容、調整模型、
-provider config，或開始 Move3D writeback。
+## Controlled restart after Researcher source-contract fix
+
+The same `SHEESH_CURRENT_SHOW_REDESIGN_001` request was rerun with the saved
+Phase A snapshot and the existing formal restart/archive mechanism. The exact
+request hash remains `e4fcdf2050900ba3bf8f8a458ba4c682c31fd5a3135a70f5b2415df0f774770c`;
+the snapshot fingerprint remains
+`b41d801b915cddfdd5017df787ad66b55941fbce415ab02ee8ec63acaa027bd5`. The
+previous run evidence was archived; `restart_archive/` now has four entries.
+Runtime artifacts remain on the USB and are not committed.
+
+```text
+RUN_ID=SHEESH_CURRENT_SHOW_REDESIGN_001
+RUN_STATUS=FAILED_AT_POSITION_DESIGNER
+GIT_HEAD=146d323039765dc9b678993e6404bf9bba2eb611
+ROLE_EXECUTION_ORDER=RESEARCHER,RIG_DESIGNER,POSITION_DESIGNER,LIGHTING_DESIGNER,CRITIC,FINALIZER
+ROLES_COMPLETED=RESEARCHER,RIG_DESIGNER
+CURRENT_SHOW_FINGERPRINT=b41d801b915cddfdd5017df787ad66b55941fbce415ab02ee8ec63acaa027bd5
+MA2_WRITES=0
+CODEX_ARTISTIC_INTERVENTION=NONE
+```
+
+Researcher used OpenRouter slot 5 and completed in one attempt. The model-facing
+context contained 8 exact selected `{source_id, record_id}` pairs; all 8 output
+source objects matched the allow-list. Source-contract validation, canonical
+resolution, and `evidence_refs` validation all passed. Its output was not
+normalized.
+
+Rig Designer attempted slots 1, 3, then 5. Gemini returned HTTP 503, NVIDIA
+timed out, and OpenRouter slot 5 returned a valid
+`zen.multi_agent_rig_design.v0.1` artifact. The required schema was already in
+the provider response, so structural normalization was not applied. The
+existing Rig validator accepted the fingerprint and all resource references;
+Fixture 9999 was not assigned.
+
+Position Designer used the same ordered slots for each of three bounded
+attempts. Slot 1 returned HTTP 503 and slot 3 timed out each time. OpenRouter
+slot 5 returned transport-successful content each time, but all three outputs
+were rejected:
+
+| Attempt | Provider calls in router order | OpenRouter response | Validation result |
+|---|---|---|---|
+| 1 (888.906 s total) | Gemini HTTP 503 (3.515 s); NVIDIA timeout (120.078 s); OpenRouter success (765.266 s) | 26,101 characters; invalid JSON | `Provider response was not valid JSON.` |
+| 2 (168.078 s total) | Gemini HTTP 503 (4.828 s); NVIDIA timeout (120.094 s); OpenRouter success (43.094 s) | 13,524 characters; expected schema present | `Position design coordinate_system must be an object.` |
+| 3 (309.531 s total) | Gemini HTTP 503 (7.328 s); NVIDIA timeout (120.078 s); OpenRouter success (182.047 s) | 1,191 characters; expected schema present | Required fields missing: `show_fingerprint`, `coordinate_system`, `spatial_groups`, `placements`, `constraints`, `uncertainties`, `codex_artistic_intervention`. |
+
+All three raw responses passed the configured secret-echo check and remain in
+their individual attempt artifacts. No source/spatial data was normalized or
+rewritten. Position references and coordinates could not be validated because
+no Position artifact passed the role contract.
+
+Lighting Designer, Critic, and Finalizer did not run. There is no final design,
+no proposed fixture placement count (0 accepted placements), and no spatial
+consistency result. A read-only scan of run JSON artifacts against configured
+provider keys found no secret leak.
+
+### Spatial artifact handoff
+
+**ZEN OUTPUT — accepted Rig intent only:** the accepted artifact describes a
+10.5 m lateral span (`X=-5.25..5.25`) with a stated 1.5 m regular spacing and
+three depth bands (`Y=3`, `Y=1..-1`, `Y=-2`). It proposes a layered deep row of
+SPOT identities 301–308 at `Z=4`, HYBRID 101–108 at `Z=6`, and BEAM 201–208 at
+`Z=8`; middle bands place WASH 501–508 at `Y=1,Z=7`, B-EYE 401–408 at
+`Y=0,Z=5`, and STROBE subfixtures 701–708.1/.2 at `Y=-1,Z=3`; LED PAR 601–608
+are assigned to the forward band at `Y=-2,Z=1`. It describes all these
+patterns as linear arrays and the X lines as parallel. These are Rig intent
+bounds/patterns, not accepted per-fixture coordinates.
+
+The Rig artifact references 56 distinct non-protected fixture IDs, including
+both subfixtures for each of the eight Strobe fixtures. It specifies no
+performer zone, calibrated stage-left/right semantics, crossing, convergence,
+or negative-space corridor. Its own constraints retain unknown axis semantics
+and unknown fixture capability profiles. No fixture-by-fixture XYZ placement
+was accepted because Position Designer failed validation.
+
+**VALIDATOR FACT:** the live snapshot contains 57 fixtures, 7 Groups, and 65
+geometry records; the Rig artifact fingerprint matches the snapshot and its
+references pass. Fixture 9999 remains unavailable. `PROPOSED_FIXTURE_COUNT=0`
+means zero accepted Position placements, not zero inventory fixtures.
+
+**CODEX OBSERVATION (not a correction):** the textual Rig intent is a regular,
+parallel linear-row scheme, with no authored corridor/negative-space
+relationship. That may be visually mechanical, but no artistic correction was
+made. There is not yet a validated Position artifact or downstream Critic
+review to establish the final spatial result.
+
+### Required outcome fields — latest controlled restart
+
+```text
+CURRENT_SHOW_IDENTIFIED=YES
+CURRENT_SHOW_FINGERPRINT=b41d801b915cddfdd5017df787ad66b55941fbce415ab02ee8ec63acaa027bd5
+LIVE_SNAPSHOT_VALID=YES
+LIVE_SNAPSHOT_IN_CONTEXT=YES
+RESEARCHER_PROVIDER=OpenRouter slot 5
+RESEARCHER_ATTEMPTED_SLOTS=2,4,5
+RESEARCHER_ALLOWED_SOURCE_REF_COUNT=8
+RESEARCHER_RAW_SOURCE_SHAPE=CANONICAL_PAIR_ARRAY
+RESEARCHER_OUTPUT_SOURCE_COUNT=8
+RESEARCHER_SOURCE_CONTRACT_VALID=PASS
+RESEARCHER_CANONICAL_SOURCE_RESOLUTION=PASS
+RESEARCHER_EVIDENCE_REFS_VALID=PASS
+RESEARCHER_RESULT=PASS
+RIG_DESIGNER_ATTEMPTED_SLOTS=1,3,5
+RIG_DESIGNER_PROVIDER=OpenRouter slot 5
+RIG_RAW_SCHEMA_PRESENT=YES
+RIG_STRUCTURAL_NORMALIZATION_APPLIED=NO
+RIG_ARTIFACT_VALID=PASS
+RIG_REFERENCES_VALID=PASS
+POSITION_DESIGNER_ATTEMPTED_SLOTS=1,3,5 on each of 3 attempts
+POSITION_DESIGNER_PROVIDER=OpenRouter slot 5 transport-successful; 3 outputs rejected
+POSITION_RAW_SCHEMA_PRESENT=ATTEMPT1_NO_VALID_JSON;ATTEMPT2_YES;ATTEMPT3_YES
+POSITION_STRUCTURAL_NORMALIZATION_APPLIED=NO
+POSITION_ARTIFACT_VALID=FAIL
+POSITION_REFERENCES_VALID=NOT_REACHED
+PROPOSED_FIXTURE_COUNT=0
+SPATIAL_PROPOSAL_CREATED=PARTIAL_RIG_INTENT_ONLY;NO_VALID_POSITION_ARTIFACT
+SPATIAL_WRITEBACK_PERFORMED=NO
+LIGHTING_DESIGNER_RECEIVED_RIG_ARTIFACT=NO
+LIGHTING_DESIGNER_RECEIVED_POSITION_ARTIFACT=NO
+DESIGNER_ATTEMPTED_SLOTS=NOT_RUN
+DESIGNER_ACCEPTED_SLOTS=NOT_RUN
+DESIGNER_CANDIDATE_COUNT=0
+CRITIC_ATTEMPTED_SLOTS=NOT_RUN
+CRITIC_ACCEPTED_SLOTS=NOT_RUN
+CRITIC_CANDIDATE_COUNT=0
+FINALIZER_PROVIDER=NOT_RUN
+FINAL_SCHEMA_VALID=NOT_REACHED
+SPATIAL_CONSISTENCY_VALID=NOT_REACHED
+EVIDENCE_VALID=RESEARCHER_PASS; downstream_NOT_REACHED
+SECRETS_LEAKED=NO
+MA2_WRITES=0
+CODEX_ARTISTIC_INTERVENTION=NONE
+CAPABILITY_GAPS=POSITION_DESIGNER returned invalid JSON/wrong coordinate_system type/missing required fields across 3 bounded attempts; fixture capabilities and axis semantics remain UNKNOWN
+```
+
+## Current blocker
+
+`POSITION_DESIGNER_PROVIDER_OUTPUT_INVALID_AFTER_BOUNDED_RETRIES`
+
+The next review condition is one Position Designer artifact from the same
+fingerprinted snapshot passing the existing structure, fixture-reference, and
+finite-coordinate validators. Only then can the unchanged Lighting Designer,
+Critic, and Finalizer stages continue. Do not normalize source identity,
+invent spatial fields, or begin Move3D writeback.
