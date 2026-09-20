@@ -5912,6 +5912,285 @@
       ],
       "source_provenance": "MA2_CLONE_MANUAL: official grandMA2 Clone documentation states referenced dependencies may be cloned for limited-scope operations.",
       "summary": "Adds dependency-footprint awareness to Clone planning so bounded-looking changes are not assumed to be isolated."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk006_pierre_minimalism_music_first",
+      "source_id": "LIVE_DESIGN_PIERRE_CLAUDE_CHATMOSPHERE",
+      "topic": "NEGATIVE_SPACE_RESTRAINT",
+      "normalized_claim": "Pierre Claude describes a music-first minimalist approach that avoids unnecessary movement, gobos and multicolor complexity so visual energy is concentrated into carefully programmed intensity and synchronization.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "MINIMALIST_CONCERT_DESIGN_CASE",
+      "exclusions": [
+        "Does not make minimalism a universal concert rule.",
+        "Does not imply movement, gobos or complex color are inherently distracting."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Other artists and genres may intentionally rely on dense movement, texture or multicolor visual language."
+      ],
+      "related_design_concepts": [
+        "restraint",
+        "music_first",
+        "negative_space",
+        "intensity"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LIVE_DESIGN_PIERRE_CLAUDE_CHATMOSPHERE: direct lighting-designer interview on minimalist concert practice.",
+      "summary": "Professional evidence that removing visual mechanisms can concentrate attention and make remaining intensity changes more meaningful."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk006_pierre_rule_breaking_contrast",
+      "source_id": "LIVE_DESIGN_PIERRE_CLAUDE_CHATMOSPHERE",
+      "topic": "CONTRAST",
+      "normalized_claim": "Claude intentionally places an occasional song with exaggerated movement or color against an otherwise restrained show so the exception gains impact from the established visual rule.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "MINIMALIST_CONCERT_CONTRAST_CASE",
+      "exclusions": [
+        "Does not prescribe exactly one visual outlier per set.",
+        "Does not establish which song should break the prevailing design language."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "A production may instead seek continuous stylistic consistency or multiple contrasting chapters."
+      ],
+      "related_design_concepts": [
+        "contrast",
+        "rule_breaking",
+        "show_arc",
+        "restraint"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LIVE_DESIGN_PIERRE_CLAUDE_CHATMOSPHERE: designer explains a deliberately opposite visual treatment for one song within a restrained set.",
+      "summary": "Shows how an established restraint rule can make a deliberate exception more powerful."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk006_mitski_choreography_center",
+      "source_id": "LIVE_DESIGN_MITSKI_BE_THE_COWBOY",
+      "topic": "FOCUS_VISUAL_ATTENTION",
+      "normalized_claim": "The Mitski Be the Cowboy lighting design centered choreography and performer movement, using lighting decisions to keep the artist's physical performance as the primary visual subject.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "CHOREOGRAPHY_LED_CONCERT_CASE",
+      "exclusions": [
+        "Does not imply solo-artist choreography should always dominate scenic or video content.",
+        "Does not establish performer-focus techniques for a different stage geometry."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Some shows intentionally distribute attention across band, scenery, audience or video."
+      ],
+      "related_design_concepts": [
+        "performer_focus",
+        "choreography",
+        "visual_hierarchy"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LIVE_DESIGN_MITSKI_BE_THE_COWBOY: tour case describes design focus on Mitski's choreography and movement.",
+      "summary": "Case evidence that choreography can be the primary driver of visual hierarchy rather than an element layered on afterward."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk006_mitski_color_change_only_when_tone_changes",
+      "source_id": "LIVE_DESIGN_MITSKI_BE_THE_COWBOY",
+      "topic": "COLOR_RELATIONSHIPS",
+      "normalized_claim": "In the Mitski case, color changes follow changes in a song's tone, while songs that maintain one emotional tone may keep a static palette; deciding not to change color is treated as an active design choice.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "CONCERT_COLOR_TIMING_CASE",
+      "exclusions": [
+        "Does not define musical-tone detection rules.",
+        "Does not prescribe static color for every emotionally consistent song."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Rhythmic, lyrical, choreographic or scenic reasons may justify color changes even when emotional tone remains stable."
+      ],
+      "related_design_concepts": [
+        "color_progression",
+        "restraint",
+        "musical_tone",
+        "timing"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LIVE_DESIGN_MITSKI_BE_THE_COWBOY: designer explicitly discusses changing color when song tone changes and keeping it static when it does not.",
+      "summary": "Adds an important non-action rule: a palette can remain unchanged when the musical idea has not earned a color transition."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk006_mitski_color_removal",
+      "source_id": "LIVE_DESIGN_MITSKI_BE_THE_COWBOY",
+      "topic": "COLOR_RELATIONSHIPS",
+      "normalized_claim": "The Mitski designer treats removing color entirely as one of the available ways to capture a song's tone, showing that color design includes the decision to withhold color rather than only selecting hues.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "CONCERT_COLOR_RESTRAINT_CASE",
+      "exclusions": [
+        "Does not prescribe white light or no-color looks for quiet material.",
+        "Does not imply desaturation is always emotionally stronger."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Saturated monochromatic color can also create strong restraint without removing color."
+      ],
+      "related_design_concepts": [
+        "color_restraint",
+        "absence",
+        "tone",
+        "negative_space"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LIVE_DESIGN_MITSKI_BE_THE_COWBOY: designer discusses when removing color is appropriate to song tone.",
+      "summary": "Frames absence of color as a deliberate expressive option rather than a missing design decision."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk006_hadestown_palette_emotional_journey",
+      "source_id": "LIVE_DESIGN_HADESTOWN_BRADLEY_KING",
+      "topic": "COLOR_RELATIONSHIPS",
+      "normalized_claim": "Bradley King's Hadestown palette is deliberately restrained and changes with the emotional and narrative journey, reserving the strongest color shifts for meaningful changes in story world rather than continuous visual variation.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "THEATRE_NARRATIVE_COLOR_CASE",
+      "exclusions": [
+        "Does not make the specific warm/cold palette transferable to concerts.",
+        "Does not imply narrative always outranks music in live performance."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Non-narrative concerts may organize color more strongly around musical structure, branding or choreography."
+      ],
+      "related_design_concepts": [
+        "emotional_arc",
+        "narrative",
+        "color_progression",
+        "restraint"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LIVE_DESIGN_HADESTOWN_BRADLEY_KING: direct designer interview on restrained palette tied to the emotional journey.",
+      "summary": "Case evidence that color progression can be reserved for real narrative/emotional state changes."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk006_hadestown_revision_after_wrong_direction",
+      "source_id": "LIVE_DESIGN_HADESTOWN_BRADLEY_KING",
+      "topic": "VISUAL_HIERARCHY",
+      "normalized_claim": "The Hadestown creative team discarded a visually polished but emotionally wrong design direction after preview, showing that successful professional design requires judging whether the visual language serves the work rather than defending technically attractive output.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "THEATRE_ITERATIVE_DESIGN_CASE",
+      "exclusions": [
+        "Does not prescribe a specific review process for concerts.",
+        "Does not mean every major visual revision indicates planning failure."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Some production constraints make late structural redesign impractical even when a more ideal direction is identified."
+      ],
+      "related_design_concepts": [
+        "critique",
+        "iteration",
+        "emotional_fit",
+        "revision"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LIVE_DESIGN_HADESTOWN_BRADLEY_KING: designer describes an earlier version being recognized as beautiful but wrong for the piece and later reworked.",
+      "summary": "Strong evidence for critic behavior: technical beauty is not enough when the visual language misses the emotional work."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk006_deftones_negative_space",
+      "source_id": "CLAYPAKY_DEFTONES_NEGATIVE_SPACE",
+      "topic": "NEGATIVE_SPACE_RESTRAINT",
+      "normalized_claim": "Jon Eddy describes using beam fixtures and negative space specifically to avoid washing the entire Deftones stage, treating unlit space as part of the composition rather than unused capacity.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "ROCK_CONCERT_NEGATIVE_SPACE_CASE",
+      "exclusions": [
+        "Manufacturer marketing source; only the designer's stated compositional intent should transfer.",
+        "Does not prescribe beam fixtures or dark stages for other artists."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Broad wash coverage may be necessary for choreography, broadcast, visibility or a deliberately immersive visual concept."
+      ],
+      "related_design_concepts": [
+        "negative_space",
+        "beam_composition",
+        "restraint",
+        "stage_coverage"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "CLAYPAKY_DEFTONES_NEGATIVE_SPACE: manufacturer-published tour case quoting designer Jon Eddy on negative space and avoiding full-stage wash.",
+      "summary": "Adds explicit professional evidence that leaving areas unwashed can be a compositional choice, not an omission."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk006_isabella_rules_then_break_them",
+      "source_id": "LIVE_DESIGN_ISABELLA_BYRD_RESTRAINT",
+      "topic": "CONTRAST",
+      "normalized_claim": "Isabella Byrd describes creating narrow self-imposed lighting rules and then selectively breaking them, using constraint to establish a readable visual baseline before an exception earns attention.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "THEATRE_RESTRAINT_AND_EXCEPTION_CASE",
+      "exclusions": [
+        "Does not prescribe narrow color rules for every production.",
+        "Does not mean every design needs an intentional rule-breaking moment."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Some productions rely on continuous visual evolution rather than a stable baseline and punctuated exception."
+      ],
+      "related_design_concepts": [
+        "constraint",
+        "contrast",
+        "rule_breaking",
+        "readability"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LIVE_DESIGN_ISABELLA_BYRD_RESTRAINT: direct designer interview on restraint, narrow color range and making rules to break selectively.",
+      "summary": "Reinforces a reusable reasoning pattern: constraint creates context that can make later exceptions legible."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk006_isabella_simple_light_scene_change",
+      "source_id": "LIVE_DESIGN_ISABELLA_BYRD_RESTRAINT",
+      "topic": "VISUAL_HIERARCHY",
+      "normalized_claim": "Byrd describes using simple warm-to-cool white-light changes to quickly communicate shifts in time and emotional space across very short scenes, showing that small changes can carry structural information when the visual vocabulary is disciplined.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "THEATRE_STRUCTURAL_SIGNALING_CASE",
+      "exclusions": [
+        "Does not prescribe warm/cool coding for concerts or other narratives.",
+        "Does not establish that simple lighting is always more readable than richer visual treatment."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Some performance contexts require multiple simultaneous visual cues or more explicit scenic/video support to communicate structure."
+      ],
+      "related_design_concepts": [
+        "readability",
+        "structural_signaling",
+        "restraint",
+        "time_shift"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LIVE_DESIGN_ISABELLA_BYRD_RESTRAINT: designer explains using a narrow warm/cool white range to differentiate rapid shifts in time and emotional space.",
+      "summary": "Case evidence that visual structure can be communicated with small disciplined changes instead of maximal differentiation."
     }
   ]
 }
