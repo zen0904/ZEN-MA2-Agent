@@ -356,6 +356,8 @@ def validate_position_design_artifact(value: object, snapshot: dict[str, object]
         raise MultiAgentRunError("Position design Show fingerprint does not match the live snapshot.")
     if not isinstance(artifact.get("coordinate_system"), dict):
         raise MultiAgentRunError("Position design coordinate_system must be an object.")
+    if artifact["coordinate_system"] != snapshot.get("coordinate_system"):
+        raise MultiAgentRunError("Position design coordinate_system must exactly match the authoritative current Show metadata.")
     for field in ("spatial_groups", "placements", "constraints", "uncertainties"):
         if not isinstance(artifact.get(field), list):
             raise MultiAgentRunError(f"Position design {field} must be an array.")
@@ -400,6 +402,78 @@ def validate_position_design_artifact(value: object, snapshot: dict[str, object]
                 if isinstance(number, bool) or not isinstance(number, (int, float)) or not math.isfinite(float(number)):
                     raise MultiAgentRunError(f"Placement rotation.{axis} must be finite numeric data.")
     return artifact
+
+
+def build_position_context(snapshot: dict[str, object]) -> dict[str, object]:
+    """Build deterministic, placement-only context from a validated live snapshot.
+
+    This is a model-facing projection, not a new source of Show truth. The
+    normalized snapshot remains the backend validator's authority.
+    """
+    fingerprint = snapshot.get("show_fingerprint")
+    coordinate_system = snapshot.get("coordinate_system")
+    inventory = snapshot.get("fixture_inventory")
+    if not isinstance(fingerprint, str) or not isinstance(coordinate_system, dict) or not isinstance(inventory, list):
+        raise MultiAgentRunError("POSITION_DESIGNER requires a normalized current Show snapshot.")
+
+    geometry_resources: list[dict[str, object]] = []
+    protected_refs: list[dict[str, object]] = []
+    for fixture in inventory:
+        if not isinstance(fixture, dict):
+            continue
+        fixture_id = fixture.get("fixture_id")
+        geometry = fixture.get("geometry", [])
+        if not isinstance(geometry, list):
+            continue
+        for row in geometry:
+            if not isinstance(row, dict):
+                continue
+            subfixture_id = row.get("subfixture_id")
+            ref = {"fixture_id": fixture_id, "subfixture_id": subfixture_id}
+            if fixture_id == 9999 or fixture.get("availability") == "PROTECTED_UNAVAILABLE":
+                protected_refs.append(ref)
+                continue
+            resource: dict[str, object] = {
+                **ref,
+                "current_xyz": row.get("xyz"),
+                "current_rotation": row.get("rotation"),
+                "availability": fixture.get("availability", "UNKNOWN"),
+            }
+            geometry_resources.append(resource)
+
+    geometry_resources.sort(key=lambda item: (int(item["fixture_id"]), int(item["subfixture_id"])))
+    protected_refs.sort(key=lambda item: (int(item["fixture_id"]), int(item["subfixture_id"])))
+    allowed_placement_refs = [
+        {"fixture_id": item["fixture_id"], "subfixture_id": item["subfixture_id"]}
+        for item in geometry_resources
+    ]
+    limitations = snapshot.get("limitations", [])
+    return {
+        "schema": "zen.position_context.v0.1",
+        "show_fingerprint": fingerprint,
+        "coordinate_system": dict(coordinate_system),
+        "geometry_resources": geometry_resources,
+        "allowed_placement_refs": allowed_placement_refs,
+        "protected_refs": protected_refs,
+        "limitations": list(limitations) if isinstance(limitations, list) else [],
+    }
+
+
+def _position_retry_contract(error: Exception) -> str:
+    """Return a structure-only retry note for known Position contract failures."""
+    message = str(error).casefold()
+    if "not valid json" in message:
+        instruction = "Return exactly one complete JSON object only. No Markdown, comments, prefix, suffix, or explanation."
+    elif "coordinate_system must be an object" in message:
+        instruction = "coordinate_system must be the exact object supplied in position_context.coordinate_system. Do not replace it with a string."
+    elif "missing required fields" in message:
+        instruction = "Return every required top-level field. Empty arrays are valid where appropriate; never omit required fields."
+    else:
+        return ""
+    return (
+        " POSITION_DESIGNER STRUCTURAL RETRY: " + instruction +
+        " Preserve valid XYZ/artistic choices; do not alter them merely to satisfy structure."
+    )
 
 
 def validate_final_spatial_consistency(
@@ -528,12 +602,20 @@ ROLE_SYSTEM_PROMPTS = {
     ),
     "position_designer": (
         "ROLE: POSITION_DESIGNER. Turn the validated upstream Rig Designer artifact into concrete proposed test-show geometry; this is a proposal only, not a write. "
-        "Use only geometry-bearing fixture/subfixture identities from the exact supplied live snapshot and the supplied Rig Designer artifact. "
-        "Do not infer coordinate-axis semantics; preserve UNKNOWN where uncalibrated. Fixture 9999 is unavailable and must not be placed. "
-        "Return exactly one JSON object. Its first key must be \"schema\" with exact value \"zen.multi_agent_position_design.v0.1\". "
-        "Then include the required fields show_fingerprint, coordinate_system, spatial_groups, placements, constraints, uncertainties, codex_artistic_intervention. "
-        "Every placement must include fixture_id, subfixture_id, matching show_fingerprint, xyz {x,y,z}; include rotation {x,y,z} only when chosen and represented. "
-        "Coordinates must be finite numbers. Do not alter Patch, Address, fixture identity/type, or emit MA2 commands, Lua, shell, or executable text. Set codex_artistic_intervention to NONE."
+        "Use only geometry_resources and allowed_placement_refs from position_context plus the supplied Rig Designer artifact. "
+        "The coordinate frame is backend metadata, not an artistic decision. Copy coordinate_system exactly from position_context.coordinate_system; do not infer or reinterpret its axis semantics. "
+        "Fixture 9999 is protected and is never an available placement resource. "
+        "Return exactly one top-level JSON object only. Its first key must be \"schema\" with exact value \"zen.multi_agent_position_design.v0.1\". "
+        "Include every required top-level field with exactly these types: show_fingerprint (string), coordinate_system (object copied exactly from position_context.coordinate_system), "
+        "spatial_groups (array), placements (array), constraints (array), uncertainties (array), codex_artistic_intervention (exactly \"NONE\"). "
+        "Do not return coordinate_system as a string. Do not omit empty arrays. Do not return explanatory prose outside JSON, Markdown fences, or comments. "
+        "Every placement item must contain only fixture_id (integer), subfixture_id (integer), show_fingerprint (string matching position_context.show_fingerprint), "
+        "xyz (object with finite numeric x, y, z), and optional rotation (object with finite numeric x, y, z). "
+        "Copy each placement identity exactly from position_context.allowed_placement_refs; never invent a fixture/subfixture identity. "
+        "Keep placements compact: identity and geometry only, no per-placement essay and do not repeat the full Rig explanation. Put shared rationale concisely in spatial_groups, constraints, or uncertainties. "
+        "Each spatial_groups item may express concise grouping intent and real fixture refs; choose any useful grouping or none, without inferring roles from labels/types. "
+        "Do not include Patch, Address, fixture_type, fixture_type_change, fixture_id_change, Move3D, console_command, Lua, shell, or other executable content. "
+        "Do not emit any MA2 commands or Show mutation instructions. Set codex_artistic_intervention to NONE."
     ),
     "critic": (
         "ROLE: CRITIC. Independently inspect the supplied draft against supplied constraints and identify strengths, problems with severity, "
@@ -756,7 +838,7 @@ def _role_context(
         if not isinstance(live_snapshot, dict):
             raise MultiAgentRunError("POSITION_DESIGNER requires a validated current Show snapshot.")
         return common | {
-            "current_show_snapshot": live_snapshot,
+            "position_context": build_position_context(live_snapshot),
             "research_artifact": completed["researcher"],
             "rig_design_artifact": completed["rig_designer"],
             "owner_constraints": context.get("hard_constraints", []),
@@ -1357,6 +1439,8 @@ def _run_role(
         system = system_prompt or ROLE_SYSTEM_PROMPTS[role_name]
         if last_error is not None:
             system += f" Previous attempt failed validation: {last_error}. Correct only the structural issue and return JSON only." + RETRY_SAFETY_CONTRACT
+            if role_name == "position_designer":
+                system += _position_retry_contract(last_error)
             if role_name == "researcher" and isinstance(
                 last_error,
                 (ResearchSourceContractError, ResearchCanonicalSourceResolutionError),

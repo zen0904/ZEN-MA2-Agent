@@ -17,6 +17,7 @@ from zen_ma2_agent.llm.multi_agent_runtime import (
     ResearchSourceContractError,
     ROLE_SYSTEM_PROMPTS,
     _sha256,
+    build_position_context,
     normalize_role_envelope,
     run_multi_agent_design,
     validate_research_source_contract,
@@ -79,7 +80,7 @@ def _position(snapshot: dict[str, object], *, placements: list[dict[str, object]
     return {
         "schema": "zen.multi_agent_position_design.v0.1",
         "show_fingerprint": snapshot["show_fingerprint"],
-        "coordinate_system": {"axis_semantics": "UNKNOWN"},
+        "coordinate_system": snapshot.get("coordinate_system", {"axis_semantics": "UNKNOWN"}),
         "spatial_groups": [],
         "placements": placements if placements is not None else [{
             "fixture_id": 101, "subfixture_id": 1, "show_fingerprint": snapshot["show_fingerprint"],
@@ -131,7 +132,7 @@ class _RoleAdapter:
         if role == "ROLE: RIG_DESIGNER":
             return json.dumps(_rig(normalized))
         if role == "ROLE: POSITION_DESIGNER":
-            return json.dumps(_position(normalized))
+            return json.dumps(_position(payload["position_context"]))
         if role == "ROLE: LIGHTING_DESIGNER":
             return json.dumps(_draft())
         if role == "ROLE: CRITIC":
@@ -188,6 +189,122 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
         self.assertEqual(rig_diag["provider_routing"]["provider_capability_role"], "LIGHTING_DESIGNER")
         self.assertEqual(rig_diag["structural_normalization"], {"applied": False, "fields_added": []})
         self.assertFalse((run.run_path / "attempts" / "rig_designer-01.json").exists())
+
+        position_role_payload = next(payload for role, payload in adapter.calls if role == "ROLE: POSITION_DESIGNER")
+        position_context = position_role_payload["position_context"]
+        self.assertNotIn("current_show_snapshot", position_role_payload)
+        self.assertEqual(position_context["coordinate_system"], self.normalized["coordinate_system"])
+        self.assertEqual(position_role_payload["rig_design_artifact"], rig)
+        self.assertEqual(position_context["show_fingerprint"], FINGERPRINT)
+
+    def test_position_context_is_compact_deterministic_and_excludes_protected_geometry(self):
+        context = build_position_context(self.normalized)
+        self.assertEqual(context, build_position_context(self.normalized))
+        self.assertEqual(context["coordinate_system"], self.normalized["coordinate_system"])
+        self.assertEqual(
+            context["geometry_resources"],
+            [
+                {
+                    "fixture_id": 101,
+                    "subfixture_id": 1,
+                    "current_xyz": {"x": -1.0, "y": 2.0, "z": 3.0},
+                    "current_rotation": {"x": 0.0, "y": 0.0, "z": 0.0},
+                    "availability": "AVAILABLE_INVENTORY_ONLY",
+                },
+                {
+                    "fixture_id": 102,
+                    "subfixture_id": 1,
+                    "current_xyz": {"x": 1.0, "y": 2.0, "z": 3.0},
+                    "current_rotation": {"x": 0.0, "y": 0.0, "z": 0.0},
+                    "availability": "AVAILABLE_INVENTORY_ONLY",
+                },
+            ],
+        )
+        self.assertEqual(context["allowed_placement_refs"], [
+            {"fixture_id": 101, "subfixture_id": 1},
+            {"fixture_id": 102, "subfixture_id": 1},
+        ])
+        self.assertEqual(context["protected_refs"], [{"fixture_id": 9999, "subfixture_id": 1}])
+        encoded = json.dumps(context).casefold()
+        self.assertNotIn("patch", encoded)
+        self.assertNotIn('"address"', encoded)
+
+    def test_position_prompt_has_exact_typed_contract_and_authoritative_coordinate_metadata(self):
+        prompt = ROLE_SYSTEM_PROMPTS["position_designer"]
+        for required in (
+            'first key must be "schema" with exact value "zen.multi_agent_position_design.v0.1"',
+            "show_fingerprint (string)",
+            "coordinate_system (object copied exactly from position_context.coordinate_system)",
+            "spatial_groups (array)",
+            "placements (array)",
+            "constraints (array)",
+            "uncertainties (array)",
+            'codex_artistic_intervention (exactly "NONE")',
+            "Do not return coordinate_system as a string",
+            "Do not omit empty arrays",
+            "position_context.allowed_placement_refs",
+        ):
+            self.assertIn(required, prompt)
+
+    def test_position_retry_contract_is_specific_without_reauthoring_geometry(self):
+        class RetryPositionAdapter(_RoleAdapter):
+            def __init__(inner_self, snapshot):
+                super().__init__(snapshot)
+                inner_self.position_systems = []
+                inner_self.position_calls = 0
+
+            def complete(inner_self, slot, *, system, user):
+                payload = json.loads(user)
+                role = system.split(". ", 1)[0]
+                if role == "ROLE: POSITION_DESIGNER":
+                    inner_self.calls.append((role, payload))
+                    inner_self.position_systems.append(system)
+                    inner_self.position_calls += 1
+                    artifact = _position(payload["position_context"])
+                    if inner_self.position_calls == 1:
+                        artifact["coordinate_system"] = "UNKNOWN"
+                    return json.dumps(artifact)
+                return super(RetryPositionAdapter, inner_self).complete(slot, system=system, user=user)
+
+        adapter = RetryPositionAdapter(self.normalized)
+        run = run_multi_agent_design(
+            self._router(adapter), request="position retry structure", repo_root=self.repo_root,
+            run_id="position-retry-contract", current_show_snapshot=self.input,
+        )
+        self.assertEqual(run.final_design["schema"], "zen.autonomous_design.v0.1")
+        self.assertEqual(adapter.position_calls, 2)
+        retry_prompt = adapter.position_systems[1]
+        self.assertIn("coordinate_system must be the exact object supplied in position_context.coordinate_system", retry_prompt)
+        self.assertIn("Preserve valid XYZ/artistic choices", retry_prompt)
+
+    def test_position_coordinate_system_must_match_authoritative_snapshot_object(self):
+        artifact = _position(self.normalized)
+        artifact["coordinate_system"] = {"frame": "SCANNED_MA2_FIXTURE_COORDINATES", "axis_semantics": "STAGE_LEFT_RIGHT", "units": "METERS"}
+        with self.assertRaisesRegex(MultiAgentRunError, "exactly match"):
+            validate_position_design_artifact(artifact, self.normalized)
+
+    def test_position_structural_required_fields_and_coordinate_type_remain_fail_closed(self):
+        cases = (
+            ("coordinate_system", "UNKNOWN", "coordinate_system must be an object"),
+            ("placements", None, "missing required fields"),
+            ("constraints", None, "missing required fields"),
+            ("uncertainties", None, "missing required fields"),
+            ("codex_artistic_intervention", None, "missing required fields"),
+        )
+        for field, replacement, message in cases:
+            with self.subTest(field=field):
+                artifact = _position(self.normalized)
+                if replacement is None:
+                    artifact.pop(field)
+                else:
+                    artifact[field] = replacement
+                with self.assertRaisesRegex(MultiAgentRunError, message):
+                    validate_position_design_artifact(artifact, self.normalized)
+
+        wrong_fingerprint = _position(self.normalized)
+        wrong_fingerprint["show_fingerprint"] = "b" * 64
+        with self.assertRaisesRegex(MultiAgentRunError, "fingerprint"):
+            validate_position_design_artifact(wrong_fingerprint, self.normalized)
 
     def test_current_show_facts_are_evidence_refs_not_research_sources(self):
         class CurrentShowEvidenceAdapter(_RoleAdapter):
@@ -333,7 +450,7 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
                     del artifact["schema"]
                     return json.dumps(artifact)
                 if role == "ROLE: POSITION_DESIGNER":
-                    artifact = _position(payload["current_show_snapshot"])
+                    artifact = _position(payload["position_context"])
                     del artifact["schema"]
                     return json.dumps(artifact)
                 if role == "ROLE: LIGHTING_DESIGNER":
