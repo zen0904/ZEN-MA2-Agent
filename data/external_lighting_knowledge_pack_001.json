@@ -6251,7 +6251,7 @@
     {
       "schema": "zen.external_lighting_knowledge_record.v0.1",
       "record_id": "elk007_karolg_chapter_palette_continuity",
-      "source_id": "PLSN_KAROL_G_MANANA_SERÁ_BONITO",
+      "source_id": "PLSN_KAROL_G_MANANA_SERA_BONITO",
       "topic": "COLOR_RELATIONSHIPS",
       "normalized_claim": "The Karol G Mañana Será Bonito production keeps entire story sections, including many consecutive songs, inside tightly restricted color families, demonstrating that intentional multi-song palette continuity can strengthen a chapter rather than indicate design repetition.",
       "evidence_classification": "CASE_CONTEXT",
@@ -6279,7 +6279,7 @@
     {
       "schema": "zen.external_lighting_knowledge_record.v0.1",
       "record_id": "elk007_karolg_variety_inside_restricted_palette",
-      "source_id": "PLSN_KAROL_G_MANANA_SERÁ_BONITO",
+      "source_id": "PLSN_KAROL_G_MANANA_SERA_BONITO",
       "topic": "COLOR_RELATIONSHIPS",
       "normalized_claim": "Within Karol G's restricted chapter palettes, the designer relies on timing, intensity and small shade differences to create distinction, showing that variation can occur inside one color family instead of requiring a new hue for every song.",
       "evidence_classification": "PROFESSIONAL_PRACTICE",
