@@ -4802,6 +4802,514 @@
       "related_console_capabilities": [],
       "source_provenance": "LIVE_DESIGN_BILLIE_EILISH_WDWG: professional case coverage of lighting integrated with automated catwalks and trusses.",
       "summary": "Case evidence for designing lighting and automation as interacting spatial layers rather than isolated systems."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk003_ma2_macro_parameterization",
+      "source_id": "MA2_MACRO_VARIABLES_MANUAL",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "grandMA2 Macro variables can hold reusable text or numeric values, so repeated workflows whose structure is stable but whose targets change can often be parameterized instead of duplicated as many near-identical Macros.",
+      "evidence_classification": "OFFICIAL_DOCUMENTED",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA2_3_9_REUSABLE_MACRO_WORKFLOW",
+      "exclusions": [
+        "Does not mean every repeated task should become a Macro.",
+        "Does not establish safe target objects without current Show evidence."
+      ],
+      "confidence": "HIGH",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Selection, Clone, Search/Replace, Filters, Worlds or another native mechanism may be clearer than a Macro for some repeated work."
+      ],
+      "related_design_concepts": [
+        "maintainability",
+        "parameterization",
+        "operator_workflow"
+      ],
+      "related_console_capabilities": [
+        "macro",
+        "setvar",
+        "setuservar",
+        "addvar",
+        "variables"
+      ],
+      "source_provenance": "MA2_MACRO_VARIABLES_MANUAL: official grandMA2 3.9 Macro variable documentation.",
+      "summary": "Supports choosing one parameterized Macro over many duplicated variants when only inputs change."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk003_ma2_macro_scope_vars",
+      "source_id": "MA2_MACRO_VARIABLES_MANUAL",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "grandMA2 distinguishes global variables from user-specific variables, so reusable automation should choose scope deliberately rather than assuming all operator state should be shared.",
+      "evidence_classification": "OFFICIAL_DOCUMENTED",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA2_3_9_MULTIUSER_MACRO_STATE",
+      "exclusions": [
+        "Does not decide which variables a specific production should expose.",
+        "Does not justify persistent state when a stateless native operation is sufficient."
+      ],
+      "confidence": "HIGH",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "A simpler stateless workflow can be preferable when shared or user-specific state adds recovery risk."
+      ],
+      "related_design_concepts": [
+        "operator_scope",
+        "multiuser",
+        "recoverability"
+      ],
+      "related_console_capabilities": [
+        "setvar",
+        "setuservar",
+        "listvar",
+        "listuservar"
+      ],
+      "source_provenance": "MA2_MACRO_VARIABLES_MANUAL: official grandMA2 variable-scope documentation.",
+      "summary": "Adds variable scope to Macro design reasoning so reusable automation does not create accidental shared state."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk003_ma2_macro_interactive_input",
+      "source_id": "MA2_MACRO_CLI_INTERACTION_MANUAL",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "grandMA2 Macros can pause for operator input or leave a partially prepared command for completion, allowing one reusable workflow to accept case-specific values without creating a separate Macro for every variant.",
+      "evidence_classification": "OFFICIAL_DOCUMENTED",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA2_3_9_INTERACTIVE_MACRO_WORKFLOW",
+      "exclusions": [
+        "Does not justify interactive prompts during time-critical playback.",
+        "Does not make free-form operator input safe without validation and clear recovery behavior."
+      ],
+      "confidence": "HIGH",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Fixed deterministic Macros are often preferable when interaction would slow or confuse live operation."
+      ],
+      "related_design_concepts": [
+        "operator_input",
+        "reusability",
+        "workflow"
+      ],
+      "related_console_capabilities": [
+        "macro",
+        "command_line_interaction",
+        "operator_prompt"
+      ],
+      "source_provenance": "MA2_MACRO_CLI_INTERACTION_MANUAL: official grandMA2 Macro command-line interaction documentation.",
+      "summary": "Supports interactive parameterization when operator input is genuinely part of the workflow."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk003_ma2_clone_native_adaptation",
+      "source_id": "MA2_CLONE_MANUAL",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "grandMA2 Clone is a native way to adapt programmed behavior from one fixture selection to another and can limit scope, so fixture-set expansion or substitution should be evaluated for Clone before custom repetitive automation is written.",
+      "evidence_classification": "OFFICIAL_DOCUMENTED",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA2_3_9_FIXTURE_ADAPTATION",
+      "exclusions": [
+        "Does not guarantee semantic equivalence between different fixture types.",
+        "Does not authorize cloning into a production Show without verified source, destination, scope and review."
+      ],
+      "confidence": "HIGH",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Manual redesign or a different mapping may be required when visual capability, geometry, references or fixture semantics differ materially."
+      ],
+      "related_design_concepts": [
+        "adaptation",
+        "reuse",
+        "maintainability"
+      ],
+      "related_console_capabilities": [
+        "clone",
+        "presets",
+        "effects",
+        "sequences"
+      ],
+      "source_provenance": "MA2_CLONE_MANUAL: official grandMA2 Clone documentation.",
+      "summary": "Makes Clone a first-class candidate for structured fixture adaptation rather than defaulting to repeated edits or custom scripts."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk003_ma2_clone_preserve_destination",
+      "source_id": "MA2_CLONE_MANUAL",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "grandMA2's default low-priority Clone preserves destination data where it already exists while adding missing source programming, so clone priority is part of the safety decision and not merely an implementation detail.",
+      "evidence_classification": "OFFICIAL_DOCUMENTED",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA2_3_9_CLONE_PRIORITY",
+      "exclusions": [
+        "Does not prove low-priority Clone is always the desired result.",
+        "Does not remove the need to inspect referenced dependencies and destination programming."
+      ],
+      "confidence": "HIGH",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Merge or overwrite behavior may be intentionally required, but carries different destructive implications and needs explicit case evidence."
+      ],
+      "related_design_concepts": [
+        "data_preservation",
+        "rollback",
+        "adaptation"
+      ],
+      "related_console_capabilities": [
+        "clone",
+        "merge",
+        "overwrite"
+      ],
+      "source_provenance": "MA2_CLONE_MANUAL: official grandMA2 Clone priority documentation.",
+      "summary": "Treats clone priority as a safety/maintenance choice when adapting existing Show programming."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk003_ma2_search_before_replace",
+      "source_id": "MA2_SEARCH_REPLACE_MANUAL",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "grandMA2 Search can locate where fixtures, presets, values or other elements are used before Replace changes them, so inspection and bounded transformation can often replace many manual edits.",
+      "evidence_classification": "OFFICIAL_DOCUMENTED",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA2_3_9_BATCH_INSPECTION_TRANSFORMATION",
+      "exclusions": [
+        "Does not make Replace safe without a bounded search result and review.",
+        "Does not imply global replacement is appropriate for semantically different uses of the same object."
+      ],
+      "confidence": "HIGH",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Manual edits may be safer when uses share an identifier but differ in artistic meaning."
+      ],
+      "related_design_concepts": [
+        "batch_editing",
+        "inspection",
+        "maintainability"
+      ],
+      "related_console_capabilities": [
+        "search",
+        "replace",
+        "searchresult"
+      ],
+      "source_provenance": "MA2_SEARCH_REPLACE_MANUAL: official grandMA2 Search and Replace documentation.",
+      "summary": "Promotes inspect-then-transform reasoning instead of repetitive blind edits."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk003_ma2_filters_input_playback",
+      "source_id": "MA2_WORLD_FILTER_EXECUTOR_MANUAL",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "grandMA2 can assign Worlds or Filters as input constraints on Sequences and as playback constraints on Executors, letting one stored structure expose different programming or playback scopes without duplicating all content.",
+      "evidence_classification": "OFFICIAL_DOCUMENTED",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA2_3_9_SEQUENCE_EXECUTOR_SCOPE_CONTROL",
+      "exclusions": [
+        "Does not establish which fixtures or attributes should be filtered in a current Show.",
+        "Does not justify hidden filtering that would make handover behavior surprising."
+      ],
+      "confidence": "HIGH",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Separate sequences may be clearer when filtered reuse would obscure intent or make live troubleshooting harder."
+      ],
+      "related_design_concepts": [
+        "reuse",
+        "scope",
+        "handover"
+      ],
+      "related_console_capabilities": [
+        "world",
+        "filter",
+        "input_filter",
+        "playback_filter",
+        "sequence",
+        "executor"
+      ],
+      "source_provenance": "MA2_WORLD_FILTER_EXECUTOR_MANUAL: official grandMA2 World/Filter assignment documentation.",
+      "summary": "Adds native input/playback scoping as an alternative to duplicated programming, while preserving handover clarity as a constraint."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk003_ma2_executor_options_before_custom_logic",
+      "source_id": "MA2_EXECUTOR_OPTIONS_ADVANCED_MANUAL",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "grandMA2 Executor and Sequence options already cover behaviors such as trigger handling, command disabling, playback filtering, Timecode association and Speed Master linkage, so these native options should be checked before reproducing equivalent behavior with custom automation.",
+      "evidence_classification": "OFFICIAL_DOCUMENTED",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA2_3_9_NATIVE_PLAYBACK_BEHAVIOR",
+      "exclusions": [
+        "Does not prescribe enabling any specific option.",
+        "Does not replace case-specific testing of how options interact with current sequence content."
+      ],
+      "confidence": "HIGH",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Custom logic can still be justified when native options cannot express the required workflow cleanly."
+      ],
+      "related_design_concepts": [
+        "native_first",
+        "playback",
+        "operator_handover"
+      ],
+      "related_console_capabilities": [
+        "executor_options",
+        "trigger_is_go",
+        "cmd_disable",
+        "playback_filter",
+        "timecode",
+        "speed_master"
+      ],
+      "source_provenance": "MA2_EXECUTOR_OPTIONS_ADVANCED_MANUAL: official grandMA2 Executor Options documentation.",
+      "summary": "Strengthens the native-first rule by requiring relevant Executor/Sequence options to be considered before custom code."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk003_buble_programmer_collaboration",
+      "source_id": "LIVE_DESIGN_MICHAEL_BUBLE_COOL_SUMMER",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "The Michael Bublé production describes strong programmer collaboration as understanding the visual intent and musical structure while contributing implementation ideas, details and venue adaptations rather than acting as a passive button operator.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "PROFESSIONAL_TOURING_LD_PROGRAMMER_COLLABORATION_CASE",
+      "exclusions": [
+        "Does not collapse the roles of designer and programmer.",
+        "Does not imply a programmer may override the production's approved visual direction."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Some productions deliberately separate design authorship and programming decisions more strictly."
+      ],
+      "related_design_concepts": [
+        "collaboration",
+        "visual_intent",
+        "musical_structure",
+        "venue_adaptation"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LIVE_DESIGN_MICHAEL_BUBLE_COOL_SUMMER: designer interview describing programmer collaboration and venue adaptation.",
+      "summary": "Case evidence that a strong programmer interprets intent, contributes solutions and preserves the design through real-world adaptation."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk003_buble_previs_handoff",
+      "source_id": "LIVE_DESIGN_MICHAEL_BUBLE_COOL_SUMMER",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "A strong previs/programming foundation allowed a replacement programmer to take over the Michael Bublé file on very short notice and continue adapting it, illustrating that readable structure and shared intent materially improve handoff resilience.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "PROFESSIONAL_TOURING_HANDOFF_CASE",
+      "exclusions": [
+        "Does not prove every show needs the same previs process.",
+        "Does not establish which MA object architecture alone produced the successful handoff."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Small one-off productions may accept different documentation and handoff tradeoffs."
+      ],
+      "related_design_concepts": [
+        "handover",
+        "resilience",
+        "previs",
+        "continuity"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "LIVE_DESIGN_MICHAEL_BUBLE_COOL_SUMMER: case account of a rapid programmer handoff enabled by a strong existing foundation.",
+      "summary": "Connects professional handoff quality to structured, understandable programming rather than merely functional output."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk003_appel_programmer_editability",
+      "source_id": "PLSN_MICHAEL_APPEL_PROGRAMMER_INTERVIEW",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "Programmer Michael Appel emphasizes that programming must remain editable by the lighting designer and that the programmer should understand and serve the show's direction rather than defend personal programming choices.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "PROFESSIONAL_PROGRAMMER_COLLABORATION_CASE",
+      "exclusions": [
+        "Does not require every production to use the same designer-programmer hierarchy.",
+        "Does not imply the programmer should avoid proposing technically or artistically useful alternatives."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Collaborative productions may distribute authorship differently while still preserving editability and shared direction."
+      ],
+      "related_design_concepts": [
+        "editability",
+        "collaboration",
+        "show_direction",
+        "handover"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "PLSN_MICHAEL_APPEL_PROGRAMMER_INTERVIEW: professional programmer interview on designer/programmer collaboration.",
+      "summary": "Case evidence that professional programming quality includes editability, low ego and fidelity to the production's direction."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk003_banks_visual_world",
+      "source_id": "PLSN_BANKS_SERPENTINA_CASE",
+      "topic": "VISUAL_HIERARCHY",
+      "normalized_claim": "The Banks Serpentina tour used lighting to extend an artist-defined emotional and visual world into the live performance, treating technology as a means to support atmosphere, drama and story rather than as the subject of the show.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "ALTERNATIVE_POP_TOURING_CONCEPT_CASE",
+      "exclusions": [
+        "Does not prescribe darkness, fixture choice or effect density for other artists.",
+        "Does not establish hierarchy without the current performance and stage context."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Some productions intentionally foreground lighting technology as a major visual subject."
+      ],
+      "related_design_concepts": [
+        "visual_world",
+        "atmosphere",
+        "story",
+        "artist_identity"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "PLSN_BANKS_SERPENTINA_CASE: professional tour case describing lighting as an extension of the artist's album world.",
+      "summary": "Case evidence for starting from the artist's emotional world and using lighting as support rather than technology-first spectacle."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk003_banks_emotion_over_fixture_recipe",
+      "source_id": "PLSN_BANKS_SERPENTINA_CASE",
+      "topic": "ENERGY_PROGRESSION",
+      "normalized_claim": "In the Serpentina case, the stated lighting objective centered on how the audience should feel through the performance, suggesting that energy and cue development can be organized around emotional progression instead of a fixed fixture-count or effect recipe.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "ALTERNATIVE_POP_EMOTIONAL_ARC_CASE",
+      "exclusions": [
+        "Does not define a universal energy curve.",
+        "Does not establish exact cue timing or fixture participation for another song."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Some performance formats prioritize choreography, broadcast or musical punctuation over a continuous emotional arc."
+      ],
+      "related_design_concepts": [
+        "emotion",
+        "energy_arc",
+        "audience_experience"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "PLSN_BANKS_SERPENTINA_CASE: case description of the tour's emotion/drama/atmosphere objective.",
+      "summary": "Case evidence that whole-show energy reasoning can begin with audience emotion rather than technical escalation."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk003_karolg_cross_department_timing",
+      "source_id": "PLSN_KAROL_G_STRIP_LOVE_CASE",
+      "topic": "RHYTHMIC_PUNCTUATION",
+      "normalized_claim": "The Karol G arena production required lighting to coordinate with frequent automation, pyro and scenic events, showing that precise timing can be driven by cross-department show events and rehearsal integration rather than by musical beats alone.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "ARENA_POP_CROSS_DEPARTMENT_TIMING_CASE",
+      "exclusions": [
+        "Does not imply every song needs automation or pyro.",
+        "Does not establish a safe timing value without actual rehearsal and production cues."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Simpler productions can legitimately derive most timing directly from music and operator feel."
+      ],
+      "related_design_concepts": [
+        "timing",
+        "coordination",
+        "rehearsal",
+        "punctuation"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "PLSN_KAROL_G_STRIP_LOVE_CASE: professional arena-tour case describing automation, pyro and scenic timing integration.",
+      "summary": "Case evidence that cue timing may need to synchronize the whole production, not merely mirror rhythm."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk003_karolg_rehearsal_resolution",
+      "source_id": "PLSN_KAROL_G_STRIP_LOVE_CASE",
+      "topic": "CONSOLE_MAINTAINABILITY",
+      "normalized_claim": "The Karol G production describes major timing relationships as something that only fully resolves during rehearsal, supporting a workflow where programming remains adaptable until automation, scenic, pyro and performer timing can be observed together.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "ARENA_POP_REHEARSAL_INTEGRATION_CASE",
+      "exclusions": [
+        "Does not justify leaving avoidable technical work unfinished before rehearsal.",
+        "Does not remove the need for previs, documentation or safe production planning."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Highly standardized or repeated productions may lock more timing before arriving onsite."
+      ],
+      "related_design_concepts": [
+        "rehearsal",
+        "adaptability",
+        "integration"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "PLSN_KAROL_G_STRIP_LOVE_CASE: case account of complex production elements converging during rehearsal.",
+      "summary": "Case evidence that professional programming must support refinement when real cross-department timing becomes visible."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk003_fantasia_section_specific_language",
+      "source_id": "PLSN_FANTASIA_BACK_TO_ME_CASE",
+      "topic": "REPEATED_SECTION_DEVELOPMENT",
+      "normalized_claim": "The Fantasia production changed visual language substantially between period-based sections, demonstrating that one show can intentionally use different movement, palette and focus strategies when narrative context changes instead of forcing one treatment across all material.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "RNB_POP_PERIOD_NARRATIVE_CASE",
+      "exclusions": [
+        "Does not imply every show needs strongly different visual eras.",
+        "Does not prescribe the exact palette or movement of the referenced production."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "Some artists benefit from a tightly unified visual language across the entire performance."
+      ],
+      "related_design_concepts": [
+        "section_identity",
+        "narrative",
+        "development",
+        "contrast"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "PLSN_FANTASIA_BACK_TO_ME_CASE: professional tour profile describing distinct visual treatments for different period sections.",
+      "summary": "Case evidence for changing strategy when the narrative context changes, rather than applying one generic lighting recipe."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk003_fantasia_focus_vs_psychedelia",
+      "source_id": "PLSN_FANTASIA_BACK_TO_ME_CASE",
+      "topic": "CONTRAST",
+      "normalized_claim": "The Fantasia tour contrasted a stark, focus-driven section with a later psychedelic section using more movement and saturated color, illustrating that contrast can come from changing the underlying visual strategy rather than only changing intensity.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "RNB_POP_PERIOD_CONTRAST_CASE",
+      "exclusions": [
+        "Does not prescribe white light for serious material or saturated color for retro material.",
+        "Does not establish performer focus or palette for another show."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "HUMAN_REVIEW_REQUIRED",
+      "conflicts": [
+        "A production can also maintain one restrained strategy across contrasting musical sections for conceptual reasons."
+      ],
+      "related_design_concepts": [
+        "contrast",
+        "focus",
+        "movement",
+        "color"
+      ],
+      "related_console_capabilities": [],
+      "source_provenance": "PLSN_FANTASIA_BACK_TO_ME_CASE: case description of contrasting period-specific visual treatments.",
+      "summary": "Case evidence that meaningful contrast may change focus, movement and palette together instead of simply adding output."
     }
   ]
 }
