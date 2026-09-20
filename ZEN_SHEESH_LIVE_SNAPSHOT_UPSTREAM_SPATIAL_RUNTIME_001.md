@@ -1,6 +1,6 @@
 # SHEESH Live Snapshot Upstream Spatial Runtime 001
 
-**Status:** IMPLEMENTED; REAL RUN BLOCKED AT `RIG_DESIGNER`
+**Status:** STRUCTURAL CONTRACT HARDENED; CONTROLLED RERUN BLOCKED AT `RESEARCHER`
 **Run:** `SHEESH_CURRENT_SHOW_REDESIGN_001`
 **Read-only boundary:** `MA2_WRITES=0`
 **Artistic provenance:** `CODEX_ARTISTIC_INTERVENTION=NONE`
@@ -11,12 +11,29 @@ The conditional live-Show runtime path is implemented. The saved Phase A
 snapshot normalized successfully, entered the context hash, and was recorded in
 run metadata. The existing no-snapshot four-role pipeline remains intact.
 
-The real run stopped at `RIG_DESIGNER`. Three bounded role attempts received
+The first real run stopped at `RIG_DESIGNER`. Three bounded role attempts received
 transport-successful JSON from a provider, but all three responses omitted the
 required `schema` field/value for `zen.multi_agent_rig_design.v0.1`. Runtime
 validation rejected them and did not create a Rig checkpoint. Position Designer
 and all later roles were not called. No artistic/spatial proposal was accepted,
 so this run provides no basis to judge a proposed rig's quality.
+
+The structural contract is now hardened without changing spatial/artistic
+content. Both spatial system prompts require an exact first `schema` key. A
+bounded deterministic normalizer may add only the known Rig or Position schema
+identity when the provider JSON is an object, the schema key is absent, every
+other required top-level field is already present, and
+`codex_artistic_intervention` is exactly `NONE`. Wrong/blank schemas, missing
+fields, invalid references, Fixture 9999, mutation/command content and every
+other validation failure remain rejected. Raw provider text and the accepted
+normalized artifact remain separate, secret-safe audit evidence.
+
+The controlled rerun from commit `e3a81ba82747660aac02725ca0e2cbac2bbea7d5`
+used the same request, run id and Phase A snapshot through the formal restart
+archive path. It stopped at a new upstream blocker: `RESEARCHER` exhausted three
+bounded attempts because transport-successful OpenRouter artifacts used
+non-canonical shapes in `sources`. Rig Designer and all downstream roles were
+therefore not called. This is not evidence for or against a spatial proposal.
 
 ## Exact input and provenance
 
@@ -25,11 +42,14 @@ so this run provides no basis to judge a proposed rig's quality.
 - Profile: `E:\ZEN_MA2_AGENT\projects\runs\SHEESH_CURRENT_SHOW_REDESIGN_001\current_show_snapshot\show_profile.json`
 - Run artifact root: `E:\ZEN_MA2_AGENT\projects\runs\SHEESH_CURRENT_SHOW_REDESIGN_001`
 - Fingerprint: `b41d801b915cddfdd5017df787ad66b55941fbce415ab02ee8ec63acaa027bd5` (scan-derived, confidence `PARTIAL`)
-- `GIT_HEAD` recorded in run: `20da57fd89e88516b67369222c43547f06962eed`
-- `CONTEXT_HASH`: `495d96c77febb72942bacc1de260b0e1b1334c2ef476d161cfcce7033309b731`
+- First-run `GIT_HEAD`: `20da57fd89e88516b67369222c43547f06962eed`
+- First-run `CONTEXT_HASH`: `495d96c77febb72942bacc1de260b0e1b1334c2ef476d161cfcce7033309b731`
 - `REQUEST_HASH`: `e4fcdf2050900ba3bf8f8a458ba4c682c31fd5a3135a70f5b2415df0f774770c`
-- Run interval: `2026-09-20 20:02:48` to `20:13:33` local time (about 645 seconds)
-- Two prior run-state archives are retained under the USB run's `restart_archive/`; the Phase A snapshot directory remains in place.
+- First-run interval: `2026-09-20 20:02:48` to `20:13:33` local time (about 645 seconds)
+- Controlled-rerun `GIT_HEAD`: `e3a81ba82747660aac02725ca0e2cbac2bbea7d5`
+- Controlled-rerun `CONTEXT_HASH`: `33bcc9367308874ed3bcb41c9271e84d13586a16731f4a2509e95906811312e2`
+- Controlled-rerun interval: `2026-09-20 20:33:50` to `20:35:04` local time (about 75 seconds)
+- Three prior run-state archives are retained under the USB run's `restart_archive/`; the Phase A snapshot directory remains in place.
 
 The normalized input contains 57 fixtures, 6 fixture types, 7 Groups and 65
 fixture/subfixture geometry records. Numeric coordinates and rotations were
@@ -67,9 +87,20 @@ as protected, unavailable inventory evidence.
   fixture/subfixture coordinates.
 - No MA2 transport, Resolver, Builder, or writeback was added or invoked.
 
+## Structural repair verification
+
+- Rig and Position prompts now use the established exact-first-schema contract.
+- Metadata-only normalization is limited to `RIG_DESIGNER` and
+  `POSITION_DESIGNER`; it can add only one `schema` field.
+- Diagnostics record whether normalization occurred. When it does, the exact
+  original response SHA256/character count and secret-safe raw response are
+  retained separately from the normalized checkpoint.
+- Already-valid outputs are unchanged. Missing artistic/spatial fields are
+  never added by code.
+
 ## Test and self-check
 
-- `python -m unittest discover -s tests -v`: **549 passed**.
+- `python -m unittest discover -s tests -v`: **559 passed**.
 - `python main.py --self-check`: **PASS**, `ma2_writes=0`; Field Core available,
   MA Bridge OFFLINE, no Workers configured.
 - Focused live-spatial tests cover the no-snapshot compatibility path, six-role
@@ -81,7 +112,7 @@ as protected, unavailable inventory evidence.
   failed response diagnostics check for API-key echo before persisting raw text.
   Regression coverage confirms the retry and secret guard.
 
-## Real provider run
+## First real provider run (before structural repair)
 
 | Role | Result | Provider / evidence |
 |---|---|---|
@@ -106,6 +137,22 @@ recorded for each, and a scan comparing configured keys against run artifacts
 found `SECRETS_LEAKED=NO`. The failed responses and bounded diagnostics remain
 on the USB run directory; runtime state/cache is not committed.
 
+## Controlled rerun after structural repair
+
+The rerun retained all earlier evidence in a third `restart_archive/` entry and
+recorded `GIT_HEAD=e3a81ba82747660aac02725ca0e2cbac2bbea7d5`.
+
+| Researcher attempt | Provider transport | Artifact result |
+|---|---|---|
+| 1 | Groq slot 2 HTTP 403; Mistral slot 4 HTTP 429; OpenRouter slot 5 success | Schema-valid Research artifact, but its nine `sources` items used `{evidence_ref, summary}` instead of canonical `{source_id, record_id}` identities; canonical source resolution rejected `unknown source_id`. |
+| 2 | Groq slot 2 HTTP 403; Mistral slot 4 HTTP 429; OpenRouter slot 5 success | Invalid JSON; rejected before evidence validation. |
+| 3 | Groq slot 2 HTTP 403; Mistral slot 4 HTTP 429; OpenRouter slot 5 success | Schema-valid envelope, but `sources` contained ten strings rather than canonical identity objects; canonical source resolution again rejected `unknown source_id`. |
+
+All attempt responses passed the secret-echo check. A scan of current run JSON
+artifacts against configured provider keys found `SECRETS_LEAKED=NO`. The
+current run contains no completed role checkpoint because Researcher never
+passed canonical source validation. `MA2_WRITES=0`.
+
 ## Required outcome fields
 
 ```text
@@ -118,10 +165,17 @@ CURRENT_STAGE_GEOMETRY_READABLE=YES (numeric geometry only; no Stage/3D image or
 LIVE_SNAPSHOT_VALID=YES
 LIVE_SNAPSHOT_IN_CONTEXT=YES
 ROLE_EXECUTION_ORDER=RESEARCHER,RIG_DESIGNER,POSITION_DESIGNER,LIGHTING_DESIGNER,CRITIC,FINALIZER
-RIG_DESIGNER_PROVIDER=OpenRouter slot 5 (attempts 1-2); NVIDIA NIM slot 3 (attempt 3)
-RIG_ARTIFACT_VALID=NO
-RIG_REFERENCES_VALID=NOT_EVALUATED
+RESEARCHER_PROVIDER=OpenRouter slot 5 (transport-successful; canonical source validation failed in attempts 1 and 3; attempt 2 invalid JSON)
+RIG_DESIGNER_ATTEMPTED_SLOTS=NOT_RUN_IN_CONTROLLED_RERUN
+RIG_DESIGNER_PROVIDER=NOT_RUN_IN_CONTROLLED_RERUN
+RIG_RAW_SCHEMA_PRESENT=NOT_RUN
+RIG_STRUCTURAL_NORMALIZATION_APPLIED=NOT_RUN
+RIG_ARTIFACT_VALID=NOT_RUN
+RIG_REFERENCES_VALID=NOT_RUN
+POSITION_DESIGNER_ATTEMPTED_SLOTS=NOT_RUN
 POSITION_DESIGNER_PROVIDER=NOT_RUN
+POSITION_RAW_SCHEMA_PRESENT=NOT_RUN
+POSITION_STRUCTURAL_NORMALIZATION_APPLIED=NOT_RUN
 POSITION_ARTIFACT_VALID=NOT_RUN
 POSITION_REFERENCES_VALID=NOT_RUN
 PROPOSED_FIXTURE_COUNT=0 (no accepted Position artifact)
@@ -137,21 +191,23 @@ CRITIC_ACCEPTED_SLOTS=NOT_RUN
 CRITIC_CANDIDATE_COUNT=0
 FINALIZER_PROVIDER=NOT_RUN
 FINAL_SCHEMA_VALID=NOT_REACHED
-EVIDENCE_VALID=Researcher PASS; final evidence validation NOT_REACHED
+SPATIAL_CONSISTENCY_VALID=NOT_REACHED
+EVIDENCE_VALID=NO (Researcher canonical source validation failed); final evidence validation NOT_REACHED
 SECRETS_LEAKED=NO
 MA2_WRITES=0
 MA2_WRITE_SUMMARY=NONE
-CAPABILITY_GAPS=RIG provider output omitted required schema after three attempts; Position/downstream not reached; current-fingerprint fixture capabilities and coordinate-axis semantics remain UNKNOWN
+CAPABILITY_GAPS=Researcher provider output did not use canonical source identity shape after bounded retries; spatial roles/downstream not reached; current-fingerprint fixture capabilities and coordinate-axis semantics remain UNKNOWN
 CODEX_ARTISTIC_INTERVENTION=NONE
 ```
 
 ## Traditional Chinese handoff
 
-這次沒有產生可接受的 ZEN 空間提案：RIG_DESIGNER 三次收到模型回應，
-但都缺少必要的 `schema` 身分欄位，因此沒有建立 Rig checkpoint；Position
-Designer 與後續角色沒有執行。故目前不能描述「ZEN 如何重新排列燈具」、
-不能評論其空間概念，也不能判斷藝術品質。這不是空間設計失敗的判定，
-而是 provider 輸出未符合角色 artifact 契約的執行阻塞。
+這次 controlled rerun 仍沒有產生可接受的 ZEN 空間提案。schema 結構修復
+本身已由 559 個測試驗證，但新的真實 run 在 Researcher 就停止：OpenRouter
+回傳的 `sources` 使用了 `{evidence_ref, summary}` 或字串清單，而不是 runtime
+要求的 canonical source identity，因此 provenance validator 正確 fail closed。
+RIG_DESIGNER、POSITION_DESIGNER 與後續角色都沒有執行。故目前不能描述
+「ZEN 如何重新排列燈具」、不能評論其空間概念，也不能判斷藝術品質。
 
 已保存的 Phase A 快照顯示數值幾何可讀，但沒有經校準的舞台軸語意，也
 沒有 Stage/3D 畫面；能力資料對這個 fingerprint 仍是 UNKNOWN。這些限制
@@ -161,9 +217,9 @@ Fixture 9999、Patch、Address、Fixture ID/Type、Preset、Sequence、Executor
 
 ## Remaining blocker
 
-`RIG_DESIGNER_PROVIDER_OUTPUT_MISSING_REQUIRED_SCHEMA_AFTER_THREE_ATTEMPTS`
+`RESEARCHER_PROVIDER_OUTPUT_NON_CANONICAL_SOURCE_IDENTITY_AFTER_BOUNDED_RETRIES`
 
-需要一個既有合格 provider 在不改寫空間內容的前提下輸出通過
-`zen.multi_agent_rig_design.v0.1` 驗證的 artifact，之後才可繼續 Position、
-Lighting Designer、Critic 與 Finalizer。此報告不授權調整角色提示、模型、
-provider config 或開始 Move3D writeback。
+需要 Researcher 先輸出 canonical source identity，或在沒有可引用 source 時
+保留空 `sources`，並通過現有 provenance validator；之後才可進入已修復的
+Rig/Position 結構契約。此報告不授權 Codex 修補 Researcher 內容、調整模型、
+provider config，或開始 Move3D writeback。

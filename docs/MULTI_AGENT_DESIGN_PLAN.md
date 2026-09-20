@@ -82,6 +82,16 @@ upstream spatial artifacts according to their role contracts. Finalization
 must reference the canonical Position Designer artifact and may not silently
 contradict its exact fixture/subfixture coordinates.
 
+The two spatial roles use the same explicit exact-first-schema contract as the
+established roles. A deterministic envelope normalizer may add only the known
+Rig or Position `schema` identity when that key is wholly absent, every other
+required top-level field is already present, and
+`codex_artistic_intervention=NONE`. It cannot replace a wrong/blank schema or
+add spatial/artistic content. The unchanged role validator still owns all
+fingerprint, fixture-reference, protected-fixture, finite-coordinate,
+mutation/command and consistency checks. Raw provider output remains separate
+from any normalized accepted artifact in secret-safe diagnostics.
+
 This route is design-artifact generation only. It does not call MA2, Resolver,
 or Builder, and it does not write geometry. A provider artifact that fails
 schema, inventory, evidence, or safety validation stops the route at that

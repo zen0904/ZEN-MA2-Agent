@@ -5,7 +5,7 @@
     "id": "M2_EXPRESSIVE_CAPABILITY",
     "title": "Expressive Capability",
     "status": "ACTIVE",
-    "active_objective": "SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001 runtime plumbing is implemented and consumes the verified Phase A snapshot. The real run is blocked at RIG_DESIGNER: after three bounded attempts, successful provider responses omitted the required schema identity. The next acceptance condition is a schema-valid ZEN Rig artifact; do not repair or replace its spatial content in Codex. MA2 writes remain disabled."
+    "active_objective": "SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001 now has an exact spatial schema contract and bounded metadata-only normalization, verified by 559 tests. The controlled real rerun is blocked earlier at RESEARCHER: transport-successful outputs used non-canonical source identity shapes and failed provenance validation after three bounded attempts. The next acceptance condition is a canonically sourced Researcher artifact, followed by the unchanged Rig/Position path. MA2 writes remain disabled."
   },
   "last_closed_task": {
     "id": "SHEESH_CURRENT_SHOW_REDESIGN_PHASE_A_001",
@@ -16,7 +16,7 @@
     "id": "SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001",
     "classification": "REQUIRED",
     "status": "BLOCKED_PROVIDER_OUTPUT",
-    "why_it_matters": "The snapshot is now an explicit fingerprint-bound runtime input, but the real run stopped at RIG_DESIGNER after three bounded attempts because successful provider responses omitted the required schema identity. No spatial artifact was accepted, so downstream design cannot run truthfully.",
+    "why_it_matters": "The spatial schema-only blocker is repaired without adding artistic content, but the controlled rerun stopped at RESEARCHER because provider outputs did not use canonical source identities. No spatial artifact was produced, so downstream design still cannot run truthfully.",
     "blocks_current_milestone": true,
     "dependencies": [
       "ZEN_SHEESH_CURRENT_SHOW_REDESIGN_001.md",
@@ -24,7 +24,7 @@
       "live current Show snapshot under the local experiment run",
       "existing multi-agent runtime and provider router"
     ],
-    "next_review_condition": "A provider in the existing eligible pool returns a schema-valid RIG_DESIGNER artifact through the bounded runtime path; then continue Position Designer, Lighting Designer, Critic and Finalizer in order, preserving zero MA2 writes."
+    "next_review_condition": "A Researcher artifact passes canonical source resolution through the existing bounded runtime path; then continue Rig Designer, Position Designer, Lighting Designer, Critic and Finalizer in order, preserving zero MA2 writes."
   },
   "human_review_decisions": [
     {
@@ -70,16 +70,18 @@
     {
       "id": "SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001",
       "source": "ZEN_SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001.md",
-      "status": "RUNTIME_IMPLEMENTED_REAL_RUN_BLOCKED_AT_RIG_DESIGNER",
+      "status": "SPATIAL_SCHEMA_CONTRACT_HARDENED_REAL_RERUN_BLOCKED_AT_RESEARCHER",
       "outcomes": [
         "LIVE_SNAPSHOT_NORMALIZED_AND_BOUND_TO_CONTEXT_HASH",
         "CONDITIONAL_SIX_ROLE_ORDER_RECORDED",
-        "RESEARCHER_ARTIFACT_VALIDATED",
-        "RIG_DESIGNER_REQUIRED_SCHEMA_IDENTITY_MISSING_AFTER_THREE_ATTEMPTS",
+        "FIRST_RUN_RESEARCHER_ARTIFACT_VALIDATED",
+        "SPATIAL_SCHEMA_METADATA_NORMALIZATION_TESTED_FAIL_CLOSED",
+        "CONTROLLED_RESTART_ARCHIVED_PRIOR_RUN_EVIDENCE",
+        "RESEARCHER_NON_CANONICAL_SOURCE_IDENTITY_AFTER_THREE_ATTEMPTS",
         "POSITION_AND_DOWNSTREAM_ROLES_NOT_RUN",
         "MA2_WRITES_ZERO"
       ],
-      "limitations": "No spatial proposal was accepted. The Researcher used supplied cached knowledge with no canonical source references. Current-fingerprint fixture capabilities and coordinate-axis semantics remain UNKNOWN. Provider output failure is not an artistic assessment."
+      "limitations": "No spatial proposal was produced in the controlled rerun because Researcher did not pass canonical source resolution. The schema normalizer was not reached by a real spatial role and its correctness is established by deterministic tests only. Current-fingerprint fixture capabilities and coordinate-axis semantics remain UNKNOWN. Provider output failure is not an artistic assessment."
     },
     {
       "id": "TEST_SHOW_COLOR_PROVISIONING_001",
@@ -177,10 +179,10 @@
       "id": "CURRENT_SHOW_SPATIAL_EVIDENCE",
       "classification": "REQUIRED",
       "milestone": "M3_SHOW_RIG_ADAPTATION",
-      "status": "RUNTIME_INPUT_READY_PROVIDER_OUTPUT_BLOCKED",
-      "why_it_matters": "The read-only live Show snapshot is now a validated runtime input; the real run is blocked because providers did not include the required RIG_DESIGNER schema identity after three bounded attempts.",
+      "status": "RUNTIME_INPUT_READY_RESEARCHER_PROVENANCE_BLOCKED",
+      "why_it_matters": "The read-only live Show snapshot and spatial schema contract are ready; the controlled rerun is blocked because Researcher outputs used non-canonical source identity shapes after three bounded attempts.",
       "blocks_current_milestone": true,
-      "next_review_condition": "A valid RIG_DESIGNER artifact is produced through the existing provider route, followed by the remaining roles in order and zero MA2 writes."
+      "next_review_condition": "A canonical-source-valid Researcher artifact is produced through the existing provider route, followed by Rig Designer and the remaining roles in order with zero MA2 writes."
     },
     {
       "id": "GENERIC_ZEN_SPATIAL_WRITE_ADAPTER",
@@ -274,7 +276,7 @@
     "production_designer": "UNCHANGED",
     "experimental_b3": "GUIDANCE_ASSISTED_AB_ONLY",
     "ab002_actions": "UNCHANGED",
-    "ma2_write_audit": "Phase A snapshot and SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001 were read-only. Runtime accepted the snapshot and Researcher step, then stopped at RIG_DESIGNER schema validation. No MA2 transport or write path was invoked; MA2_WRITES=0.",
+    "ma2_write_audit": "Phase A snapshot and both SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001 runs were read-only. The structural repair added no MA path. The controlled rerun accepted the snapshot but stopped at Researcher canonical source validation before any spatial role. No MA2 transport or write path was invoked; MA2_WRITES=0.",
     "test_show_mode": "WRITE_AUTHORIZATION_RETAINED_BUT_NOT_USED_DURING_CURRENT_READ_ONLY_RUNTIME_INTEGRATION_GATE",
     "fixture_9999": "UNTOUCHED",
     "zen_style_profile": "DEFERRED",
