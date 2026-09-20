@@ -56,6 +56,10 @@ class MultiAgentRunError(RuntimeError):
     """Raised when a bounded role cannot produce a valid checkpoint."""
 
 
+class EvidenceValidationError(MultiAgentRunError):
+    """Raised when a structurally valid artifact violates canonical evidence."""
+
+
 @dataclass(frozen=True)
 class MultiAgentRun:
     run_id: str
@@ -709,11 +713,11 @@ def _validate_artifact_evidence(role_name: str, artifact: dict[str, object], con
     if refs is None:
         refs = []
     if not isinstance(refs, list) or any(not isinstance(ref, str) for ref in refs):
-        raise MultiAgentRunError(f"{role_name} evidence_refs must be a list of strings.")
+        raise EvidenceValidationError(f"{role_name} evidence_refs must be a list of strings.")
     try:
         validate_evidence_refs(refs, ledger)
     except ValueError as exc:
-        raise MultiAgentRunError(str(exc)) from exc
+        raise EvidenceValidationError(str(exc)) from exc
     if role_name == "researcher":
         try:
             artifact["resolved_sources"] = resolve_research_sources(
@@ -722,7 +726,7 @@ def _validate_artifact_evidence(role_name: str, artifact: dict[str, object], con
                 records=context.get("canonical_knowledge_records", []),
             )
         except (KeyError, TypeError, ValueError) as exc:
-            raise MultiAgentRunError(str(exc)) from exc
+            raise EvidenceValidationError(str(exc)) from exc
     return artifact
 
 
@@ -846,23 +850,28 @@ def _record_attempt_diagnostic(
     attempt: int,
     content: str,
     error: Exception,
+    api_key: str = "",
     provider_elapsed_seconds: float | None = None,
     failure_class: str = "OUTPUT_VALIDATION",
 ) -> None:
     """Keep an agent-owned failed response for local validation diagnosis."""
-    _write_json(path / "attempts" / f"{role_name}-{attempt:02}.json", {
+    secret_leaked = bool(api_key and api_key in content)
+    diagnostic: dict[str, object] = {
         "schema": ATTEMPT_SCHEMA,
         "role": role_name,
         "attempt": attempt,
         "response_sha256": hashlib.sha256(content.encode("utf-8")).hexdigest(),
         "response_characters": len(content),
         "validation_error_type": type(error).__name__,
-        "validation_error": str(error),
+        "validation_error": _bounded_validation_error(error, api_key=api_key),
         "provider_elapsed_seconds": provider_elapsed_seconds,
         "failure_class": failure_class,
-        "raw_response": content,
+        "secret_check": "FAIL" if secret_leaked else "PASS",
         "CODEX_ARTISTIC_INTERVENTION": "NONE",
-    })
+    }
+    if not secret_leaked:
+        diagnostic["raw_response"] = content
+    _write_json(path / "attempts" / f"{role_name}-{attempt:02}.json", diagnostic)
 
 
 def _bounded_validation_error(error: Exception, *, api_key: str) -> str:
@@ -955,6 +964,7 @@ def _write_single_role_provider_diagnostic(
     provider_attempts: tuple[dict[str, object], ...],
     selected_slot: ProviderSlot | None,
     role_output_validation: str,
+    evidence_validation: str = "NOT_RUN",
 ) -> None:
     """Persist sequential router fallback evidence beside the role attempt."""
     try:
@@ -969,8 +979,11 @@ def _write_single_role_provider_diagnostic(
         row = dict(attempt)
         if selected_slot is not None and row.get("slot_number") == selected_slot.number:
             row["role_output_validation"] = role_output_validation
+            row["evidence_validation"] = evidence_validation
             row["candidate_status"] = (
-                "OUTPUT_VALIDATION_FAILURE"
+                "EVIDENCE_VALIDATION_FAILURE"
+                if role_output_validation == "PASS" and evidence_validation == "FAIL"
+                else "OUTPUT_VALIDATION_FAILURE"
                 if role_output_validation == "FAIL"
                 else "VALID_ROLE_OUTPUT"
             )
@@ -994,6 +1007,8 @@ def _write_single_role_provider_diagnostic(
 
 
 def _failure_class(error: Exception) -> str:
+    if isinstance(error, EvidenceValidationError):
+        return "EVIDENCE_VALIDATION"
     if isinstance(error, ProviderUnavailable):
         message = str(error).casefold()
         if any(marker in message for marker in ("timeouterror", "socket.timeout", "timed out", "timeout")):
@@ -1013,6 +1028,7 @@ def _run_role(
     run_path: Path,
     validator: Callable[[object], dict[str, object]] | None = None,
     system_prompt: str | None = None,
+    evidence_validation_enabled: bool = False,
 ) -> tuple[dict[str, object], ProviderSlot, int]:
     validator = validator or ROLE_VALIDATORS[role_name]
     last_error: Exception | None = None
@@ -1055,6 +1071,7 @@ def _run_role(
                 provider_attempts=provider_attempts,
                 selected_slot=selected_slot,
                 role_output_validation="PASS",
+                evidence_validation="PASS" if evidence_validation_enabled else "NOT_RUN",
             )
             return artifact, slot, attempt
         except (ProviderUnavailable, MultiAgentRunError, DesignValidationError) as exc:
@@ -1070,7 +1087,12 @@ def _run_role(
                     router=router,
                     provider_attempts=provider_attempts,
                     selected_slot=selected_slot,
-                    role_output_validation="FAIL" if selected_slot is not None and content else "NOT_RUN",
+                    role_output_validation=(
+                        "PASS" if isinstance(exc, EvidenceValidationError)
+                        else "FAIL" if selected_slot is not None and content
+                        else "NOT_RUN"
+                    ),
+                    evidence_validation="FAIL" if isinstance(exc, EvidenceValidationError) else "NOT_RUN",
                 )
             last_error = exc
             if content:
@@ -1080,6 +1102,7 @@ def _run_role(
                     attempt=attempt,
                     content=content,
                     error=exc,
+                    api_key=selected_slot.api_key if selected_slot is not None else "",
                     provider_elapsed_seconds=elapsed,
                     failure_class=_failure_class(exc),
                 )
@@ -1416,16 +1439,22 @@ def run_multi_agent_design(
                         return final
 
                     role_validator = validate_live_final
+                schema_validator = role_validator or ROLE_VALIDATORS[role_name]
+
+                def validate_role_with_evidence(value: object) -> dict[str, object]:
+                    validated = schema_validator(value)
+                    return _validate_artifact_evidence(role_name, validated, context)
+
                 artifact, slot, attempts = _run_role(
                     router,
                     role_name=role_name,
                     payload=payload,
                     max_attempts=max_role_attempts,
                     run_path=path,
-                    validator=role_validator,
+                    validator=validate_role_with_evidence,
                     system_prompt=system_prompt,
+                    evidence_validation_enabled=True,
                 )
-                artifact = _validate_artifact_evidence(role_name, artifact, context)
                 if slot.api_key and slot.api_key in _canonical_json(artifact):
                     raise MultiAgentRunError("Role artifact contained a provider secret and was rejected.")
                 validated_candidates = [(artifact, slot)]

@@ -334,6 +334,44 @@ class MultiAgentRuntimeTests(unittest.TestCase):
         with self.assertRaises(MultiAgentRunError):
             run_multi_agent_design(router, request="synthetic request", repo_root=self.repo_root, run_id="unknown-evidence")
 
+    def test_researcher_source_resolution_failure_uses_bounded_retry_and_secret_safe_diagnostic(self):
+        secret = "private-research-provider-key"
+        invalid_research = _research() | {
+            "sources": [{"source_id": "MODEL_INVENTED_SOURCE", "title": secret}],
+        }
+        adapter = _SequenceAdapter([invalid_research, _research(), _draft(), _critic(), _final()])
+        router = ProviderRouter(
+            "PRIMARY_ONLY",
+            (self._local_slot(api_key=secret),),
+            adapter,
+        )
+
+        run = run_multi_agent_design(
+            router,
+            request="synthetic request",
+            repo_root=self.repo_root,
+            run_id="research-source-validation-retry",
+            max_role_attempts=2,
+        )
+
+        researcher = read_step_artifact("research-source-validation-retry", "researcher")
+        self.assertEqual(researcher["attempts"], 2)
+        self.assertEqual(researcher["artifact"]["resolved_sources"], [])
+        attempt = json.loads((run.run_path / "attempts" / "researcher-01.json").read_text(encoding="utf-8"))
+        self.assertEqual(attempt["failure_class"], "EVIDENCE_VALIDATION")
+        self.assertEqual(attempt["secret_check"], "FAIL")
+        self.assertNotIn("raw_response", attempt)
+        self.assertNotIn(secret, json.dumps(attempt))
+        diagnostic = json.loads((run.run_path / "diagnostics" / "researcher-01.json").read_text(encoding="utf-8"))
+        selected = diagnostic["provider_routing"]["provider_attempts"][-1]
+        self.assertEqual(selected["role_output_validation"], "PASS")
+        self.assertEqual(selected["evidence_validation"], "FAIL")
+        self.assertEqual(selected["candidate_status"], "EVIDENCE_VALIDATION_FAILURE")
+        success = json.loads((run.run_path / "diagnostics" / "researcher-02.json").read_text(encoding="utf-8"))
+        selected_success = success["provider_routing"]["provider_attempts"][-1]
+        self.assertEqual(selected_success["evidence_validation"], "PASS")
+        self.assertEqual(run.final_design["schema"], "zen.autonomous_design.v0.1")
+
     def test_valid_research_source_and_knowledge_reference_are_resolved_by_runtime(self):
         import pathlib
         pack = json.loads((pathlib.Path(__file__).resolve().parents[1] / "data/external_lighting_knowledge_pack_001.json").read_text(encoding="utf-8"))
