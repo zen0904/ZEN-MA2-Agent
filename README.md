@@ -115,6 +115,44 @@ DESIGN  -> parse only, NOT_IMPLEMENTED
 
 No Bridge command currently performs a real MA write or calls the LLM.
 
+## Multi-provider inference
+
+ZEN now supports an expandable provider pool rather than assuming one local 7B
+model should carry every AI role.
+
+```text
+Researcher
+→ role-routed provider
+
+Lighting Designer
+→ two independent provider candidates in parallel when configured
+
+Critic
+→ two independent provider candidates in parallel when configured
+
+Finalizer
+→ one canonical synthesis step
+
+Local model
+→ lightweight 3B-4B class offline/degraded fallback
+```
+
+The role dependency chain remains ordered; parallelism is used only where
+candidate work is independent.
+
+Configuration examples:
+
+- `config/providers.private.env.example` — lightweight local-only example
+- `config/providers.free_pool.env.example` — free-first multi-provider pool
+
+Current provider infrastructure supports up to 16 slots, role routing,
+`FREE_FIRST`, per-slot priority/cost metadata, and bounded parallel fan-out.
+
+Free-tier/model availability is not assumed permanent. Verify the account's
+current provider limits before marking a slot `FREE`.
+
+See `ZEN_MULTI_PROVIDER_PARALLEL_POOL_001.md`.
+
 ## Hardware return quickstart
 
 The two compute hosts are not currently physically available. Repository-side
