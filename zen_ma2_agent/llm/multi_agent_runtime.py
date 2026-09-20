@@ -788,13 +788,18 @@ def run_multi_agent_design(
                     limit=parallel_limit,
                 )
 
+            validated_candidates: list[tuple[dict[str, object], ProviderSlot]] = []
             if parallel_results:
-                validated_candidates: list[tuple[dict[str, object], ProviderSlot]] = []
                 for candidate, candidate_slot in parallel_results:
-                    candidate = _validate_artifact_evidence(role_name, candidate, context)
+                    try:
+                        candidate = _validate_artifact_evidence(role_name, candidate, context)
+                    except MultiAgentRunError:
+                        continue
                     if candidate_slot.api_key and candidate_slot.api_key in _canonical_json(candidate):
-                        raise MultiAgentRunError("Role artifact contained a provider secret and was rejected.")
+                        continue
                     validated_candidates.append((candidate, candidate_slot))
+
+            if validated_candidates:
                 artifact, slot = validated_candidates[0]
                 attempts = 1
                 candidate_sets[role_name] = [candidate for candidate, _ in validated_candidates]
@@ -834,7 +839,10 @@ def run_multi_agent_design(
             }
             write_step_artifact(run_id, role_name, envelope)
             completed[role_name] = artifact
-            state["LOCAL_MODEL_USED"] = "YES" if _is_local(slot) or state["LOCAL_MODEL_USED"] == "YES" else "NO"
+            state["LOCAL_MODEL_USED"] = "YES" if (
+                state["LOCAL_MODEL_USED"] == "YES"
+                or any(_is_local(candidate_slot) for _, candidate_slot in validated_candidates)
+            ) else "NO"
             state["role_execution"] = list(state.get("role_execution", [])) + [{
                 "role": role_name,
                 "provider": slot.safe_identity(),
