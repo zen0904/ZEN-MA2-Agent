@@ -8,43 +8,48 @@ plan-only; neither the MVP nor this document implements a Resolver/Builder or
 any MA2 write path. This remains the agreed target shape so later work extends
 the same pipeline rather than inventing a different one.
 
-## Hardware this must run on
+## Current inference/deployment boundary
 
-Project owner's current development machine (photographed 2026-09-13):
-2014 MacBook Pro under Bootcamp, Intel i7-4770HQ (4 cores / 8 threads),
-16GB DDR3 RAM, **no discrete GPU** (Intel Iris Pro 5200 integrated only).
-CPU-only inference. This is the binding constraint on every design choice
-below -- do not propose anything that assumes CUDA/GPU acceleration or more
-than ~16GB total system memory is available. A future secondary machine
-(~NT$20,000 used desktop) is discussed but is not an implementation
-dependency; design for the machine that exists today.
+The four-role MVP is no longer constrained to one CPU-only 7B model.
 
-Consequence: a single large prompt asking one CPU-bound 7B-class model to
-produce the entire Show Plan in one shot (which is what
-`autonomous_designer.py` currently does) is both an architectural gap
-(Section 2 of the status report) and a poor fit for this hardware even once
-wired up. Smaller, role-scoped prompts are not just "more like a real
-department" -- they are the more reliable way to get a valid
-`zen.autonomous_design.v0.1` document out of a small local model at all.
+Current design target:
 
-## Model and runtime
+```text
+RESEARCHER
+-> role-routed provider
 
-- Runtime: **llama.cpp server**, CPU-only build, `-t 8` (matches the 4770HQ's
-  8 logical threads). No GPU offload flags.
-- Model: a single 7B-8B instruct model, Q4_K_M GGUF quantization
-  (~4.5-5GB), e.g. Qwen2.5-7B-Instruct or Llama-3.1-8B-Instruct. Do not start
-  larger (13B+) on 16GB total RAM -- the risk is swapping, which is worse
-  than a slower response from a smaller model.
-- Wiring: llama.cpp server is OpenAI-compatible out of the box, so it plugs
-  directly into the existing `ProviderRouter` as `OPENAI_COMPATIBLE_LOCAL`
-  (see `config/providers.private.env.example`). No changes to `llm/router.py`
-  are needed to add the model itself.
-- One model, many roles: do **not** load multiple models concurrently. Every
-  role below is the same loaded model given a different, narrower system
-  prompt and a different, narrower slice of context. This is what keeps
-  memory pressure constant regardless of how many roles the pipeline has.
+LIGHTING_DESIGNER
+-> bounded parallel provider candidates when configured
 
-## Role pipeline (sequential, single model)
+CRITIC
+-> bounded parallel provider candidates when configured
+
+FINALIZER
+-> one canonical validated zen.autonomous_design.v0.1 artifact
+
+LOCAL MODEL
+-> lightweight 3B-4B class offline/degraded fallback
+```
+
+The two physical Worker hosts remain unavailable for current verification and
+their actual OS must not be assumed. Worker A is known to have 16 GB RAM and a
+GTX 1650 4 GB; Worker B has 16 GB RAM and an older/weaker GPU whose exact model
+is still TO_VERIFY. Cloud/free providers may carry primary creative/reasoning
+work while local inference preserves degraded/offline capability.
+
+The Provider Router is provider-agnostic and supports OpenAI-compatible slots,
+role routing, priorities, `FREE_FIRST`, bounded parallel fan-out, and
+replaceable provider/model configuration. Free-tier status is not a permanent
+product fact and must be verified at configuration time.
+
+Do not load multiple large local models merely to imitate multi-provider
+diversity. Local compute is better spent on lightweight fallback, retrieval,
+cache, preprocessing, and orchestration unless later measurements prove a
+different allocation useful.
+
+See `ZEN_MULTI_PROVIDER_PARALLEL_POOL_001.md` for the current implementation.
+
+## Role pipeline and dependency order
 
 ```
 RESEARCHER
@@ -62,6 +67,8 @@ RESEARCHER
 
 Rules that apply to every role:
 
+- Role dependencies remain ordered even when independent provider candidates
+  are generated in parallel inside Designer/Critic stages.
 - Each role receives **only the slice of Designer Context it needs**, not the
   full bundle `build_designer_context()` currently assembles. For example
   `RIG_DESIGNER` needs fixture capability + rig spatial affordance; it does
