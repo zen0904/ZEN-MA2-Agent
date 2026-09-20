@@ -95,6 +95,39 @@ Rules that apply to every role:
 - `FINALIZER`'s output is the only thing that gets validated against
   `zen.autonomous_design.v0.1` and handed to the (not yet built) Resolver.
 
+## Show-level identity and anti-template review
+
+Multi-song design must not reduce to one song template with changed parameter
+values, and must not optimize for maximum novelty between songs.
+
+Use `docs/SHOW_LEVEL_VISUAL_IDENTITY.md` as the current reasoning reference.
+
+The intended review distinction is:
+
+```text
+SHOW LANGUAGE
+= recurring production grammar and recognizable identity
+
+SONG IDENTITY
+= why this song feels like itself inside that language
+```
+
+A later Designer/Critic prompt revision may operationalize concepts such as
+continuity, development, contrast, callback and reset. Until the owner approves
+that wording and any schema change, these remain review concepts rather than
+mandatory output fields.
+
+The Critic should eventually be able to identify two opposite failure modes:
+
+1. **rubber-stamp design** -- repeated verse/chorus/bridge logic with only
+   colors, values, or targets substituted; and
+2. **forced novelty** -- arbitrary differences introduced only to make songs
+   appear different, damaging chapter coherence or show identity.
+
+No deterministic diversity score should be treated as artistic truth. Similar
+visual fingerprints can be correct when they represent a chapter, motif,
+callback or deliberate continuity.
+
 ## What is explicitly out of scope for this document
 
 - The Resolver/Builder that turns a finalized `zen.autonomous_design.v0.1`
