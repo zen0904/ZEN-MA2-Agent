@@ -1,0 +1,92 @@
+{
+  "schema": "zen.sheesh_spatial_fact_calibration.v0.1",
+  "gate_id": "SHEESH_SPATIAL_FACT_CALIBRATION_001",
+  "status": "BLOCKED_MISSING_EVIDENCE",
+  "show_fingerprint": "b41d801b915cddfdd5017df787ad66b55941fbce415ab02ee8ec63acaa027bd5",
+  "source_artifacts": {
+    "run_id": "SHEESH_CURRENT_SHOW_REDESIGN_001",
+    "phase_a_snapshot_relative_path": "projects/runs/SHEESH_CURRENT_SHOW_REDESIGN_001/current_show_snapshot/snapshot.json",
+    "phase_a_snapshot_file_sha256": "ced92c175ba67d6ee6fcb72aaf12b5c6375d5d8bf470c5cf46c96acd1b193c25",
+    "phase_a_show_profile_relative_path": "projects/runs/SHEESH_CURRENT_SHOW_REDESIGN_001/current_show_snapshot/show_profile.json",
+    "phase_a_show_profile_file_sha256": "8c0322629814d52935bba30369adbcae5491c9111b698f8bc52b8985687da360",
+    "normalized_snapshot_source_hash": "48e28e46c720a8d922ec707faf9c343173bc682f57a12d39009386bb561f9a3b",
+    "position_artifact_sha256": "fb1f5ef01aa43dc06cf710e92a9c9301570528bbb2f9c342d8aa83d7b070f5e7",
+    "critic_artifact_sha256": "0dab7856d8dfe6c5aab884806970180af7fe110a422ad6f8e0babbda14afe8f5"
+  },
+  "facts": {
+    "COORDINATE_FRAME_VERIFIED": "PARTIAL",
+    "X_AXIS_SEMANTICS": "UNKNOWN",
+    "Y_AXIS_SEMANTICS": "UNKNOWN",
+    "Z_AXIS_SEMANTICS": "UNKNOWN",
+    "COORDINATE_UNITS_VERIFIED": "UNKNOWN",
+    "STAGE_VIEW_CAPTURE_SUPPORTED": "NO",
+    "STAGE_VIEW_IMAGE_AVAILABLE": "NO",
+    "STAGE_BOUNDS_KNOWN": "UNKNOWN",
+    "PERFORMER_ZONE_KNOWN": "UNKNOWN",
+    "AUDIENCE_DIRECTION_KNOWN": "UNKNOWN",
+    "UPSTAGE_DOWNSTAGE_KNOWN": "UNKNOWN",
+    "STAGE_LEFT_RIGHT_KNOWN": "UNKNOWN",
+    "FIXTURE_MOUNTING_POSITIONS_KNOWN": "UNKNOWN",
+    "FIXTURE_ORIENTATION_WRITABLE": "NOT_TESTED",
+    "FIXTURE_ORIENTATION_READABLE": "PARTIAL_NUMERIC_ROTATION_ONLY",
+    "OBSTRUCTION_DATA_AVAILABLE": "NOT_AVAILABLE",
+    "TRUSS_OR_SUPPORT_GEOMETRY_AVAILABLE": "NOT_AVAILABLE",
+    "CURRENT_FINGERPRINT_CAPABILITY_PROFILES_AVAILABLE": "NO"
+  },
+  "fact_evidence": {
+    "COORDINATE_FRAME_VERIFIED": "Phase A records numeric fixture/subfixture geometry from MA2_FIXTURE_OBJECT_PROPERTY. The scanner frame is identified, but no venue-facing semantic mapping was captured.",
+    "X_AXIS_SEMANTICS": "UNKNOWN in normalized snapshot; verify_real_stage_axis.py explicitly requires independent Stage View visual evidence before semantic labels.",
+    "Y_AXIS_SEMANTICS": "UNKNOWN in normalized snapshot; no visual or venue mapping evidence is present.",
+    "Z_AXIS_SEMANTICS": "UNKNOWN in normalized snapshot; numeric values do not establish physical height or units.",
+    "COORDINATE_UNITS_VERIFIED": "UNKNOWN; no source in the saved Phase A artifacts assigns physical units.",
+    "STAGE_VIEW_CAPTURE_SUPPORTED": "NO supported read-only Stage View capture interface was found in the repository/runtime; no raw command was attempted.",
+    "STAGE_VIEW_IMAGE_AVAILABLE": "NO image/screenshot artifact exists beside the saved Phase A snapshot and Show profile.",
+    "STAGE_BOUNDS_KNOWN": "UNKNOWN physical stage boundaries. Numeric coordinate extents are not venue/stage bounds.",
+    "PERFORMER_ZONE_KNOWN": "UNKNOWN; no performer-zone evidence was captured.",
+    "AUDIENCE_DIRECTION_KNOWN": "UNKNOWN; no audience-facing orientation evidence was captured.",
+    "UPSTAGE_DOWNSTAGE_KNOWN": "UNKNOWN; no venue orientation evidence was captured.",
+    "STAGE_LEFT_RIGHT_KNOWN": "UNKNOWN; no Stage View or audience-axis calibration was captured.",
+    "FIXTURE_MOUNTING_POSITIONS_KNOWN": "UNKNOWN; the scan records numeric coordinates, not physical mounting/support points.",
+    "FIXTURE_ORIENTATION_WRITABLE": "NOT_TESTED; this gate is read-only and does not authorize orientation/geometry writes.",
+    "FIXTURE_ORIENTATION_READABLE": "PARTIAL_NUMERIC_ROTATION_ONLY; rotation values are present in scanned rows, but their physical orientation semantics are unverified.",
+    "OBSTRUCTION_DATA_AVAILABLE": "NOT_AVAILABLE in the scanned snapshot/profile.",
+    "TRUSS_OR_SUPPORT_GEOMETRY_AVAILABLE": "NOT_AVAILABLE in the scanned snapshot/profile.",
+    "CURRENT_FINGERPRINT_CAPABILITY_PROFILES_AVAILABLE": "NO; Show profile marks fixture_type_profiles UNAVAILABLE and normalized current-fingerprint capability status UNKNOWN_FOR_CURRENT_FINGERPRINT."
+  },
+  "geometry_evidence": {
+    "scanned_geometry_records_including_protected_fixture": 65,
+    "accepted_position_placements_excluding_fixture_9999": 64,
+    "placements_equal_to_scanned_xyz": "64/64",
+    "rotations_equal_to_scanned_values": "64/64",
+    "geometry_delta_from_snapshot": "ZERO",
+    "fixture_9999": "PROTECTED_UNAVAILABLE"
+  },
+  "revision_readiness": {
+    "status": "BLOCKED_MISSING_EVIDENCE",
+    "ready": false,
+    "blocking_facts": [
+      "COORDINATE_FRAME_VERIFIED",
+      "X_AXIS_SEMANTICS",
+      "Y_AXIS_SEMANTICS",
+      "Z_AXIS_SEMANTICS",
+      "COORDINATE_UNITS_VERIFIED",
+      "STAGE_VIEW_IMAGE_AVAILABLE",
+      "STAGE_BOUNDS_KNOWN",
+      "PERFORMER_ZONE_KNOWN",
+      "AUDIENCE_DIRECTION_KNOWN",
+      "UPSTAGE_DOWNSTAGE_KNOWN",
+      "STAGE_LEFT_RIGHT_KNOWN",
+      "FIXTURE_MOUNTING_POSITIONS_KNOWN",
+      "FIXTURE_ORIENTATION_READABLE",
+      "CURRENT_FINGERPRINT_CAPABILITY_PROFILES_AVAILABLE"
+    ]
+  },
+  "owner_review": {
+    "decision": "REJECT_FOR_REVISION",
+    "spatial_writeback_approved": "NO",
+    "current_position_artifact": "TECHNICALLY_VALID_ARTISTICALLY_UNACCEPTED",
+    "critic_blocker_accepted": "YES"
+  },
+  "MA2_WRITES": 0,
+  "CODEX_ARTISTIC_INTERVENTION": "NONE"
+}

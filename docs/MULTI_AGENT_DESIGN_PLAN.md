@@ -108,6 +108,33 @@ or Builder, and it does not write geometry. A provider artifact that fails
 schema, inventory, evidence, or safety validation stops the route at that
 role; downstream roles do not run.
 
+### Live spatial review and bounded revision
+
+Technical execution completion and design review are recorded separately.
+For live-Show runs, a validated Critic `severity.classification=BLOCKER`
+sets `design_review_status=BLOCKED_BY_CRITIC` even if Finalizer succeeds and
+`execution_status=COMPLETE`. Finalizer receives the exact accepted spatial,
+lighting, and Critic artifacts plus this runtime-owned state; its output
+cannot clear the blocker. `WRITEBACK_ELIGIBLE`, `RESOLVER_ELIGIBLE`, and
+`PREVIEW_FOR_WRITEBACK_ELIGIBLE` remain `NO`; a non-blocking Critic result is
+not human write approval. Qualitative Critic classifications are
+`BLOCKER`, `DESIGN_WEAKNESS`, `OPTIONAL_IMPROVEMENT`, and legacy `NONE`.
+
+The explicit `run_spatial_revision_loop()` path requires owner decision
+`REJECT_FOR_REVISION`, verified source-run checkpoints, identical request,
+context, snapshot-source hash and Show fingerprint, and a validated
+`SHEESH_SPATIAL_FACT_CALIBRATION_001` artifact. The runtime passes prior
+Researcher/Rig/Position/Lighting/Critic artifacts unchanged to ZEN's
+revision roles; code does not derive geometry from Critic prose. At most two
+`RIG_DESIGNER_REVISION -> POSITION_DESIGNER_REVISION -> LIGHTING_DESIGNER
+-> CRITIC` cycles run. A second `BLOCKER` yields
+`BLOCKED_AFTER_REVISION_LIMIT`. Zero coordinate change is reported as evidence
+but is not a deterministic failure rule. Finalizer receives the latest role
+artifacts and blocked/passed review state; all write eligibility remains
+`NO`. Unknown calibration facts are valid evidence but block this experiment
+when physical frame/axis/units, Stage view, performer/audience orientation,
+mounting, or current-fingerprint capability facts are still missing.
+
 ### Researcher provenance boundary
 
 Researcher model context includes a deterministic `research_context.allowed_source_refs`

@@ -20,12 +20,14 @@ from zen_ma2_agent.llm.multi_agent_runtime import (
     build_position_context,
     normalize_role_envelope,
     run_multi_agent_design,
+    run_spatial_revision_loop,
     validate_research_source_contract,
     validate_final_spatial_consistency,
     validate_position_design_artifact,
     validate_rig_design_artifact,
 )
 from zen_ma2_agent.llm.router import ProviderRouter, ProviderSlot, ProviderUnavailable
+from zen_ma2_agent.llm.spatial_review import CALIBRATION_FACT_FIELDS
 
 
 FINGERPRINT = "a" * 64
@@ -179,6 +181,9 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
         self.assertEqual(critic_payload["position_design_artifact"], position)
         self.assertEqual(final_payload["rig_design_artifact"], rig)
         self.assertEqual(final_payload["position_design_artifact"], position)
+        self.assertEqual(final_payload["latest_lighting_designer_artifact"], _draft())
+        self.assertEqual(final_payload["latest_critic_artifact"], _critic())
+        self.assertEqual(final_payload["design_review_state"]["design_review_status"], "REVIEW_PASSED")
         self.assertEqual(designer_payload["current_show_snapshot"], self.normalized)
         self.assertEqual(designer_payload["design_context"]["fixture_technical_capability"]["status"], "UNKNOWN_FOR_CURRENT_FINGERPRINT")
         self.assertEqual(run.final_design["schema"], "zen.autonomous_design.v0.1")
@@ -196,6 +201,205 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
         self.assertEqual(position_context["coordinate_system"], self.normalized["coordinate_system"])
         self.assertEqual(position_role_payload["rig_design_artifact"], rig)
         self.assertEqual(position_context["show_fingerprint"], FINGERPRINT)
+
+    def test_critic_blocker_keeps_execution_complete_and_finalizer_cannot_clear_review(self):
+        class BlockerAdapter(_RoleAdapter):
+            def complete(self, slot, *, system, user):
+                payload = json.loads(user)
+                role = system.split(". ", 1)[0]
+                self.calls.append((role, payload))
+                if role == "ROLE: CRITIC":
+                    return json.dumps({
+                        "schema": "zen.multi_agent_critic.v0.1",
+                        "strengths": [], "problems": ["verified blocker"],
+                        "severity": {"classification": "BLOCKER", "rationale": "unverified physical facts"},
+                        "revision_requests": [{"request": "Calibrate physical semantics."}],
+                        "codex_artistic_intervention": "NONE",
+                    })
+                return super().complete(slot, system=system, user=user)
+
+        adapter = BlockerAdapter(self.normalized)
+        run = run_multi_agent_design(
+            self._router(adapter), request="BABYMONSTER - SHEESH", repo_root=self.repo_root,
+            run_id="live-review-blocker", current_show_snapshot=self.input,
+        )
+        state = json.loads((run.run_path / "run.json").read_text(encoding="utf-8"))
+        review = json.loads((run.run_path / "design_review.json").read_text(encoding="utf-8"))
+        finalizer_envelope = json.loads((run.run_path / "steps" / "finalizer.json").read_text(encoding="utf-8"))
+        final_payload = next(payload for role, payload in adapter.calls if role == "ROLE: FINALIZER")
+        self.assertEqual(state["status"], "COMPLETE")
+        self.assertEqual(state["execution_status"], "COMPLETE")
+        self.assertEqual(state["design_review_status"], "BLOCKED_BY_CRITIC")
+        self.assertEqual(run.design_review_status, "BLOCKED_BY_CRITIC")
+        self.assertEqual(review["critic_severity"], "BLOCKER")
+        self.assertEqual(review["WRITEBACK_ELIGIBLE"], "NO")
+        self.assertEqual(review["RESOLVER_ELIGIBLE"], "NO")
+        self.assertEqual(review["PREVIEW_FOR_WRITEBACK_ELIGIBLE"], "NO")
+        self.assertEqual(final_payload["design_review_state"]["design_review_status"], "BLOCKED_BY_CRITIC")
+        self.assertEqual(final_payload["latest_critic_artifact"]["severity"]["classification"], "BLOCKER")
+        self.assertEqual(finalizer_envelope["design_review_state"]["design_review_status"], "BLOCKED_BY_CRITIC")
+        self.assertEqual(finalizer_envelope["design_review_state"]["execution_status"], "COMPLETE")
+
+    def _completed_calibration(self, run_id: str) -> dict[str, object]:
+        facts = {field: "UNKNOWN" for field in CALIBRATION_FACT_FIELDS}
+        for field in (
+            "COORDINATE_FRAME_VERIFIED", "X_AXIS_SEMANTICS", "Y_AXIS_SEMANTICS",
+            "Z_AXIS_SEMANTICS", "COORDINATE_UNITS_VERIFIED", "STAGE_VIEW_IMAGE_AVAILABLE",
+            "STAGE_BOUNDS_KNOWN", "PERFORMER_ZONE_KNOWN", "AUDIENCE_DIRECTION_KNOWN",
+            "UPSTAGE_DOWNSTAGE_KNOWN", "STAGE_LEFT_RIGHT_KNOWN",
+            "FIXTURE_MOUNTING_POSITIONS_KNOWN", "FIXTURE_ORIENTATION_READABLE",
+            "CURRENT_FINGERPRINT_CAPABILITY_PROFILES_AVAILABLE",
+        ):
+            facts[field] = "VERIFIED"
+        return {
+            "schema": "zen.sheesh_spatial_fact_calibration.v0.1",
+            "gate_id": "SHEESH_SPATIAL_FACT_CALIBRATION_001",
+            "show_fingerprint": FINGERPRINT,
+            "source_artifacts": {
+                "run_id": run_id,
+                "normalized_snapshot_source_hash": self.normalized["source_artifact_hash"],
+            },
+            "facts": facts,
+            "fact_evidence": {
+                field: (
+                    "Synthetic test evidence explicitly marks this fact verified."
+                    if facts[field] == "VERIFIED"
+                    else "UNKNOWN in the synthetic test fixture."
+                )
+                for field in CALIBRATION_FACT_FIELDS
+            },
+            "CODEX_ARTISTIC_INTERVENTION": "NONE",
+        }
+
+    def test_revision_loop_passes_exact_prior_artifacts_and_stops_after_two_blockers(self):
+        class InitialBlockerAdapter(_RoleAdapter):
+            def complete(self, slot, *, system, user):
+                payload = json.loads(user)
+                role = system.split(". ", 1)[0]
+                if role == "ROLE: CRITIC":
+                    return json.dumps({
+                        "schema": "zen.multi_agent_critic.v0.1", "strengths": [],
+                        "problems": ["blocker"],
+                        "severity": {"classification": "BLOCKER", "rationale": "test evidence"},
+                        "revision_requests": [{"request": "Consider verified facts only."}],
+                        "codex_artistic_intervention": "NONE",
+                    })
+                return super().complete(slot, system=system, user=user)
+
+        initial_adapter = InitialBlockerAdapter(self.normalized)
+        source_run = run_multi_agent_design(
+            self._router(initial_adapter), request="BABYMONSTER - SHEESH", repo_root=self.repo_root,
+            run_id="revision-source-blocker", current_show_snapshot=self.input,
+        )
+        source_artifacts = {
+            name: json.loads((source_run.run_path / "steps" / f"{name}.json").read_text(encoding="utf-8"))["artifact"]
+            for name in ("researcher", "rig_designer", "position_designer", "lighting_designer", "critic")
+        }
+
+        class RevisionAdapter:
+            def __init__(self):
+                self.calls = []
+
+            def complete(self, slot, *, system, user):
+                payload = json.loads(user)
+                role = system.split(". ", 1)[0]
+                self.calls.append((role, payload))
+                if role == "ROLE: RIG_DESIGNER_REVISION":
+                    return json.dumps(_rig(payload["current_show_snapshot"]))
+                if role == "ROLE: POSITION_DESIGNER_REVISION":
+                    return json.dumps(_position(payload["position_context"]))
+                if role == "ROLE: LIGHTING_DESIGNER":
+                    return json.dumps(_draft())
+                if role == "ROLE: CRITIC":
+                    return json.dumps({
+                        "schema": "zen.multi_agent_critic.v0.1", "strengths": [],
+                        "problems": ["still blocked"],
+                        "severity": {"classification": "BLOCKER", "rationale": "test evidence"},
+                        "revision_requests": [{"request": "Continue only if evidence supports it."}],
+                        "codex_artistic_intervention": "NONE",
+                    })
+                if role == "ROLE: FINALIZER":
+                    return json.dumps(_final(payload["position_design_artifact"]))
+                raise AssertionError(role)
+
+        adapter = RevisionAdapter()
+        result = run_spatial_revision_loop(
+            self._router(adapter), request="BABYMONSTER - SHEESH", repo_root=self.repo_root,
+            run_id="revision-source-blocker", current_show_snapshot=self.input,
+            calibration_artifact=self._completed_calibration("revision-source-blocker"), owner_decision="REJECT_FOR_REVISION",
+            revision_id="bounded-two-cycles",
+        )
+        self.assertEqual(result.cycles_completed, 2)
+        self.assertEqual(result.design_review_state["design_review_status"], "BLOCKED_AFTER_REVISION_LIMIT")
+        self.assertEqual(result.design_review_state["WRITEBACK_ELIGIBLE"], "NO")
+        role_calls = [role for role, _payload in adapter.calls]
+        self.assertEqual(role_calls, [
+            "ROLE: RIG_DESIGNER_REVISION", "ROLE: POSITION_DESIGNER_REVISION", "ROLE: LIGHTING_DESIGNER", "ROLE: CRITIC",
+            "ROLE: RIG_DESIGNER_REVISION", "ROLE: POSITION_DESIGNER_REVISION", "ROLE: LIGHTING_DESIGNER", "ROLE: CRITIC",
+            "ROLE: FINALIZER",
+        ])
+        cycle_one_rig = json.loads((result.run_path / "cycle_01" / "steps" / "rig_designer.json").read_text(encoding="utf-8"))["artifact"]
+        cycle_one_position = json.loads((result.run_path / "cycle_01" / "steps" / "position_designer.json").read_text(encoding="utf-8"))["artifact"]
+        cycle_one_lighting = json.loads((result.run_path / "cycle_01" / "steps" / "lighting_designer.json").read_text(encoding="utf-8"))["artifact"]
+        cycle_one_critic = json.loads((result.run_path / "cycle_01" / "steps" / "critic.json").read_text(encoding="utf-8"))["artifact"]
+        first_rig_payload = adapter.calls[0][1]
+        self.assertEqual(first_rig_payload["semantic_role"], "RIG_DESIGNER_REVISION")
+        self.assertEqual(first_rig_payload["revision_context"]["previous_rig_artifact"], source_artifacts["rig_designer"])
+        self.assertEqual(first_rig_payload["revision_context"]["previous_position_artifact"], source_artifacts["position_designer"])
+        self.assertEqual(first_rig_payload["revision_context"]["previous_lighting_artifact"], source_artifacts["lighting_designer"])
+        self.assertEqual(first_rig_payload["revision_context"]["previous_critic_artifact"], source_artifacts["critic"])
+        second_rig_payload = adapter.calls[4][1]
+        self.assertEqual(second_rig_payload["semantic_role"], "RIG_DESIGNER_REVISION")
+        self.assertEqual(second_rig_payload["revision_context"]["previous_rig_artifact"], cycle_one_rig)
+        self.assertEqual(second_rig_payload["revision_context"]["previous_position_artifact"], cycle_one_position)
+        self.assertEqual(second_rig_payload["revision_context"]["previous_lighting_artifact"], cycle_one_lighting)
+        self.assertEqual(second_rig_payload["revision_context"]["previous_critic_artifact"], cycle_one_critic)
+        finalizer_payload = adapter.calls[-1][1]
+        self.assertEqual(finalizer_payload["rig_design_artifact"], result.latest_artifacts["rig_designer"])
+        self.assertEqual(finalizer_payload["position_design_artifact"], result.latest_artifacts["position_designer"])
+        self.assertEqual(finalizer_payload["latest_lighting_designer_artifact"], result.latest_artifacts["lighting_designer"])
+        self.assertEqual(finalizer_payload["latest_critic_artifact"], result.latest_artifacts["critic"])
+        self.assertEqual(finalizer_payload["design_review_state"]["design_review_status"], "BLOCKED_AFTER_REVISION_LIMIT")
+        finalizer_envelope = json.loads((result.run_path / "steps" / "finalizer.json").read_text(encoding="utf-8"))
+        self.assertEqual(finalizer_envelope["design_review_state"]["design_review_status"], "BLOCKED_AFTER_REVISION_LIMIT")
+        self.assertEqual(result.final_design["position_design_reference"]["position_artifact_sha256"], _sha256(result.latest_artifacts["position_designer"]))
+        self.assertEqual(result.latest_artifacts["position_designer"], _position(self.normalized))
+        saved = json.loads((result.run_path / "revision_run.json").read_text(encoding="utf-8"))
+        self.assertEqual(saved["MA2_WRITES"], 0)
+        self.assertEqual(saved["MAX_SPATIAL_REVISION_CYCLES"], 2)
+        rig_diagnostic = json.loads((result.run_path / "cycle_01" / "diagnostics" / "rig_designer_revision-01.json").read_text(encoding="utf-8"))
+        self.assertEqual(rig_diagnostic["role"], "rig_designer_revision")
+        self.assertEqual(rig_diagnostic["provider_routing"]["semantic_role"], "RIG_DESIGNER_REVISION")
+
+    def test_unknown_calibration_stops_before_provider_calls(self):
+        class NoCallAdapter:
+            def __init__(self):
+                self.calls = []
+
+            def complete(self, slot, *, system, user):
+                self.calls.append((system, user))
+                raise AssertionError("provider must not be called with unknown physical semantics")
+
+        adapter = NoCallAdapter()
+        unknown = {
+            "schema": "zen.sheesh_spatial_fact_calibration.v0.1",
+            "gate_id": "SHEESH_SPATIAL_FACT_CALIBRATION_001",
+            "show_fingerprint": FINGERPRINT,
+            "source_artifacts": {
+                "run_id": "missing-run-not-reached",
+                "normalized_snapshot_source_hash": self.normalized["source_artifact_hash"],
+            },
+            "facts": {field: "UNKNOWN" for field in CALIBRATION_FACT_FIELDS},
+            "fact_evidence": {field: "UNKNOWN in the synthetic test fixture." for field in CALIBRATION_FACT_FIELDS},
+            "CODEX_ARTISTIC_INTERVENTION": "NONE",
+        }
+        with self.assertRaisesRegex(MultiAgentRunError, "BLOCKED_MISSING_EVIDENCE"):
+            run_spatial_revision_loop(
+                self._router(adapter), request="BABYMONSTER - SHEESH", repo_root=self.repo_root,
+                run_id="missing-run-not-reached", current_show_snapshot=self.input,
+                calibration_artifact=unknown, owner_decision="REJECT_FOR_REVISION",
+            )
+        self.assertEqual(adapter.calls, [])
 
     def test_position_context_is_compact_deterministic_and_excludes_protected_geometry(self):
         context = build_position_context(self.normalized)
@@ -541,6 +745,9 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
         state = json.loads((run.run_path / "run.json").read_text(encoding="utf-8"))
         self.assertIsNone(state["CURRENT_SHOW_FINGERPRINT"])
         self.assertEqual(state["LIVE_SHOW_SNAPSHOT_IN_CONTEXT"], "NO")
+        self.assertEqual(state["execution_status"], "COMPLETE")
+        self.assertEqual(state["design_review_status"], "NOT_APPLICABLE")
+        self.assertEqual(run.design_review_status, "NOT_APPLICABLE")
 
     def test_snapshot_changes_context_hash_and_is_saved_as_normalized_run_input(self):
         adapter = _RoleAdapter(self.normalized)

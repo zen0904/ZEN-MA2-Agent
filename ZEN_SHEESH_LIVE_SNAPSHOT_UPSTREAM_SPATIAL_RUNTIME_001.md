@@ -557,3 +557,21 @@ This completes the read-only artifact-generation gate, not artistic or
 operator approval. The next acceptance gate is human review of the complete
 ZEN artifacts and Critic findings. Spatial Resolver, Preview, Move3D Builder,
 writeback, readback, and rollback remain unauthorized and unimplemented here.
+
+## Superseding owner review and calibration update
+
+The later owner review supersedes the next-gate statement above. The outcome
+is `REJECT_FOR_REVISION`; the technically valid Position artifact is
+artistically unaccepted, the Critic `BLOCKER` is accepted, and spatial
+writeback is not approved. The original six-role run and all its artifacts
+remain preserved unchanged. Its 64 placements and rotations reproduce the
+scanned geometry exactly (`GEOMETRY_DELTA_FROM_SNAPSHOT=ZERO`), which is
+negative evidence for this run, not an approval or a universal rejection rule.
+
+See [ZEN_SHEESH_SPATIAL_FACT_CALIBRATION_001.md](ZEN_SHEESH_SPATIAL_FACT_CALIBRATION_001.md)
+and [data/sheesh_spatial_fact_calibration_001.json](data/sheesh_spatial_fact_calibration_001.json).
+Calibration is `BLOCKED_MISSING_EVIDENCE`: axis semantics, units, Stage View
+image, physical bounds, performer/audience orientation, mounting positions,
+and current-fingerprint capability profiles are unknown or unavailable. The
+bounded ZEN-authored revision loop (maximum two cycles) is implemented and
+tested, but no new provider run was made. MA2 writeback remains unauthorized.

@@ -5,25 +5,26 @@
     "id": "M2_EXPRESSIVE_CAPABILITY",
     "title": "Expressive Capability",
     "status": "ACTIVE",
-    "active_objective": "SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001 implementation passed 570 tests and self-check. The exact fingerprint-bound run resumed at POSITION_DESIGNER, then completed Position, Lighting Designer, Critic, and Finalizer. Position passed validation but preserved the scanned geometry unchanged; Critic classified the resulting design BLOCKER. Await human visual/operator review of the complete read-only artifacts. No spatial writeback is authorized. MA2_WRITES=0."
+    "active_objective": "Owner review rejected the technically valid but artistically unaccepted SHEESH Position artifact for revision; its 64 placements and rotations exactly reproduce scanned geometry, and the accepted Critic BLOCKER is preserved. Read-only spatial fact calibration found coordinate axes/units, Stage View image, bounds, performer/audience orientation, mounting and current-fingerprint capabilities missing. The bounded two-cycle ZEN revision runtime is implemented but must not run until calibration evidence satisfies its gate. No writeback is approved; MA2_WRITES=0."
   },
   "last_closed_task": {
-    "id": "SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001",
-    "status": "CLOSED_ARTIFACT_PIPELINE_COMPLETE_WITH_CRITIC_BLOCKERS",
-    "result": "Position context projection and typed contract passed 570 tests; exact Researcher/Rig checkpoints were safely resumed and all six roles completed read-only against fingerprint b41d801b915cddfdd5017df787ad66b55941fbce415ab02ee8ec63acaa027bd5. Position produced 64 valid placements, all exactly matching scanned XYZ/rotation. Critic returned severity BLOCKER with 13 problems and 10 revision requests. Final schema, spatial reference, and evidence validation passed. No MA2 path/writeback was invoked; MA2_WRITES=0."
+    "id": "SHEESH_ZEN_SPATIAL_ARTIFACT_HUMAN_REVIEW_001_AND_SPATIAL_FACT_CALIBRATION_001",
+    "status": "HUMAN_REVIEW_REJECTED_CALIBRATION_BLOCKED_MISSING_EVIDENCE",
+    "result": "Owner decision REJECT_FOR_REVISION is recorded. The completed six-role run is preserved unchanged as negative evidence: technical Position validation passed, all 64 placements and rotations equal scanned geometry, and Critic severity BLOCKER is accepted. Runtime now separates execution completion from design review, keeps writeback/Resolver/preview eligibility NO, and provides a max-two-cycle provider-authored revision path. Calibration against the fingerprinted Phase A snapshot remains BLOCKED_MISSING_EVIDENCE; no new provider run or MA2 write occurred."
   },
   "next_acceptance_gate": {
-    "id": "SHEESH_ZEN_SPATIAL_ARTIFACT_HUMAN_REVIEW_001",
+    "id": "SHEESH_SPATIAL_FACT_CALIBRATION_001",
     "classification": "REQUIRED",
-    "status": "AWAITING_HUMAN_REVIEW",
-    "why_it_matters": "All six read-only ZEN roles produced validated artifacts, but the Position artifact leaves scanned geometry unchanged and Critic classifies the proposal BLOCKER. Human visual/operator review must decide what, if anything, should happen next; validity is not artistic approval and does not authorize writeback.",
+    "status": "BLOCKED_MISSING_EVIDENCE",
+    "why_it_matters": "The owner rejected the current Position artifact for revision and accepted the Critic BLOCKER. Calibration verified only the existence of numeric scanned coordinates and numeric rotations; axis semantics, units, visual Stage View, physical bounds, performer/audience orientation, mounting positions and current-fingerprint capability profiles remain unknown or unavailable.",
     "blocks_current_milestone": true,
     "dependencies": [
       "ZEN_SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001.md",
       "ZEN_SHEESH_CURRENT_SHOW_REDESIGN_PHASE_A_001.md",
+      "data/sheesh_spatial_fact_calibration_001.json",
       "fingerprinted current Show snapshot and six validated role artifacts under the portable run state"
     ],
-    "next_review_condition": "Zen reviews the actual spatial and lighting artifacts, Critic blockers, and Stage/3D/operator context, then explicitly decides whether to request a bounded follow-up. Do not implement Resolver, Preview, Move3D Builder, or geometry writeback automatically."
+    "next_review_condition": "Supply verified, fingerprint-bound physical coordinate semantics and units, a human-visible Stage View image, stage/performance/audience orientation and mounting evidence, and current-fingerprint capability profiles. Then reevaluate calibration readiness before any ZEN revision inference. No spatial writeback is authorized."
   },
   "human_review_decisions": [
     {
@@ -50,6 +51,21 @@
         "DENSITY_IS_CONTEXT_DEPENDENT_DIMENSION"
       ],
       "limitations": "No numeric-ID tie-break, equal Group level, cohort saturation, Group participation count, or dimmer level may be promoted into Lighting Design knowledge or a production strategy."
+    },
+    {
+      "id": "SHEESH_ZEN_SPATIAL_ARTIFACT_HUMAN_REVIEW_001",
+      "source": "ZEN_SHEESH_SPATIAL_FACT_CALIBRATION_001.md#owner-review-decision",
+      "status": "CLOSED",
+      "outcomes": [
+        "HUMAN_REVIEW_DECISION_REJECT_FOR_REVISION",
+        "SPATIAL_WRITEBACK_APPROVED_NO",
+        "CURRENT_POSITION_ARTIFACT_TECHNICALLY_VALID_ARTISTICALLY_UNACCEPTED",
+        "CRITIC_BLOCKER_ACCEPTED_YES",
+        "GEOMETRY_DELTA_FROM_SNAPSHOT_ZERO",
+        "PLACEMENTS_EQUAL_TO_SCANNED_GEOMETRY_64_OF_64",
+        "ROTATIONS_EQUAL_TO_SCANNED_GEOMETRY_64_OF_64"
+      ],
+      "limitations": "The completed SHEESH_CURRENT_SHOW_REDESIGN_001 run and its six role artifacts remain unchanged. The old status=COMPLETE describes technical execution only; the owner rejected the design and it is not writeback-approved."
     }
   ],
   "evidence_results": [
@@ -86,6 +102,23 @@
         "MA2_WRITES_ZERO"
       ],
       "limitations": "All roles completed, but Position placements exactly reproduce the scanned 64 available geometry records; no geometry change is proposed. Position prose assigns units/physical meanings not established by the snapshot. Coordinate axes/units, physical mounting and current-fingerprint capability profiles remain UNKNOWN. Critic reports severity BLOCKER. Schema/provenance validity is not artistic approval. Codex did not edit ZEN artistic output; no spatial writeback occurred."
+    },
+    {
+      "id": "SHEESH_SPATIAL_FACT_CALIBRATION_001",
+      "source": "ZEN_SHEESH_SPATIAL_FACT_CALIBRATION_001.md",
+      "status": "BLOCKED_MISSING_EVIDENCE",
+      "outcomes": [
+        "OWNER_REVIEW_REJECT_FOR_REVISION_RECORDED",
+        "PHASE_A_SNAPSHOT_AND_PROFILE_HASH_BOUND",
+        "NUMERIC_GEOMETRY_AND_ROTATION_READABLE_ONLY",
+        "STAGE_VIEW_CAPTURE_UNSUPPORTED_AND_IMAGE_UNAVAILABLE",
+        "AXIS_UNITS_PERFORMER_AUDIENCE_AND_MOUNTING_SEMANTICS_UNKNOWN",
+        "CURRENT_FINGERPRINT_CAPABILITY_PROFILES_UNAVAILABLE",
+        "REVISION_LOOP_CODE_PATH_FAILS_CLOSED_WHILE_FACTS_UNKNOWN",
+        "NO_NEW_PROVIDER_RUN",
+        "MA2_WRITES_ZERO"
+      ],
+      "limitations": "UNKNOWN and PARTIAL facts are retained. Numeric coordinate extents do not establish physical bounds or units. Orientation is numerically readable only; orientation writeability was not tested because no write is authorized. A new ZEN revision must wait for the listed key evidence."
     },
     {
       "id": "TEST_SHOW_COLOR_PROVISIONING_001",
@@ -183,10 +216,15 @@
       "id": "CURRENT_SHOW_SPATIAL_EVIDENCE",
       "classification": "REQUIRED",
       "milestone": "M3_SHOW_RIG_ADAPTATION",
-      "status": "ARTIFACTS_COMPLETE_AWAITING_HUMAN_REVIEW",
-      "why_it_matters": "Read-only six-role pipeline completed and Position passed validation, but its 64 placements preserve scanned coordinates exactly and Critic identified blocking unsupported physical/capability claims and weak spatial/design substantiation.",
+      "status": "REJECTED_BY_OWNER_CALIBRATION_BLOCKED",
+      "why_it_matters": "Owner rejected the Position artifact for revision and accepted the Critic BLOCKER. All 64 placements and rotations equal the scan. Physical coordinate semantics, Stage View, performer/audience orientation, mounting and current-fingerprint capability evidence are insufficient for a meaningful ZEN revision.",
       "blocks_current_milestone": true,
-      "next_review_condition": "Human visual/operator review of the actual Stage/3D and artifacts; decide explicitly whether further design-context evidence or a bounded follow-up is needed. No MA2 geometry writeback follows automatically."
+      "dependencies": [
+        "SHEESH_SPATIAL_FACT_CALIBRATION_001",
+        "fingerprint-bound current Show and capability evidence",
+        "human-visible Stage View and venue orientation evidence"
+      ],
+      "next_review_condition": "Satisfy the calibration readiness facts, then let ZEN run at most two provider-authored revision cycles. No automatic repair or MA2 writeback follows."
     },
     {
       "id": "GENERIC_ZEN_SPATIAL_WRITE_ADAPTER",
@@ -280,8 +318,8 @@
     "production_designer": "UNCHANGED",
     "experimental_b3": "GUIDANCE_ASSISTED_AB_ONLY",
     "ab002_actions": "UNCHANGED",
-    "ma2_write_audit": "Phase A snapshot and SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001 runs were read-only. Position-context work added no MA path. The latest exact-hash resume completed all six design roles and artifact validators; no MA2 transport, Resolver, Builder, Stage geometry writeback, or Show write path was invoked. MA2_WRITES=0.",
-    "test_show_mode": "WRITE_AUTHORIZATION_RETAINED_BUT_NOT_USED_DURING_CURRENT_READ_ONLY_RUNTIME_INTEGRATION_GATE",
+    "ma2_write_audit": "The original SHEESH_CURRENT_SHOW_REDESIGN_001 six-role run remains preserved unchanged. This owner-review, spatial-fact-calibration and runtime-plumbing task used no provider, MA2 transport, Resolver, Builder, Stage geometry writeback, or Show write path. All spatial eligibility flags remain NO. MA2_WRITES=0.",
+    "test_show_mode": "TEST_SHOW_WRITE_AUTHORIZATION_RETAINED_BUT_SPATIAL_WRITEBACK_NOT_APPROVED_AND_CALIBRATION_BLOCKED",
     "fixture_9999": "UNTOUCHED",
     "zen_style_profile": "DEFERRED",
     "real_venue_validation": "WAIT_FOR_REAL_CASE",
