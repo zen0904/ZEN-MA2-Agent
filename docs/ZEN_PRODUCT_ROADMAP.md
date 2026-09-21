@@ -119,6 +119,7 @@ contract and report fields.
 | MA / Console Knowledge | Improve native-console judgment and implementation options. | Must follow learning evidence and Stable Operator Contract. |
 | Future MA3 Architecture | Preserve separable capability/resolution boundaries. | No MA3 Builder implementation is currently authorized. |
 | OpenCode ZEN Quota HUD | Side-track: expose one normalized remaining-capacity indicator inside OpenCode, e.g. `ZEN 73%`, without requiring the operator to inspect individual providers. | PARKED / non-blocking. Display-only first; no paid-provider enablement and no routing-policy changes until explicitly resumed. |
+| MA3D Scene Read / Full Stage Context | Future read-only scene ingestion from grandMA2 Stage View / MA 3D for stage, truss, LED/scenic objects, object transforms, dimensions, hierarchy, and visual context. | PARKED / non-blocking. Do not interrupt the current MA2 programming mainline; fixtures remain the only fully proven structured scan path today. |
 
 ## Fixture knowledge boundary
 
@@ -217,3 +218,56 @@ Initial implementation boundary when this side-track is resumed:
 from a local ZEN quota-state artifact, with clear provenance for measured,
 derived, and unknown inputs. Routing-aware conservation modes are a separate
 future decision, not part of this parked task.
+
+
+## Parked side-track — MA3D Scene Read / Full Stage Context
+
+**Status:** RECORDED / PARKED / NON-BLOCKING
+
+**Purpose:** When the core MA2 programming path is stable, allow ZEN to consume
+a richer stage scene than fixture-only geometry. The intended source may be
+grandMA2 Stage View and/or the MA 3D application joined to the same session.
+
+Future scene evidence may include, where reliably obtainable:
+
+- stage/deck geometry;
+- truss and support objects;
+- LED walls and scenic objects;
+- generic 3D objects;
+- object XYZ, rotation and dimensions;
+- object grouping/hierarchy;
+- fixture objects in scene context;
+- a visual Stage View / MA 3D screenshot as optional visual evidence.
+
+Important boundary:
+
+```text
+Stage View can display an object
+!=
+ZEN currently has a structured authoritative reader for that object
+```
+
+Today the proven structured scan path is fixture-oriented. A future read-only
+Scene Adapter should separate machine-readable scene facts from visual
+evidence. Numeric/object properties should come from structured data where
+possible; screenshots should help interpret composition and space rather than
+replace exact object metadata.
+
+Potential future flow:
+
+```text
+grandMA2 / MA 3D scene
+        ↓
+read-only Scene Adapter
+        ↓
+ZEN Scene Model
+        ↓
+Spatial Designer
+        ↓
+existing deterministic validation / write paths
+```
+
+Do not make MA 3D, full-stage object scanning, truss ingestion, scenic-object
+recognition, or visual scene parsing a prerequisite for the current ZEN MA2
+programming milestone. This side-track resumes only after the basic path from
+AI lighting intent to native MA2 Preset/Cue/Sequence execution is proven.
