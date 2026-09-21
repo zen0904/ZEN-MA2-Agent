@@ -2716,7 +2716,12 @@ def run_spatial_revision_loop(
         "Preserve UNKNOWN facts. No geometry change is required merely to create a delta; revise only if your own evidence-based design reasoning supports it. "
         "Return the normal role schema and do not emit MA2 commands."
     )
-    visual_roles = {"rig_designer", "position_designer", "critic"}
+    # Geometry generation and structural review are artifact-driven.  The
+    # post-write image is optional and is attempted only by Critic; neither
+    # Rig nor Position may depend on a vision-capable provider.
+    visual_roles = {"critic"}
+    visual_critic_status = "UNAVAILABLE_FREE_PROVIDER"
+    visual_critic_failure_class: str | None = None
     visual_system_suffix = (
         " POST-WRITE VISUAL EVIDENCE: A separately fingerprint-bound MA2_POSTWRITE_STAGE_VIEW image is attached to this request. "
         "It is the actual Stage View after the source design writeback and is distinct from the historical/bootstrap Stage View hash in operator_stage_context. "
@@ -2733,6 +2738,8 @@ def run_spatial_revision_loop(
         cycle_slots: dict[str, ProviderSlot] = {}
         cycle_attempts: dict[str, int] = {}
         cycle_candidate_sets: dict[str, list[dict[str, object]]] = {}
+        visual_critic_status = "UNAVAILABLE_FREE_PROVIDER"
+        visual_critic_failure_class = None
 
         def revision_payload(role_name: str) -> dict[str, object]:
             payload = _role_context(
@@ -2813,23 +2820,83 @@ def run_spatial_revision_loop(
                     "Do not use numeric symmetry thresholds; do not penalize purposeful symmetry or reward arbitrary irregularity."
                 )
             system += revision_system_suffix
-            artifact, slot, attempts = _run_role(
-                router,
-                role_name=role_name,
-                payload=payload,
-                max_attempts=max_role_attempts,
-                run_path=cycle_root,
-                validator=validate_with_evidence,
-                system_prompt=system,
-                evidence_validation_enabled=True,
-                semantic_role_name=semantic_role_name,
-                visual_evidence=visual_input if role_name in visual_roles and model_visual_metadata is not None else None,
-            )
+            visual_sent = False
+            visual_sha256: str | None = None
+            visual_attempt_rows: list[dict[str, object]] = []
+            if role_name == "critic" and visual_input is not None and model_visual_metadata is not None:
+                # Vision is best-effort. Keep its attempt evidence isolated so
+                # the required text-only structural Critic cannot overwrite it.
+                visual_path = cycle_root / "visual_critic"
+                try:
+                    artifact, slot, attempts = _run_role(
+                        router,
+                        role_name=role_name,
+                        payload=payload,
+                        max_attempts=max_role_attempts,
+                        run_path=visual_path,
+                        validator=validate_with_evidence,
+                        system_prompt=system,
+                        evidence_validation_enabled=True,
+                        semantic_role_name="critic_visual",
+                        visual_evidence=visual_input,
+                    )
+                    visual_critic_status = "PASS"
+                    visual_sent = True
+                    visual_sha256 = str(model_visual_metadata["sha256"])
+                    visual_attempt_rows = _role_provider_attempts(visual_path, "critic_visual")
+                except MultiAgentRunError as visual_error:
+                    cause = visual_error.__cause__ or visual_error
+                    visual_critic_failure_class = _failure_class(cause)
+                    visual_attempt_rows = _role_provider_attempts(visual_path, "critic_visual")
+                    # The structural Critic still runs from validated artifacts
+                    # only. Remove image metadata and image-specific wording so
+                    # the fallback cannot claim that pixels were inspected.
+                    payload = revision_payload(role_name)
+                    payload.pop("postwrite_visual_evidence", None)
+                    payload["semantic_role"] = semantic_role_name.upper()
+                    system = ROLE_SYSTEM_PROMPTS[role_name] + (
+                        " CRITIC OWNER-REVIEW CONTRACT: explicitly evaluate each criterion in owner_revision_brief, including hero identifiability, primary/secondary weight, active framing of central negative space, intentional height/depth rhythm, generic inventory-row impression, purposeful symmetry, distinctive SHEESH identity, and any reason for irregularity. "
+                        "Do not use numeric symmetry thresholds; do not penalize purposeful symmetry or reward arbitrary irregularity."
+                    ) + revision_system_suffix
+                    artifact, slot, attempts = _run_role(
+                        router,
+                        role_name=role_name,
+                        payload=payload,
+                        max_attempts=max_role_attempts,
+                        run_path=cycle_root,
+                        validator=validate_with_evidence,
+                        system_prompt=system,
+                        evidence_validation_enabled=True,
+                        semantic_role_name=semantic_role_name,
+                        visual_evidence=None,
+                    )
+            else:
+                artifact, slot, attempts = _run_role(
+                    router,
+                    role_name=role_name,
+                    payload=payload,
+                    max_attempts=max_role_attempts,
+                    run_path=cycle_root,
+                    validator=validate_with_evidence,
+                    system_prompt=system,
+                    evidence_validation_enabled=True,
+                    semantic_role_name=semantic_role_name,
+                    # Position and Rig are intentionally text-only even when a
+                    # verified post-write image was supplied to the revision.
+                    visual_evidence=None,
+                )
             if slot.api_key and slot.api_key in _canonical_json(artifact):
                 raise MultiAgentRunError(f"{role_name} revision artifact contained a provider secret.")
             cycle_slots[role_name] = slot
             cycle_attempts[role_name] = attempts
+            if role_name == "critic" and model_visual_metadata is not None:
+                cycle_attempts["critic_visual"] = len(visual_attempt_rows) or (1 if visual_critic_status == "PASS" else 0)
             cycle_completed[role_name] = artifact
+            persisted_provider_attempts = (
+                visual_attempt_rows + _role_provider_attempts(cycle_root, semantic_role_name or role_name)
+                if role_name == "critic"
+                else _role_provider_attempts(cycle_root, semantic_role_name or role_name)
+            )
             _write_json(cycle_root / "steps" / f"{role_name}.json", {
                 "schema": STEP_SCHEMA,
                 "role": role_name,
@@ -2838,9 +2905,12 @@ def run_spatial_revision_loop(
                 "provider": slot.safe_identity(),
                 "artifact_hash": _sha256(artifact),
                 "artifact": artifact,
-                "VISUAL_EVIDENCE_SENT": "YES" if role_name in visual_roles and model_visual_metadata is not None else "NO",
-                "VISUAL_EVIDENCE_SHA256": model_visual_metadata["sha256"] if role_name in visual_roles and model_visual_metadata is not None else None,
-                "provider_attempts": _role_provider_attempts(cycle_root, semantic_role_name or role_name),
+                "VISUAL_EVIDENCE_SENT": "YES" if visual_sent else "NO",
+                "VISUAL_EVIDENCE_SHA256": visual_sha256,
+                "VISUAL_CRITIC_STATUS": visual_critic_status if role_name == "critic" else "NOT_APPLICABLE",
+                "VISUAL_CRITIC_FAILURE_CLASS": visual_critic_failure_class if role_name == "critic" else None,
+                "STRUCTURAL_CRITIC_COMPLETE": "YES" if role_name == "critic" else "NOT_APPLICABLE",
+                "provider_attempts": persisted_provider_attempts,
                 "CODEX_ARTISTIC_INTERVENTION": "NONE",
             })
 
@@ -2861,6 +2931,8 @@ def run_spatial_revision_loop(
             "geometry_delta": delta,
             "visual_evidence_roles": sorted(role.upper() for role in visual_roles) if model_visual_metadata is not None else [],
             "visual_evidence_sha256": model_visual_metadata["sha256"] if model_visual_metadata is not None else None,
+            "visual_critic_status": visual_critic_status if model_visual_metadata is not None else "UNAVAILABLE_FREE_PROVIDER",
+            "visual_critic_failure_class": visual_critic_failure_class,
             "design_review_status": review_state["design_review_status"],
             "critic_severity": review_state["critic_severity"],
         }
@@ -2967,6 +3039,12 @@ def run_spatial_revision_loop(
         "REVISION_READINESS": calibration_readiness,
         "POSTWRITE_VISUAL_EVIDENCE": audit_visual_metadata,
         "POSTWRITE_VISUAL_EVIDENCE_VERIFIED": audit_visual_metadata is not None,
+        "VISION_REQUIRED_FOR_POSITION": "NO",
+        "VISION_REQUIRED_FOR_WRITEBACK": "NO",
+        "VISUAL_CRITIC_MODE": "BEST_EFFORT",
+        "VISUAL_CRITIC_STATUS": visual_critic_status,
+        "VISUAL_CRITIC_FAILURE_CLASS": visual_critic_failure_class,
+        "STRUCTURAL_CRITIC_COMPLETE": "YES",
         "MAX_SPATIAL_REVISION_CYCLES": max_cycles,
         "cycles": cycles,
         "cycles_completed": len(cycles),
@@ -2983,6 +3061,7 @@ def run_spatial_revision_loop(
                 ("position_designer_revision", "position_designer_revision"),
                 ("lighting_designer", "lighting_designer"),
                 ("critic", "critic"),
+                ("critic_visual", "critic_visual"),
             )
             for attempt in _role_provider_attempts(
                 revision_root / f"cycle_{int(cycle['cycle_number']):02}", diagnostic_role

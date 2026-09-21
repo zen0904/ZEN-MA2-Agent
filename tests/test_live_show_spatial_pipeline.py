@@ -472,11 +472,17 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
             "ROLE: RIG_DESIGNER_REVISION", "ROLE: POSITION_DESIGNER_REVISION",
             "ROLE: LIGHTING_DESIGNER", "ROLE: CRITIC", "ROLE: FINALIZER",
         ])
-        self.assertEqual([item[2] for item in adapter.calls if item[2]], [visual_hash, visual_hash, visual_hash])
-        for role in ("rig_designer", "position_designer", "critic"):
+        self.assertEqual([item[2] for item in adapter.calls if item[2]], [visual_hash])
+        for role in ("rig_designer", "position_designer"):
             step = json.loads((result.run_path / "cycle_01" / "steps" / f"{role}.json").read_text(encoding="utf-8"))
-            self.assertEqual(step["VISUAL_EVIDENCE_SENT"], "YES")
-            self.assertEqual(step["VISUAL_EVIDENCE_SHA256"], visual_hash)
+            self.assertEqual(step["VISUAL_EVIDENCE_SENT"], "NO")
+            self.assertIsNone(step["VISUAL_EVIDENCE_SHA256"])
+        critic_step = json.loads((result.run_path / "cycle_01" / "steps" / "critic.json").read_text(encoding="utf-8"))
+        self.assertEqual(critic_step["VISUAL_EVIDENCE_SENT"], "YES")
+        self.assertEqual(critic_step["VISUAL_EVIDENCE_SHA256"], visual_hash)
+        self.assertEqual(critic_step["VISUAL_CRITIC_STATUS"], "PASS")
+        position_call = next(call for call in adapter.calls if call[0] == "ROLE: POSITION_DESIGNER_REVISION")
+        self.assertNotIn("postwrite_visual_evidence", position_call[1])
         self.assertEqual(result.design_review_state["design_review_status"], "REVIEW_PASSED")
         saved = json.loads((result.run_path / "revision_run.json").read_text(encoding="utf-8"))
         self.assertEqual(saved["REVISION_TRIGGER"], "OWNER_REJECT_FOR_REVISION")
@@ -502,7 +508,67 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
         self.assertEqual(source_state_after["CONTEXT_HASH"], source_state_before["CONTEXT_HASH"])
         self.assertEqual(source_state_after["CURRENT_SHOW_FINGERPRINT"], source_state_before["CURRENT_SHOW_FINGERPRINT"])
         self.assertEqual((source.run_path / "steps" / "critic.json").read_bytes(), source_critic_before)
-        self.assertNotIn("relative_path", adapter.calls[0][1]["postwrite_visual_evidence"])
+        critic_payload = next(call[1] for call in adapter.calls if call[0] == "ROLE: CRITIC")
+        self.assertNotIn("relative_path", critic_payload["postwrite_visual_evidence"])
+
+    def test_visual_critic_provider_failure_falls_back_to_required_text_critic(self):
+        run_id = "owner-revision-visual-best-effort"
+        bootstrap_input, source = self._create_bootstrap_source(run_id)
+        visual_bytes = (
+            b"\x89PNG\r\n\x1a\n" + b"\x00\x00\x00\rIHDR"
+            + (1151).to_bytes(4, "big") + (680).to_bytes(4, "big") + b"\x08\x02\x00\x00\x00"
+        )
+        writeback = source.run_path / "writeback"
+        writeback.mkdir()
+        (writeback / "actual.png").write_bytes(visual_bytes)
+        evidence = {
+            "schema": "zen.ma2_postwrite_stage_view_evidence.v0.1",
+            "source_run_id": run_id,
+            "show_fingerprint": FINGERPRINT,
+            "evidence_type": "MA2_POSTWRITE_STAGE_VIEW",
+            "capture_time": "2026-09-21T17:41:25.793+08:00",
+            "sha256": hashlib.sha256(visual_bytes).hexdigest(),
+            "mime_type": "image/png", "pixel_width": 1151, "pixel_height": 680,
+            "relative_path": "writeback/actual.png",
+        }
+
+        class VisionUnavailableAdapter(_RoleAdapter):
+            def __init__(self, snapshot):
+                super().__init__(snapshot)
+                self.visual_calls = 0
+
+            def complete(self, slot, *, system, user):
+                payload = json.loads(user)
+                role = system.split(". ", 1)[0]
+                if role == "ROLE: RIG_DESIGNER_REVISION":
+                    self.calls.append((role, payload))
+                    return json.dumps(_rig(payload["current_show_snapshot"]))
+                if role == "ROLE: POSITION_DESIGNER_REVISION":
+                    self.calls.append((role, payload))
+                    return json.dumps(_position(payload["position_context"]))
+                return super().complete(slot, system=system, user=user)
+
+            def complete_with_image(self, slot, *, system, user, visual_evidence):
+                self.visual_calls += 1
+                raise ProviderUnavailable("Provider slot 1 request failed: HTTPError 400")
+
+        adapter = VisionUnavailableAdapter(self.normalized)
+        result = run_spatial_revision_loop(
+            self._router(adapter), repo_root=self.repo_root, run_id=run_id,
+            current_show_snapshot=bootstrap_input,
+            owner_decision="REJECT_FOR_REVISION", owner_revision_brief="owner brief",
+            postwrite_visual_evidence=evidence, revision_id="visual-best-effort",
+            max_cycles=1, max_role_attempts=1,
+        )
+        self.assertEqual(adapter.visual_calls, 1)
+        self.assertEqual(result.design_review_state["design_review_status"], "REVIEW_PASSED")
+        critic_step = json.loads((result.run_path / "cycle_01" / "steps" / "critic.json").read_text(encoding="utf-8"))
+        self.assertEqual(critic_step["STRUCTURAL_CRITIC_COMPLETE"], "YES")
+        self.assertEqual(critic_step["VISUAL_CRITIC_STATUS"], "UNAVAILABLE_FREE_PROVIDER")
+        self.assertEqual(critic_step["VISUAL_CRITIC_FAILURE_CLASS"], "PROVIDER_ERROR")
+        self.assertEqual(critic_step["VISUAL_EVIDENCE_SENT"], "NO")
+        self.assertTrue((result.run_path / "cycle_01" / "visual_critic" / "diagnostics" / "critic_visual-01.json").exists())
+        self.assertEqual(critic_step["artifact"]["schema"], "zen.multi_agent_critic.v0.1")
 
     def test_legacy_revision_fails_closed_without_well_formed_request_hash(self):
         for run_id, bad_value, error in (
