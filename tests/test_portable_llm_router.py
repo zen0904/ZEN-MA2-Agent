@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import io
+import hashlib
 import os
 import tempfile
 import unittest
@@ -10,7 +11,7 @@ from unittest.mock import patch
 from urllib.error import HTTPError
 
 from zen_ma2_agent.llm.autonomous_designer import SCHEMA, DesignValidationError, validate_design_output
-from zen_ma2_agent.llm.router import OpenAICompatibleHTTPAdapter, ProviderRouter, ProviderSlot, ProviderUnavailable, load_provider_slots
+from zen_ma2_agent.llm.router import OpenAICompatibleHTTPAdapter, ProviderImageInput, ProviderRouter, ProviderSlot, ProviderUnavailable, load_provider_slots
 from zen_ma2_agent.config import settings_path
 from launcher.zen_portable_launcher import ma2_connectivity, provider_self_test
 
@@ -363,6 +364,51 @@ class PortableLLMRouterTests(unittest.TestCase):
                 OpenAICompatibleHTTPAdapter().complete(self._http_slot(), system="s", user="u")
         self.assertEqual(str(raised.exception), "Provider slot 1 request failed: HTTPError 400")
         self.assertNotIn("secret-token", str(raised.exception))
+
+    def test_text_only_http_request_keeps_user_content_as_plain_text(self):
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *_): return False
+            def read(self): return b'{"choices":[{"message":{"content":"{}"}}]}'
+
+        captured = {}
+        def opener(request, timeout):
+            captured["body"] = json.loads(request.data.decode("utf-8"))
+            return Response()
+
+        with patch("zen_ma2_agent.llm.router.urlopen", side_effect=opener):
+            OpenAICompatibleHTTPAdapter().complete(self._http_slot(), system="s", user="u")
+        self.assertEqual(captured["body"]["messages"], [
+            {"role": "system", "content": "s"},
+            {"role": "user", "content": "u"},
+        ])
+
+    def test_multimodal_http_request_contains_verified_image_bytes_not_local_path(self):
+        image_bytes = b"\x89PNG\r\n\x1a\n" + b"provider-visual-evidence"
+        evidence = ProviderImageInput("image/png", image_bytes, hashlib.sha256(image_bytes).hexdigest())
+
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *_): return False
+            def read(self): return b'{"choices":[{"message":{"content":"{}"}}]}'
+
+        captured = {}
+        def opener(request, timeout):
+            captured["body"] = json.loads(request.data.decode("utf-8"))
+            return Response()
+
+        with patch("zen_ma2_agent.llm.router.urlopen", side_effect=opener):
+            OpenAICompatibleHTTPAdapter().complete_with_image(
+                self._http_slot(), system="s", user="u", visual_evidence=evidence,
+            )
+        user_content = captured["body"]["messages"][1]["content"]
+        self.assertEqual(user_content[0], {"type": "text", "text": "u"})
+        self.assertEqual(user_content[1]["type"], "image_url")
+        self.assertEqual(
+            user_content[1]["image_url"]["url"],
+            "data:image/png;base64," + __import__("base64").b64encode(image_bytes).decode("ascii"),
+        )
+        self.assertNotIn("local/path", json.dumps(captured["body"]))
 
     def test_http_error_non_string_detail_is_discarded(self):
         error = HTTPError(

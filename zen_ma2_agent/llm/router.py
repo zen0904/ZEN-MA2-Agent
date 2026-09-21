@@ -11,6 +11,8 @@ import json
 import os
 import socket
 import re
+import base64
+import hashlib
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
@@ -35,6 +37,37 @@ class ProviderUnavailable(RuntimeError):
         # Runtime callers may preserve these bounded rows in their run
         # diagnostics.  They intentionally contain safe identities only.
         self.provider_attempts = tuple(provider_attempts)
+
+
+@dataclass(frozen=True)
+class ProviderImageInput:
+    """Verified image bytes for one multimodal provider request.
+
+    Deliberately contains no local path. Runtime code validates provenance and
+    file location before constructing this transport-only value.
+    """
+
+    media_type: str
+    image_bytes: bytes
+    sha256: str
+
+    MAX_BYTES = 10 * 1024 * 1024
+    _SIGNATURES = {
+        "image/png": lambda value: value.startswith(b"\x89PNG\r\n\x1a\n"),
+        "image/jpeg": lambda value: value.startswith(b"\xff\xd8\xff"),
+        "image/webp": lambda value: len(value) >= 12 and value[:4] == b"RIFF" and value[8:12] == b"WEBP",
+    }
+
+    def __post_init__(self) -> None:
+        if self.media_type not in self._SIGNATURES:
+            raise ValueError("Provider image input MIME type is not supported.")
+        if not isinstance(self.image_bytes, bytes) or not self.image_bytes or len(self.image_bytes) > self.MAX_BYTES:
+            raise ValueError("Provider image input must be non-empty and no larger than 10 MiB.")
+        if not self._SIGNATURES[self.media_type](self.image_bytes):
+            raise ValueError("Provider image bytes do not match the declared MIME type.")
+        digest = hashlib.sha256(self.image_bytes).hexdigest()
+        if self.sha256 != digest:
+            raise ValueError("Provider image input SHA-256 does not match its bytes.")
 
 
 @dataclass(frozen=True)
@@ -214,15 +247,34 @@ class OpenAICompatibleHTTPAdapter:
     no artistic logic belongs in an adapter.
     """
 
-    def complete(self, slot: ProviderSlot, *, system: str, user: str) -> str:
+    def complete(
+        self,
+        slot: ProviderSlot,
+        *,
+        system: str,
+        user: str,
+        visual_evidence: ProviderImageInput | None = None,
+    ) -> str:
         if slot.provider_type not in {"OPENAI_COMPATIBLE", "OPENAI", "OPENAI_COMPATIBLE_LOCAL"}:
             raise ProviderUnavailable(f"Provider slot {slot.number} type is not implemented: {slot.provider_type or 'UNSET'}")
         endpoint = slot.base_url.rstrip("/")
         if not endpoint.endswith("/chat/completions"):
             endpoint += "/chat/completions"
+        user_content: str | list[dict[str, object]] = user
+        if visual_evidence is not None:
+            encoded_image = base64.b64encode(visual_evidence.image_bytes).decode("ascii")
+            user_content = [
+                {"type": "text", "text": user},
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:{visual_evidence.media_type};base64,{encoded_image}"
+                    },
+                },
+            ]
         body_payload: dict[str, object] = {
             "model": slot.model,
-            "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+            "messages": [{"role": "system", "content": system}, {"role": "user", "content": user_content}],
             "temperature": 0.2,
         }
         if slot.response_format == "JSON_OBJECT":
@@ -253,6 +305,22 @@ class OpenAICompatibleHTTPAdapter:
         if not isinstance(content, str) or not content.strip():
             raise ProviderUnavailable(f"Provider slot {slot.number} returned empty chat completion content.")
         return content
+
+    def complete_with_image(
+        self,
+        slot: ProviderSlot,
+        *,
+        system: str,
+        user: str,
+        visual_evidence: ProviderImageInput,
+    ) -> str:
+        """Send text and verified image bytes in an OpenAI-compatible request."""
+        return self.complete(
+            slot,
+            system=system,
+            user=user,
+            visual_evidence=visual_evidence,
+        )
 
 
 class ProviderRouter:
@@ -392,11 +460,19 @@ class ProviderRouter:
             ),
         ))
 
-    def complete(self, *, role: str, system: str, user: str) -> tuple[str, ProviderSlot]:
+    def complete(
+        self,
+        *,
+        role: str,
+        system: str,
+        user: str,
+        visual_evidence: ProviderImageInput | None = None,
+    ) -> tuple[str, ProviderSlot]:
         content, slot, _attempts = self.complete_with_diagnostics(
             role=role,
             system=system,
             user=user,
+            visual_evidence=visual_evidence,
         )
         return content, slot
 
@@ -406,6 +482,7 @@ class ProviderRouter:
         role: str,
         system: str,
         user: str,
+        visual_evidence: ProviderImageInput | None = None,
     ) -> tuple[str, ProviderSlot, tuple[dict[str, object], ...]]:
         """Run normal ordered fallback and return secret-free attempt evidence.
 
@@ -421,7 +498,18 @@ class ProviderRouter:
         for attempt_order, slot in enumerate(candidates, start=1):
             started = monotonic()
             try:
-                content = self.adapter.complete(slot, system=system, user=user)
+                if visual_evidence is None:
+                    content = self.adapter.complete(slot, system=system, user=user)
+                else:
+                    image_method = getattr(self.adapter, "complete_with_image", None)
+                    if not callable(image_method):
+                        raise ProviderUnavailable("Provider adapter does not support visual evidence input.")
+                    content = image_method(
+                        slot,
+                        system=system,
+                        user=user,
+                        visual_evidence=visual_evidence,
+                    )
             except ProviderUnavailable as exc:
                 failures.append(f"slot {slot.number}: {exc}")
                 failure_class, failure_reason = _parallel_failure_diagnostic(exc, None)
@@ -435,6 +523,8 @@ class ProviderRouter:
                     "provider_elapsed_seconds": round(monotonic() - started, 3),
                     "role_output_validation": "NOT_RUN",
                     "candidate_status": "TRANSPORT_FAILURE" if failure_class == "TRANSPORT_FAILURE" else "PROVIDER_ERROR",
+                    "visual_evidence_sent": "YES" if visual_evidence is not None and callable(getattr(self.adapter, "complete_with_image", None)) else "NO",
+                    "visual_evidence_sha256": visual_evidence.sha256 if visual_evidence is not None else None,
                 })
                 if self.mode == "PRIMARY_ONLY":
                     break
@@ -449,6 +539,8 @@ class ProviderRouter:
                 "provider_elapsed_seconds": round(monotonic() - started, 3),
                 "role_output_validation": "NOT_RUN",
                 "candidate_status": "TRANSPORT_SUCCESS",
+                "visual_evidence_sent": "YES" if visual_evidence is not None else "NO",
+                "visual_evidence_sha256": visual_evidence.sha256 if visual_evidence is not None else None,
             })
             return content, slot, tuple(attempts)
         raise ProviderUnavailable(

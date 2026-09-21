@@ -17,6 +17,7 @@ from zen_ma2_agent.llm.multi_agent_runtime import (
     ResearchSourceContractError,
     ROLE_SYSTEM_PROMPTS,
     _bootstrap_role_prompt,
+    _load_postwrite_visual_evidence,
     _model_facing_current_show_snapshot,
     _sha256,
     build_position_context,
@@ -385,6 +386,190 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
             },
             "CODEX_ARTISTIC_INTERVENTION": "NONE",
         }
+
+    def _bootstrap_input(self):
+        return CurrentShowSnapshotInput(
+            self.raw_snapshot,
+            spatial_bootstrap_mode="NEW_UNDESIGNED_SHOW",
+            operator_stage_context=_operator_stage_context(),
+            show_bound_capability_profiles=_show_bound_capabilities(),
+        )
+
+    def _create_bootstrap_source(self, run_id: str):
+        bootstrap_input = self._bootstrap_input()
+        adapter = _RoleAdapter(self.normalized)
+        source = run_multi_agent_design(
+            self._router(adapter), request="BABYMONSTER - SHEESH", repo_root=self.repo_root,
+            run_id=run_id, current_show_snapshot=bootstrap_input,
+        )
+        return bootstrap_input, source
+
+    def test_owner_rejects_non_blocker_bootstrap_run_with_brief_and_visual_evidence(self):
+        run_id = "owner-revision-bootstrap"
+        bootstrap_input, source = self._create_bootstrap_source(run_id)
+        source_state_before = json.loads((source.run_path / "run.json").read_text(encoding="utf-8"))
+        source_critic_before = (source.run_path / "steps" / "critic.json").read_bytes()
+        visual_bytes = (
+            b"\x89PNG\r\n\x1a\n" + b"\x00\x00\x00\rIHDR"
+            + (1151).to_bytes(4, "big") + (680).to_bytes(4, "big") + b"\x08\x02\x00\x00\x00"
+        )
+        writeback = source.run_path / "writeback"
+        writeback.mkdir()
+        (writeback / "actual.png").write_bytes(visual_bytes)
+        visual_hash = hashlib.sha256(visual_bytes).hexdigest()
+        visual_metadata = {
+            "schema": "zen.ma2_postwrite_stage_view_evidence.v0.1",
+            "source_run_id": run_id,
+            "show_fingerprint": FINGERPRINT,
+            "evidence_type": "MA2_POSTWRITE_STAGE_VIEW",
+            "capture_time": "2026-09-21T17:41:25.793+08:00",
+            "sha256": visual_hash,
+            "mime_type": "image/png",
+            "pixel_width": 1151,
+            "pixel_height": 680,
+            "relative_path": "writeback/actual.png",
+        }
+
+        class RevisionAdapter:
+            def __init__(self): self.calls = []
+            def complete(self, slot, *, system, user):
+                payload = json.loads(user)
+                role = system.split(". ", 1)[0]
+                self.calls.append((role, payload, None, system))
+                if role == "ROLE: RIG_DESIGNER_REVISION":
+                    return json.dumps(_rig(payload["current_show_snapshot"]))
+                if role == "ROLE: POSITION_DESIGNER_REVISION":
+                    return json.dumps(_position(payload["position_context"]))
+                if role == "ROLE: LIGHTING_DESIGNER": return json.dumps(_draft())
+                if role == "ROLE: CRITIC": return json.dumps(_critic())
+                if role == "ROLE: FINALIZER": return json.dumps(_final(payload["position_design_artifact"]))
+                raise AssertionError(role)
+            def complete_with_image(self, slot, *, system, user, visual_evidence):
+                payload = json.loads(user)
+                role = system.split(". ", 1)[0]
+                self.calls.append((role, payload, visual_evidence.sha256, system))
+                if role == "ROLE: RIG_DESIGNER_REVISION":
+                    return json.dumps(_rig(payload["current_show_snapshot"]))
+                if role == "ROLE: POSITION_DESIGNER_REVISION":
+                    return json.dumps(_position(payload["position_context"]))
+                if role == "ROLE: CRITIC": return json.dumps(_critic())
+                raise AssertionError(f"Unexpected visual provider role: {role}")
+
+        adapter = RevisionAdapter()
+        brief = "owner directed structure brief"
+        result = run_spatial_revision_loop(
+            self._router(adapter), request="BABYMONSTER - SHEESH", repo_root=self.repo_root,
+            run_id=run_id, current_show_snapshot=bootstrap_input,
+            owner_decision="REJECT_FOR_REVISION", owner_revision_brief=brief,
+            postwrite_visual_evidence=visual_metadata, revision_id="owner-directed",
+            max_cycles=1,
+        )
+        roles = [item[0] for item in adapter.calls]
+        self.assertEqual(roles, [
+            "ROLE: RIG_DESIGNER_REVISION", "ROLE: POSITION_DESIGNER_REVISION",
+            "ROLE: LIGHTING_DESIGNER", "ROLE: CRITIC", "ROLE: FINALIZER",
+        ])
+        self.assertEqual([item[2] for item in adapter.calls if item[2]], [visual_hash, visual_hash, visual_hash])
+        for role in ("rig_designer", "position_designer", "critic"):
+            step = json.loads((result.run_path / "cycle_01" / "steps" / f"{role}.json").read_text(encoding="utf-8"))
+            self.assertEqual(step["VISUAL_EVIDENCE_SENT"], "YES")
+            self.assertEqual(step["VISUAL_EVIDENCE_SHA256"], visual_hash)
+        self.assertEqual(result.design_review_state["design_review_status"], "REVIEW_PASSED")
+        saved = json.loads((result.run_path / "revision_run.json").read_text(encoding="utf-8"))
+        self.assertEqual(saved["REVISION_TRIGGER"], "OWNER_REJECT_FOR_REVISION")
+        self.assertEqual(saved["SOURCE_CRITIC_SEVERITY"], "NONE")
+        self.assertEqual(saved["SPATIAL_FACT_CALIBRATION_STATUS"], "NOT_APPLICABLE_NEW_UNDESIGNED_SHOW")
+        self.assertEqual(saved["OWNER_REVISION_BRIEF"], brief)
+        self.assertEqual(saved["OWNER_REVISION_BRIEF_HASH"], hashlib.sha256(brief.encode("utf-8")).hexdigest())
+        self.assertTrue(saved["POSTWRITE_VISUAL_EVIDENCE_VERIFIED"])
+        source_state_after = json.loads((source.run_path / "run.json").read_text(encoding="utf-8"))
+        self.assertEqual(source_state_after["REQUEST_HASH"], source_state_before["REQUEST_HASH"])
+        self.assertEqual(source_state_after["CONTEXT_HASH"], source_state_before["CONTEXT_HASH"])
+        self.assertEqual(source_state_after["CURRENT_SHOW_FINGERPRINT"], source_state_before["CURRENT_SHOW_FINGERPRINT"])
+        self.assertEqual((source.run_path / "steps" / "critic.json").read_bytes(), source_critic_before)
+        self.assertNotIn("relative_path", adapter.calls[0][1]["postwrite_visual_evidence"])
+
+    def test_non_blocker_revision_requires_nonempty_owner_brief(self):
+        run_id = "owner-revision-brief-required"
+        bootstrap_input, _source = self._create_bootstrap_source(run_id)
+        class NoCallAdapter:
+            def complete(self, slot, *, system, user):
+                raise AssertionError("revision provider must not run without owner brief")
+        with self.assertRaisesRegex(MultiAgentRunError, "non-empty owner_revision_brief"):
+            run_spatial_revision_loop(
+                self._router(NoCallAdapter()), request="BABYMONSTER - SHEESH", repo_root=self.repo_root,
+                run_id=run_id, current_show_snapshot=bootstrap_input,
+                owner_decision="REJECT_FOR_REVISION", revision_id="missing-owner-brief",
+            )
+
+    def test_imported_show_still_requires_exact_calibration_provenance(self):
+        run_id = "imported-calibration-provenance"
+        source_adapter = _RoleAdapter(self.normalized)
+        run_multi_agent_design(
+            self._router(source_adapter), request="BABYMONSTER - SHEESH", repo_root=self.repo_root,
+            run_id=run_id, current_show_snapshot=self.input,
+        )
+        calibration = self._completed_calibration(run_id)
+        calibration["source_artifacts"]["run_id"] = "different-run"
+        class NoCallAdapter:
+            def complete(self, slot, *, system, user):
+                raise AssertionError("provider must not run after calibration provenance mismatch")
+        with self.assertRaisesRegex(MultiAgentRunError, "source_artifact|provenance|source run|Spatial revision evidence rejected"):
+            run_spatial_revision_loop(
+                self._router(NoCallAdapter()), request="BABYMONSTER - SHEESH", repo_root=self.repo_root,
+                run_id=run_id, current_show_snapshot=self.input,
+                calibration_artifact=calibration, owner_decision="REJECT_FOR_REVISION",
+                owner_revision_brief="owner brief",
+            )
+
+    def _visual_evidence_fixture(self, root: Path, *, relative_path="writeback/image.png"):
+        image_bytes = (
+            b"\x89PNG\r\n\x1a\n" + b"\x00\x00\x00\rIHDR"
+            + (10).to_bytes(4, "big") + (20).to_bytes(4, "big") + b"\x08\x02\x00\x00\x00"
+        )
+        (root / "writeback").mkdir(exist_ok=True)
+        (root / "writeback" / "image.png").write_bytes(image_bytes)
+        return image_bytes, {
+            "schema": "zen.ma2_postwrite_stage_view_evidence.v0.1",
+            "source_run_id": "visual-source",
+            "show_fingerprint": FINGERPRINT,
+            "evidence_type": "MA2_POSTWRITE_STAGE_VIEW",
+            "capture_time": "2026-09-21T17:41:25.793+08:00",
+            "sha256": hashlib.sha256(image_bytes).hexdigest(),
+            "mime_type": "image/png", "pixel_width": 10, "pixel_height": 20,
+            "relative_path": relative_path,
+        }
+
+    def test_visual_evidence_sha_mismatch_fails_closed(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "visual-source"
+            root.mkdir()
+            _image, evidence = self._visual_evidence_fixture(root)
+            evidence["sha256"] = "0" * 64
+            with self.assertRaisesRegex(MultiAgentRunError, "SHA-256 does not match"):
+                _load_postwrite_visual_evidence(evidence, source_run_id="visual-source", show_fingerprint=FINGERPRINT, source_run_path=root)
+
+    def test_missing_visual_evidence_fails_closed(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "visual-source"
+            root.mkdir()
+            evidence = {
+                "schema": "zen.ma2_postwrite_stage_view_evidence.v0.1", "source_run_id": "visual-source",
+                "show_fingerprint": FINGERPRINT, "evidence_type": "MA2_POSTWRITE_STAGE_VIEW",
+                "capture_time": "2026-09-21T17:41:25.793+08:00", "sha256": "0" * 64,
+                "mime_type": "image/png", "pixel_width": 10, "pixel_height": 20,
+                "relative_path": "writeback/missing.png",
+            }
+            with self.assertRaisesRegex(MultiAgentRunError, "missing"):
+                _load_postwrite_visual_evidence(evidence, source_run_id="visual-source", show_fingerprint=FINGERPRINT, source_run_path=root)
+
+    def test_visual_evidence_outside_source_run_writeback_fails_closed(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "visual-source"
+            root.mkdir()
+            _image, evidence = self._visual_evidence_fixture(root, relative_path="../outside.png")
+            with self.assertRaisesRegex(MultiAgentRunError, "safe relative path"):
+                _load_postwrite_visual_evidence(evidence, source_run_id="visual-source", show_fingerprint=FINGERPRINT, source_run_path=root)
 
     def test_revision_loop_passes_exact_prior_artifacts_and_stops_after_two_blockers(self):
         class InitialBlockerAdapter(_RoleAdapter):
