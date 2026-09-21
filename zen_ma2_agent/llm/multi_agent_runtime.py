@@ -140,6 +140,30 @@ def _sha256(value: object) -> str:
     return hashlib.sha256(_canonical_json(value).encode("utf-8")).hexdigest()
 
 
+def _valid_sha256_hex(value: object) -> bool:
+    return isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value) is not None
+
+
+def _request_hash_from_text(request: str) -> str:
+    return _sha256({"user_request": request})
+
+
+def _load_source_request(path: Path, *, expected_hash: str) -> str:
+    """Read exact persisted UTF-8 request text and verify its run identity."""
+    source_request_path = path / "source_request.txt"
+    try:
+        raw = source_request_path.read_bytes()
+    except OSError as exc:
+        raise MultiAgentRunError("Persisted source_request.txt is unavailable.") from exc
+    try:
+        request = raw.decode("utf-8", errors="strict")
+    except UnicodeDecodeError as exc:
+        raise MultiAgentRunError("Persisted source_request.txt is not valid UTF-8.") from exc
+    if _request_hash_from_text(request) != expected_hash:
+        raise MultiAgentRunError("Persisted source_request.txt hash does not match REQUEST_HASH.")
+    return request
+
+
 def _run_path(run_id: str) -> Path:
     if not run_id or Path(run_id).name != run_id:
         raise ValueError("run_id must be a single portable directory name.")
@@ -1397,7 +1421,7 @@ def _archive_for_restart(path: Path) -> None:
     """Preserve an explicit restart's prior evidence before regenerating it."""
     existing = [
         path / name
-        for name in ("run.json", "steps", "final_design.json", "failure.json", "diagnostics", "attempts")
+        for name in ("run.json", "source_request.txt", "steps", "final_design.json", "failure.json", "diagnostics", "attempts")
         if (path / name).exists()
     ]
     if not existing:
@@ -2131,22 +2155,49 @@ def run_multi_agent_design(
         context = _bind_current_show_context(context, normalized_snapshot)
     role_sequence = LIVE_SHOW_ROLE_SEQUENCE if normalized_snapshot is not None else ROLE_SEQUENCE
     context_hash = _sha256(context)
-    request_hash = _sha256({"user_request": request})
+    request_hash = _request_hash_from_text(request)
     run_id = run_id or _new_run_id()
     path = _run_path(run_id)
     path.mkdir(parents=True, exist_ok=True)
     if restart_run:
         _archive_for_restart(path)
+    previous_state = _read_run_state(path)
+    source_request_path = path / "source_request.txt"
+    source_request_status = "AVAILABLE_SOURCE_REQUEST"
+    source_request_authority = "SOURCE_REQUEST_FILE_AND_RUN_JSON"
+    if source_request_path.is_file():
+        persisted_hash = previous_state.get("REQUEST_HASH") if previous_state else request_hash
+        if not _valid_sha256_hex(persisted_hash):
+            raise MultiAgentRunError("Existing run has no valid REQUEST_HASH for source_request.txt verification.")
+        persisted_request = _load_source_request(path, expected_hash=str(persisted_hash))
+        if persisted_request != request:
+            raise MultiAgentRunError("Caller request differs from the verified source_request.txt; persisted source text is authoritative.")
+        request_hash = str(persisted_hash)
+    elif previous_state and not restart_run:
+        persisted_hash = previous_state.get("REQUEST_HASH")
+        if not _valid_sha256_hex(persisted_hash):
+            raise MultiAgentRunError("Existing legacy run has no valid REQUEST_HASH; refusing resume.")
+        if persisted_hash != request_hash:
+            raise MultiAgentRunError("Existing run id belongs to a different request; use a new run id or --restart-run.")
+        # Never retrofit caller-provided text onto a legacy run: its hash is
+        # authoritative, but its original request bytes are unavailable.
+        source_request_status = "UNAVAILABLE_LEGACY_RUN"
+        source_request_authority = "RUN_JSON"
+    else:
+        # Persist exact UTF-8 bytes without adding a newline or normalizing text.
+        source_request_path.write_bytes(request.encode("utf-8"))
+        persisted_request = _load_source_request(path, expected_hash=request_hash)
+        if persisted_request != request:
+            raise MultiAgentRunError("New source_request.txt failed exact text verification.")
     if normalized_snapshot is not None:
         _write_json(path / "normalized_current_show_snapshot.json", normalized_snapshot)
     final_path = path / "final_design.json"
     resume_point = find_resume_point(run_id, list(role_sequence))
-    previous_state = _read_run_state(path)
     step_dir = path / "steps"
     checkpoint_files = sorted(step_dir.glob("*.json")) if step_dir.is_dir() else []
     has_checkpoints = bool(checkpoint_files)
     if not restart_run and previous_state:
-        if previous_state.get("REQUEST_HASH") not in (None, request_hash):
+        if previous_state.get("REQUEST_HASH") != request_hash:
             raise MultiAgentRunError("Existing run id belongs to a different request; use a new run id or --restart-run.")
         if has_checkpoints:
             if previous_state.get("CURRENT_SHOW_FINGERPRINT") != show_fingerprint:
@@ -2193,6 +2244,8 @@ def run_multi_agent_design(
         "GIT_HEAD": _git_head(repo_root),
         "CONTEXT_HASH": context_hash,
         "REQUEST_HASH": request_hash,
+        "ORIGINAL_REQUEST_TEXT_STATUS": source_request_status,
+        "SOURCE_REQUEST_HASH_AUTHORITY": source_request_authority,
         "HOST_OS": platform.system(),
         "ROLE_EXECUTION_ORDER": list(role_sequence),
         "CURRENT_SHOW_FINGERPRINT": show_fingerprint,
@@ -2447,7 +2500,7 @@ def run_multi_agent_design(
 def run_spatial_revision_loop(
     router: ProviderRouter,
     *,
-    request: str,
+    request: str | None = None,
     repo_root: Path,
     run_id: str,
     current_show_snapshot: CurrentShowSnapshotInput | dict[str, object],
@@ -2503,9 +2556,6 @@ def run_spatial_revision_loop(
             "Spatial revision BLOCKED_MISSING_EVIDENCE; missing calibrated physical facts: "
             + ", ".join(str(item) for item in readiness["blocking_facts"])
         )
-    if not request.strip():
-        raise ValueError("A non-empty user request is required.")
-
     fingerprint = str(normalized_snapshot["show_fingerprint"])
     path = _run_path(run_id)
     if not path.is_dir():
@@ -2513,12 +2563,26 @@ def run_spatial_revision_loop(
     previous_state = _read_run_state(path)
     if not previous_state or previous_state.get("status") != "COMPLETE":
         raise MultiAgentRunError("Spatial revision requires a completed source run.")
+    source_request_hash = previous_state.get("REQUEST_HASH")
+    if not _valid_sha256_hex(source_request_hash):
+        raise MultiAgentRunError("Spatial revision source run is missing a valid REQUEST_HASH.")
+    source_request_path = path / "source_request.txt"
+    if source_request_path.is_file():
+        revision_request = _load_source_request(path, expected_hash=str(source_request_hash))
+        if request is not None and request != revision_request:
+            raise MultiAgentRunError("Caller request differs from the verified source_request.txt; persisted source text is authoritative.")
+        original_request_text_status = "AVAILABLE_SOURCE_REQUEST"
+        source_request_hash_authority = "SOURCE_REQUEST_FILE_AND_RUN_JSON"
+    else:
+        # A legacy run's request text cannot be reconstructed from SHA-256.
+        # Ignore any caller-supplied guess and retain only run.json's hash.
+        revision_request = ""
+        original_request_text_status = "UNAVAILABLE_LEGACY_RUN"
+        source_request_hash_authority = "RUN_JSON"
     if previous_state.get("CURRENT_SHOW_FINGERPRINT") != fingerprint:
         raise MultiAgentRunError("Spatial revision Show fingerprint differs from the source run.")
     if previous_state.get("CURRENT_SHOW_SNAPSHOT_SOURCE_HASH") != normalized_snapshot.get("source_artifact_hash"):
         raise MultiAgentRunError("Spatial revision snapshot source hash differs from the source run.")
-    if previous_state.get("REQUEST_HASH") != _sha256({"user_request": request}):
-        raise MultiAgentRunError("Spatial revision request hash differs from the source run.")
     if previous_state.get("ROLE_EXECUTION_ORDER") != list(LIVE_SHOW_ROLE_SEQUENCE):
         raise MultiAgentRunError("Spatial revision source run has an incompatible role execution order.")
 
@@ -2563,7 +2627,7 @@ def run_spatial_revision_loop(
     completed["finalizer"] = validate_design_output(completed["finalizer"])
     validate_final_spatial_consistency(completed["finalizer"], completed["position_designer"], fingerprint)
     researcher_payload = _role_context(
-        "researcher", request=request, context=context, completed=completed
+        "researcher", request=revision_request, context=context, completed=completed
     )
     _validate_artifact_evidence(
         "researcher", completed["researcher"], context,
@@ -2634,7 +2698,7 @@ def run_spatial_revision_loop(
         def revision_payload(role_name: str) -> dict[str, object]:
             payload = _role_context(
                 role_name,
-                request=request,
+                request=revision_request,
                 context=context,
                 completed=cycle_completed,
                 candidate_sets=cycle_candidate_sets,
@@ -2642,6 +2706,13 @@ def run_spatial_revision_loop(
             )
             if calibration_artifact is not None:
                 payload["spatial_fact_calibration"] = calibration_artifact
+            if original_request_text_status == "UNAVAILABLE_LEGACY_RUN":
+                payload.pop("user_request", None)
+            payload["request_provenance"] = {
+                "original_request_text": original_request_text_status,
+                "original_request_hash": source_request_hash,
+                "source_request_hash_authority": source_request_hash_authority,
+            }
             payload["owner_review_decision"] = owner_decision
             payload["owner_revision_brief"] = owner_revision_brief
             if model_visual_metadata is not None and role_name in visual_roles:
@@ -2769,7 +2840,7 @@ def run_spatial_revision_loop(
     review_state["execution_status"] = "RUNNING"
     finalizer_payload = _role_context(
         "finalizer",
-        request=request,
+        request=revision_request,
         context=context,
         completed=completed,
         candidate_sets={},
@@ -2777,6 +2848,13 @@ def run_spatial_revision_loop(
     )
     if calibration_artifact is not None:
         finalizer_payload["spatial_fact_calibration"] = calibration_artifact
+    if original_request_text_status == "UNAVAILABLE_LEGACY_RUN":
+        finalizer_payload.pop("user_request", None)
+    finalizer_payload["request_provenance"] = {
+        "original_request_text": original_request_text_status,
+        "original_request_hash": source_request_hash,
+        "source_request_hash_authority": source_request_hash_authority,
+    }
     finalizer_payload["owner_review_decision"] = owner_decision
     finalizer_payload["owner_revision_brief"] = owner_revision_brief
     finalizer_system = ROLE_SYSTEM_PROMPTS["finalizer"] + (
@@ -2833,6 +2911,9 @@ def run_spatial_revision_loop(
         "RUN_ID": run_id,
         "REVISION_ID": revision_id,
         "SOURCE_CONTEXT_HASH": context_hash,
+        "SOURCE_REQUEST_HASH": source_request_hash,
+        "ORIGINAL_REQUEST_TEXT_STATUS": original_request_text_status,
+        "SOURCE_REQUEST_HASH_AUTHORITY": source_request_hash_authority,
         "CURRENT_SHOW_FINGERPRINT": fingerprint,
         "SPATIAL_BOOTSTRAP_MODE": normalized_snapshot.get("spatial_bootstrap_mode"),
         "SPATIAL_FACT_CALIBRATION_STATUS": calibration_status,

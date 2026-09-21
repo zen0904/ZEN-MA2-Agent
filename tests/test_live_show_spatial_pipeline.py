@@ -409,6 +409,9 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
         bootstrap_input, source = self._create_bootstrap_source(run_id)
         source_state_before = json.loads((source.run_path / "run.json").read_text(encoding="utf-8"))
         source_critic_before = (source.run_path / "steps" / "critic.json").read_bytes()
+        # Simulate a completed pre-provenance legacy run: its run.json hash is
+        # authoritative, but the original request bytes were never retained.
+        (source.run_path / "source_request.txt").unlink()
         visual_bytes = (
             b"\x89PNG\r\n\x1a\n" + b"\x00\x00\x00\rIHDR"
             + (1151).to_bytes(4, "big") + (680).to_bytes(4, "big") + b"\x08\x02\x00\x00\x00"
@@ -458,7 +461,7 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
         adapter = RevisionAdapter()
         brief = "owner directed structure brief"
         result = run_spatial_revision_loop(
-            self._router(adapter), request="BABYMONSTER - SHEESH", repo_root=self.repo_root,
+            self._router(adapter), request="guessed replacement must not become source authority", repo_root=self.repo_root,
             run_id=run_id, current_show_snapshot=bootstrap_input,
             owner_decision="REJECT_FOR_REVISION", owner_revision_brief=brief,
             postwrite_visual_evidence=visual_metadata, revision_id="owner-directed",
@@ -482,12 +485,124 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
         self.assertEqual(saved["OWNER_REVISION_BRIEF"], brief)
         self.assertEqual(saved["OWNER_REVISION_BRIEF_HASH"], hashlib.sha256(brief.encode("utf-8")).hexdigest())
         self.assertTrue(saved["POSTWRITE_VISUAL_EVIDENCE_VERIFIED"])
+        self.assertEqual(saved["SOURCE_REQUEST_HASH"], source_state_before["REQUEST_HASH"])
+        self.assertEqual(saved["ORIGINAL_REQUEST_TEXT_STATUS"], "UNAVAILABLE_LEGACY_RUN")
+        self.assertEqual(saved["SOURCE_REQUEST_HASH_AUTHORITY"], "RUN_JSON")
+        self.assertTrue(all("user_request" not in call[1] for call in adapter.calls))
+        self.assertTrue(all(
+            call[1]["request_provenance"] == {
+                "original_request_text": "UNAVAILABLE_LEGACY_RUN",
+                "original_request_hash": source_state_before["REQUEST_HASH"],
+                "source_request_hash_authority": "RUN_JSON",
+            }
+            for call in adapter.calls
+        ))
         source_state_after = json.loads((source.run_path / "run.json").read_text(encoding="utf-8"))
         self.assertEqual(source_state_after["REQUEST_HASH"], source_state_before["REQUEST_HASH"])
         self.assertEqual(source_state_after["CONTEXT_HASH"], source_state_before["CONTEXT_HASH"])
         self.assertEqual(source_state_after["CURRENT_SHOW_FINGERPRINT"], source_state_before["CURRENT_SHOW_FINGERPRINT"])
         self.assertEqual((source.run_path / "steps" / "critic.json").read_bytes(), source_critic_before)
         self.assertNotIn("relative_path", adapter.calls[0][1]["postwrite_visual_evidence"])
+
+    def test_legacy_revision_fails_closed_without_well_formed_request_hash(self):
+        for run_id, bad_value, error in (
+            ("legacy-missing-request-hash", None, "valid REQUEST_HASH"),
+            ("legacy-malformed-request-hash", "not-a-sha256", "valid REQUEST_HASH"),
+        ):
+            with self.subTest(run_id=run_id):
+                bootstrap_input, source = self._create_bootstrap_source(run_id)
+                (source.run_path / "source_request.txt").unlink()
+                state_path = source.run_path / "run.json"
+                state = json.loads(state_path.read_text(encoding="utf-8"))
+                if bad_value is None:
+                    state.pop("REQUEST_HASH", None)
+                else:
+                    state["REQUEST_HASH"] = bad_value
+                state_path.write_text(json.dumps(state), encoding="utf-8")
+
+                class NoCallAdapter:
+                    def complete(self, slot, *, system, user):
+                        raise AssertionError("provider must not run for invalid legacy request provenance")
+
+                with self.assertRaisesRegex(MultiAgentRunError, error):
+                    run_spatial_revision_loop(
+                        self._router(NoCallAdapter()), repo_root=self.repo_root,
+                        run_id=run_id, current_show_snapshot=bootstrap_input,
+                        owner_decision="REJECT_FOR_REVISION", owner_revision_brief="owner brief",
+                        revision_id="invalid-request-provenance",
+                    )
+
+    def test_source_request_is_persisted_exactly_and_future_revision_rejects_tampering(self):
+        run_id = "source-request-tamper"
+        bootstrap_input, source = self._create_bootstrap_source(run_id)
+        source_request = (source.run_path / "source_request.txt").read_bytes()
+        self.assertEqual(source_request, "BABYMONSTER - SHEESH".encode("utf-8"))
+        state = json.loads((source.run_path / "run.json").read_text(encoding="utf-8"))
+        self.assertEqual(state["REQUEST_HASH"], _sha256({"user_request": source_request.decode("utf-8")}))
+        self.assertEqual(state["ORIGINAL_REQUEST_TEXT_STATUS"], "AVAILABLE_SOURCE_REQUEST")
+        self.assertEqual(state["SOURCE_REQUEST_HASH_AUTHORITY"], "SOURCE_REQUEST_FILE_AND_RUN_JSON")
+        (source.run_path / "source_request.txt").write_bytes(b"changed request")
+
+        class NoCallAdapter:
+            def complete(self, slot, *, system, user):
+                raise AssertionError("provider must not run after source request tampering")
+
+        with self.assertRaisesRegex(MultiAgentRunError, "source_request.txt hash does not match"):
+            run_spatial_revision_loop(
+                self._router(NoCallAdapter()), repo_root=self.repo_root,
+                run_id=run_id, current_show_snapshot=bootstrap_input,
+                owner_decision="REJECT_FOR_REVISION", owner_revision_brief="owner brief",
+                revision_id="tampered-source-request",
+            )
+        with self.assertRaisesRegex(MultiAgentRunError, "source_request.txt hash does not match"):
+            run_multi_agent_design(
+                self._router(NoCallAdapter()), request="BABYMONSTER - SHEESH",
+                repo_root=self.repo_root, run_id=run_id, current_show_snapshot=bootstrap_input,
+            )
+
+    def test_revision_rejects_context_fingerprint_and_checkpoint_mismatch(self):
+        run_id = "revision-provenance-mismatch"
+        bootstrap_input, source = self._create_bootstrap_source(run_id)
+        state_path = source.run_path / "run.json"
+        original_state_bytes = state_path.read_bytes()
+        researcher_path = source.run_path / "steps" / "researcher.json"
+        original_researcher_bytes = researcher_path.read_bytes()
+
+        class NoCallAdapter:
+            def complete(self, slot, *, system, user):
+                raise AssertionError("provider must not run after source provenance mismatch")
+
+        try:
+            for field, invalid_value, expected_error in (
+                ("CONTEXT_HASH", "0" * 64, "context hash"),
+                ("CURRENT_SHOW_FINGERPRINT", "0" * 64, "Show fingerprint"),
+                ("CURRENT_SHOW_SNAPSHOT_SOURCE_HASH", "0" * 64, "snapshot source hash"),
+            ):
+                with self.subTest(field=field):
+                    state = json.loads(original_state_bytes)
+                    state[field] = invalid_value
+                    state_path.write_text(json.dumps(state), encoding="utf-8")
+                    with self.assertRaisesRegex(MultiAgentRunError, expected_error):
+                        run_spatial_revision_loop(
+                            self._router(NoCallAdapter()), repo_root=self.repo_root,
+                            run_id=run_id, current_show_snapshot=bootstrap_input,
+                            owner_decision="REJECT_FOR_REVISION", owner_revision_brief="owner brief",
+                            revision_id=f"mismatch-{field.lower()}",
+                        )
+            state_path.write_bytes(original_state_bytes)
+            researcher = json.loads(original_researcher_bytes)
+            researcher["artifact_hash"] = "0" * 64
+            researcher_path.write_text(json.dumps(researcher), encoding="utf-8")
+            with self.assertRaisesRegex(MultiAgentRunError, "artifact hash does not match"):
+                run_spatial_revision_loop(
+                    self._router(NoCallAdapter()), repo_root=self.repo_root,
+                    run_id=run_id, current_show_snapshot=bootstrap_input,
+                    owner_decision="REJECT_FOR_REVISION", owner_revision_brief="owner brief",
+                    revision_id="mismatch-checkpoint",
+                )
+        finally:
+            state_path.write_bytes(original_state_bytes)
+            researcher_path.write_bytes(original_researcher_bytes)
 
     def test_non_blocker_revision_requires_nonempty_owner_brief(self):
         run_id = "owner-revision-brief-required"
