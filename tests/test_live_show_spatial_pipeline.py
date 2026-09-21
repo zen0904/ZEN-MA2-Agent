@@ -19,6 +19,7 @@ from zen_ma2_agent.llm.multi_agent_runtime import (
     _bootstrap_role_prompt,
     _load_postwrite_visual_evidence,
     _model_facing_current_show_snapshot,
+    _run_role,
     _sha256,
     build_position_context,
     normalize_role_envelope,
@@ -273,6 +274,7 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
         position_context = position_role_payload["position_context"]
         self.assertNotIn("current_show_snapshot", position_role_payload)
         self.assertEqual(position_context["coordinate_system"], self.normalized["coordinate_system"])
+        self.assertEqual(position_role_payload["authoritative_coordinate_system"], self.normalized["coordinate_system"])
         self.assertEqual(position_role_payload["rig_design_artifact"], rig)
         self.assertEqual(position_context["show_fingerprint"], FINGERPRINT)
 
@@ -483,6 +485,9 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
         self.assertEqual(critic_step["VISUAL_CRITIC_STATUS"], "PASS")
         position_call = next(call for call in adapter.calls if call[0] == "ROLE: POSITION_DESIGNER_REVISION")
         self.assertNotIn("postwrite_visual_evidence", position_call[1])
+        bootstrap_normalized = normalize_current_show_snapshot(bootstrap_input)
+        self.assertEqual(position_call[1]["authoritative_coordinate_system"], bootstrap_normalized["coordinate_system"])
+        self.assertIn("Return coordinate_system EXACTLY byte-for-structure equivalent", position_call[3])
         self.assertEqual(result.design_review_state["design_review_status"], "REVIEW_PASSED")
         saved = json.loads((result.run_path / "revision_run.json").read_text(encoding="utf-8"))
         self.assertEqual(saved["REVISION_TRIGGER"], "OWNER_REJECT_FOR_REVISION")
@@ -1041,6 +1046,8 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
             'first key must be "schema" with exact value "zen.multi_agent_position_design.v0.1"',
             "show_fingerprint (string)",
             "coordinate_system (object copied exactly from position_context.coordinate_system)",
+            "Return coordinate_system EXACTLY byte-for-structure equivalent to the authoritative_coordinate_system object supplied below",
+            "Copy all keys and values exactly. Do not add fields. Do not remove fields. Do not rename fields.",
             "spatial_groups (array)",
             "placements (array)",
             "constraints (array)",
@@ -1100,6 +1107,89 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
         retry_prompt = adapter.position_systems[1]
         self.assertIn("coordinate_system must be the exact object supplied in position_context.coordinate_system", retry_prompt)
         self.assertIn("Preserve valid XYZ/artistic choices", retry_prompt)
+
+    def test_position_revision_metadata_mismatch_gets_one_provider_repair_retry(self):
+        position_context = build_position_context(self.normalized)
+        authoritative = self.normalized["coordinate_system"]
+        good = _position(position_context)
+        good["coordinate_system"] = authoritative
+        rejected = dict(good)
+        rejected["coordinate_system"] = {"frame": "WRONG_FRAME"}
+
+        class MetadataRepairAdapter:
+            def __init__(inner_self):
+                inner_self.calls = []
+
+            def complete(inner_self, slot, *, system, user):
+                payload = json.loads(user)
+                inner_self.calls.append((payload, system))
+                if len(inner_self.calls) == 1:
+                    return json.dumps(rejected)
+                return json.dumps(good)
+
+        adapter = MetadataRepairAdapter()
+        status = {"applied": False}
+        with tempfile.TemporaryDirectory() as temp:
+            artifact, _slot, attempts = _run_role(
+                self._router(adapter),
+                role_name="position_designer",
+                semantic_role_name="position_designer_revision",
+                payload={
+                    "position_context": position_context,
+                    "authoritative_coordinate_system": authoritative,
+                },
+                max_attempts=1,
+                run_path=Path(temp),
+                validator=lambda value: validate_position_design_artifact(value, self.normalized),
+                system_prompt=ROLE_SYSTEM_PROMPTS["position_designer"],
+                position_metadata_repair_status=status,
+            )
+            self.assertEqual(attempts, 2)
+            self.assertTrue(status["applied"])
+            self.assertEqual(artifact, good)
+            second_payload, second_system = adapter.calls[1]
+            repair = second_payload["position_metadata_repair"]
+            self.assertEqual(repair["validation_error"], "Position design coordinate_system must exactly match the authoritative design frame metadata.")
+            self.assertEqual(repair["authoritative_coordinate_system"], authoritative)
+            self.assertEqual(repair["rejected_position_artifact"], rejected)
+            self.assertIn("Preserve every artistic placement coordinate and fixture assignment", second_system)
+            self.assertIn("Repair only the coordinate_system metadata", second_system)
+            self.assertEqual(rejected["placements"], artifact["placements"])
+            diagnostic = json.loads((Path(temp) / "diagnostics" / "position_designer_revision-02.json").read_text(encoding="utf-8"))
+            self.assertEqual(diagnostic["POSITION_METADATA_REPAIR"], "YES")
+            failed = json.loads((Path(temp) / "attempts" / "position_designer_revision-01.json").read_text(encoding="utf-8"))
+            self.assertEqual(failed["validation_error"], "Position design coordinate_system must exactly match the authoritative design frame metadata.")
+            self.assertEqual(json.loads(failed["raw_response"]), rejected)
+
+    def test_position_revision_metadata_repair_is_not_used_for_other_failures(self):
+        position_context = build_position_context(self.normalized)
+        invalid = _position(position_context)
+        invalid["placements"][0]["xyz"]["x"] = float("inf")
+
+        class InvalidPositionAdapter:
+            def __init__(inner_self):
+                inner_self.calls = 0
+
+            def complete(inner_self, slot, *, system, user):
+                inner_self.calls += 1
+                return json.dumps(invalid)
+
+        adapter = InvalidPositionAdapter()
+        status = {"applied": False}
+        with tempfile.TemporaryDirectory() as temp:
+            with self.assertRaisesRegex(MultiAgentRunError, "finite numeric"):
+                _run_role(
+                    self._router(adapter),
+                    role_name="position_designer",
+                    semantic_role_name="position_designer_revision",
+                    payload={"position_context": position_context, "authoritative_coordinate_system": self.normalized["coordinate_system"]},
+                    max_attempts=1,
+                    run_path=Path(temp),
+                    validator=lambda value: validate_position_design_artifact(value, self.normalized),
+                    position_metadata_repair_status=status,
+                )
+        self.assertEqual(adapter.calls, 1)
+        self.assertFalse(status["applied"])
 
     def test_position_coordinate_system_must_match_authoritative_snapshot_object(self):
         artifact = _position(self.normalized)
