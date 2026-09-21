@@ -1004,6 +1004,48 @@ def _project_allowed_source_refs(selected_records: list[dict[str, object]]) -> l
     ]
 
 
+def _allowed_source_refs_from_saved_research_context(
+    run_path: Path,
+    context: dict[str, object],
+) -> list[dict[str, str]]:
+    """Rebuild the accepted Researcher source allow-list without request text.
+
+    A completed checkpoint's original selected knowledge IDs are preserved in
+    its model-context diagnostic. Rebinding those IDs to the current
+    canonical records keeps legacy revalidation deterministic without using a
+    guessed request or changing the Researcher artifact.
+    """
+    diagnostic_path = run_path / "diagnostics" / "researcher-01.json"
+    try:
+        diagnostic = json.loads(diagnostic_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise MultiAgentRunError("Completed source run is missing valid Researcher context diagnostics.") from exc
+    selected_ids = diagnostic.get("selected_knowledge_ids") if isinstance(diagnostic, dict) else None
+    if (
+        not isinstance(diagnostic, dict)
+        or diagnostic.get("role") != "researcher"
+        or not isinstance(selected_ids, list)
+        or any(not isinstance(item, str) or not item for item in selected_ids)
+        or len(selected_ids) != len(set(selected_ids))
+    ):
+        raise MultiAgentRunError("Completed source run Researcher context diagnostics have invalid selected knowledge identities.")
+    canonical_records = context.get("canonical_knowledge_records", [])
+    if not isinstance(canonical_records, list):
+        raise MultiAgentRunError("Canonical knowledge records are unavailable for Researcher checkpoint validation.")
+    record_by_id = {
+        str(record.get("record_id")): record
+        for record in canonical_records
+        if isinstance(record, dict) and isinstance(record.get("record_id"), str)
+    }
+    if any(record_id not in record_by_id for record_id in selected_ids):
+        raise MultiAgentRunError("Saved Researcher knowledge selections no longer resolve to canonical records.")
+    selected_records = [record_by_id[record_id] for record_id in selected_ids]
+    allowed = _project_allowed_source_refs(selected_records)
+    if diagnostic.get("RESEARCHER_ALLOWED_SOURCE_REF_COUNT") != len(allowed):
+        raise MultiAgentRunError("Saved Researcher source allow-list count does not match its canonical selections.")
+    return allowed
+
+
 def validate_research_source_contract(
     sources: object,
     allowed_source_refs: object,
@@ -2626,12 +2668,9 @@ def run_spatial_revision_loop(
     completed["critic"] = validate_critic_artifact(completed["critic"])
     completed["finalizer"] = validate_design_output(completed["finalizer"])
     validate_final_spatial_consistency(completed["finalizer"], completed["position_designer"], fingerprint)
-    researcher_payload = _role_context(
-        "researcher", request=revision_request, context=context, completed=completed
-    )
     _validate_artifact_evidence(
         "researcher", completed["researcher"], context,
-        allowed_source_refs=researcher_payload["research_context"]["allowed_source_refs"],
+        allowed_source_refs=_allowed_source_refs_from_saved_research_context(path, context),
     )
     for role in ("rig_designer", "position_designer", "lighting_designer", "critic"):
         _validate_artifact_evidence(role, completed[role], context)
