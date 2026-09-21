@@ -118,6 +118,7 @@ contract and report fields.
 | Fixture Market Learning | Approximately every 120 days, discover materially new fixture technology and its affordances. | Discovery does not expire existing knowledge or select equipment. |
 | MA / Console Knowledge | Improve native-console judgment and implementation options. | Must follow learning evidence and Stable Operator Contract. |
 | Future MA3 Architecture | Preserve separable capability/resolution boundaries. | No MA3 Builder implementation is currently authorized. |
+| OpenCode ZEN Quota HUD | Side-track: expose one normalized remaining-capacity indicator inside OpenCode, e.g. `ZEN 73%`, without requiring the operator to inspect individual providers. | PARKED / non-blocking. Display-only first; no paid-provider enablement and no routing-policy changes until explicitly resumed. |
 
 ## Fixture knowledge boundary
 
@@ -174,3 +175,45 @@ replace general professional knowledge or technical facts.
   action capability plus case context.
 - Broad industry evidence, not Zen’s habits alone, supplies the general design
   prior; Zen preference remains a distinct layer.
+
+
+## Parked side-track — OpenCode ZEN Quota HUD
+
+**Status:** RECORDED / PARKED / NON-BLOCKING
+
+**Purpose:** Use OpenCode's own plugin/UI surface to show one operator-facing
+remaining-capacity value for the ZEN free-provider pool. The normal view should
+answer only: “roughly how much ZEN capacity is still usable?” The operator does
+not need to care which provider contributes it.
+
+Example normal status:
+
+```text
+ZEN 73%
+```
+
+An optional expanded view may later show estimated remaining full Designs,
+Revisions, pool health, free-only state, and next known refill/reset time.
+
+This is **not** a raw average of provider quota percentages. Providers use
+different units and reset rules, so a future Quota Engine should normalize
+available capacity from whatever evidence is actually obtainable, potentially
+including provider-reported remaining quota, ZEN-observed call/token/neuron
+usage, provider health, role eligibility, recent success rate, and known reset
+windows.
+
+Initial implementation boundary when this side-track is resumed:
+
+1. OpenCode integration is UI/plugin-only; do not fork OpenCode merely for this.
+2. ZEN remains the authority for quota/capacity calculation.
+3. The first version is display-only and must not change provider routing.
+4. `PAID_PROVIDER_ALLOWED=NO` remains unchanged.
+5. Missing provider quota telemetry must remain UNKNOWN/estimated rather than
+   fabricated.
+6. This side-track must not interrupt the current MA2 design/programming
+   mainline.
+
+**Future acceptance:** OpenCode can render a stable `ZEN <percent>%` status
+from a local ZEN quota-state artifact, with clear provenance for measured,
+derived, and unknown inputs. Routing-aware conservation modes are a separate
+future decision, not part of this parked task.
