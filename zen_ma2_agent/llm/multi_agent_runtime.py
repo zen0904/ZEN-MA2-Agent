@@ -776,13 +776,6 @@ def _position_retry_contract(error: Exception) -> str:
     message = str(error).casefold()
     if "not valid json" in message:
         instruction = "Return exactly one complete JSON object only. No Markdown, comments, prefix, suffix, or explanation."
-    elif "coordinate_system must be an object" in message:
-        instruction = "coordinate_system must be the exact object supplied in position_context.coordinate_system. Do not replace it with a string."
-    elif "coordinate_system must exactly match the authoritative design frame metadata" in message:
-        instruction = (
-            "Return coordinate_system exactly byte-for-structure equivalent to the authoritative_coordinate_system object supplied in this request. "
-            "Copy all keys and values exactly; do not add, remove, rename, or paraphrase fields or values; do not infer MA2 native coordinate mapping."
-        )
     elif "missing required fields" in message:
         instruction = "Return every required top-level field. Empty arrays are valid where appropriate; never omit required fields."
     else:
@@ -942,14 +935,14 @@ ROLE_SYSTEM_PROMPTS = {
     "position_designer": (
         "ROLE: POSITION_DESIGNER. Turn the validated upstream Rig Designer artifact into concrete proposed conceptual Stage View geometry; this is a proposal only, not a write. "
         "Use only geometry_resources and allowed_placement_refs from position_context plus the supplied Rig Designer artifact. "
-        "The coordinate frame is backend metadata, not an artistic decision. Return coordinate_system EXACTLY byte-for-structure equivalent to the authoritative_coordinate_system object supplied below. "
-        "Copy all keys and values exactly. Do not add fields. Do not remove fields. Do not rename fields. Do not paraphrase values. Do not infer MA2 native coordinate mapping. "
-        "The same authoritative object is also exposed as position_context.coordinate_system; do not reconstruct or summarize it. "
+        "coordinate_system is immutable backend-owned design-frame metadata, not a Position Designer decision. ZEN runtime will bind the authoritative value after parsing your response. "
+        "You may omit coordinate_system or return a provisional value; the runtime replaces only that field with authoritative metadata. "
+        "Do not infer or claim MA2 native coordinate mapping. "
         "Fixture 9999 is protected and is never an available placement resource. "
         "Return exactly one top-level JSON object only. Its first key must be \"schema\" with exact value \"zen.multi_agent_position_design.v0.1\". "
-        "Include every required top-level field with exactly these types: show_fingerprint (string), coordinate_system (object copied exactly from position_context.coordinate_system), "
+        "Include every provider-authored top-level field with exactly these types: show_fingerprint (string), "
         "spatial_groups (array), placements (array), constraints (array), uncertainties (array), codex_artistic_intervention (exactly \"NONE\"). "
-        "Do not return coordinate_system as a string. Do not omit empty arrays. Do not return explanatory prose outside JSON, Markdown fences, or comments. "
+        "Do not omit empty arrays. Do not return explanatory prose outside JSON, Markdown fences, or comments. "
         "Every placement item must contain fixture_id (integer), optional subfixture_id (integer only when present in an allowed ref), show_fingerprint (string matching position_context.show_fingerprint), "
         "xyz (object with finite numeric x, y, z), and optional rotation (object with finite numeric x, y, z). "
         "Copy each placement identity exactly from position_context.allowed_placement_refs; never invent a fixture/subfixture identity. "
@@ -1604,6 +1597,47 @@ def _record_attempt_diagnostic(
     _write_json(path / "attempts" / f"{diagnostic_role_name or role_name}-{attempt:02}.json", diagnostic)
 
 
+def _record_position_provider_response_diagnostic(
+    path: Path,
+    *,
+    role_name: str,
+    attempt: int,
+    content: str,
+    parsed: object,
+    api_key: str,
+    provider_coordinate_system_status: str,
+) -> None:
+    """Preserve the provider's exact Position response without leaking credentials."""
+    secret_leaked = bool(api_key and api_key in content)
+    has_value = isinstance(parsed, dict) and "coordinate_system" in parsed
+    provider_value = parsed.get("coordinate_system") if has_value else None
+    serialized_value = _canonical_json(provider_value) if has_value else None
+    diagnostic: dict[str, object] = {
+        "schema": "zen.position_provider_response_diagnostic.v0.1",
+        "role": role_name,
+        "attempt": attempt,
+        "response_sha256": hashlib.sha256(content.encode("utf-8")).hexdigest(),
+        "response_characters": len(content),
+        "secret_check": "FAIL" if secret_leaked else "PASS",
+        "POSITION_COORDINATE_SYSTEM_AUTHORITY": "ZEN_RUNTIME",
+        "POSITION_METADATA_CANONICALIZED": "YES",
+        "PROVIDER_COORDINATE_SYSTEM_STATUS": provider_coordinate_system_status,
+        "CODEX_ARTISTIC_INTERVENTION": "NONE",
+    }
+    if has_value:
+        diagnostic["provider_coordinate_system_characters"] = len(serialized_value or "")
+        diagnostic["provider_coordinate_system_sha256"] = hashlib.sha256(
+            (serialized_value or "").encode("utf-8")
+        ).hexdigest()
+        if not secret_leaked and len(serialized_value or "") <= 4096:
+            diagnostic["provider_coordinate_system_raw"] = provider_value
+        elif not secret_leaked:
+            diagnostic["provider_coordinate_system_raw_bounded"] = (serialized_value or "")[:4096]
+    if not secret_leaked:
+        diagnostic["raw_response"] = content
+    _write_json(path / "attempts" / f"{role_name}-provider-response-{attempt:02}.json", diagnostic)
+
+
 def _record_structural_normalization_diagnostic(
     path: Path,
     *,
@@ -1856,41 +1890,20 @@ def _run_role(
     evidence_validation_enabled: bool = False,
     semantic_role_name: str | None = None,
     visual_evidence: ProviderImageInput | None = None,
-    position_metadata_repair_status: dict[str, object] | None = None,
+    authoritative_coordinate_system: dict[str, object] | None = None,
+    position_metadata_audit: dict[str, object] | None = None,
 ) -> tuple[dict[str, object], ProviderSlot, int]:
     validator = validator or ROLE_VALIDATORS[role_name]
     diagnostic_role_name = semantic_role_name or role_name
     last_error: Exception | None = None
-    attempt_limit = max_attempts
-    attempts_made = 0
-    metadata_repair_context: dict[str, object] | None = None
-    metadata_repair_enabled = (
-        role_name == "position_designer"
-        and diagnostic_role_name == "position_designer_revision"
-    )
-    while attempts_made < attempt_limit:
-        attempts_made += 1
-        attempt = attempts_made
+    for attempt in range(1, max_attempts + 1):
         content = ""
         parsed: object | None = None
         selected_slot: ProviderSlot | None = None
         provider_attempts: tuple[dict[str, object], ...] = ()
         structural_normalization = _empty_structural_normalization()
         system = system_prompt or ROLE_SYSTEM_PROMPTS[role_name]
-        is_metadata_repair_attempt = metadata_repair_context is not None
         attempt_payload = payload
-        if metadata_repair_context is not None:
-            attempt_payload = {
-                **payload,
-                "position_metadata_repair": metadata_repair_context,
-            }
-            system += (
-                " POSITION METADATA REPAIR: The prior Position artifact failed only this exact validator check: "
-                + str(metadata_repair_context["validation_error"])
-                + " Return coordinate_system EXACTLY byte-for-structure equivalent to the authoritative_coordinate_system object in this request. "
-                "Preserve every artistic placement coordinate and fixture assignment from rejected_position_artifact unless another validator error requires change. "
-                "Repair only the coordinate_system metadata to match the supplied authoritative object. Do not silently omit or replace any other content."
-            )
         if last_error is not None:
             system += f" Previous attempt failed validation: {last_error}. Correct only the structural issue and return JSON only." + RETRY_SAFETY_CONTRACT
             if role_name == "position_designer":
@@ -1933,11 +1946,49 @@ def _run_role(
                 extra={
                     "VISUAL_EVIDENCE_SENT": "YES" if visual_evidence is not None else "NO",
                     "VISUAL_EVIDENCE_SHA256": visual_evidence.sha256 if visual_evidence is not None else None,
-                    **({"POSITION_METADATA_REPAIR": "YES"} if metadata_repair_context is not None else {}),
                 },
             )
             try:
                 parsed = _parse_json(content)
+                if role_name == "position_designer":
+                    if not isinstance(authoritative_coordinate_system, dict):
+                        raise MultiAgentRunError(
+                            "Position role has no backend-owned authoritative coordinate_system object."
+                        )
+                    provider_coordinate_system_status = (
+                        "OMITTED" if not isinstance(parsed, dict) or "coordinate_system" not in parsed
+                        else "MATCHED" if parsed.get("coordinate_system") == authoritative_coordinate_system
+                        else "MISMATCHED"
+                    )
+                    if position_metadata_audit is not None:
+                        position_metadata_audit.update({
+                            "POSITION_COORDINATE_SYSTEM_AUTHORITY": "ZEN_RUNTIME",
+                            "POSITION_METADATA_CANONICALIZED": "YES",
+                            "PROVIDER_COORDINATE_SYSTEM_STATUS": provider_coordinate_system_status,
+                        })
+                    _record_position_provider_response_diagnostic(
+                        run_path,
+                        role_name=diagnostic_role_name,
+                        attempt=attempt,
+                        content=content,
+                        parsed=parsed,
+                        api_key=slot.api_key,
+                        provider_coordinate_system_status=provider_coordinate_system_status,
+                    )
+                    _update_model_context_diagnostic(
+                        path=diagnostic_path,
+                        provider_elapsed_seconds=elapsed,
+                        failure_class="SUCCESS",
+                        extra={
+                            "POSITION_COORDINATE_SYSTEM_AUTHORITY": "ZEN_RUNTIME",
+                            "POSITION_METADATA_CANONICALIZED": "YES",
+                            "PROVIDER_COORDINATE_SYSTEM_STATUS": provider_coordinate_system_status,
+                        },
+                    )
+                    if isinstance(parsed, dict):
+                        # Only backend-owned immutable metadata is rebound here.
+                        # Provider-authored placement/design fields are retained verbatim.
+                        parsed = {**parsed, "coordinate_system": authoritative_coordinate_system}
                 if role_name == "researcher":
                     source_diagnostics = _researcher_source_diagnostic_values(parsed, allowed_source_refs)
                     source_diagnostics.update({
@@ -1995,7 +2046,7 @@ def _run_role(
                     provider_elapsed_seconds=elapsed,
                     structural_normalization=structural_normalization,
                 )
-            return artifact, slot, attempts_made
+            return artifact, slot, attempt
         except (ProviderUnavailable, MultiAgentRunError, DesignValidationError) as exc:
             elapsed = time.monotonic() - started
             researcher_diagnostics = (
@@ -2013,7 +2064,6 @@ def _run_role(
                         **(researcher_diagnostics or {}),
                         "VISUAL_EVIDENCE_SENT": "YES" if visual_evidence is not None else "NO",
                         "VISUAL_EVIDENCE_SHA256": visual_evidence.sha256 if visual_evidence is not None else None,
-                        **({"POSITION_METADATA_REPAIR": "YES"} if metadata_repair_context is not None else {}),
                     },
                 )
                 if isinstance(exc, ProviderUnavailable):
@@ -2047,36 +2097,11 @@ def _run_role(
                     researcher_diagnostics=researcher_diagnostics,
                     diagnostic_role_name=diagnostic_role_name,
                 )
-            if (
-                metadata_repair_enabled
-                and metadata_repair_context is None
-                and type(exc) is MultiAgentRunError
-                and str(exc) == "Position design coordinate_system must exactly match the authoritative design frame metadata."
-                and isinstance(parsed, dict)
-                and isinstance(payload.get("authoritative_coordinate_system"), dict)
-            ):
-                metadata_repair_context = {
-                    "validation_error": str(exc),
-                    "authoritative_coordinate_system": payload["authoritative_coordinate_system"],
-                    "rejected_position_artifact": parsed,
-                }
-                attempt_limit = max(attempt_limit, attempts_made + 1)
-                if position_metadata_repair_status is not None:
-                    position_metadata_repair_status["applied"] = True
-            elif (
-                metadata_repair_enabled
-                and is_metadata_repair_attempt
-                and type(exc) is MultiAgentRunError
-                and str(exc) == "Position design coordinate_system must exactly match the authoritative design frame metadata."
-            ):
-                # The single targeted metadata repair did not fix the metadata;
-                # do not spend additional attempts repeating the same repair.
-                break
             if _failure_class(exc) == "TRANSPORT_TIMEOUT":
                 break
     assert last_error is not None
-    failure = MultiAgentRunError(f"{role_name} failed after {attempts_made} attempts: {last_error}")
-    failure.attempts = attempts_made
+    failure = MultiAgentRunError(f"{role_name} failed after {min(max_attempts, attempt)} attempts: {last_error}")
+    failure.attempts = min(max_attempts, attempt)
     raise failure from last_error
 
 
@@ -2396,11 +2421,14 @@ def run_multi_agent_design(
                 candidate_sets=candidate_sets,
                 design_review_state=review_state,
             )
-            if role_name == "position_designer" and normalized_snapshot is not None:
-                authoritative_coordinate_system = normalized_snapshot.get("coordinate_system")
-                if not isinstance(authoritative_coordinate_system, dict):
-                    raise MultiAgentRunError("Position role has no authoritative coordinate_system object in the normalized Show snapshot.")
-                payload["authoritative_coordinate_system"] = authoritative_coordinate_system
+            authoritative_coordinate_system = (
+                normalized_snapshot.get("coordinate_system")
+                if role_name == "position_designer" and normalized_snapshot is not None
+                else None
+            )
+            if role_name == "position_designer" and not isinstance(authoritative_coordinate_system, dict):
+                raise MultiAgentRunError("Position role has no authoritative coordinate_system object in the normalized Show snapshot.")
+            position_metadata_audit: dict[str, object] = {}
             parallel_results: list[tuple[dict[str, object], ProviderSlot]] = []
             parallel_runtime: dict[str, object] | None = None
             system_prompt = ROLE_SYSTEM_PROMPTS[role_name]
@@ -2492,6 +2520,12 @@ def run_multi_agent_design(
                     validator=validate_role_with_evidence,
                     system_prompt=system_prompt,
                     evidence_validation_enabled=True,
+                    authoritative_coordinate_system=(
+                        authoritative_coordinate_system
+                        if isinstance(authoritative_coordinate_system, dict)
+                        else None
+                    ),
+                    position_metadata_audit=(position_metadata_audit if role_name == "position_designer" else None),
                 )
                 structural_normalization = _read_structural_normalization_diagnostic(
                     path,
@@ -2525,6 +2559,7 @@ def run_multi_agent_design(
                 "structural_normalization": structural_normalization,
                 "current_show_fingerprint": show_fingerprint,
                 "CODEX_ARTISTIC_INTERVENTION": "NONE",
+                **position_metadata_audit,
             }
             if normalized_snapshot is not None and role_name == "finalizer":
                 envelope["design_review_state"] = review_state
@@ -2828,11 +2863,6 @@ def run_spatial_revision_loop(
             }
             payload["owner_review_decision"] = owner_decision
             payload["owner_revision_brief"] = owner_revision_brief
-            if role_name == "position_designer":
-                authoritative_coordinate_system = normalized_snapshot.get("coordinate_system")
-                if not isinstance(authoritative_coordinate_system, dict):
-                    raise MultiAgentRunError("Position revision has no authoritative coordinate_system object in the normalized Show snapshot.")
-                payload["authoritative_coordinate_system"] = authoritative_coordinate_system
             if model_visual_metadata is not None and role_name in visual_roles:
                 # This contains provenance metadata only; the router separately
                 # attaches the verified PNG bytes and never receives its path.
@@ -2895,7 +2925,7 @@ def run_spatial_revision_loop(
             visual_sent = False
             visual_sha256: str | None = None
             visual_attempt_rows: list[dict[str, object]] = []
-            position_metadata_repair_status: dict[str, object] = {"applied": False}
+            position_metadata_audit: dict[str, object] = {}
             if role_name == "critic" and visual_input is not None and model_visual_metadata is not None:
                 # Vision is best-effort. Keep its attempt evidence isolated so
                 # the required text-only structural Critic cannot overwrite it.
@@ -2954,9 +2984,13 @@ def run_spatial_revision_loop(
                     system_prompt=system,
                     evidence_validation_enabled=True,
                     semantic_role_name=semantic_role_name,
-                    position_metadata_repair_status=(
-                        position_metadata_repair_status if role_name == "position_designer" else None
+                    authoritative_coordinate_system=(
+                        normalized_snapshot.get("coordinate_system")
+                        if role_name == "position_designer"
+                        and isinstance(normalized_snapshot.get("coordinate_system"), dict)
+                        else None
                     ),
+                    position_metadata_audit=(position_metadata_audit if role_name == "position_designer" else None),
                     # Position and Rig are intentionally text-only even when a
                     # verified post-write image was supplied to the revision.
                     visual_evidence=None,
@@ -2986,7 +3020,7 @@ def run_spatial_revision_loop(
                 "VISUAL_CRITIC_STATUS": visual_critic_status if role_name == "critic" else "NOT_APPLICABLE",
                 "VISUAL_CRITIC_FAILURE_CLASS": visual_critic_failure_class if role_name == "critic" else None,
                 "STRUCTURAL_CRITIC_COMPLETE": "YES" if role_name == "critic" else "NOT_APPLICABLE",
-                "POSITION_METADATA_REPAIR": "YES" if position_metadata_repair_status.get("applied") else "NO",
+                **position_metadata_audit,
                 "provider_attempts": persisted_provider_attempts,
                 "CODEX_ARTISTIC_INTERVENTION": "NONE",
             })
@@ -3010,7 +3044,7 @@ def run_spatial_revision_loop(
             "visual_evidence_sha256": model_visual_metadata["sha256"] if model_visual_metadata is not None else None,
             "visual_critic_status": visual_critic_status if model_visual_metadata is not None else "UNAVAILABLE_FREE_PROVIDER",
             "visual_critic_failure_class": visual_critic_failure_class,
-            "position_metadata_repair": "YES" if position_metadata_repair_status.get("applied") else "NO",
+            **position_metadata_audit,
             "design_review_status": review_state["design_review_status"],
             "critic_severity": review_state["critic_severity"],
         }
