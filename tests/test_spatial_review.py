@@ -202,6 +202,70 @@ class SpatialReviewTests(unittest.TestCase):
         self.assertEqual(calibration["facts"]["PERFORMER_ZONE_KNOWN"], "UNKNOWN")
         self.assertIn("STAGE_AND_PERFORMER_CONTEXT", spatial_revision_readiness(calibration)["blocking_categories"])
 
+    def test_new_show_bootstrap_readiness_uses_zen_stage_frame_not_raw_fixture_signs(self):
+        normalized = {
+            "show_fingerprint": FINGERPRINT,
+            "spatial_bootstrap_mode": "NEW_UNDESIGNED_SHOW",
+            "initial_fixture_geometry": "UNDESIGNED",
+            "stage_frame": {
+                "frame_id": "ZEN_STAGE_FRAME_V1", "show_fingerprint": FINGERPRINT,
+                "authority": "ZEN_DESIGN_SPACE_CONVENTION_BOUND_TO_OPERATOR_STAGE_CONTEXT",
+                "origin": "STAGE_CENTER",
+                "axes": {
+                    "X_POSITIVE": "STAGE_LEFT", "X_NEGATIVE": "STAGE_RIGHT",
+                    "Y_POSITIVE": "UPSTAGE", "Y_NEGATIVE": "DOWNSTAGE_AUDIENCE",
+                    "Z_POSITIVE": "UP",
+                },
+            },
+            "operator_stage_context": {
+                "source_type": "OPERATOR_SUPPLIED_STAGE_CONTEXT", "status": "OPERATOR_VERIFIED",
+                "asserted_by": "OPERATOR", "show_fingerprint": FINGERPRINT,
+                "stage_view_image": {"sha256": "b" * 64},
+                "stage_region": {"status": "OPERATOR_VERIFIED", "shape": "SQUARE", "region": "ENTIRE_VISIBLE_GRAY_STAGE_PLANE", "visual_bounds_known": True},
+                "orientation": {"viewpoint": "FACING_STAGE", "audience_side": "IMAGE_BOTTOM_FOREGROUND", "upstage_direction": "IMAGE_TOP_BACKGROUND", "stage_right": "IMAGE_LEFT", "stage_left": "IMAGE_RIGHT"},
+                "performer_context": {"status": "OPERATOR_VERIFIED", "zone": "FRONT_STAGE_PRIORITY", "relation": "CLOSER_TO_AUDIENCE_THAN_UPSTAGE"},
+                "conceptual_design_scope": {"enabled": True, "scope": "CONCEPTUAL_VIRTUAL_FIXTURE_PLACEMENT_ONLY"},
+                "coordinate_sign_mapping": {"x": "UNKNOWN", "y": "UNKNOWN", "z": "UNKNOWN", "pan_tilt_may_fill_xyz_mapping": False},
+                "pan_tilt_calibration": {"derive_xyz_sign_mapping": False},
+            },
+            "fixture_inventory": [
+                {"fixture_id": 101, "availability": "AVAILABLE_INVENTORY_ONLY", "geometry": [{"subfixture_id": 1}]},
+                {"fixture_id": 9999, "availability": "PROTECTED_UNAVAILABLE", "geometry": [{"subfixture_id": 1}]},
+            ],
+            "placement_resource_refs": [{"fixture_id": 101, "subfixture_id": 1}],
+            "technical_capabilities": {
+                "status": "SHOW_BOUND_VERIFIED", "show_fingerprint": FINGERPRINT,
+                "verified_fixture_type_profiles": [{
+                    "fixture_id": 101, "show_fingerprint": FINGERPRINT,
+                    "confidence": "SHOW_BOUND_VERIFIED", "observed_attributes": ["DIM"],
+                }],
+            },
+        }
+        readiness = spatial_revision_readiness(normalized_snapshot=normalized)
+        self.assertTrue(readiness["ready"])
+        self.assertEqual(readiness["status"], "READY")
+        self.assertFalse(readiness["raw_ma2_xyz_sign_mapping_required"])
+        self.assertFalse(readiness["ma2_native_coordinate_mapping_required_for_conceptual_design"])
+        self.assertTrue(readiness["ma2_coordinate_transform_required_for_writeback"])
+        self.assertEqual(readiness["initial_fixture_geometry"], "UNDESIGNED")
+        self.assertEqual(readiness["zen_stage_frame_id"], "ZEN_STAGE_FRAME_V1")
+        self.assertEqual(readiness["fixture_inventory_count"], 2)
+        self.assertEqual(readiness["usable_fixture_count"], 1)
+        self.assertEqual(readiness["capability_binding_count"], 1)
+        self.assertFalse(readiness["writeback_eligible"])
+        self.assertFalse(readiness["resolver_eligible"])
+        self.assertTrue(all("xyz" not in geometry and "rotation" not in geometry for fixture in normalized["fixture_inventory"] for geometry in fixture["geometry"]))
+        self.assertNotIn("MA2_COORDINATE_CONCEPTS", readiness["blocking_categories"])
+
+    def test_bootstrap_geometry_delta_is_not_compared_across_coordinate_frames(self):
+        snapshot = {
+            "spatial_bootstrap_mode": "NEW_UNDESIGNED_SHOW",
+            "fixture_inventory": [{"fixture_id": 101, "geometry": [{"subfixture_id": 1}]}],
+        }
+        result = geometry_delta(snapshot, {"placements": [{"fixture_id": 101, "subfixture_id": 1, "xyz": {"x": 0, "y": 0, "z": 0}}]})
+        self.assertEqual(result["geometry_delta_from_snapshot"], "NOT_COMPARABLE_DIFFERENT_COORDINATE_FRAMES")
+        self.assertIsNone(result["placements_unchanged_count"])
+
     def test_fixture_capability_is_not_inferred_from_fixture_or_group_labels(self):
         snapshot = {
             "show_fingerprint": FINGERPRINT,

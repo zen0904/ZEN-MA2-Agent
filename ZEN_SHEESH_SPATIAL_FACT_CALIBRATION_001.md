@@ -119,3 +119,50 @@ convention must remain separate; it cannot satisfy XYZ mapping. A Stage View
 image is one supported evidence path but is not mandatory if equivalent
 verified evidence is supplied. No ZEN revision inference or spatial writeback
 is approved by this calibration update.
+
+## Superseding architecture direction: new-show design frame (2026-09-21)
+
+The preceding `BLOCKED_MISSING_EVIDENCE` result remains historically correct
+for a revision expressed in the scanned MA2 fixture coordinate frame. The
+owner has clarified that this is not a prerequisite for designing a new
+virtual fixture layout: new Shows can start with every fixture at the origin.
+Accordingly, `NEW_UNDESIGNED_SHOW` treats initial fixture geometry as
+`UNDESIGNED` and uses the independent owner-defined `ZEN_STAGE_FRAME_V1` for
+conceptual placement. Raw `CURRENT_SHOW_X/Y/Z_SIGN_MAPPING` remains
+`UNKNOWN`; the canonical ZEN convention is not an inference about MA2 signs or
+a direct MA2 write transform.
+
+For the fresh current Test Show fingerprint
+`145be3835bf8d23cf4cb416535a7313d90240077954594e33c4c995337023340`, the
+operator-confirmed square Stage View region, audience/upstage/stage-left/right
+orientation, front-priority performer context, and 56 exact Show-bound
+non-protected FixtureType capability profiles are available in the portable
+refresh artifacts. These facts can support a conceptual bootstrap design once
+the code changes pass regression verification. This note does not approve or
+execute a provider run, revision, Resolver, Builder, Move3D, or MA2 write.
+
+## Superseding conceptual-readiness checkpoint (2026-09-21)
+
+The missing-evidence status above applies to a revision in the scanned MA2
+fixture-coordinate frame. It does not block the separate
+`NEW_UNDESIGNED_SHOW` conceptual workflow. The readiness evaluator now accepts
+the normalized current Show snapshot directly and does not require a legacy
+calibration artifact for that mode. It verifies the same Show fingerprint
+across the snapshot, canonical ZEN stage frame, operator context and complete
+capability bindings; the launcher preflight additionally verifies the Stage
+View image bytes against its recorded SHA256.
+
+The current 145be fingerprint passed conceptual readiness with 57 inventory
+fixtures, 56 non-protected usable fixtures, 56 exact capability bindings and
+6 exact FixtureType profiles. Operator-confirmed square Stage region,
+orientation and front-priority performer context are bound to the same
+fingerprint. Native MA2 XYZ sign mapping remains `UNKNOWN` and is a
+writeback-only concern; Pan/Tilt does not populate it. Metric scale and
+installation feasibility remain unknown/out of scope.
+
+`CONCEPTUAL_VIRTUAL_FIXTURE_PLACEMENT_READINESS=READY` means only that a
+provider-authored virtual placement proposal may be requested. No provider
+was called at this checkpoint. It does not approve the prior rejected design,
+authorize physical installation, enable writeback/Resolver/Builder/Preview,
+or authorize MA2 changes. `MA2_WRITES=0` and
+`CODEX_ARTISTIC_INTERVENTION=NONE`.

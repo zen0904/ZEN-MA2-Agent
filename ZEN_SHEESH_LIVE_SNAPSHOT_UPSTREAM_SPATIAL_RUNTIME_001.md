@@ -575,3 +575,89 @@ image, physical bounds, performer/audience orientation, mounting positions,
 and current-fingerprint capability profiles are unknown or unavailable. The
 bounded ZEN-authored revision loop (maximum two cycles) is implemented and
 tested, but no new provider run was made. MA2 writeback remains unauthorized.
+
+## Owner architecture correction: independent stage frame (2026-09-21)
+
+The prior calibration block treated current-Show fixture XYZ sign mapping as
+necessary to establish a usable design coordinate frame. That is not the
+long-term product contract: a new Show may have every fixture at the origin.
+The earlier completed `SHEESH_CURRENT_SHOW_REDESIGN_001` run remains untouched
+negative evidence and its 64/64 geometry match is not reinterpreted as a valid
+redesign.
+
+The runtime now defines `SPATIAL_BOOTSTRAP_MODE=NEW_UNDESIGNED_SHOW` and
+`INITIAL_FIXTURE_GEOMETRY=UNDESIGNED`. In that mode, Position Designer receives
+verified fixture/subfixture identities and exact current-fingerprint capability
+profiles but not the scanned XYZ/rotation values. `ZEN_STAGE_FRAME_V1` is the
+independent conceptual design-space convention: origin at Stage Center; X+
+Stage Left / X− Stage Right; Y+ Upstage / Y− Downstage/Audience; Z+ Up. It is
+bound to fingerprint `145be3835bf8d23cf4cb416535a7313d90240077954594e33c4c995337023340`
+and the operator-confirmed square visual stage region, facing-stage image
+orientation, and front-priority performer context. The Stage is not classified
+as trapezoidal. Metric dimensions remain unknown.
+
+MA2 fixture-object XYZ sign mapping remains `UNKNOWN`; Pan/Tilt and fixture
+extrema do not fill it. Proposed Position coordinates use
+`ZEN_CONCEPTUAL_STAGE_UNITS`, are not a direct MA2 Pos transform, and do not
+authorize physical installation. Truss/mounting/structural/cable/load/
+obstruction constraints remain deferred or out of scope. Imported Shows retain
+the optional legacy geometry-comparison mode. Bootstrap coordinate comparisons
+are `NOT_COMPARABLE_DIFFERENT_COORDINATE_FRAMES`, not zero or changed geometry.
+
+The portable launcher now accepts the snapshot, Show profile, operator stage
+context, Show-bound capability profile artifact, and bootstrap mode as
+explicit inputs. The current USB refresh contains 57 fixtures, 7 Groups, 65
+scanned geometry rows (historical only for bootstrap), and 56 non-protected
+Show-bound capability profiles. Fixture 9999 remains protected. The runtime
+and focused regression cases were edited, but the full suite/self-check were
+not run in this handoff; no provider inference was launched. The next gate is
+to verify the implementation, then let ZEN run a new read-only spatial design
+using this snapshot. No Resolver, Builder, Move3D, or MA2 writeback was added.
+
+```text
+SPATIAL_BOOTSTRAP_MODE=NEW_UNDESIGNED_SHOW
+INITIAL_FIXTURE_GEOMETRY=UNDESIGNED
+ZEN_STAGE_FRAME=ZEN_STAGE_FRAME_V1
+CURRENT_SHOW_FINGERPRINT=145be3835bf8d23cf4cb416535a7313d90240077954594e33c4c995337023340
+CURRENT_SHOW_XYZ_SIGN_MAPPING=UNKNOWN
+RAW_XYZ_REQUIRED_FOR_CALIBRATION=NO
+EXACT_SHOW_BOUND_CAPABILITY_PROFILES=56
+SPATIAL_REVISION_READINESS=NOT_EXECUTED (operator evidence appears complete for bootstrap; implementation awaits regression verification)
+PROVIDER_RUN=NOT_RUN
+MA2_WRITES=0
+CODEX_ARTISTIC_INTERVENTION=NONE
+```
+
+## Regression and conceptual-readiness checkpoint (2026-09-21)
+
+The previous paragraph's pending-verification statement is superseded. The
+uncommitted bootstrap implementation passed `git diff --check`, the complete
+suite (`602/602`), and `python main.py --self-check`. A no-provider readiness
+preflight was then run against the USB refresh artifacts for the same
+fingerprinted Show. It normalized the machine snapshot, operator context and
+capability profiles; verified the Stage View PNG SHA256 against the operator
+context; and returned `READY` using the independent ZEN stage frame.
+
+The preflight confirmed 57 inventory fixtures, 56 usable fixtures, 56 exact
+Show-bound capability bindings and 6 exact FixtureType profiles. Stage context
+and front-priority performer context are operator verified. Initial XYZ and
+rotation are not sent to artistic roles in bootstrap mode. Native MA2
+coordinate mapping is not required for conceptual design, but a separately
+verified transform remains required for future writeback. No provider was
+called, and Resolver, Builder, Preview-for-writeback, Move3D, MA2 transport,
+and all MA2 writes remain disabled.
+
+```text
+FULL_TEST_STATUS=602/602 PASS
+SELF_CHECK=PASS
+SPATIAL_BOOTSTRAP_MODE=NEW_UNDESIGNED_SHOW
+ZEN_STAGE_FRAME_VERSION=ZEN_STAGE_FRAME_V1
+CONCEPTUAL_VIRTUAL_FIXTURE_PLACEMENT_READINESS=READY
+REMAINING_BLOCKERS=[]
+PROVIDER_CALLS=0
+MA2_WRITES=0
+CODEX_ARTISTIC_INTERVENTION=NONE
+```
+
+This is a clean readiness checkpoint only. It is not a generated design,
+Critic approval, physical installation approval, or MA2 write authorization.

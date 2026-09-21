@@ -19,7 +19,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Mapping
 from uuid import uuid4
 
 from ..portable import portable_state_path
@@ -303,6 +303,27 @@ def _snapshot_identity_sets(snapshot: dict[str, object]) -> tuple[set[int], set[
     return fixture_ids, subfixture_refs
 
 
+def _placement_identity_key(value: Mapping[str, object]) -> tuple[int, int | None]:
+    fixture_id = value.get("fixture_id")
+    subfixture_id = value.get("subfixture_id")
+    return (
+        int(fixture_id),
+        int(subfixture_id) if isinstance(subfixture_id, int) and not isinstance(subfixture_id, bool) else None,
+    )
+
+
+def _allowed_position_identity_keys(snapshot: dict[str, object]) -> set[tuple[int, int | None]]:
+    if snapshot.get("spatial_bootstrap_mode") == "NEW_UNDESIGNED_SHOW":
+        refs = snapshot.get("placement_resource_refs", [])
+        return {
+            _placement_identity_key(ref)
+            for ref in refs
+            if isinstance(ref, Mapping)
+        }
+    _, subfixture_refs = _snapshot_identity_sets(snapshot)
+    return {(fixture_id, subfixture_id) for fixture_id, subfixture_id in subfixture_refs}
+
+
 def _validate_embedded_fixture_refs(
     value: object,
     *,
@@ -383,15 +404,16 @@ def validate_position_design_artifact(value: object, snapshot: dict[str, object]
     if not isinstance(artifact.get("coordinate_system"), dict):
         raise MultiAgentRunError("Position design coordinate_system must be an object.")
     if artifact["coordinate_system"] != snapshot.get("coordinate_system"):
-        raise MultiAgentRunError("Position design coordinate_system must exactly match the authoritative current Show metadata.")
+        raise MultiAgentRunError("Position design coordinate_system must exactly match the authoritative design frame metadata.")
     for field in ("spatial_groups", "placements", "constraints", "uncertainties"):
         if not isinstance(artifact.get(field), list):
             raise MultiAgentRunError(f"Position design {field} must be an array.")
     if _contains_spatial_command_or_mutation(artifact):
         raise MultiAgentRunError("Position design contains a prohibited command or Show identity/patch mutation field.")
     fixture_ids, subfixture_refs = _snapshot_identity_sets(snapshot)
+    allowed_position_refs = _allowed_position_identity_keys(snapshot)
     _validate_embedded_fixture_refs(artifact["spatial_groups"], fixture_ids=fixture_ids, subfixture_refs=subfixture_refs)
-    seen: set[tuple[int, int]] = set()
+    seen: set[tuple[int, int | None]] = set()
     for placement in artifact["placements"]:
         if not isinstance(placement, dict):
             raise MultiAgentRunError("Position placements must be objects.")
@@ -399,14 +421,14 @@ def validate_position_design_artifact(value: object, snapshot: dict[str, object]
         subfixture_id = placement.get("subfixture_id")
         if (
             isinstance(fixture_id, bool) or not isinstance(fixture_id, int)
-            or isinstance(subfixture_id, bool) or not isinstance(subfixture_id, int)
+            or (subfixture_id is not None and (isinstance(subfixture_id, bool) or not isinstance(subfixture_id, int)))
         ):
-            raise MultiAgentRunError("Each placement must identify a fixture_id and subfixture_id.")
+            raise MultiAgentRunError("Each placement must identify a fixture_id and an optional verified subfixture_id.")
         if fixture_id == 9999:
             raise MultiAgentRunError("Fixture 9999 is protected and unavailable for placement.")
         ref = (fixture_id, subfixture_id)
-        if ref not in subfixture_refs:
-            raise MultiAgentRunError("Position placement references an unknown geometry-bearing fixture/subfixture.")
+        if ref not in allowed_position_refs:
+            raise MultiAgentRunError("Position placement references an unknown geometry-bearing or unavailable fixture/subfixture identity.")
         if ref in seen:
             raise MultiAgentRunError("Position design contains duplicate placement references.")
         seen.add(ref)
@@ -444,6 +466,71 @@ def build_position_context(snapshot: dict[str, object]) -> dict[str, object]:
 
     geometry_resources: list[dict[str, object]] = []
     protected_refs: list[dict[str, object]] = []
+    bootstrap_mode = snapshot.get("spatial_bootstrap_mode")
+    if bootstrap_mode == "NEW_UNDESIGNED_SHOW":
+        fixture_by_id = {
+            int(item["fixture_id"]): item
+            for item in inventory
+            if isinstance(item, dict) and isinstance(item.get("fixture_id"), int)
+        }
+        for raw_ref in snapshot.get("placement_resource_refs", []):
+            if not isinstance(raw_ref, dict):
+                continue
+            fixture_id = raw_ref.get("fixture_id")
+            fixture = fixture_by_id.get(fixture_id) if isinstance(fixture_id, int) else None
+            if fixture is None or fixture_id == 9999 or fixture.get("availability") == "PROTECTED_UNAVAILABLE":
+                continue
+            resource: dict[str, object] = {
+                **raw_ref,
+                "fixture_type_identity": fixture.get("fixture_type_identity", "UNKNOWN"),
+                "group_ids": list(fixture.get("group_ids", [])),
+                "availability": fixture.get("availability", "UNKNOWN"),
+                "initial_geometry": "UNDESIGNED",
+            }
+            geometry_resources.append(resource)
+        capability_profiles = _project_fixture_capability_profiles(snapshot)
+        protected_inventory_present = False
+        for fixture in inventory:
+            if not isinstance(fixture, dict) or fixture.get("fixture_id") != 9999:
+                continue
+            protected_inventory_present = True
+            protected_geometry = fixture.get("geometry", [])
+            if isinstance(protected_geometry, list) and protected_geometry:
+                protected_refs.extend(
+                    {"fixture_id": 9999, "subfixture_id": row.get("subfixture_id"), "availability": "PROTECTED_UNAVAILABLE"}
+                    for row in protected_geometry if isinstance(row, dict)
+                )
+            else:
+                protected_refs.append({"fixture_id": 9999, "availability": "PROTECTED_UNAVAILABLE"})
+        if not protected_inventory_present:
+            protected_refs.append({
+                "fixture_id": 9999,
+                "availability": "PROTECTED_BY_ZEN_POLICY_NOT_IN_INVENTORY",
+            })
+        geometry_resources.sort(key=lambda item: (int(item["fixture_id"]), int(item.get("subfixture_id", 0))))
+        protected_refs.sort(key=lambda item: (int(item["fixture_id"]), int(item.get("subfixture_id", 0))))
+        return {
+            "schema": "zen.position_context.v0.2",
+            "spatial_bootstrap_mode": "NEW_UNDESIGNED_SHOW",
+            "show_fingerprint": fingerprint,
+            "coordinate_system": dict(snapshot.get("stage_frame", coordinate_system)),
+            "stage_context": snapshot.get("operator_stage_context", {}),
+            "geometry_resources": geometry_resources,
+            "verified_capability_profiles": capability_profiles,
+            "allowed_placement_refs": [
+                {key: value for key, value in item.items() if key in {"fixture_id", "subfixture_id"}}
+                for item in geometry_resources
+            ],
+            "protected_refs": protected_refs,
+            "initial_fixture_geometry": "UNDESIGNED",
+            "historical_geometry_comparison": {
+                "scanned_record_count": snapshot.get("geometry_record_count", 0),
+                "values_included": False,
+                "coordinate_relation": "NOT_MAPPED_TO_ZEN_STAGE_FRAME",
+            },
+            "limitations": list(snapshot.get("limitations", [])),
+        }
+
     for fixture in inventory:
         if not isinstance(fixture, dict):
             continue
@@ -485,6 +572,82 @@ def build_position_context(snapshot: dict[str, object]) -> dict[str, object]:
     }
 
 
+def _model_facing_current_show_snapshot(snapshot: dict[str, object]) -> dict[str, object]:
+    """Project current Show facts without exposing legacy XYZ as bootstrap truth."""
+    if snapshot.get("spatial_bootstrap_mode") != "NEW_UNDESIGNED_SHOW":
+        return snapshot
+    capability_data = snapshot.get("technical_capabilities", {})
+    return {
+        "schema": snapshot.get("schema"),
+        "show_fingerprint": snapshot.get("show_fingerprint"),
+        "spatial_bootstrap_mode": "NEW_UNDESIGNED_SHOW",
+        "initial_fixture_geometry": "UNDESIGNED",
+        "coordinate_system": snapshot.get("stage_frame"),
+        "ma2_fixture_coordinate_system": snapshot.get("ma2_fixture_coordinate_system"),
+        "stage_frame": snapshot.get("stage_frame"),
+        "operator_stage_context": snapshot.get("operator_stage_context"),
+        "fixture_count": snapshot.get("fixture_count"),
+        "group_count": snapshot.get("group_count"),
+        "available_resource_refs": snapshot.get("placement_resource_refs", []),
+        "protected_fixture_ids": [9999],
+        "fixture_inventory": [
+            {
+                key: fixture.get(key)
+                for key in ("fixture_id", "name", "fixture_type_identity", "availability", "group_ids")
+                if key in fixture
+            }
+            for fixture in snapshot.get("fixture_inventory", [])
+            if isinstance(fixture, dict)
+        ],
+        "groups": snapshot.get("groups", []),
+        "technical_capabilities": {
+            "status": capability_data.get("status", "UNKNOWN_FOR_CURRENT_FINGERPRINT") if isinstance(capability_data, dict) else "UNKNOWN_FOR_CURRENT_FINGERPRINT",
+            "show_fingerprint": snapshot.get("show_fingerprint"),
+            "verified_fixture_type_profiles": _project_fixture_capability_profiles(snapshot),
+            "reason": capability_data.get("reason", "Capability evidence unavailable.") if isinstance(capability_data, dict) else "Capability evidence unavailable.",
+        },
+        "historical_geometry_comparison": {
+            "record_count": snapshot.get("geometry_record_count", 0),
+            "values_included": False,
+            "authority": "HISTORICAL_COMPARISON_ONLY",
+        },
+        "limitations": snapshot.get("limitations", []),
+        "CODEX_ARTISTIC_INTERVENTION": "NONE",
+    }
+
+
+def _project_fixture_capability_profiles(snapshot: dict[str, object]) -> list[dict[str, object]]:
+    """Deduplicate exact Show-bound profiles without merging unlike FixtureTypes."""
+    capability_data = snapshot.get("technical_capabilities", {})
+    rows = capability_data.get("verified_fixture_type_profiles", []) if isinstance(capability_data, dict) else []
+    grouped: dict[tuple[object, object], dict[str, object]] = {}
+    for profile in rows if isinstance(rows, list) else []:
+        if not isinstance(profile, dict):
+            continue
+        identity = profile.get("fixture_type_identity", {})
+        if not isinstance(identity, dict):
+            continue
+        key = (identity.get("fixture_type_id"), identity.get("list_label"))
+        group = grouped.get(key)
+        if group is None:
+            group = {
+                "fixture_type_identity": dict(identity),
+                "source": profile.get("source"),
+                "confidence": profile.get("confidence"),
+                "observed_attributes": list(profile.get("observed_attributes", [])),
+                "capabilities": profile.get("capabilities", {}),
+                "fixture_ids": [],
+            }
+            grouped[key] = group
+        fixture_id = profile.get("fixture_id")
+        if isinstance(fixture_id, int) and not isinstance(fixture_id, bool):
+            group["fixture_ids"].append(fixture_id)
+    return [
+        {**group, "fixture_ids": sorted(set(group["fixture_ids"]))}
+        for _key, group in sorted(grouped.items(), key=lambda item: (str(item[0][0]), str(item[0][1])))
+    ]
+
+
 def _position_retry_contract(error: Exception) -> str:
     """Return a structure-only retry note for known Position contract failures."""
     message = str(error).casefold()
@@ -502,6 +665,27 @@ def _position_retry_contract(error: Exception) -> str:
     )
 
 
+def _bootstrap_role_prompt(role_name: str, prompt: str) -> str:
+    """Add owner-specified structure for conceptual new-Show spatial roles."""
+    if role_name not in {"rig_designer", "position_designer"}:
+        return prompt
+    result = prompt + (
+        " SPATIAL BOOTSTRAP CONTRACT: SPATIAL_BOOTSTRAP_MODE=NEW_UNDESIGNED_SHOW. "
+        "INITIAL_FIXTURE_GEOMETRY=UNDESIGNED. Treat scanned XYZ/rotation only as historical comparison evidence; it is intentionally absent from your model-facing placement resources and must not constrain or calibrate the design. "
+        "Use the supplied ZEN_STAGE_FRAME_V1, whose origin and axis meanings are explicit and independent of fixture positions. "
+        "Design the virtual fixture arrangement from the audience view, verified stage region, front-weighted performer context, exact inventory identities, and only Show-bound verified capability evidence. "
+        "Do not sort fixture families into permanent rows or roles merely by labels. Proposed XYZ values are ZEN conceptual stage-space values, not direct MA2 Pos values or installation approval. "
+        "Truss, mounting, structural, cable, load, obstruction, and installation constraints are deferred or out of scope. Do not emit MA2 commands or imply write authorization."
+    )
+    if role_name == "position_designer":
+        result += (
+            " Lay out every resource the validated Rig Designer explicitly selected for placement. "
+            "Do not silently omit a selected resource or preserve an assumed default/origin position; "
+            "resources intentionally left unused must remain unassigned by the Rig Designer."
+        )
+    return result
+
+
 def validate_final_spatial_consistency(
     final_artifact: dict[str, object],
     position_artifact: dict[str, object],
@@ -514,13 +698,13 @@ def validate_final_spatial_consistency(
     if final_artifact.get("position_design_reference") != expected_reference:
         raise MultiAgentRunError("Finalizer position_design_reference does not identify the validated upstream Position Designer artifact.")
     expected = {
-        (item["fixture_id"], item["subfixture_id"]): item["xyz"]
+        (item["fixture_id"], item.get("subfixture_id")): item["xyz"]
         for item in position_artifact.get("placements", []) if isinstance(item, dict)
     }
 
     def visit(value: object) -> None:
         if isinstance(value, dict):
-            if "fixture_id" in value and "subfixture_id" in value and "xyz" in value:
+            if "fixture_id" in value and "xyz" in value:
                 key = (value.get("fixture_id"), value.get("subfixture_id"))
                 if key not in expected or value.get("xyz") != expected[key]:
                     raise MultiAgentRunError("Final design geometry contradicts the upstream Position Designer artifact.")
@@ -618,7 +802,8 @@ ROLE_SYSTEM_PROMPTS = {
     "rig_designer": (
         "ROLE: RIG_DESIGNER. Create the upstream spatial/resource organization for this exact current Show before lighting design. "
         "Use only the supplied live Show snapshot and Researcher artifact. Fixture type and Group labels are identity evidence only, never artistic roles. "
-        "Treat coordinate axes as UNKNOWN unless the supplied snapshot explicitly verifies semantics; do not infer stage-left/right or performer zones. "
+        "When stage_frame is supplied, use its explicit ZEN design-space semantics exactly and keep them separate from raw MA2 fixture coordinates. "
+        "Do not infer stage direction from fixture extrema, fixture rows, fixture labels, Groups, or Pan/Tilt. "
         "Only reference real fixture/subfixture identities. Fixture 9999 is protected and unavailable. Do not claim unavailable fixture capabilities. "
         "Do not alter fixture identity, type, Patch, Address, or Stage geometry. Return exactly one JSON object. "
         "Its first key must be \"schema\" with exact value \"zen.multi_agent_rig_design.v0.1\". Then include the required fields "
@@ -627,7 +812,7 @@ ROLE_SYSTEM_PROMPTS = {
         "Emit no MA2 commands, Lua, shell, or executable text. Set codex_artistic_intervention to NONE."
     ),
     "position_designer": (
-        "ROLE: POSITION_DESIGNER. Turn the validated upstream Rig Designer artifact into concrete proposed test-show geometry; this is a proposal only, not a write. "
+        "ROLE: POSITION_DESIGNER. Turn the validated upstream Rig Designer artifact into concrete proposed conceptual Stage View geometry; this is a proposal only, not a write. "
         "Use only geometry_resources and allowed_placement_refs from position_context plus the supplied Rig Designer artifact. "
         "The coordinate frame is backend metadata, not an artistic decision. Copy coordinate_system exactly from position_context.coordinate_system; do not infer or reinterpret its axis semantics. "
         "Fixture 9999 is protected and is never an available placement resource. "
@@ -635,7 +820,7 @@ ROLE_SYSTEM_PROMPTS = {
         "Include every required top-level field with exactly these types: show_fingerprint (string), coordinate_system (object copied exactly from position_context.coordinate_system), "
         "spatial_groups (array), placements (array), constraints (array), uncertainties (array), codex_artistic_intervention (exactly \"NONE\"). "
         "Do not return coordinate_system as a string. Do not omit empty arrays. Do not return explanatory prose outside JSON, Markdown fences, or comments. "
-        "Every placement item must contain only fixture_id (integer), subfixture_id (integer), show_fingerprint (string matching position_context.show_fingerprint), "
+        "Every placement item must contain fixture_id (integer), optional subfixture_id (integer only when present in an allowed ref), show_fingerprint (string matching position_context.show_fingerprint), "
         "xyz (object with finite numeric x, y, z), and optional rotation (object with finite numeric x, y, z). "
         "Copy each placement identity exactly from position_context.allowed_placement_refs; never invent a fixture/subfixture identity. "
         "Keep placements compact: identity and geometry only, no per-placement essay and do not repeat the full Rig explanation. Put shared rationale concisely in spatial_groups, constraints, or uncertainties. "
@@ -858,7 +1043,9 @@ def _role_context(
         if not isinstance(live_snapshot, dict):
             raise MultiAgentRunError("RIG_DESIGNER requires a validated current Show snapshot.")
         return common | {
-            "current_show_snapshot": live_snapshot,
+            "current_show_snapshot": _model_facing_current_show_snapshot(live_snapshot),
+            "stage_context": live_snapshot.get("operator_stage_context"),
+            "stage_frame": live_snapshot.get("stage_frame") or live_snapshot.get("coordinate_system"),
             "research_artifact": completed["researcher"],
             "owner_constraints": context.get("hard_constraints", []),
         }
@@ -882,7 +1069,8 @@ def _role_context(
         }
         if isinstance(live_snapshot, dict):
             lighting_payload |= {
-                "current_show_snapshot": live_snapshot,
+                "current_show_snapshot": _model_facing_current_show_snapshot(live_snapshot),
+                "stage_frame": live_snapshot.get("stage_frame") or live_snapshot.get("coordinate_system"),
                 "rig_design_artifact": completed["rig_designer"],
                 "position_design_artifact": completed["position_designer"],
             }
@@ -899,7 +1087,8 @@ def _role_context(
         }
         if isinstance(live_snapshot, dict):
             critic_payload |= {
-                "current_show_snapshot": live_snapshot,
+                "current_show_snapshot": _model_facing_current_show_snapshot(live_snapshot),
+                "stage_frame": live_snapshot.get("stage_frame") or live_snapshot.get("coordinate_system"),
                 "rig_design_artifact": completed["rig_designer"],
                 "position_design_artifact": completed["position_designer"],
             }
@@ -934,7 +1123,8 @@ def _role_context(
         # validated values unchanged; finalization may reference, not replace,
         # the Position Designer proposal.
         finalizer_payload |= {
-            "current_show_snapshot": live_snapshot,
+            "current_show_snapshot": _model_facing_current_show_snapshot(live_snapshot),
+            "stage_frame": live_snapshot.get("stage_frame") or live_snapshot.get("coordinate_system"),
             "rig_design_artifact": completed["rig_designer"],
             "position_design_artifact": completed["position_designer"],
             "latest_lighting_designer_artifact": completed["lighting_designer"],
@@ -1127,19 +1317,27 @@ def _bind_current_show_context(
     bound = dict(context)
     categories = dict(bound.get("categories", {}))
     fingerprint = str(snapshot["show_fingerprint"])
+    capability_data = snapshot.get("technical_capabilities", {})
+    capability_profiles = (
+        capability_data.get("verified_fixture_type_profiles", [])
+        if isinstance(capability_data, dict) else []
+    )
     categories["fixture_technical_capability"] = {
-        "status": "UNKNOWN_FOR_CURRENT_FINGERPRINT",
+        "status": capability_data.get("status", "UNKNOWN_FOR_CURRENT_FINGERPRINT") if isinstance(capability_data, dict) else "UNKNOWN_FOR_CURRENT_FINGERPRINT",
         "show_fingerprint": fingerprint,
-        "capabilities": [],
-        "reason": snapshot["technical_capabilities"]["reason"],
+        "capabilities": _project_fixture_capability_profiles(snapshot),
+        "reason": capability_data.get("reason", "Capability evidence unavailable.") if isinstance(capability_data, dict) else "Capability evidence unavailable.",
     }
     categories["rig_spatial_visual_affordance"] = {
-        "status": "LIVE_GEOMETRY_ONLY",
+        "status": "CANONICAL_ZEN_STAGE_FRAME" if snapshot.get("spatial_bootstrap_mode") == "NEW_UNDESIGNED_SHOW" else "LIVE_GEOMETRY_ONLY",
         "show_fingerprint": fingerprint,
         "coordinate_system": snapshot["coordinate_system"],
+        "spatial_bootstrap_mode": snapshot.get("spatial_bootstrap_mode"),
+        "initial_fixture_geometry": snapshot.get("initial_fixture_geometry"),
         "fixture_count": snapshot["fixture_count"],
         "geometry_record_count": snapshot["geometry_record_count"],
         "group_count": snapshot["group_count"],
+        "stage_frame": snapshot.get("stage_frame"),
         "semantic_positions": "NONE_VERIFIED",
     }
     # These cached inputs can belong to a different Show. Keep their existence
@@ -1160,9 +1358,15 @@ def _bind_current_show_context(
     }
     facts = [
         ("fixture_inventory", f"The read-only current Show snapshot records {snapshot['fixture_count']} fixtures and {snapshot['group_count']} Groups."),
-        ("fixture_geometry", f"The read-only current Show snapshot records {snapshot['geometry_record_count']} fixture/subfixture geometry entries; axis semantics remain UNKNOWN."),
-        ("technical_capability_status", "No current-fingerprint verified fixture capability profiles are available to this run."),
+        ("fixture_geometry", (
+            "Initial fixture geometry is UNDESIGNED; any scanned XYZ/rotation is historical comparison evidence, not stage-frame calibration."
+            if snapshot.get("spatial_bootstrap_mode") == "NEW_UNDESIGNED_SHOW"
+            else f"The read-only current Show snapshot records {snapshot['geometry_record_count']} fixture/subfixture geometry entries; axis semantics remain UNKNOWN."
+        )),
+        ("technical_capability_status", f"Current-fingerprint fixture capability status: {capability_data.get('status', 'UNKNOWN_FOR_CURRENT_FINGERPRINT') if isinstance(capability_data, dict) else 'UNKNOWN_FOR_CURRENT_FINGERPRINT'}."),
     ]
+    if isinstance(snapshot.get("stage_frame"), dict):
+        facts.append(("zen_stage_frame", "The owner-specified ZEN_STAGE_FRAME_V1 is bound to the operator-confirmed Stage View and is independent of scanned fixture positions."))
     for name, summary in facts:
         entries.append({
             "evidence_ref": f"CURRENT_SHOW:{fingerprint}:{name}",
@@ -1870,6 +2074,9 @@ def run_multi_agent_design(
         "CURRENT_SHOW_SNAPSHOT_SOURCE_HASH": normalized_snapshot.get("source_artifact_hash") if normalized_snapshot else None,
         "LIVE_SHOW_SNAPSHOT_IN_CONTEXT": "YES" if normalized_snapshot else "NO",
         "CURRENT_SHOW_CAPABILITY_STATUS": normalized_snapshot.get("technical_capabilities", {}).get("status") if normalized_snapshot else "NOT_SUPPLIED",
+        "SPATIAL_BOOTSTRAP_MODE": normalized_snapshot.get("spatial_bootstrap_mode") if normalized_snapshot else "NOT_APPLICABLE",
+        "INITIAL_FIXTURE_GEOMETRY": normalized_snapshot.get("initial_fixture_geometry") if normalized_snapshot else "NOT_APPLICABLE",
+        "ZEN_STAGE_FRAME_ID": (normalized_snapshot.get("stage_frame") or {}).get("frame_id") if normalized_snapshot else None,
         "role_execution": [] if restart_run else list(previous_state.get("role_execution", [])),
         "LOCAL_MODEL_USED": "NO",
         "CLOUD_REQUIRED": "NO",
@@ -1910,6 +2117,11 @@ def run_multi_agent_design(
             parallel_results: list[tuple[dict[str, object], ProviderSlot]] = []
             parallel_runtime: dict[str, object] | None = None
             system_prompt = ROLE_SYSTEM_PROMPTS[role_name]
+            if (
+                isinstance(normalized_snapshot, dict)
+                and normalized_snapshot.get("spatial_bootstrap_mode") == "NEW_UNDESIGNED_SHOW"
+            ):
+                system_prompt = _bootstrap_role_prompt(role_name, system_prompt)
             if normalized_snapshot is not None and role_name == "lighting_designer":
                 system_prompt += (
                     " For this live-Show case, treat the supplied validated Rig Designer and Position Designer artifacts as upstream authority. "
@@ -2144,7 +2356,10 @@ def run_spatial_revision_loop(
         )
     except (LiveShowSnapshotError, TypeError, ValueError) as exc:
         raise MultiAgentRunError(f"Spatial revision evidence rejected: {exc}") from exc
-    readiness = spatial_revision_readiness(calibration_artifact)
+    readiness = spatial_revision_readiness(
+        calibration_artifact,
+        normalized_snapshot=normalized_snapshot,
+    )
     if not readiness["ready"]:
         raise MultiAgentRunError(
             "Spatial revision BLOCKED_MISSING_EVIDENCE; missing calibrated physical facts: "
@@ -2292,6 +2507,15 @@ def run_spatial_revision_loop(
                 system = system.replace("ROLE: RIG_DESIGNER.", "ROLE: RIG_DESIGNER_REVISION.", 1)
             elif role_name == "position_designer":
                 system = system.replace("ROLE: POSITION_DESIGNER.", "ROLE: POSITION_DESIGNER_REVISION.", 1)
+            if (
+                normalized_snapshot.get("spatial_bootstrap_mode") == "NEW_UNDESIGNED_SHOW"
+                and role_name in {"rig_designer", "position_designer"}
+            ):
+                system += (
+                    " SPATIAL BOOTSTRAP CONTRACT: INITIAL_FIXTURE_GEOMETRY=UNDESIGNED. "
+                    "Use the supplied ZEN_STAGE_FRAME_V1 and verified inventory/capabilities, not scanned fixture XYZ or fixture extrema. "
+                    "The previous Position artifact is review evidence, not the target layout. Conceptual coordinates are not direct MA2 Pos values; physical installation and write authority remain unapproved."
+                )
             system += revision_system_suffix
             artifact, slot, attempts = _run_role(
                 router,

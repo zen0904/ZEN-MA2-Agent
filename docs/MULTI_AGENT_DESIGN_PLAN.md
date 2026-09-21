@@ -93,20 +93,63 @@ mutation/command and consistency checks. Raw provider output remains separate
 from any normalized accepted artifact in secret-safe diagnostics.
 
 Position Designer receives a deterministic, compact `position_context` rather
-than the entire live snapshot. It contains the snapshot fingerprint, the
-backend-authoritative coordinate-system metadata, only geometry-bearing
-fixture/subfixture identities with current XYZ/rotation/availability, an exact
-backend-generated `allowed_placement_refs` list, protected references, and
-limitations. Patch, Address, unrelated pools, and Fixture 9999 as a placement
-candidate are excluded. The prompt requires coordinate metadata to be copied
-exactly as an object and every placement identity to come from the allow-list;
-the validator checks both. This is structural context reduction only and
-does not choose or repair spatial content.
+than the entire live snapshot. In `IMPORTED_EXISTING_SHOW`, this includes
+geometry-bearing fixture/subfixture identities with scanned XYZ/rotation and
+availability. In `NEW_UNDESIGNED_SHOW`, it instead includes verified resource
+identities/capabilities and the canonical ZEN stage frame, with initial XYZ
+deliberately excluded. Both modes carry the fingerprint, exact backend-
+generated `allowed_placement_refs`, protected references, and limitations.
+Patch, Address, unrelated pools, and Fixture 9999 as a placement candidate are
+excluded. The prompt requires coordinate metadata to be copied exactly as an
+object and every placement identity to come from the allow-list; the validator
+checks both. This is structural context reduction only and does not choose or
+repair spatial content.
+
+#### Independent stage frame and new-show bootstrap
+
+The runtime also supports the explicit `NEW_UNDESIGNED_SHOW` bootstrap mode.
+In this mode, fixture inventory and exact Show-bound capability evidence are
+authoritative, while initial fixture XYZ/rotation is `UNDESIGNED` and is not
+sent to Rig or Position Designer as a target or calibration input. A Show may
+have all fixtures stacked at the same origin. Position resources are derived
+from verified inventory/subfixture identities, not fixture extrema; if no
+subfixture identity was scanned, the root fixture identity is used rather than
+inventing a subfixture number. Fixture 9999 remains unavailable.
+
+The independent `ZEN_STAGE_FRAME_V1` design-space convention uses origin
+`STAGE_CENTER`, X positive `STAGE_LEFT` / negative `STAGE_RIGHT`, Y positive
+`UPSTAGE` / negative `DOWNSTAGE_AUDIENCE`, and Z positive `UP`. It is bound to
+fingerprinted Stage/audience/performer context and is never inferred from raw
+fixture positions or Pan/Tilt. Conceptual XYZ is expressed in
+`ZEN_CONCEPTUAL_STAGE_UNITS`; metric scale and a direct transform to MA2 Pos
+remain unknown. Consequently bootstrap geometry is a virtual design proposal,
+not an executable MA2 position map or physical installation approval, and its
+comparison to scanned fixture XYZ is recorded as not comparable across frames.
+
+`IMPORTED_EXISTING_SHOW` remains the optional legacy mode: scanned fixture
+geometry can inform comparison/calibration, but is not a general prerequisite
+for a new ZEN-designed Show. The live-snapshot launcher accepts the mode,
+operator Stage context, and Show-bound capability artifact as explicit inputs;
+it does not discover them from a machine-local path. Neither mode adds MA2,
+Resolver, Builder, or write authority.
 
 This route is design-artifact generation only. It does not call MA2, Resolver,
 or Builder, and it does not write geometry. A provider artifact that fails
 schema, inventory, evidence, or safety validation stops the route at that
 role; downstream roles do not run.
+
+The portable launcher also exposes `--spatial-readiness` for a non-inference
+preflight. It normalizes caller-supplied snapshot, operator Stage context, and
+Show-bound capability files, verifies the referenced Stage View image hash,
+then evaluates conceptual bootstrap readiness without constructing a
+`ProviderRouter`. In `NEW_UNDESIGNED_SHOW`, readiness depends on the
+fingerprint-bound `ZEN_STAGE_FRAME_V1`, operator-confirmed Stage/orientation/
+performer context, complete non-protected fixture identity coverage, and exact
+Show-bound capabilities. It does not depend on initial fixture XYZ/rotation,
+fixture extrema, Pan/Tilt-derived XYZ signs, or a native MA2 coordinate
+transform. A verified transform remains a separate prerequisite for any later
+writeback; this preflight never makes Resolver/Builder/Preview or writeback
+eligible.
 
 ### Live spatial review and bounded revision
 

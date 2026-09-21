@@ -8,6 +8,7 @@ never overwritten or merged by this program.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import socket
@@ -191,6 +192,9 @@ def multi_agent_design(
     restart_run: bool = False,
     current_show_snapshot_file: Path | None = None,
     current_show_profile_file: Path | None = None,
+    operator_stage_context_file: Path | None = None,
+    show_bound_capabilities_file: Path | None = None,
+    spatial_bootstrap_mode: str = "IMPORTED_EXISTING_SHOW",
 ) -> dict[str, object]:
     if not request_file.is_file():
         raise SystemExit(f"Design request file does not exist: {request_file}")
@@ -207,15 +211,35 @@ def multi_agent_design(
         try:
             snapshot_data = json.loads(current_show_snapshot_file.read_text(encoding="utf-8"))
             profile_data = None
+            stage_context_data = None
+            capability_data = None
             if current_show_profile_file is not None:
                 if not current_show_profile_file.is_file():
                     raise SystemExit(f"Current Show profile does not exist: {current_show_profile_file}")
                 profile_data = json.loads(current_show_profile_file.read_text(encoding="utf-8"))
-            current_show_snapshot = CurrentShowSnapshotInput(snapshot_data, profile_data)
+            if operator_stage_context_file is not None:
+                if not operator_stage_context_file.is_file():
+                    raise SystemExit(f"Operator stage context does not exist: {operator_stage_context_file}")
+                stage_context_data = json.loads(operator_stage_context_file.read_text(encoding="utf-8"))
+            if show_bound_capabilities_file is not None:
+                if not show_bound_capabilities_file.is_file():
+                    raise SystemExit(f"Show-bound capability profiles do not exist: {show_bound_capabilities_file}")
+                capability_data = json.loads(show_bound_capabilities_file.read_text(encoding="utf-8"))
+            current_show_snapshot = CurrentShowSnapshotInput(
+                snapshot_data,
+                profile_data,
+                spatial_bootstrap_mode,
+                stage_context_data,
+                capability_data,
+            )
         except (OSError, UnicodeError, json.JSONDecodeError) as exc:
             raise SystemExit(f"Current Show snapshot input is invalid: {type(exc).__name__}") from exc
     elif current_show_profile_file is not None:
         raise SystemExit("--current-show-profile requires --current-show-snapshot.")
+    elif operator_stage_context_file is not None or show_bound_capabilities_file is not None:
+        raise SystemExit("Stage context and capability profiles require --current-show-snapshot.")
+    elif spatial_bootstrap_mode != "IMPORTED_EXISTING_SHOW":
+        raise SystemExit("--spatial-bootstrap-mode requires --current-show-snapshot.")
 
     try:
         run = run_multi_agent_design(
@@ -251,6 +275,118 @@ def multi_agent_design(
     }
     _log("multi_agent_design", result)
     return result
+
+
+def spatial_readiness(
+    current_show_snapshot_file: Path,
+    operator_stage_context_file: Path,
+    show_bound_capabilities_file: Path,
+    *,
+    current_show_profile_file: Path | None = None,
+    spatial_bootstrap_mode: str,
+) -> dict[str, object]:
+    """Evaluate conceptual spatial readiness without constructing a provider router."""
+    if spatial_bootstrap_mode != "NEW_UNDESIGNED_SHOW":
+        raise SystemExit("--spatial-readiness currently evaluates only NEW_UNDESIGNED_SHOW.")
+    required_files = {
+        "snapshot": current_show_snapshot_file,
+        "operator stage context": operator_stage_context_file,
+        "Show-bound capability profiles": show_bound_capabilities_file,
+    }
+    for label, path in required_files.items():
+        if not path.is_file():
+            raise SystemExit(f"{label} file does not exist: {path}")
+    try:
+        snapshot_data = json.loads(current_show_snapshot_file.read_text(encoding="utf-8"))
+        operator_context = json.loads(operator_stage_context_file.read_text(encoding="utf-8"))
+        capabilities = json.loads(show_bound_capabilities_file.read_text(encoding="utf-8"))
+        profile_data = None
+        if current_show_profile_file is not None:
+            profile_data = json.loads(current_show_profile_file.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise SystemExit(f"Spatial readiness evidence is invalid: {type(exc).__name__}") from exc
+    if not isinstance(snapshot_data, dict) or not isinstance(operator_context, dict) or not isinstance(capabilities, dict):
+        raise SystemExit("Spatial readiness snapshot, operator context, and capability artifacts must be JSON objects.")
+    if profile_data is not None and not isinstance(profile_data, dict):
+        raise SystemExit("Spatial readiness Show profile must be a JSON object.")
+
+    image_metadata = operator_context.get("stage_view_image") if isinstance(operator_context, dict) else None
+    relative_image = image_metadata.get("relative_path") if isinstance(image_metadata, dict) else None
+    declared_image_hash = image_metadata.get("sha256") if isinstance(image_metadata, dict) else None
+    if not isinstance(relative_image, str) or not relative_image or Path(relative_image).is_absolute():
+        raise SystemExit("Operator stage context must point to a relative Stage View image artifact.")
+    image_path = (operator_stage_context_file.parent / relative_image).resolve()
+    try:
+        image_path.relative_to(operator_stage_context_file.parent.resolve())
+    except ValueError as exc:
+        raise SystemExit("Stage View image path must remain inside the evidence directory.") from exc
+    if not image_path.is_file():
+        raise SystemExit("The operator-supplied Stage View image is missing.")
+    actual_image_hash = hashlib.sha256(image_path.read_bytes()).hexdigest()
+    if not isinstance(declared_image_hash, str) or actual_image_hash != declared_image_hash:
+        raise SystemExit("Stage View image bytes do not match the operator-context SHA256.")
+
+    sys.path.insert(0, str(repo()))
+    from zen_ma2_agent.llm.live_show_snapshot import CurrentShowSnapshotInput, normalize_current_show_snapshot
+    from zen_ma2_agent.llm.spatial_review import spatial_revision_readiness
+
+    try:
+        normalized = normalize_current_show_snapshot(CurrentShowSnapshotInput(
+            snapshot_data,
+            profile_data,
+            spatial_bootstrap_mode,
+            operator_context,
+            capabilities,
+        ))
+        readiness = spatial_revision_readiness(normalized_snapshot=normalized)
+    except (ValueError, TypeError) as exc:
+        raise SystemExit(f"Spatial readiness evidence failed validation: {exc}") from exc
+
+    inventory = normalized.get("fixture_inventory", [])
+    usable = [
+        row for row in inventory
+        if isinstance(row, dict) and row.get("fixture_id") != 9999
+    ]
+    raw_profiles = capabilities.get("profiles", []) if isinstance(capabilities, dict) else []
+    distinct_type_profiles = {
+        (
+            row.get("fixture_type_identity", {}).get("fixture_type_id"),
+            row.get("fixture_type_identity", {}).get("list_label"),
+        )
+        for row in raw_profiles
+        if isinstance(row, dict) and isinstance(row.get("fixture_type_identity"), dict)
+    }
+    readiness.update({
+        "stage_view_image_available": True,
+        "stage_view_image_sha256_verified": actual_image_hash,
+        "capability_profile_binding_count": len(raw_profiles),
+        "distinct_fixture_type_profile_count": len(distinct_type_profiles),
+        "provider_calls": 0,
+        "ma2_writes": 0,
+        "CODEX_ARTISTIC_INTERVENTION": "NONE",
+    })
+    return {
+        "SPATIAL_BOOTSTRAP_MODE": spatial_bootstrap_mode,
+        "ZEN_STAGE_FRAME_VERSION": readiness.get("zen_stage_frame_id"),
+        "CURRENT_SHOW_FINGERPRINT": normalized.get("show_fingerprint"),
+        "FIXTURE_INVENTORY_COUNT": len(inventory),
+        "USABLE_FIXTURE_COUNT": len(usable),
+        "CAPABILITY_BINDING_COUNT": len(raw_profiles),
+        "FIXTURE_TYPE_PROFILE_COUNT": len(distinct_type_profiles),
+        "STAGE_CONTEXT_STATUS": readiness.get("stage_context_status"),
+        "STAGE_VIEW_IMAGE_AVAILABLE": "YES" if readiness.get("stage_view_image_available") else "NO",
+        "STAGE_VIEW_IMAGE_SHA256_VERIFIED": actual_image_hash,
+        "PERFORMER_ZONE_STATUS": readiness.get("performer_zone_status"),
+        "INITIAL_FIXTURE_GEOMETRY_SENT_TO_ARTISTIC_ROLES": "NO",
+        "INITIAL_FIXTURE_ROTATION_SENT_TO_ARTISTIC_ROLES": "NO",
+        "MA2_NATIVE_COORDINATE_MAPPING_REQUIRED_FOR_CONCEPTUAL_DESIGN": "NO",
+        "MA2_COORDINATE_TRANSFORM_REQUIRED_FOR_WRITEBACK": "YES",
+        "CONCEPTUAL_VIRTUAL_FIXTURE_PLACEMENT_READINESS": readiness.get("status"),
+        "REMAINING_BLOCKERS": readiness.get("blocking_categories", []),
+        "PROVIDER_CALLS": 0,
+        "MA2_WRITES": 0,
+        "CODEX_ARTISTIC_INTERVENTION": "NONE",
+    }
 
 
 def knowledge_ingest(source_meta_file: Path, source_text_file: Path, *, max_records: int = 8) -> dict[str, object]:
@@ -311,6 +447,7 @@ def main() -> int:
     choice.add_argument("--provider-self-test", action="store_true")
     choice.add_argument("--provider-pool-status", action="store_true")
     choice.add_argument("--ma2-connectivity", action="store_true")
+    choice.add_argument("--spatial-readiness", action="store_true")
     choice.add_argument("--design-request", type=Path)
     choice.add_argument("--multi-agent-design", type=Path)
     choice.add_argument("--knowledge-ingest", nargs=2, type=Path, metavar=("SOURCE_META", "SOURCE_TEXT"))
@@ -318,12 +455,26 @@ def main() -> int:
     parser.add_argument("--restart-run", action="store_true")
     parser.add_argument("--current-show-snapshot", type=Path)
     parser.add_argument("--current-show-profile", type=Path)
+    parser.add_argument("--operator-stage-context", type=Path)
+    parser.add_argument("--show-bound-capabilities", type=Path)
+    parser.add_argument(
+        "--spatial-bootstrap-mode",
+        choices=("NEW_UNDESIGNED_SHOW", "IMPORTED_EXISTING_SHOW"),
+        default="IMPORTED_EXISTING_SHOW",
+    )
     parser.add_argument("--knowledge-max-records", type=int, default=8)
     args = parser.parse_args()
-    if (args.current_show_snapshot or args.current_show_profile) and not args.multi_agent_design:
-        parser.error("--current-show-snapshot and --current-show-profile require --multi-agent-design.")
+    if (args.current_show_snapshot or args.current_show_profile or args.operator_stage_context or args.show_bound_capabilities or args.spatial_bootstrap_mode != "IMPORTED_EXISTING_SHOW") and not (args.multi_agent_design or args.spatial_readiness):
+        parser.error("Current Show snapshot, stage context, capability, and bootstrap options require --multi-agent-design or --spatial-readiness.")
     if args.current_show_profile and not args.current_show_snapshot:
         parser.error("--current-show-profile requires --current-show-snapshot.")
+    if args.spatial_readiness:
+        if args.run_id or args.restart_run:
+            parser.error("--run-id and --restart-run are not valid with --spatial-readiness.")
+        if not (args.current_show_snapshot and args.operator_stage_context and args.show_bound_capabilities):
+            parser.error("--spatial-readiness requires --current-show-snapshot, --operator-stage-context, and --show-bound-capabilities.")
+        if args.spatial_bootstrap_mode != "NEW_UNDESIGNED_SHOW":
+            parser.error("--spatial-readiness requires --spatial-bootstrap-mode NEW_UNDESIGNED_SHOW.")
     if args.git_status:
         result: dict[str, object] = git_status()
     elif args.update:
@@ -341,6 +492,14 @@ def main() -> int:
         result = provider_pool_status()
     elif args.ma2_connectivity:
         result = ma2_connectivity()
+    elif args.spatial_readiness:
+        result = spatial_readiness(
+            args.current_show_snapshot,
+            args.operator_stage_context,
+            args.show_bound_capabilities,
+            current_show_profile_file=args.current_show_profile,
+            spatial_bootstrap_mode=args.spatial_bootstrap_mode,
+        )
     elif args.design_request:
         if args.run_id or args.restart_run:
             parser.error("--run-id and --restart-run require --multi-agent-design.")
@@ -352,14 +511,17 @@ def main() -> int:
             restart_run=args.restart_run,
             current_show_snapshot_file=args.current_show_snapshot,
             current_show_profile_file=args.current_show_profile,
+            operator_stage_context_file=args.operator_stage_context,
+            show_bound_capabilities_file=args.show_bound_capabilities,
+            spatial_bootstrap_mode=args.spatial_bootstrap_mode,
         )
     elif args.knowledge_ingest:
         if args.run_id or args.restart_run:
             parser.error("--run-id and --restart-run are not valid with --knowledge-ingest.")
         result = knowledge_ingest(*args.knowledge_ingest, max_records=args.knowledge_max_records)
     else:
-        if args.run_id or args.restart_run or args.current_show_snapshot or args.current_show_profile:
-            parser.error("--run-id, --restart-run, and current Show snapshot options require --multi-agent-design.")
+        if args.run_id or args.restart_run or args.current_show_snapshot or args.current_show_profile or args.operator_stage_context or args.show_bound_capabilities or args.spatial_bootstrap_mode != "IMPORTED_EXISTING_SHOW":
+            parser.error("--run-id, --restart-run, and current Show snapshot options require --multi-agent-design or --spatial-readiness.")
         result = git_status()
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0

@@ -16,6 +16,8 @@ from zen_ma2_agent.llm.multi_agent_runtime import (
     MultiAgentRunError,
     ResearchSourceContractError,
     ROLE_SYSTEM_PROMPTS,
+    _bootstrap_role_prompt,
+    _model_facing_current_show_snapshot,
     _sha256,
     build_position_context,
     normalize_role_envelope,
@@ -61,6 +63,72 @@ def _snapshot(fingerprint: str = FINGERPRINT) -> dict[str, object]:
         "stage_geometry_readability": {"status": "SUPPORTED"},
         "ma2_writes": 0,
         "codex_artistic_intervention": "NONE",
+    }
+
+
+def _operator_stage_context(fingerprint: str = FINGERPRINT) -> dict[str, object]:
+    return {
+        "schema": "zen.operator_current_show_stage_context.v0.1",
+        "source_type": "OPERATOR_SUPPLIED_STAGE_CONTEXT",
+        "status": "OPERATOR_VERIFIED",
+        "show_fingerprint": fingerprint,
+        "stage_view_image": {"sha256": "b" * 64, "media_type": "image/png", "viewpoint": "FACING_STAGE"},
+        "asserted_by": "OPERATOR",
+        "stage_region": {
+            "status": "OPERATOR_VERIFIED", "shape": "SQUARE",
+            "region": "ENTIRE_VISIBLE_GRAY_STAGE_PLANE", "visual_bounds_known": True,
+            "metric_dimensions_known": False,
+        },
+        "orientation": {
+            "viewpoint": "FACING_STAGE", "audience_side": "IMAGE_BOTTOM_FOREGROUND",
+            "upstage_direction": "IMAGE_TOP_BACKGROUND", "stage_right": "IMAGE_LEFT",
+            "stage_left": "IMAGE_RIGHT",
+        },
+        "performer_context": {
+            "status": "OPERATOR_VERIFIED", "zone": "FRONT_STAGE_PRIORITY",
+            "relation": "CLOSER_TO_AUDIENCE_THAN_UPSTAGE", "exact_metric_bounds_known": False,
+        },
+        "pan_tilt_calibration": {
+            "status": "OPERATOR_VERIFIED", "tilt_negative_direction": "AUDIENCE",
+            "tilt_positive_direction": "UPSTAGE_OR_INWARD", "pan_negative_direction": "STAGE_RIGHT",
+            "pan_positive_direction": "STAGE_LEFT", "derive_xyz_sign_mapping": False,
+        },
+        "coordinate_sign_mapping": {
+            "x": "UNKNOWN", "y": "UNKNOWN", "z": "UNKNOWN",
+            "pan_tilt_may_fill_xyz_mapping": False,
+            "image_may_fill_xyz_mapping_without_independent_evidence": False,
+        },
+        "conceptual_design_scope": {
+            "enabled": True, "scope": "CONCEPTUAL_VIRTUAL_FIXTURE_PLACEMENT_ONLY",
+            "truss_constraints": "DEFERRED", "mounting_feasibility": "DEFERRED",
+            "structural_engineering": "OUT_OF_SCOPE", "cable_routing": "OUT_OF_SCOPE",
+            "load_calculation": "OUT_OF_SCOPE", "obstruction_engineering": "DEFERRED",
+            "installation_approval": "NOT_GRANTED",
+        },
+        "codex_artistic_intervention": "NONE", "ma2_writes": 0,
+    }
+
+
+def _show_bound_capabilities(fingerprint: str = FINGERPRINT) -> dict[str, object]:
+    profiles = []
+    for fixture_id in (101, 102):
+        profiles.append({
+            "show_fingerprint": fingerprint,
+            "fixture_id": fixture_id,
+            "fixture_type_identity": {"fixture_type_id": 3, "list_label": "3 Example Profile"},
+            "source": "MA2_EXPORT_FIXTURE_TYPE_XML",
+            "observed_attributes": ["DIM", "PAN", "TILT"],
+            "capabilities": {"DIMMER": {"status": "SHOW_BOUND_VERIFIED"}},
+            "confidence": "SHOW_BOUND_VERIFIED",
+            "artistic_role_inference": "NONE",
+        })
+    return {
+        "schema": "zen.show_bound_fixture_capability_profiles.v0.1",
+        "show_fingerprint": fingerprint,
+        "profiles": profiles,
+        "protected_fixture_ids": [9999],
+        "capability_profile_count": len(profiles),
+        "source": "MA2_EXPORT_FIXTURE_TYPE_XML",
     }
 
 
@@ -499,6 +567,108 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
         self.assertNotIn("patch", encoded)
         self.assertNotIn('"address"', encoded)
 
+    def test_new_undesigned_show_uses_canonical_frame_without_fixture_geometry_or_groups(self):
+        raw = _snapshot()
+        raw["groups"] = []
+        raw["group_count"] = 0
+        raw["resource_status"]["fixture_geometry"] = {
+            "status": "not_available", "stale": False, "values": [],
+        }
+        supplied = CurrentShowSnapshotInput(
+            raw,
+            spatial_bootstrap_mode="NEW_UNDESIGNED_SHOW",
+            operator_stage_context=_operator_stage_context(),
+            show_bound_capability_profiles=_show_bound_capabilities(),
+        )
+        normalized = normalize_current_show_snapshot(supplied)
+        frame = normalized["stage_frame"]
+        self.assertEqual(normalized["initial_fixture_geometry"], "UNDESIGNED")
+        self.assertEqual(normalized["geometry_record_count"], 0)
+        self.assertEqual(frame["frame_id"], "ZEN_STAGE_FRAME_V1")
+        self.assertEqual(frame["origin"], "STAGE_CENTER")
+        self.assertEqual(frame["axes"], {
+            "X_POSITIVE": "STAGE_LEFT", "X_NEGATIVE": "STAGE_RIGHT",
+            "Y_POSITIVE": "UPSTAGE", "Y_NEGATIVE": "DOWNSTAGE_AUDIENCE",
+            "Z_POSITIVE": "UP",
+        })
+        self.assertEqual(frame["raw_ma2_fixture_xyz_mapping"], "UNKNOWN_AND_NOT_INFERRED")
+        self.assertEqual(frame["pan_tilt_calibration"]["xyz_sign_mapping_inference"], "PROHIBITED")
+        varied_geometry = _snapshot()
+        varied_geometry["resource_status"]["fixture_geometry"]["values"] = [
+            {"fixture_id": fixture_id, "subfixture_id": 1,
+             "position": {"x": 9000 + fixture_id, "y": -3000, "z": 700},
+             "rotation": {"x": 20, "y": 40, "z": 60}}
+            for fixture_id in (101, 102, 9999)
+        ]
+        varied = normalize_current_show_snapshot(CurrentShowSnapshotInput(
+            varied_geometry,
+            spatial_bootstrap_mode="NEW_UNDESIGNED_SHOW",
+            operator_stage_context=_operator_stage_context(),
+            show_bound_capability_profiles=_show_bound_capabilities(),
+        ))
+        self.assertEqual(varied["stage_frame"], frame)
+        context = build_position_context(normalized)
+        self.assertEqual(context["allowed_placement_refs"], [{"fixture_id": 101}, {"fixture_id": 102}])
+        self.assertNotIn("current_xyz", json.dumps(context))
+        self.assertNotIn("patch", json.dumps(context).casefold())
+        self.assertNotIn('"address"', json.dumps(context).casefold())
+        self.assertTrue(context["verified_capability_profiles"])
+
+    def test_bootstrap_role_snapshot_excludes_scanned_positions(self):
+        raw = _snapshot()
+        raw["resource_status"]["fixture_geometry"]["values"] = [
+            {"fixture_id": fixture_id, "subfixture_id": 1,
+             "position": {"x": 0, "y": 0, "z": 0},
+             "rotation": {"x": 0, "y": 0, "z": 0}}
+            for fixture_id in (101, 102, 9999)
+        ]
+        normalized = normalize_current_show_snapshot(CurrentShowSnapshotInput(
+            raw,
+            spatial_bootstrap_mode="NEW_UNDESIGNED_SHOW",
+            operator_stage_context=_operator_stage_context(),
+            show_bound_capability_profiles=_show_bound_capabilities(),
+        ))
+        model_snapshot = _model_facing_current_show_snapshot(normalized)
+        encoded = json.dumps(model_snapshot)
+        self.assertIn("ZEN_STAGE_FRAME_V1", encoded)
+        self.assertIn('"initial_fixture_geometry": "UNDESIGNED"', encoded)
+        self.assertNotIn('"xyz"', encoded)
+        self.assertNotIn('"rotation"', encoded)
+        self.assertNotIn('"x": 0', encoded)
+
+    def test_bootstrap_ignores_origin_geometry_and_allows_verified_inventory_layout(self):
+        raw = _snapshot()
+        raw["resource_status"]["fixture_geometry"]["values"] = [
+            {"fixture_id": fixture_id, "subfixture_id": 1,
+             "position": {"x": 0, "y": 0, "z": 0},
+             "rotation": {"x": 0, "y": 0, "z": 0}}
+            for fixture_id in (101, 102, 9999)
+        ]
+        supplied = CurrentShowSnapshotInput(
+            raw,
+            spatial_bootstrap_mode="NEW_UNDESIGNED_SHOW",
+            operator_stage_context=_operator_stage_context(),
+            show_bound_capability_profiles=_show_bound_capabilities(),
+        )
+        normalized = normalize_current_show_snapshot(supplied)
+        self.assertNotIn("xyz", normalized["fixture_inventory"][0]["geometry"][0])
+        position_context = build_position_context(normalized)
+        self.assertEqual(position_context["coordinate_system"], normalized["stage_frame"])
+        self.assertEqual(position_context["allowed_placement_refs"], [
+            {"fixture_id": 101, "subfixture_id": 1},
+            {"fixture_id": 102, "subfixture_id": 1},
+        ])
+        self.assertNotIn('"x": 0', json.dumps(position_context))
+
+        artifact = _position(normalized, placements=[
+            {"fixture_id": 101, "subfixture_id": 1, "show_fingerprint": FINGERPRINT,
+             "xyz": {"x": -1, "y": -1, "z": 1}},
+            {"fixture_id": 102, "subfixture_id": 1, "show_fingerprint": FINGERPRINT,
+             "xyz": {"x": 1, "y": 0, "z": 2}},
+        ])
+        artifact["coordinate_system"] = normalized["stage_frame"]
+        self.assertIs(validate_position_design_artifact(artifact, normalized), artifact)
+
     def test_position_prompt_has_exact_typed_contract_and_authoritative_coordinate_metadata(self):
         prompt = ROLE_SYSTEM_PROMPTS["position_designer"]
         for required in (
@@ -515,6 +685,24 @@ class LiveShowSpatialPipelineTests(unittest.TestCase):
             "position_context.allowed_placement_refs",
         ):
             self.assertIn(required, prompt)
+
+    def test_bootstrap_position_prompt_requires_layout_for_rig_selected_resources(self):
+        prompt = _bootstrap_role_prompt("position_designer", ROLE_SYSTEM_PROMPTS["position_designer"])
+        self.assertIn("every resource the validated Rig Designer explicitly selected for placement", prompt)
+        self.assertIn("Do not silently omit a selected resource", prompt)
+        self.assertEqual(
+            _bootstrap_role_prompt("researcher", "base"),
+            "base",
+        )
+
+    def test_bootstrap_position_prompt_requires_layout_for_rig_selected_resources(self):
+        # The bootstrap-only contract is appended at runtime; this constant
+        # prompt remains compatible with imported-Show runs.
+        from zen_ma2_agent.llm.multi_agent_runtime import _bootstrap_role_prompt
+
+        prompt = _bootstrap_role_prompt("position_designer", ROLE_SYSTEM_PROMPTS["position_designer"])
+        self.assertIn("every resource the validated Rig Designer explicitly selected for placement", prompt)
+        self.assertIn("Do not silently omit a selected resource", prompt)
 
     def test_position_retry_contract_is_specific_without_reauthoring_geometry(self):
         class RetryPositionAdapter(_RoleAdapter):

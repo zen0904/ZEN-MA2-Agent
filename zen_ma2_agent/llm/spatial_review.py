@@ -508,17 +508,21 @@ def _is_known(value: object) -> bool:
     )
 
 
-def spatial_revision_readiness(calibration: Mapping[str, Any]) -> dict[str, Any]:
-    """Require evidence needed for meaningful placement and supported resources.
+def spatial_revision_readiness(
+    calibration: Mapping[str, Any] | None = None,
+    *,
+    normalized_snapshot: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Gate a spatial proposal using the correct coordinate authority.
 
-    This intentionally does not require obstruction/truss data, fixture
-    orientation writeability, a Stage View image when equivalent explicit
-    evidence exists, or a universal perfection state for every calibration
-    field. Unknown scale may be bounded by explicit Stage dimensions in the
-    same MA2 coordinate frame; unknown venue signs, stage area, or capabilities
-    remain blocking.
+    NEW_UNDESIGNED_SHOW relies on the canonical ZEN stage frame plus explicit
+    stage/audience/performer context and exact Show-bound fixture capabilities.
+    Raw fixture XYZ sign mapping and initial positions are not calibration
+    prerequisites in that mode. Imported Shows retain legacy requirements.
     """
+    calibration = calibration if isinstance(calibration, Mapping) else {}
     facts = calibration.get("facts", {})
+    facts = facts if isinstance(facts, Mapping) else {}
     semantics = calibration.get("software_coordinate_semantics", {})
     geometry = calibration.get("geometry_evidence", {})
     live = calibration.get("current_live_machine_observation", {})
@@ -527,65 +531,274 @@ def spatial_revision_readiness(calibration: Mapping[str, Any]) -> dict[str, Any]
     fingerprint = calibration.get("show_fingerprint")
     live_fingerprint = live.get("show_fingerprint") if isinstance(live, Mapping) else fingerprint
 
+    bootstrap = (
+        isinstance(normalized_snapshot, Mapping)
+        and normalized_snapshot.get("spatial_bootstrap_mode") == "NEW_UNDESIGNED_SHOW"
+    )
+    if bootstrap:
+        # In bootstrap mode, the explicitly normalized snapshot is the runtime
+        # authority. Do not require a legacy calibration file or any MA2 XYZ
+        # sign/extent facts to establish the independent ZEN design frame.
+        fingerprint = normalized_snapshot.get("show_fingerprint")
+        live_fingerprint = fingerprint
+    inventory = normalized_snapshot.get("fixture_inventory", []) if isinstance(normalized_snapshot, Mapping) else []
+    placement_refs = normalized_snapshot.get("placement_resource_refs", []) if isinstance(normalized_snapshot, Mapping) else []
+    stage_frame = normalized_snapshot.get("stage_frame") if isinstance(normalized_snapshot, Mapping) else None
+    operator_context = normalized_snapshot.get("operator_stage_context") if isinstance(normalized_snapshot, Mapping) else None
+    runtime_capabilities = normalized_snapshot.get("technical_capabilities", {}) if isinstance(normalized_snapshot, Mapping) else {}
+    runtime_profiles = (
+        runtime_capabilities.get("verified_fixture_type_profiles", [])
+        if isinstance(runtime_capabilities, Mapping) else []
+    )
+    runtime_profile_ids = {
+        item.get("fixture_id")
+        for item in runtime_profiles
+        if isinstance(item, Mapping) and isinstance(item.get("fixture_id"), int)
+    }
+    expected_profile_ids = {
+        item.get("fixture_id")
+        for item in inventory
+        if isinstance(item, Mapping)
+        and isinstance(item.get("fixture_id"), int)
+        and item.get("fixture_id") != PROTECTED_FIXTURE_ID
+    }
+    expected_axes = {
+        "X_POSITIVE": "STAGE_LEFT",
+        "X_NEGATIVE": "STAGE_RIGHT",
+        "Y_POSITIVE": "UPSTAGE",
+        "Y_NEGATIVE": "DOWNSTAGE_AUDIENCE",
+        "Z_POSITIVE": "UP",
+    }
+    canonical_frame_valid = (
+        isinstance(stage_frame, Mapping)
+        and stage_frame.get("frame_id") == "ZEN_STAGE_FRAME_V1"
+        and stage_frame.get("show_fingerprint") == fingerprint
+        and stage_frame.get("origin") == "STAGE_CENTER"
+        and stage_frame.get("axes") == expected_axes
+        and stage_frame.get("authority") == "ZEN_DESIGN_SPACE_CONVENTION_BOUND_TO_OPERATOR_STAGE_CONTEXT"
+    )
+    image_metadata = operator_context.get("stage_view_image") if isinstance(operator_context, Mapping) else None
+    orientation = operator_context.get("orientation") if isinstance(operator_context, Mapping) else None
+    stage_region = operator_context.get("stage_region") if isinstance(operator_context, Mapping) else None
+    performer_context = operator_context.get("performer_context") if isinstance(operator_context, Mapping) else None
+    design_scope = operator_context.get("conceptual_design_scope") if isinstance(operator_context, Mapping) else None
+    operator_context_valid = (
+        isinstance(operator_context, Mapping)
+        and operator_context.get("source_type") == "OPERATOR_SUPPLIED_STAGE_CONTEXT"
+        and operator_context.get("status") == "OPERATOR_VERIFIED"
+        and operator_context.get("show_fingerprint") == fingerprint
+        and operator_context.get("asserted_by") == "OPERATOR"
+        and isinstance(stage_region, Mapping)
+        and stage_region.get("status") == "OPERATOR_VERIFIED"
+        and stage_region.get("shape") == "SQUARE"
+        and stage_region.get("region") == "ENTIRE_VISIBLE_GRAY_STAGE_PLANE"
+        and stage_region.get("visual_bounds_known") is True
+        and isinstance(orientation, Mapping)
+        and orientation.get("viewpoint") == "FACING_STAGE"
+        and orientation.get("audience_side") == "IMAGE_BOTTOM_FOREGROUND"
+        and orientation.get("upstage_direction") == "IMAGE_TOP_BACKGROUND"
+        and orientation.get("stage_right") == "IMAGE_LEFT"
+        and orientation.get("stage_left") == "IMAGE_RIGHT"
+        and isinstance(performer_context, Mapping)
+        and performer_context.get("status") == "OPERATOR_VERIFIED"
+        and performer_context.get("zone") == "FRONT_STAGE_PRIORITY"
+        and performer_context.get("relation") == "CLOSER_TO_AUDIENCE_THAN_UPSTAGE"
+        and isinstance(design_scope, Mapping)
+        and design_scope.get("enabled") is True
+        and design_scope.get("scope") == "CONCEPTUAL_VIRTUAL_FIXTURE_PLACEMENT_ONLY"
+        and isinstance(operator_context.get("coordinate_sign_mapping"), Mapping)
+        and all(operator_context["coordinate_sign_mapping"].get(axis) == "UNKNOWN" for axis in ("x", "y", "z"))
+        and operator_context["coordinate_sign_mapping"].get("pan_tilt_may_fill_xyz_mapping") is False
+        and isinstance(operator_context.get("pan_tilt_calibration"), Mapping)
+        and operator_context["pan_tilt_calibration"].get("derive_xyz_sign_mapping") is False
+        and isinstance(image_metadata, Mapping)
+        and isinstance(image_metadata.get("sha256"), str)
+        and bool(re.fullmatch(r"[0-9a-f]{64}", image_metadata["sha256"]))
+    )
+    inventory_ids = [
+        item.get("fixture_id") for item in inventory if isinstance(item, Mapping)
+    ]
+    inventory_valid = (
+        bool(inventory)
+        and len(inventory_ids) == len(inventory)
+        and all(isinstance(item, int) and not isinstance(item, bool) and item > 0 for item in inventory_ids)
+        and len(inventory_ids) == len(set(inventory_ids))
+        and PROTECTED_FIXTURE_ID in inventory_ids
+        and any(
+            isinstance(item, Mapping)
+            and item.get("fixture_id") == PROTECTED_FIXTURE_ID
+            and item.get("availability") == "PROTECTED_UNAVAILABLE"
+            for item in inventory
+        )
+    )
+    usable_ids = set(inventory_ids) - {PROTECTED_FIXTURE_ID} if inventory_valid else set()
+    expected_placement_refs: set[tuple[int, int | None]] = set()
+    expected_refs_valid = inventory_valid
+    if inventory_valid:
+        for fixture in inventory:
+            if not isinstance(fixture, Mapping) or fixture.get("fixture_id") == PROTECTED_FIXTURE_ID:
+                continue
+            fixture_id = fixture.get("fixture_id")
+            geometry_rows = fixture.get("geometry", [])
+            if not isinstance(geometry_rows, list):
+                expected_refs_valid = False
+                break
+            if geometry_rows:
+                for row in geometry_rows:
+                    if not isinstance(row, Mapping):
+                        expected_refs_valid = False
+                        break
+                    subfixture_id = row.get("subfixture_id")
+                    if isinstance(subfixture_id, int) and not isinstance(subfixture_id, bool) and subfixture_id > 0:
+                        expected_placement_refs.add((fixture_id, subfixture_id))
+                    else:
+                        expected_refs_valid = False
+                        break
+            else:
+                expected_placement_refs.add((fixture_id, None))
+    actual_placement_refs = {
+        (item.get("fixture_id"), item.get("subfixture_id"))
+        for item in placement_refs if isinstance(item, Mapping)
+    }
+    refs_valid = (
+        expected_refs_valid
+        and bool(placement_refs)
+        and actual_placement_refs == expected_placement_refs
+        and all(
+            isinstance(item, Mapping)
+            and isinstance(item.get("fixture_id"), int)
+            and not isinstance(item.get("fixture_id"), bool)
+            and item.get("fixture_id") in usable_ids
+            and (
+                "subfixture_id" not in item
+                or (isinstance(item.get("subfixture_id"), int) and not isinstance(item.get("subfixture_id"), bool) and item.get("subfixture_id") > 0)
+            )
+            for item in placement_refs
+        )
+        and len({(item["fixture_id"], item.get("subfixture_id")) for item in placement_refs if isinstance(item, Mapping)}) == len(placement_refs)
+    )
+
     checks = {
         "CURRENT_SHOW_IDENTITY": (
-            live_fingerprint == fingerprint
-            and facts.get("CURRENT_SHOW_FINGERPRINT_MATCHES_LIVE_SCAN") in {"YES", "VERIFIED", "KNOWN"}
+            (
+                isinstance(fingerprint, str)
+                and bool(re.fullmatch(r"[0-9a-f]{64}", fingerprint))
+                and normalized_snapshot.get("show_fingerprint") == fingerprint
+                and isinstance(runtime_capabilities, Mapping)
+                and runtime_capabilities.get("show_fingerprint") == fingerprint
+            ) if bootstrap else (
+                live_fingerprint == fingerprint
+                and facts.get("CURRENT_SHOW_FINGERPRINT_MATCHES_LIVE_SCAN") in {"YES", "VERIFIED", "KNOWN"}
+            )
         ),
         "GEOMETRY_AND_PROTECTED_RESOURCES": (
-            isinstance(geometry, Mapping)
-            and isinstance(geometry.get("geometry_bearing_resource_count"), int)
-            and geometry["geometry_bearing_resource_count"] > 0
-            and PROTECTED_FIXTURE_ID in geometry.get("protected_fixture_ids", [])
-            and facts.get("GEOMETRY_BEARING_RESOURCES_AVAILABLE") in {"YES", "VERIFIED", "KNOWN"}
-            and facts.get("PROTECTED_RESOURCES_IDENTIFIED") in {"YES", "VERIFIED", "KNOWN"}
+            inventory_valid and refs_valid
+            if bootstrap else (
+                isinstance(geometry, Mapping)
+                and isinstance(geometry.get("geometry_bearing_resource_count"), int)
+                and geometry["geometry_bearing_resource_count"] > 0
+                and PROTECTED_FIXTURE_ID in geometry.get("protected_fixture_ids", [])
+                and facts.get("GEOMETRY_BEARING_RESOURCES_AVAILABLE") in {"YES", "VERIFIED", "KNOWN"}
+                and facts.get("PROTECTED_RESOURCES_IDENTIFIED") in {"YES", "VERIFIED", "KNOWN"}
+            )
         ),
         "MA2_COORDINATE_CONCEPTS": (
-            isinstance(semantics, Mapping) and semantics.get("values") == MA2_COORDINATE_CONCEPTS
+            bootstrap
+            or (isinstance(semantics, Mapping) and semantics.get("values") == MA2_COORDINATE_CONCEPTS)
         ),
         "VENUE_COORDINATE_ORIENTATION": (
-            all(_is_known(facts.get(field)) for field in (
-                "CURRENT_SHOW_X_SIGN_MAPPING", "CURRENT_SHOW_Y_SIGN_MAPPING", "CURRENT_SHOW_Z_SIGN_MAPPING"
-            ))
-            and _is_known(facts.get("AUDIENCE_DIRECTION_KNOWN"))
-            and _is_known(facts.get("STAGE_LEFT_RIGHT_KNOWN"))
-            and _is_known(facts.get("UPSTAGE_DOWNSTAGE_KNOWN"))
+            canonical_frame_valid and operator_context_valid
+            if bootstrap else (
+                all(_is_known(facts.get(field)) for field in (
+                    "CURRENT_SHOW_X_SIGN_MAPPING", "CURRENT_SHOW_Y_SIGN_MAPPING", "CURRENT_SHOW_Z_SIGN_MAPPING"
+                ))
+                and _is_known(facts.get("AUDIENCE_DIRECTION_KNOWN"))
+                and _is_known(facts.get("STAGE_LEFT_RIGHT_KNOWN"))
+                and _is_known(facts.get("UPSTAGE_DOWNSTAGE_KNOWN"))
+            )
         ),
         "STAGE_AND_PERFORMER_CONTEXT": (
-            _is_known(facts.get("STAGE_BOUNDS_KNOWN"))
-            and _is_known(facts.get("PERFORMER_ZONE_KNOWN"))
+            canonical_frame_valid and operator_context_valid
+            if bootstrap else (
+                _is_known(facts.get("STAGE_BOUNDS_KNOWN"))
+                and _is_known(facts.get("PERFORMER_ZONE_KNOWN"))
+            )
         ),
         "CURRENT_SHOW_CAPABILITIES": (
-            facts.get("CURRENT_FINGERPRINT_CAPABILITY_PROFILES_AVAILABLE") in {
-                "YES", "VERIFIED", "KNOWN", "SHOW_BOUND_VERIFIED"
-            }
-            and isinstance(profile_items, list)
-            and bool(profile_items)
+            isinstance(runtime_capabilities, Mapping)
+            and runtime_capabilities.get("status") == "SHOW_BOUND_VERIFIED"
+            and runtime_capabilities.get("show_fingerprint") == fingerprint
+            and bool(expected_profile_ids)
+            and expected_profile_ids == usable_ids
+            and runtime_profile_ids == expected_profile_ids
             and all(
                 isinstance(profile, Mapping)
                 and profile.get("show_fingerprint") == fingerprint
                 and profile.get("confidence") == "SHOW_BOUND_VERIFIED"
                 and bool(profile.get("observed_attributes"))
-                for profile in profile_items
+                for profile in runtime_profiles
+            )
+            if bootstrap else (
+                facts.get("CURRENT_FINGERPRINT_CAPABILITY_PROFILES_AVAILABLE") in {
+                    "YES", "VERIFIED", "KNOWN", "SHOW_BOUND_VERIFIED"
+                }
+                and isinstance(profile_items, list)
+                and bool(profile_items)
+                and all(
+                    isinstance(profile, Mapping)
+                    and profile.get("show_fingerprint") == fingerprint
+                    and profile.get("confidence") == "SHOW_BOUND_VERIFIED"
+                    and bool(profile.get("observed_attributes"))
+                    for profile in profile_items
+                )
             )
         ),
     }
     blockers = [category for category in REVISION_READINESS_CATEGORIES if not checks[category]]
+    non_blocking = [
+        field for field in (
+            "COORDINATE_UNITS_VERIFIED",
+            "OBSTRUCTION_DATA_AVAILABLE",
+            "TRUSS_OR_SUPPORT_GEOMETRY_AVAILABLE",
+            "FIXTURE_ORIENTATION_WRITABLE",
+            "STAGE_VIEW_IMAGE_AVAILABLE",
+        ) if not _is_known(facts.get(field))
+    ]
+    if bootstrap:
+        non_blocking.extend(
+            field for field in (
+                "CURRENT_SHOW_X_SIGN_MAPPING",
+                "CURRENT_SHOW_Y_SIGN_MAPPING",
+                "CURRENT_SHOW_Z_SIGN_MAPPING",
+            ) if not _is_known(facts.get(field))
+        )
+        if not checks["MA2_COORDINATE_CONCEPTS"]:
+            non_blocking.append("MA2_COORDINATE_CONCEPTS")
     return {
         "ready": not blockers,
         "status": "READY" if not blockers else "BLOCKED_MISSING_EVIDENCE",
         "blocking_categories": blockers,
         "blocking_facts": blockers,
         "checks": checks,
-        "non_blocking_limitations": [
-            field for field in (
-                "COORDINATE_UNITS_VERIFIED",
-                "OBSTRUCTION_DATA_AVAILABLE",
-                "TRUSS_OR_SUPPORT_GEOMETRY_AVAILABLE",
-                "FIXTURE_ORIENTATION_WRITABLE",
-                "STAGE_VIEW_IMAGE_AVAILABLE",
-            ) if not _is_known(facts.get(field))
-        ],
+        "spatial_bootstrap_mode": normalized_snapshot.get("spatial_bootstrap_mode") if isinstance(normalized_snapshot, Mapping) else "IMPORTED_EXISTING_SHOW",
+        "initial_fixture_geometry": normalized_snapshot.get("initial_fixture_geometry") if isinstance(normalized_snapshot, Mapping) else "EXISTING_IMPORTED_GEOMETRY",
+        "raw_ma2_xyz_sign_mapping_required": not bootstrap,
+        "ma2_native_coordinate_mapping_required_for_conceptual_design": False if bootstrap else None,
+        "ma2_coordinate_transform_required_for_writeback": True if bootstrap else None,
+        "writeback_eligible": False,
+        "resolver_eligible": False,
+        "preview_for_writeback_eligible": False,
+        "current_show_fingerprint": fingerprint,
+        "fixture_inventory_count": len(inventory) if bootstrap else None,
+        "usable_fixture_count": len(usable_ids) if bootstrap else None,
+        "capability_binding_count": len(runtime_profile_ids) if bootstrap else None,
+        "stage_context_status": "OPERATOR_VERIFIED" if operator_context_valid else "UNKNOWN",
+        "performer_zone_status": (
+            performer_context.get("status") if isinstance(performer_context, Mapping) else "UNKNOWN"
+        ),
+        "stage_view_image_sha256": image_metadata.get("sha256") if isinstance(image_metadata, Mapping) else None,
+        "zen_stage_frame_id": stage_frame.get("frame_id") if isinstance(stage_frame, Mapping) else None,
+        "non_blocking_limitations": non_blocking,
     }
 
 
@@ -593,7 +806,20 @@ def geometry_delta(
     snapshot: Mapping[str, Any],
     position_artifact: Mapping[str, Any],
 ) -> dict[str, Any]:
-    """Compare a proposal with scanned numeric geometry without judging it."""
+    """Compare compatible imported coordinates; bootstrap frames are incomparable."""
+    if snapshot.get("spatial_bootstrap_mode") == "NEW_UNDESIGNED_SHOW":
+        return {
+            "geometry_delta_from_snapshot": "NOT_COMPARABLE_DIFFERENT_COORDINATE_FRAMES",
+            "placements_changed_count": None,
+            "placements_unchanged_count": None,
+            "rotations_changed_count": None,
+            "rotations_unchanged_count": None,
+            "rotations_unreported_count": None,
+            "unmatched_placement_count": None,
+            "placement_count": len(position_artifact.get("placements", [])),
+            "comparison_reason": "Initial fixture geometry is UNDESIGNED and raw MA2 coordinates are not mapped to ZEN_STAGE_FRAME_V1.",
+            "is_artistic_validation_failure": False,
+        }
     originals: dict[tuple[int, int], Mapping[str, Any]] = {}
     for fixture in snapshot.get("fixture_inventory", []):
         if not isinstance(fixture, Mapping):
