@@ -73,42 +73,59 @@ not production readiness.
 ## Current mainline
 
 ```text
-CURRENT_MILESTONE: M2 — EXPRESSIVE CAPABILITY
-ACTIVE_EXPERIMENT:
-  SHEESH_CURRENT_SHOW_REDESIGN_001
-OWNER_AUTHORIZATION:
-  CURRENT LOADED FINGERPRINTED TEST SHOW MAY BE REDESIGNED
-ORDER:
-  CURRENT SHOW SNAPSHOT
-  -> VERIFIED FIXTURE / GROUP / CAPABILITY / GEOMETRY STATE
-  -> ZEN SPATIAL / STAGE VIEW DESIGN
-  -> ZEN SHEESH DESIGN
-  -> CRITIC
-  -> FINALIZER
-  -> VERIFIED SUPPORTED TEST-SHOW WRITEBACK ONLY
-STOP CONDITION:
-  IF A REQUIRED SPATIAL OR AUTONOMOUS WRITE PATH DOES NOT EXIST,
-  REPORT CAPABILITY GAP; DO NOT INVENT RAW MA COMMANDS
+CURRENT_MILESTONE: M4 — PROFESSIONAL MA2 IMPLEMENTATION
+DEFAULT_DESIGN_MODE:
+  VERIFIED KNOWLEDGE / CACHE
+  -> ONE PRIMARY LIGHTING DESIGNER CALL
+  -> OPTIONAL ONE DELTA REVISION
+  -> ZEN ARTISTIC PLAN COMPILER
+  -> STRICT INTERNAL SHOW PLAN
+  -> DETERMINISTIC MA2 BUILDER
+  -> READBACK
+DEFAULT_PROVIDER_CONTRACT: ARTISTIC_CUES_V0_1
+STRICT_INTERNAL_SCHEMA_AUTHORITY: ZEN
+LEGACY_MULTI_AGENT_DEFAULT: NO
+PAID_PROVIDER_ALLOWED: NO
 ```
 
-Zen's explicit 2026-09-20 owner decision supersedes the earlier
-`SHEESH_TEST_SHOW_VISUAL_OPERATOR_REVIEW_001` hold-before-overwrite gate for
-this fingerprinted Test Show. The earlier SHEESH baseline remains comparison
-evidence, not the template for the new design.
+The first real programming path is now proven on the fingerprinted Test Show.
+ZEN has successfully compiled AI-authored artistic cue intent into native MA2
+programming, created six Cues, assigned a new Sequence to Page 2 / Executor
+2.002, and passed Sequence/Cue/Executor readback while preserving Group order,
+XYZ, protected Fixture 9999, the prior Sequence 301 baseline, and Executor
+2.001.
 
-The high-value evidence is no longer another provider/synthetic test. It is
-whether ZEN can consume a real current rig, create a coherent spatial design
-upstream of song design, produce a SHEESH artifact through the existing
-multi-provider runtime, and safely realize the portions for which the
-repository already has a verified bounded write path.
+The current product objective is therefore no longer "make a provider emit a
+perfect internal JSON document" and no longer "run every historical role on
+every song." The default path is the lean Design Mode defined in
+`docs/ZEN_DESIGN_MODE.md`.
 
-The prior Test Show build proves a bounded `Move3D` write/read-back technique
-for this fixture set. It does not by itself prove that the autonomous
-`zen.autonomous_design.v0.1` path has a generic spatial Resolver/Builder.
-That boundary must be inspected, and missing capability must fail closed.
+Song-specific constraints belong at the calling task boundary. The generic
+Artistic Plan Compiler must remain song-agnostic: it may normalize
+representation and attach ZEN-owned operational metadata, but it must not
+encode universal assumptions such as "every song has six cues" or fixed
+SHEESH section labels.
 
-See `ZEN_SHEESH_CURRENT_SHOW_REDESIGN_001.md` for the exact experiment
-contract and report fields.
+The historical Researcher / Rig Designer / Position Designer / Lighting
+Designer / Critic / Finalizer runtime remains available for explicit research,
+spatial bootstrap experiments, independent deep review, and regression
+comparison. It is not the ordinary song-programming default.
+
+Near-term mainline:
+
+1. keep the lean one-call design path stable;
+2. use Knowledge/State and cached compact context instead of repeatedly sending
+   full Show dumps to the model;
+3. implement delta-first artistic revision so a local Cue/region change does
+   not restart the full design pipeline;
+4. expand typed artistic capability only when the corresponding deterministic
+   MA2 Builder/readback path is actually verified;
+5. keep live operation event-driven and local-first so routine state monitoring
+   costs zero model calls.
+
+M2 expressive-learning work remains useful as a supporting knowledge track,
+but it no longer justifies automatically inserting extra model roles into the
+default product path.
 
 ## Ongoing tracks — non-interrupting by default
 
