@@ -1,5 +1,12 @@
 # ZEN Multi-Provider Parallel Pool 001
 
+> **2026-09-22 default-path update:** The provider-pool and parallel-role
+> capabilities remain implemented, but they are no longer the default ordinary
+> song-design path. `docs/ZEN_DESIGN_MODE.md` is authoritative for the normal
+> product flow: one primary Lighting Designer call, optional one delta
+> revision, then deterministic ZEN Compiler/Builder/readback. Parallel
+> Designer/Critic fan-out is explicit deep/research mode only.
+>
 Status: **IMPLEMENTED IN REPOSITORY / FULL REGRESSION PENDING**
 
 Date: 2026-09-20
