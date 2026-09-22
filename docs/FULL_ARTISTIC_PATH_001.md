@@ -151,6 +151,14 @@ touching geometry, existing Cues, Sequence 901, or its Executor. Every created
 Effect is read back immediately; creation stops before additional Effects if
 exact label + TEMPLATE-kind verification fails.
 
+The current Test Show has another native quirk: its generic `List Preset All`
+view can omit the Agent-created 4.101-4.113 Color rows. The smoke runner
+therefore performs thirteen bounded read-only `List Preset 4.xxx` lookups
+against the committed Build 001 palette manifest, accepts only exact label
+matches, merges those verified rows into the scanned profile, and recomputes
+the Show identity before deriving Group/Preset applicability. This is not a
+general Preset-number sweep.
+
 ## Smoke test versus product design
 
 `scripts/run_sheesh_programming_test.py` is a six-cue bounded smoke test only.
