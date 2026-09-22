@@ -5,7 +5,7 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "Use the lean Design Mode as the default product path: verified Knowledge/State and cached compact context -> one primary LIGHTING_DESIGNER call -> optional one delta revision -> ZEN Artistic Plan Compiler -> strict internal ShowPlan -> deterministic MA2 Builder -> readback. ARTISTIC_CUES_V0_1 is the default provider contract; ZEN owns backend metadata and strict schema. The historical full multi-agent role chain is explicit/research-only, not the ordinary song-programming default. Preserve FREE_ONLY routing, CODEX_ARTISTIC_INTERVENTION=NONE, Fixture 9999 protection, Group/XYZ state, and verified readback boundaries."
+    "active_objective": "Use the lean single-designer path while restoring full artistic expression. Current mainline: verified Knowledge/State/cache -> one LIGHTING_DESIGNER call -> ARTISTIC_CUES_V0_2 -> verified Preset/Effect resource resolution -> strict internal ShowPlan -> deterministic MA2 Builder -> explicit readback scope. Execution limits must not become artistic-language limits. Preserve FREE_ONLY routing, CODEX_ARTISTIC_INTERVENTION=NONE, Fixture 9999 protection, protected object boundaries and no raw LLM-to-MA2 command path."
   },
   "last_closed_task": {
     "id": "SHEESH_ARTISTIC_CUES_V0_1_SEQUENCE_2_EXECUTOR_2_002",
@@ -13,21 +13,23 @@
     "result": "The lean AI programming path executed successfully on the Test Show. Provider artistic intent used ARTISTIC_CUES_V0_1, ZEN compiled strict zen.show_plan.v0.1, Sequence 2 was created and assigned to Executor 2.002 with six cues, MA2 programming readback passed, Sequence 301 / Executor 2.001 remained untouched, Phase A was not rerun, Groups and XYZ were not modified, Fixture 9999 was untouched, no paid provider was used, and CODEX_ARTISTIC_INTERVENTION=NONE. The generic compiler has since been refactored so SHEESH-specific six-cue labels live at the experiment boundary rather than in the compiler."
   },
   "next_acceptance_gate": {
-    "id": "LEAN_DESIGN_MODE_REGRESSION_AND_DELTA_REVISION_001",
+    "id": "FULL_ARTISTIC_PATH_001",
     "classification": "REQUIRED",
-    "status": "COMPLETE",
-    "why_it_matters": "The default product path must stay lean enough for free-provider quota while preserving artistic quality. The compiler is now song-agnostic and the full historical role chain is no longer default. Verify the refactor on the Windows runtime, then add delta-first revision/context reuse without reintroducing mandatory Researcher/Rig/Position/Critic/Finalizer calls.",
-    "blocks_current_milestone": false,
+    "status": "ACTIVE",
+    "why_it_matters": "The lean architecture regressed artistically because the provider-facing path was narrowed to dimmer/generic preset behavior even though richer Test Show Color and Effect evidence already exists. Restore verified Preset/Effect dimensions now while keeping the artistic vocabulary broader than current execution capability.",
+    "blocks_current_milestone": true,
     "dependencies": [
+      "docs/FULL_ARTISTIC_PATH_001.md",
       "docs/ZEN_DESIGN_MODE.md",
-      "docs/ZEN_PRODUCT_ROADMAP.md",
       "zen_ma2_agent/designer/artistic_plan.py",
       "zen_ma2_agent/designer/lean_design_mode.py",
       "scripts/run_sheesh_programming_test.py",
+      "zen_ma2_agent/builder/draft.py",
+      "zen_ma2_agent/effect_resources.py",
       "tests/test_artistic_plan_compiler.py",
       "tests/test_lean_design_mode.py"
     ],
-    "next_review_condition": "Closed: the generic compiler remains song-agnostic, the bounded SHEESH runner owns its six-cue policy, deterministic compact context/cache reuse and one-call delta revision are implemented and covered by regression tests. No provider or MA2 call was made during verification."
+    "next_review_condition": "On the real development machine: full tests/self-check/diff-check pass; ARTISTIC_CUES_V0_2 compiles verified typed Preset dimensions and verified Effect IDs; lean compact/delta context carries Effects and never guesses Cue 1; the six-cue SHEESH runner is clearly smoke-only and accepts an explicit target Executor; no MA2 write is required for regression verification. A later real-machine smoke may prove current-Show Color/Effect resource flow with explicit metadata-vs-cue-content readback reporting."
   },
   "human_review_decisions": [
     {
@@ -332,7 +334,7 @@
   },
   "design_mode_policy": {
     "default": "LEAN_SINGLE_DESIGNER",
-    "provider_contract": "ARTISTIC_CUES_V0_1",
+    "provider_contract": "ARTISTIC_CUES_V0_2",
     "primary_design_calls": 1,
     "optional_delta_revision_calls": 1,
     "legacy_multi_agent_default": false,
@@ -342,7 +344,33 @@
       "Do not spend provider calls on backend metadata or representation-only repair.",
       "Do not use the LLM as the Show database; retrieve compact verified context from Knowledge/State/cache.",
       "Song-specific cue counts and labels belong to the calling task, not the generic compiler.",
+      "Preset and Effect objects are implementation resources, not the artistic ontology.",
+      "Unsupported artistic dimensions stay explicit; never silently substitute another meaning.",
       "Live mode is local/event-driven first; call an LLM only for meaningful interpretation."
+    ],
+    "artistic_vocabulary": [
+      "DIMMER",
+      "COLOR",
+      "POSITION",
+      "FOCUS",
+      "BEAM",
+      "GOBO",
+      "PRISM",
+      "ZOOM",
+      "FROST",
+      "EFFECT",
+      "MOVEMENT",
+      "STROBE"
+    ],
+    "current_compiler_resource_forms": [
+      "DIMMER_LEVEL",
+      "GENERIC_VERIFIED_PRESET",
+      "COLOR_PRESET",
+      "POSITION_PRESET",
+      "FOCUS_PRESET",
+      "BEAM_PRESET",
+      "GOBO_PRESET",
+      "VERIFIED_EFFECT_ID"
     ]
   }
 }
