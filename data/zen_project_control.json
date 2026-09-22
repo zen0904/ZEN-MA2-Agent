@@ -15,17 +15,18 @@
   "next_acceptance_gate": {
     "id": "SHEESH_ARTISTIC_RESOURCE_RESTORE_001",
     "classification": "REQUIRED",
-    "status": "READY_FOR_RETRY_AFTER_EXECUTOR_PRECHECK_FIX",
-    "why_it_matters": "The first resource-only run failed before any resource write because the restore preflight incorrectly required the historical Executor 1.201 -> Sequence 901 assignment even though resources-only mode never touches Executor/Sequence. The live Test Show currently uses Executor 2.002 -> Sequence 2. Resource-only preflight is now decoupled from that stale executor binding while retaining Group/Fixture/Fixture9999/Sequence901/Test-Show identity checks.",
+    "status": "READY_FOR_QTY_READBACK_RETRY",
+    "why_it_matters": "The resource-only preflight now passes and 13/13 Color presets are restored. The only remaining failure is that generic List Effect did not prove whether the already-created Effect 2500 is TEMPLATE. MA2 defines template/selective through Effect-line QTY evidence, so the implementation now performs bounded List Effect 1.<id>.* reads for reserved FX_DIM_CHASE_* labels and accepts TEMPLATE only when explicit QTY=None is read back.",
     "blocks_current_milestone": true,
     "dependencies": [
-      "scripts/build_real_ma2_test_show_sheesh.py --resources-only",
+      "zen_ma2_agent/state/providers/show_pools.py::EffectProvider.parse_template_detail",
+      "scripts/build_real_ma2_test_show_sheesh.py::_read_effect_line_detail",
+      "scripts/run_sheesh_programming_test.py::_augment_bounded_template_effect_inventory",
+      "tests/test_test_show_resources.py",
       "tests/test_sheesh_resource_restore_script.py",
-      "zen_ma2_agent/test_show_resources.py",
-      "zen_ma2_agent/test_show_evidence.py",
-      "zen_ma2_agent/artistic_resources.py"
+      "tests/test_lean_design_mode.py"
     ],
-    "next_review_condition": "Run offline regression at current HEAD, then retry only the bounded resource restore using a new result filename so the failed precheck evidence is preserved. Require 13/13 Color exact-label readback. Require each reusable Effect to read back with exact label and native TEMPLATE kind; stop before additional Effects on the first mismatch. Resource-only mode must not modify Executor 2.002, Sequence 2, Sequence 901 contents, geometry, Patch/Address, or Fixture 9999."
+    "next_review_condition": "Run offline regression. Then perform a read-only bounded detail read of existing Effect 2500. If explicit QTY=None is present, rerun resources-only with a new result file so 2500 is reused and only missing template Effects are created. If QTY is numeric, mixed, zero, or absent, stop and return the exact raw List Effect 1.2500.* evidence; do not create 2501/2502 and do not call Lighting Designer."
   },
   "human_review_decisions": [
     {
@@ -388,7 +389,9 @@
       "test_show_resource_restore": "BOUNDED_RESOURCES_ONLY: COLOR_PRESETS_4.101_4.113 + THREE_NATIVE_TEMPLATE_DIMMER_CHASE_EFFECTS; NO_GEOMETRY_OR_SEQUENCE_WRITE",
       "color_inventory_discovery": "LIST_PRESET_ALL_MAY_OMIT_TEST_COLORS; ONLY_BOUNDED_DIRECT_4.101_4.113_EXACT_LABEL_READBACK_MAY_AUGMENT_PROFILE",
       "resource_only_executor_policy": "EXECUTOR_ASSIGNMENT_NOT_REQUIRED_AND_NOT_MODIFIED; current live Executor 2.002 -> Sequence 2 may remain untouched",
-      "preflight_failure_cleanup": "NO_CLEARALL_IF_NO_WRITE_STARTED"
+      "preflight_failure_cleanup": "NO_CLEARALL_IF_NO_WRITE_STARTED",
+      "effect_template_kind_evidence": "EXPLICIT_EFFECT_LINE_QTY_ONLY: QTY_NONE=TEMPLATE; POSITIVE_NUMERIC_QTY=SELECTIVE; ABSENT_ZERO_MIXED=UNKNOWN",
+      "generic_list_effect_kind_authority": false
     }
   }
 }
