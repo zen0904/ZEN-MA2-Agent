@@ -3,7 +3,9 @@ import unittest
 from zen_ma2_agent.test_show_evidence import (
     SHEESH_TEST_SEQUENCE,
     SHEESH_TEST_SEQUENCE_LABEL,
+    SHEESH_TEST_GROUP_FIXTURES,
     bounded_test_show_color_rows,
+    derive_sheesh_test_dimmer_bindings,
     derive_sheesh_test_preset_bindings,
     test_show_palette_manifest,
 )
@@ -98,6 +100,80 @@ class TestShowEvidenceTests(unittest.TestCase):
             },
         )
         self.assertEqual(rows, [])
+
+    def test_dimmer_bindings_require_exact_current_group_membership_and_observed_set_dimmer(self):
+        profile = {
+            **self.profile,
+            "groups": [
+                {
+                    "group_id": group_id,
+                    "name": f"G{group_id}",
+                    "fixture_ids_in_selection_order": list(members),
+                }
+                for group_id, members in SHEESH_TEST_GROUP_FIXTURES.items()
+            ],
+        }
+        plan = {
+            **self.plan,
+            "cues": [
+                {
+                    "cue_number": 1,
+                    "actions": [
+                        {
+                            "operation": "SET_DIMMER",
+                            "target": {"type": "group", "ref": group_id},
+                            "level": 50,
+                        }
+                        for group_id in sorted(SHEESH_TEST_GROUP_FIXTURES)
+                    ],
+                }
+            ],
+        }
+        result = derive_sheesh_test_dimmer_bindings(profile, plan)
+        self.assertEqual(result["status"], "SHOW_BOUND_VERIFIED")
+        self.assertEqual(
+            {row["group_id"] for row in result["bindings"]},
+            set(SHEESH_TEST_GROUP_FIXTURES),
+        )
+        self.assertTrue(all(row["capability"] == "DIMMER" for row in result["bindings"]))
+        self.assertTrue(all(row["implementation"] == "SET_DIMMER" for row in result["bindings"]))
+
+    def test_dimmer_binding_does_not_survive_group_membership_drift(self):
+        profile = {
+            **self.profile,
+            "groups": [
+                {
+                    "group_id": group_id,
+                    "name": f"G{group_id}",
+                    "fixture_ids_in_selection_order": (
+                        list(members[:-1]) + [9998]
+                        if group_id == 3
+                        else list(members)
+                    ),
+                }
+                for group_id, members in SHEESH_TEST_GROUP_FIXTURES.items()
+            ],
+        }
+        plan = {
+            **self.plan,
+            "cues": [
+                {
+                    "cue_number": 1,
+                    "actions": [
+                        {
+                            "operation": "SET_DIMMER",
+                            "target": {"type": "group", "ref": group_id},
+                            "level": 25,
+                        }
+                        for group_id in sorted(SHEESH_TEST_GROUP_FIXTURES)
+                    ],
+                }
+            ],
+        }
+        result = derive_sheesh_test_dimmer_bindings(profile, plan)
+        self.assertEqual(result["status"], "PARTIAL")
+        self.assertIn(3, result["mismatched_groups"])
+        self.assertNotIn(3, {row["group_id"] for row in result["bindings"]})
 
     def test_sequence_identity_mismatch_blocks_recovery(self):
         profile = dict(self.profile)
