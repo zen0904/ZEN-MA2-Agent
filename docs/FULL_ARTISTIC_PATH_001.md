@@ -79,6 +79,47 @@ existing real-machine Effect-call capability before execution.
 
 Preset and Effect are implementation resources, not the artistic ontology.
 
+
+## Artistic Resource Map
+
+The current implementation uses `zen.artistic_resource_map.v0.1` as the
+authoritative model-facing resource boundary.
+
+It exists because these statements are not equivalent:
+
+```text
+Group is named BEAM
+!= Group has verified Beam capability
+
+Preset is COLOR
+!= Preset is verified applicable to this Group
+
+Effect ID exists in MA2
+!= Effect is a verified artistic resource for this Group
+```
+
+The resource map is built from the current Show profile and may combine:
+
+- exact Group membership from the current Show;
+- exact Show-bound FixtureType capability profiles;
+- explicit current-Show Preset applicability bindings;
+- exact Agent-owned Effect catalog entries whose Show identity and current
+  Effect label both still match;
+- the separately verified Cue Effect application grammar.
+
+Arbitrary rows returned by `List Effect` are never offered to the Lighting
+Designer merely because they exist.
+
+Preset resources are Group-eligible only when explicit binding evidence matches
+the exact current Show identity. Preset type alone is insufficient.
+
+The lean compact context carries this map so the primary model sees the actual
+Group-specific toolbox instead of a flat dump of unrelated Presets and Effects.
+
+The bounded SHEESH smoke runner now refreshes Group membership and FixtureType
+capability evidence before building the resource map, then feeds only
+Group-bound executable resources to the provider contract.
+
 ## Smoke test versus product design
 
 `scripts/run_sheesh_programming_test.py` is a six-cue bounded smoke test only.
