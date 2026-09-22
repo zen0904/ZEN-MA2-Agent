@@ -63,11 +63,22 @@ class EffectProvider:
         expose that column, so callers should use a bounded line-detail read
         when this distinction matters.
         """
-        tokens = re.findall(
+        text = output or ""
+        explicit_tokens = re.findall(
             r"\bQTY\b\s*(?:[:=]\s*|\s+)(None|\d+)\b",
-            output or "",
+            text,
             re.I,
         )
+        # Actual grandMA2 3.9 table output prints QTY only in the header and
+        # places the value as the first data column after "Effectline <n>",
+        # for example:
+        #   Effectline 1 None None DIM Abs ...
+        table_tokens = re.findall(
+            r"^\s*Effectline\s+\d+\s+(None|\d+)\b",
+            text,
+            re.I | re.M,
+        )
+        tokens = [*explicit_tokens, *table_tokens]
         normalized = [token.upper() if token.lower() == "none" else token for token in tokens]
         if not normalized:
             return {
