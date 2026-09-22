@@ -185,6 +185,66 @@ class ArtisticResourceMapTests(unittest.TestCase):
         )
         self.assertEqual(effect_applicability_from_map(result)[1], set())
 
+    def test_strict_template_effect_can_use_show_bound_group_dimmer_application_evidence(self):
+        profile = {
+            **self.profile,
+            "effects": [
+                {"effect_id": 88, "name": "FX_DIM_CHASE_FAST", "kind": "TEMPLATE"},
+            ],
+            "fixture_type_profiles": [],
+        }
+        dimmer_binding = {
+            "status": "SHOW_BOUND_VERIFIED",
+            "show_identity": self.identity,
+            "group_id": 1,
+            "capability": "DIMMER",
+            "implementation": "SET_DIMMER",
+            "source": "REAL_MACHINE_TEST_BUILD",
+            "evidence": {"fixture_ids_in_selection_order": [101]},
+        }
+        result = build_artistic_resource_map(
+            profile,
+            dimmer_bindings=[dimmer_binding],
+            effect_application_capability=self.effect_application,
+        )
+        group1, group2 = result["groups"]
+        self.assertEqual(
+            group1["dimensions"]["DIMMER"]["technical_capability"]["status"],
+            "UNKNOWN",
+        )
+        self.assertEqual(
+            group1["dimensions"]["DIMMER"]["execution_status"],
+            "SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL",
+        )
+        self.assertEqual(effect_applicability_from_map(result)[1], {88})
+        self.assertEqual(effect_applicability_from_map(result)[2], set())
+        self.assertEqual(
+            group1["dimensions"]["EFFECT"]["execution_status"],
+            "VERIFIED_EFFECT_RESOURCE",
+        )
+
+    def test_wrong_show_identity_dimmer_evidence_does_not_unlock_template_effect(self):
+        profile = {
+            **self.profile,
+            "effects": [
+                {"effect_id": 88, "name": "FX_DIM_CHASE_FAST", "kind": "TEMPLATE"},
+            ],
+            "fixture_type_profiles": [],
+        }
+        wrong = {"kind": "SCANNED_SHOW_PROFILE_FINGERPRINT", "value": "other", "confidence": "PARTIAL"}
+        result = build_artistic_resource_map(
+            profile,
+            dimmer_bindings=[{
+                "status": "SHOW_BOUND_VERIFIED",
+                "show_identity": wrong,
+                "group_id": 1,
+                "capability": "DIMMER",
+                "implementation": "SET_DIMMER",
+            }],
+            effect_application_capability=self.effect_application,
+        )
+        self.assertEqual(effect_applicability_from_map(result)[1], set())
+
     def test_unbound_presets_are_context_only_not_group_resources(self):
         result = self.build()
         refs = {item["reference"] for item in result["unbound_presets"]}
