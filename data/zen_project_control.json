@@ -13,18 +13,20 @@
     "result": "The lean AI programming path executed successfully on the Test Show. Provider artistic intent used ARTISTIC_CUES_V0_1, ZEN compiled strict zen.show_plan.v0.1, Sequence 2 was created and assigned to Executor 2.002 with six cues, MA2 programming readback passed, Sequence 301 / Executor 2.001 remained untouched, Phase A was not rerun, Groups and XYZ were not modified, Fixture 9999 was untouched, no paid provider was used, and CODEX_ARTISTIC_INTERVENTION=NONE. The generic compiler has since been refactored so SHEESH-specific six-cue labels live at the experiment boundary rather than in the compiler."
   },
   "next_acceptance_gate": {
-    "id": "SHEESH_ARTISTIC_RESOURCE_RESTORE_001",
+    "id": "FULL_ARTISTIC_PATH_001",
     "classification": "REQUIRED",
-    "status": "READY_FOR_RESOURCE_CONTINUATION",
-    "why_it_matters": "Real MA2 readback proved Effect 2500 has QTY=None in the tabular Effectline row. The prior parser only recognized QTY when repeated inline, so it returned UNKNOWN despite authoritative template evidence. The parser now reads the first data column after Effectline <n>, preserving the same safety rule: None=TEMPLATE, positive numeric=SELECTIVE, absent/zero/mixed=UNKNOWN.",
+    "status": "READY_FOR_READ_ONLY_RESOURCE_MAP_CONFIRMATION",
+    "why_it_matters": "Color and three native TEMPLATE Dimmer Chase Effects are now restored and verified on the Test Show. Effect exposure remained zero only because FixtureType DIMMER capability evidence was incomplete. ZEN now recovers bounded Group-level Dimmer application evidence from the successful Build 001 only when current Sequence 901 identity and exact Group member sets still match. This evidence is application-specific and does not masquerade as FixtureType capability.",
     "blocks_current_milestone": true,
     "dependencies": [
-      "zen_ma2_agent/state/providers/show_pools.py::EffectProvider.parse_template_detail",
-      "tests/test_test_show_resources.py",
-      "scripts/build_real_ma2_test_show_sheesh.py --resources-only",
-      "scripts/run_sheesh_programming_test.py"
+      "zen_ma2_agent/test_show_evidence.py::derive_sheesh_test_dimmer_bindings",
+      "zen_ma2_agent/artistic_resources.py",
+      "scripts/run_sheesh_programming_test.py",
+      "tests/test_test_show_evidence.py",
+      "tests/test_artistic_resources.py",
+      "tests/test_lean_design_mode.py"
     ],
-    "next_review_condition": "Run regression, re-read existing Effect 2500 and require TEMPLATE/qty_values=[NONE]. Then rerun resources-only with a new result file. Reuse 2500; create only missing MED/FAST resources; require QTY=None after each creation. If all resource restore readbacks pass, perform the fresh read-only resource-map refresh. Do not call Lighting Designer until that map exposes verified Color and Effect resources."
+    "next_review_condition": "Run regression and a fresh read-only resource-map refresh only. Require seven current Group member-set matches, SHOW_BOUND_VERIFIED direct Dimmer application evidence, Color resources present, and Effects 2500/2501/2502 exposed only as verified TEMPLATE resources. If clean, proceed directly to the Lighting Designer smoke on a new free Executor; do not add another resource layer."
   },
   "human_review_decisions": [
     {
@@ -390,7 +392,8 @@
       "preflight_failure_cleanup": "NO_CLEARALL_IF_NO_WRITE_STARTED",
       "effect_template_kind_evidence": "EXPLICIT_EFFECT_LINE_QTY_ONLY: QTY_NONE=TEMPLATE; POSITIVE_NUMERIC_QTY=SELECTIVE; ABSENT_ZERO_MIXED=UNKNOWN",
       "generic_list_effect_kind_authority": false,
-      "effect_template_qty_table_format": "grandMA2_3.9: QTY header + Effectline <n> <QTY_VALUE> data column"
+      "effect_template_qty_table_format": "grandMA2_3.9: QTY header + Effectline <n> <QTY_VALUE> data column",
+      "test_show_dimmer": "BUILD_001_OBSERVED_SET_DIMMER + CURRENT_SEQUENCE_901_IDENTITY + EXACT_CURRENT_GROUP_MEMBER_SET; selection order may differ and is context, not capability identity"
     }
   }
 }
