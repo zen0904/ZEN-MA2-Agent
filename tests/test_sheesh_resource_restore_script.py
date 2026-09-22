@@ -11,28 +11,31 @@ SPEC.loader.exec_module(MODULE)
 
 
 class _Client:
-    def __init__(self):
+    def __init__(self, detail_outputs=None):
         self.commands = []
+        self.detail_outputs = dict(detail_outputs or {})
 
     def execute(self, command):
         self.commands.append(command)
         if command.startswith("List Preset 4."):
             return "Error #14: OBJECT DOES NOT EXIST"
+        if command.startswith("List Effect 1."):
+            return self.detail_outputs.get(command, "")
         return ""
 
 
 class _Runtime:
-    def __init__(self, outputs):
+    def __init__(self, outputs, detail_outputs=None):
         self.outputs = outputs
-        self.client = _Client()
+        self.client = _Client(detail_outputs)
 
     def read_state(self, command):
         return self.outputs[command]
 
 
 class _Core:
-    def __init__(self, outputs):
-        self.runtime = _Runtime(outputs)
+    def __init__(self, outputs, detail_outputs=None):
+        self.runtime = _Runtime(outputs, detail_outputs)
 
 
 def _outputs():
@@ -81,6 +84,35 @@ class SheeshResourceRestoreScriptTests(unittest.TestCase):
                 resume_existing_build=True,
                 require_owned_executor=True,
             )
+
+
+    def test_effect_rows_upgrade_exact_reserved_label_only_from_qty_none(self):
+        outputs = _outputs()
+        outputs["List Effect"] = (
+            'Effect 2500 "FX_DIM_CHASE_SLOW"\n'
+            'Effect 2501 "UNRELATED"\n'
+        )
+        core = _Core(
+            outputs,
+            {"List Effect 1.2500.*": "Effect 1.2500.1\nQTY=None\n"},
+        )
+        rows = MODULE._effect_rows(core, {})
+        slow = next(row for row in rows if row["number"] == 2500)
+        unrelated = next(row for row in rows if row["number"] == 2501)
+        self.assertEqual(slow["kind"], "TEMPLATE")
+        self.assertEqual(slow["template_detail"]["reason"], "ALL_EFFECT_LINES_QTY_NONE")
+        self.assertIsNone(unrelated["kind"])
+        self.assertNotIn("List Effect 1.2501.*", core.runtime.client.commands)
+
+    def test_effect_rows_marks_reserved_selective_and_does_not_promote_it(self):
+        outputs = _outputs()
+        outputs["List Effect"] = 'Effect 2500 "FX_DIM_CHASE_SLOW"\n'
+        core = _Core(
+            outputs,
+            {"List Effect 1.2500.*": "Effect 1.2500.1\nQTY=8\n"},
+        )
+        rows = MODULE._effect_rows(core, {})
+        self.assertEqual(rows[0]["kind"], "SELECTIVE")
 
     def test_failed_preflight_path_is_guarded_from_final_clear(self):
         source = SCRIPT_PATH.read_text(encoding="utf-8")
