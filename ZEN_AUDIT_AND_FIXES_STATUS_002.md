@@ -1,26 +1,30 @@
 # ZEN MA2 Agent Status Report 002 (supersedes ZEN_MA2_AGENT_STATUS_REPORT.md for current status)
 
-> **Current-state supersession (2026-09-20):** This report is still useful as
-> historical audit evidence, but several implementation statements below have
-> been superseded by committed repository state. Before acting on any "missing"
-> item in this file, check `data/zen_project_control.json`,
-> `ZEN_MULTI_PROVIDER_PARALLEL_POOL_001.md`, and the actual code.
+> **Current-state supersession (2026-09-22):** This report is historical audit
+> evidence. For current execution decisions, read `data/zen_project_control.json`,
+> `docs/ZEN_DESIGN_MODE.md`, `docs/ZEN_PRODUCT_ROADMAP.md`, and the actual
+> code before treating any older "missing" item here as current.
 >
 > Current committed truths include:
 >
-> - the bounded four-role runtime `RESEARCHER -> LIGHTING_DESIGNER -> CRITIC -> FINALIZER` exists;
-> - Designer and Critic can generate bounded parallel candidates across
->   independent providers;
-> - the Provider Router supports expandable slots, `FREE_FIRST`, priorities,
->   role routing, and a lightweight local fallback;
-> - the legacy PySide6/mobile UI is retired; OpenClaw is the intended operator UI;
-> - the autonomous design artifact still has **no production-authorized direct
->   MA write path**; Safety / Resolver / deterministic Builder boundaries remain;
-> - the current project gate is the one recorded in
->   `data/zen_project_control.json`, presently
->   `SHEESH_TEST_SHOW_VISUAL_OPERATOR_REVIEW_001`.
+> - the default ordinary design path is now lean:
+>   verified Knowledge/State/cache -> one primary Lighting Designer call ->
+>   optional one delta revision -> ZEN Compiler -> deterministic Builder ->
+>   readback;
+> - `ARTISTIC_CUES_V0_1` is the provider-facing programming contract and ZEN
+>   owns strict internal `zen.show_plan.v0.1` metadata/shape;
+> - the generic Artistic Plan Compiler is song-agnostic; SHEESH-specific
+>   six-cue labels/count live at the bounded SHEESH runner boundary;
+> - real MA2 programming has been proven on the Test Show, including a new
+>   Sequence 2 assigned to Executor 2.002 with readback PASS while preserving
+>   the earlier Sequence 301 / Executor 2.001 baseline;
+> - the historical Researcher/Rig/Position/Lighting/Critic/Finalizer runtime
+>   remains available for explicit research, spatial bootstrap, and deep-review
+>   work, but is not the default ordinary song-programming path;
+> - Safety / protected-object / deterministic Builder / readback boundaries
+>   remain in force, including Fixture 9999 protection and
+>   `CODEX_ARTISTIC_INTERVENTION=NONE`.
 >
-
 Assessment date: 2026-09-13
 Assessment implementation HEAD at time of writing: `94e0bed` (main)
 
