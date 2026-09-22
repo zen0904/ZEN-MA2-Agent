@@ -122,3 +122,42 @@ def verify_template_effect_rows(
             "verified": label_ok and template_ok,
         }
     return result
+
+
+def reconcile_template_effect_specs(
+    existing_effects: Iterable[Mapping[str, Any]],
+    *,
+    start: int = 2500,
+) -> tuple[tuple[TemplateEffectSpec, ...], set[int]]:
+    """Reuse exact verified template labels and allocate only missing resources."""
+    rows = [item for item in existing_effects if isinstance(item, Mapping)]
+    used = {
+        int(item["number"])
+        for item in rows
+        if isinstance(item.get("number"), int)
+        and not isinstance(item.get("number"), bool)
+        and int(item["number"]) > 0
+    }
+    existing_ids: set[int] = set()
+    specs: list[TemplateEffectSpec] = []
+    candidate = max(1, int(start))
+    for label, bpm in _TEMPLATE_EFFECTS:
+        matches = [item for item in rows if str(item.get("name") or "").strip() == label]
+        if len(matches) > 1:
+            raise ValueError(f"Multiple Effects use reserved template label {label}.")
+        if matches:
+            row = matches[0]
+            if str(row.get("kind") or "").upper() != "TEMPLATE":
+                raise ValueError(f"Reserved Effect label {label} exists but is not verified TEMPLATE.")
+            effect_id = row.get("number")
+            if not isinstance(effect_id, int) or isinstance(effect_id, bool) or effect_id < 1:
+                raise ValueError(f"Reserved Effect label {label} has invalid pool identity.")
+            specs.append(TemplateEffectSpec(effect_id, label, bpm))
+            existing_ids.add(effect_id)
+            continue
+        while candidate in used:
+            candidate += 1
+        specs.append(TemplateEffectSpec(candidate, label, bpm))
+        used.add(candidate)
+        candidate += 1
+    return tuple(specs), existing_ids
