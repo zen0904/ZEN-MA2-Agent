@@ -3,6 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from zen_ma2_agent.artistic_resources import build_artistic_resource_map
 from zen_ma2_agent.designer.lean_design_mode import (
     DEFAULT_DELTA_REVISION_CALL_BUDGET,
     DEFAULT_PRIMARY_DESIGN_CALL_BUDGET,
@@ -183,6 +184,44 @@ class LeanDesignModeTests(unittest.TestCase):
         source = runner.read_text(encoding="utf-8")
         self.assertNotIn("run_multi_agent_design", source)
         self.assertNotIn("run_spatial_revision_loop", source)
+
+
+    def test_compact_and_delta_context_can_carry_authoritative_artistic_resource_map(self):
+        identity = {"kind": "SCANNED_SHOW_PROFILE_FINGERPRINT", "value": "show-1", "confidence": "PARTIAL"}
+        profile = {
+            "show_identity": identity,
+            "fixtures": [
+                {"fixture_id": 101, "fixture_type": "2 TYPE"},
+                {"fixture_id": 201, "fixture_type": "2 TYPE"},
+            ],
+            "groups": [
+                {"group_id": 1, "name": "CENTER", "fixture_ids_in_selection_order": [101]},
+                {"group_id": 2, "name": "RIGHT", "fixture_ids_in_selection_order": [201]},
+            ],
+            "presets": [{"reference": "4.1", "preset_type": "COLOR", "name": "Red"}],
+            "effects": [],
+            "fixture_type_profiles": [],
+        }
+        resource_map = build_artistic_resource_map(profile)
+        full = self._build(artistic_resource_map=resource_map)
+        self.assertIn("artistic_resource_map", full["context"])
+        self.assertEqual(
+            [row["group_id"] for row in full["context"]["artistic_resource_map"]["groups"]],
+            [1, 2],
+        )
+
+        delta = build_delta_revision_context(
+            accepted_artistic_plan=self.plan,
+            owner_revision_text="Cue 4 is too full before the drop.",
+            groups=self.groups,
+            presets=self.presets,
+            effects=self.effects,
+            artistic_resource_map=resource_map,
+        )
+        self.assertEqual(
+            [row["group_id"] for row in delta["context"]["artistic_resource_map"]["groups"]],
+            [1, 2],
+        )
 
     def test_raw_transport_fields_are_rejected(self):
         with self.assertRaisesRegex(ValueError, "forbidden transport"):
