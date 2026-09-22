@@ -15,18 +15,16 @@
   "next_acceptance_gate": {
     "id": "SHEESH_ARTISTIC_RESOURCE_RESTORE_001",
     "classification": "REQUIRED",
-    "status": "READY_FOR_QTY_READBACK_RETRY",
-    "why_it_matters": "The resource-only preflight now passes and 13/13 Color presets are restored. The only remaining failure is that generic List Effect did not prove whether the already-created Effect 2500 is TEMPLATE. MA2 defines template/selective through Effect-line QTY evidence, so the implementation now performs bounded List Effect 1.<id>.* reads for reserved FX_DIM_CHASE_* labels and accepts TEMPLATE only when explicit QTY=None is read back.",
+    "status": "READY_FOR_RESOURCE_CONTINUATION",
+    "why_it_matters": "Real MA2 readback proved Effect 2500 has QTY=None in the tabular Effectline row. The prior parser only recognized QTY when repeated inline, so it returned UNKNOWN despite authoritative template evidence. The parser now reads the first data column after Effectline <n>, preserving the same safety rule: None=TEMPLATE, positive numeric=SELECTIVE, absent/zero/mixed=UNKNOWN.",
     "blocks_current_milestone": true,
     "dependencies": [
       "zen_ma2_agent/state/providers/show_pools.py::EffectProvider.parse_template_detail",
-      "scripts/build_real_ma2_test_show_sheesh.py::_read_effect_line_detail",
-      "scripts/run_sheesh_programming_test.py::_augment_bounded_template_effect_inventory",
       "tests/test_test_show_resources.py",
-      "tests/test_sheesh_resource_restore_script.py",
-      "tests/test_lean_design_mode.py"
+      "scripts/build_real_ma2_test_show_sheesh.py --resources-only",
+      "scripts/run_sheesh_programming_test.py"
     ],
-    "next_review_condition": "Run offline regression. Then perform a read-only bounded detail read of existing Effect 2500. If explicit QTY=None is present, rerun resources-only with a new result file so 2500 is reused and only missing template Effects are created. If QTY is numeric, mixed, zero, or absent, stop and return the exact raw List Effect 1.2500.* evidence; do not create 2501/2502 and do not call Lighting Designer."
+    "next_review_condition": "Run regression, re-read existing Effect 2500 and require TEMPLATE/qty_values=[NONE]. Then rerun resources-only with a new result file. Reuse 2500; create only missing MED/FAST resources; require QTY=None after each creation. If all resource restore readbacks pass, perform the fresh read-only resource-map refresh. Do not call Lighting Designer until that map exposes verified Color and Effect resources."
   },
   "human_review_decisions": [
     {
@@ -391,7 +389,8 @@
       "resource_only_executor_policy": "EXECUTOR_ASSIGNMENT_NOT_REQUIRED_AND_NOT_MODIFIED; current live Executor 2.002 -> Sequence 2 may remain untouched",
       "preflight_failure_cleanup": "NO_CLEARALL_IF_NO_WRITE_STARTED",
       "effect_template_kind_evidence": "EXPLICIT_EFFECT_LINE_QTY_ONLY: QTY_NONE=TEMPLATE; POSITIVE_NUMERIC_QTY=SELECTIVE; ABSENT_ZERO_MIXED=UNKNOWN",
-      "generic_list_effect_kind_authority": false
+      "generic_list_effect_kind_authority": false,
+      "effect_template_qty_table_format": "grandMA2_3.9: QTY header + Effectline <n> <QTY_VALUE> data column"
     }
   }
 }
