@@ -138,10 +138,18 @@ identity.
 Effect recovery has a similarly narrow fallback already recognized by the
 Effect Resource Resolver: exact current Effect labels
 `FX_DIM_CHASE_SLOW`, `FX_DIM_CHASE_MED`, and `FX_DIM_CHASE_FAST` may be
-offered without a portable Agent catalog only when the target Group has
-Show-bound verified Dimmer capability and the Cue Effect application grammar is
-`REAL_MACHINE_VERIFIED`. Near-matching or arbitrary Effect names remain
+offered without a portable Agent catalog only when fresh MA2 inventory also
+classifies that pool object as a native `TEMPLATE` Effect, the target Group has
+Show-bound verified Dimmer capability, and the Cue Effect application grammar
+is `REAL_MACHINE_VERIFIED`. A SELECTIVE Effect with the same label is not
+reusable across Groups. Near-matching or arbitrary Effect names remain
 unavailable.
+
+The bounded Test Show resource-restoration mode may recreate the missing
+4.101-4.113 Color palette and three Dimmer Chase template Effects without
+touching geometry, existing Cues, Sequence 901, or its Executor. Every created
+Effect is read back immediately; creation stops before additional Effects if
+exact label + TEMPLATE-kind verification fails.
 
 ## Smoke test versus product design
 
