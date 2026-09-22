@@ -9,7 +9,9 @@ from zen_ma2_agent.designer.artistic_plan import (
 class ArtisticPlanCompilerTests(unittest.TestCase):
     def setUp(self):
         self.groups = {1, 2, 3}
-        self.presets = {"4.1", "6.2"}
+        self.presets = {"4.1", "6.2", "2.3"}
+        self.preset_types = {"4.1": "COLOR", "6.2": "FOCUS", "2.3": "POSITION"}
+        self.effects = {3520, 3600}
 
     def compile(self, provider_plan, *, cue_labels=None):
         return compile_artistic_cue_plan(
@@ -19,6 +21,8 @@ class ArtisticPlanCompilerTests(unittest.TestCase):
             active_sequence_range=[301, 400],
             verified_group_ids=self.groups,
             verified_preset_refs=self.presets,
+            verified_preset_types=self.preset_types,
+            verified_effect_ids=self.effects,
             cue_labels=cue_labels,
         )
 
@@ -38,8 +42,44 @@ class ArtisticPlanCompilerTests(unittest.TestCase):
         self.assertEqual(plan["active_sequence_range"], [301, 400])
         self.assertEqual([cue["cue_number"] for cue in plan["cues"]], [1, 2, 3])
         self.assertEqual([cue["label"] for cue in plan["cues"]], ["CUE_001", "CUE_002", "CUE_003"])
+        self.assertEqual(audit["provider_contract"], "ARTISTIC_CUES_V0_2")
         self.assertEqual(audit["cue_labels_source"], "PROVIDER_OR_GENERIC")
         self.assertFalse(audit["artistic_values_changed"])
+
+    def test_dimension_specific_presets_and_effects_compile_to_verified_actions(self):
+        provider_plan = {
+            "cues": [{
+                "fade": 0.2,
+                "actions": [
+                    {"group": 1, "color_preset": "4.1"},
+                    {"group": 1, "position_preset": "2.3"},
+                    {"group": 2, "focus_preset": "6.2"},
+                    {"group": 3, "effect": 3520},
+                ],
+            }]
+        }
+        plan, _ = self.compile(provider_plan)
+        actions = plan["cues"][0]["actions"]
+        self.assertEqual(actions[0]["operation"], "CALL_PRESET")
+        self.assertEqual(actions[0]["preset_type"], "COLOR")
+        self.assertEqual(actions[1]["preset_type"], "POSITION")
+        self.assertEqual(actions[2]["preset_type"], "FOCUS")
+        self.assertEqual(actions[3]["operation"], "CALL_EFFECT")
+        self.assertEqual(actions[3]["effect_ref"], {"id": 3520})
+
+    def test_dimension_specific_preset_type_mismatch_fails_closed(self):
+        provider_plan = {
+            "cues": [{"fade": 1, "actions": [{"group": 1, "color_preset": "6.2"}]}]
+        }
+        with self.assertRaisesRegex(ArtisticPlanCompileError, "not COLOR"):
+            self.compile(provider_plan)
+
+    def test_unverified_effect_fails_closed(self):
+        provider_plan = {
+            "cues": [{"fade": 1, "actions": [{"group": 1, "effect": 9999}]}]
+        }
+        with self.assertRaisesRegex(ArtisticPlanCompileError, "not in the verified Effect"):
+            self.compile(provider_plan)
 
     def test_caller_owns_experiment_specific_labels(self):
         provider_plan = {
@@ -113,27 +153,23 @@ class ArtisticPlanCompilerTests(unittest.TestCase):
 
     def test_semantic_substitution_is_not_performed(self):
         provider_plan = {
-            "cues": [
-                {
-                    "fade": 1,
-                    "actions": [
-                        {"operation": "SET_COLOR", "target": {"type": "group", "ref": 1}}
-                    ],
-                }
-            ]
+            "cues": [{
+                "fade": 1,
+                "actions": [
+                    {"operation": "SET_COLOR", "target": {"type": "group", "ref": 1}}
+                ],
+            }]
         }
         with self.assertRaisesRegex(ArtisticPlanCompileError, "Unsupported artistic operation"):
             self.compile(provider_plan)
 
     def test_transport_fields_are_rejected(self):
         provider_plan = {
-            "cues": [
-                {
-                    "fade": 1,
-                    "actions": [{"group": 1, "dimmer": 20}],
-                    "command": "Store Cue 1",
-                }
-            ]
+            "cues": [{
+                "fade": 1,
+                "actions": [{"group": 1, "dimmer": 20}],
+                "command": "Store Cue 1",
+            }]
         }
         with self.assertRaisesRegex(ArtisticPlanCompileError, "forbidden transport"):
             self.compile(provider_plan)
