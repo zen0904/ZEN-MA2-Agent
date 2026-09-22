@@ -29,6 +29,7 @@ _CUE_KEYS = ("id", "cue_number", "label", "fade", "actions", "intent")
 _GROUP_KEYS = ("group_id", "name")
 _PRESET_KEYS = ("reference", "preset_type", "name")
 _EFFECT_KEYS = ("effect_id", "name")
+_RESOURCE_GROUP_KEYS = ("group_id", "name", "dimensions", "preset_resources", "effect_resources")
 _CAPABILITY_KEYS = (
     "fixture_type_identity",
     "show_fingerprint",
@@ -174,6 +175,32 @@ def _compact_capabilities(value: object) -> list[dict[str, Any]]:
     return sorted(rows, key=lambda item: (str(item.get("fixture_type_identity") or ""), str(item.get("source") or "")))[:_MAX_LIST]
 
 
+def _compact_resource_map(value: object, *, group_ids: set[int] | None = None) -> dict[str, Any]:
+    source = _mapping(value)
+    groups: list[dict[str, Any]] = []
+    for item in source.get("groups", []) if isinstance(source.get("groups"), list) else []:
+        if not isinstance(item, Mapping):
+            continue
+        group_id = item.get("group_id")
+        if not isinstance(group_id, int) or isinstance(group_id, bool):
+            continue
+        if group_ids is not None and group_id not in group_ids:
+            continue
+        compact = _pick_mapping(item, _RESOURCE_GROUP_KEYS)
+        for key in ("preset_resources", "effect_resources"):
+            if isinstance(compact.get(key), list):
+                compact[key] = _bounded_list(compact[key])
+        groups.append(compact)
+    result = {
+        "schema": source.get("schema"),
+        "show_identity": deepcopy(source.get("show_identity")),
+        "groups": sorted(groups, key=lambda item: item["group_id"])[:_MAX_LIST],
+        "effect_inventory_summary": deepcopy(source.get("effect_inventory_summary") or {}),
+        "rules": deepcopy(source.get("rules") or {}),
+    }
+    return {key: value for key, value in result.items() if value not in (None, {}, [])}
+
+
 def _compact_plan(value: object, *, cue_numbers: set[int] | None = None) -> dict[str, Any] | None:
     source = _mapping(value)
     cues = source.get("cues")
@@ -201,11 +228,13 @@ def assemble_compact_design_context(
     presets: Sequence[Mapping[str, Any]] | None = None,
     effects: Sequence[Mapping[str, Any]] | None = None,
     capability_profiles: Sequence[Mapping[str, Any]] | None = None,
+    artistic_resource_map: Mapping[str, Any] | None = None,
     prior_artistic_plan: Mapping[str, Any] | None = None,
     owner_revision_text: str | None = None,
 ) -> dict[str, Any]:
     """Build a stable, bounded context without copying a raw Show dump."""
     _reject_forbidden_transport(prior_artistic_plan, path="prior_artistic_plan")
+    _reject_forbidden_transport(artistic_resource_map, path="artistic_resource_map")
     context: dict[str, Any] = {
         "schema": COMPACT_CONTEXT_SCHEMA,
         "song": _compact_song(song_context),
@@ -215,6 +244,8 @@ def assemble_compact_design_context(
         "verified_effects": _compact_effects(effects),
         "capability_summary": _compact_capabilities(capability_profiles),
     }
+    if artistic_resource_map is not None:
+        context["artistic_resource_map"] = _compact_resource_map(artistic_resource_map)
     plan = _compact_plan(prior_artistic_plan)
     if plan is not None:
         context["prior_artistic_plan"] = plan
@@ -294,12 +325,14 @@ def build_delta_revision_context(
     presets: Sequence[Mapping[str, Any]] | None = None,
     effects: Sequence[Mapping[str, Any]] | None = None,
     capability_profiles: Sequence[Mapping[str, Any]] | None = None,
+    artistic_resource_map: Mapping[str, Any] | None = None,
     song_context: Mapping[str, Any] | None = None,
     spatial_context: Mapping[str, Any] | None = None,
     affected_cue_numbers: Sequence[int] | None = None,
 ) -> dict[str, Any]:
     """Build one bounded local revision context around affected cues."""
     _reject_forbidden_transport(accepted_artistic_plan, path="accepted_artistic_plan")
+    _reject_forbidden_transport(artistic_resource_map, path="artistic_resource_map")
     cues = _mapping(accepted_artistic_plan).get("cues")
     cue_count = len(cues) if isinstance(cues, list) else 0
     explicit = {int(value) for value in (affected_cue_numbers or ()) if isinstance(value, int) and 1 <= value <= cue_count}
@@ -354,6 +387,11 @@ def build_delta_revision_context(
         "song": _compact_song(song_context),
         "spatial": _compact_spatial(spatial_context),
     }
+    if artistic_resource_map is not None:
+        context["artistic_resource_map"] = _compact_resource_map(
+            artistic_resource_map,
+            group_ids=group_refs if selected else None,
+        )
     return {
         "schema": DELTA_CONTEXT_SCHEMA,
         "context": context,
