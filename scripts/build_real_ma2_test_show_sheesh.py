@@ -112,7 +112,13 @@ def _load_plan(path: Path) -> dict[str, Any]:
     return plan
 
 
-def _assert_preflight(core: AgentCore, reads: dict[str, str], *, resume_existing_build: bool) -> None:
+def _assert_preflight(
+    core: AgentCore,
+    reads: dict[str, str],
+    *,
+    resume_existing_build: bool,
+    require_owned_executor: bool = True,
+) -> None:
     groups = _read(core, "List Group", reads)
     for number, label in EXPECTED_GROUPS.items():
         if f"Group {number}" not in groups or label not in groups:
@@ -133,11 +139,12 @@ def _assert_preflight(core: AgentCore, reads: dict[str, str], *, resume_existing
             raise RuntimeError(f"Protected existing Sequence {protected} is missing; refusing an unexpected Show.")
     executors = _read(core, "List Executor", reads)
     owned_existing_executor = "Sequence=Seq 901" in executors and "ZEN_SHEESH_TEST" in executors
-    if resume_existing_build:
-        if executors and not owned_existing_executor:
-            raise RuntimeError(f"Executor {EXECUTOR_DISPLAY} is not the exact owned SHEESH assignment.")
-    elif EXECUTOR_DISPLAY in executors or "ZEN_TEST_SHEESH" in executors:
-        raise RuntimeError(f"Executor {EXECUTOR_DISPLAY} is occupied; refusing to overwrite.")
+    if require_owned_executor:
+        if resume_existing_build:
+            if executors and not owned_existing_executor:
+                raise RuntimeError(f"Executor {EXECUTOR_DISPLAY} is not the exact owned SHEESH assignment.")
+        elif EXECUTOR_DISPLAY in executors or "ZEN_TEST_SHEESH" in executors:
+            raise RuntimeError(f"Executor {EXECUTOR_DISPLAY} is occupied; refusing to overwrite.")
     palette_labels = {entry["preset"]: entry["label"] for entry in _palette(_load_plan(PLAN_PATH))}
     for reference in range(101, 114):
         # Individual lookup is required because this MA2 List All display omits
@@ -353,6 +360,7 @@ def main() -> int:
     core = AgentCore(AgentRuntime(ROOT))
     audit: list[dict[str, str]] = []
     reads: dict[str, str] = {}
+    write_started = False
     result: dict[str, Any] = {
         "schema": "zen.real_ma2_test_show_sheesh_build.v0.1",
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -375,18 +383,22 @@ def main() -> int:
             core,
             reads,
             resume_existing_build=args.resume_existing_build or args.resources_only,
+            require_owned_executor=not args.resources_only,
         )
         result["preflight"] = "PASS"
         if args.resources_only:
             result["resource_mode"] = "ARTISTIC_RESOURCES_ONLY"
+            write_started = True
             result["created_presets"] = _write_palette(core, plan, audit)
             result["template_effects"] = _write_template_effects(core, audit, reads)
         elif args.resume_existing_build:
             result["resume"] = "EXACT_AGENT_OWNED_SEQUENCE_VERIFIED"
+            write_started = True
             if "ZEN_SHEESH_TEST" not in reads.get("List Executor", ""):
                 _run(core, f'Assign Sequence {SEQUENCE} At Executor {EXECUTOR} /nc', audit)
                 _run(core, f'Label Executor {EXECUTOR} "ZEN_SHEESH_TEST" /nc', audit)
         else:
+            write_started = True
             result["created_presets"] = _write_palette(core, plan, audit)
             result["test_stage_layout"] = {"id": LAYOUT_NAME, "coordinates": _write_geometry(core, plan, audit)}
             _write_sequence(core, plan, audit)
@@ -410,7 +422,7 @@ def main() -> int:
         return_code = 1
     finally:
         try:
-            if core.runtime.ready:
+            if core.runtime.ready and write_started:
                 _run(core, "ClearAll", audit)
         except Exception as exc:
             result["clear_after_failure"] = f"{type(exc).__name__}: {exc}"
