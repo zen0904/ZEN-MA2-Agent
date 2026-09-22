@@ -62,6 +62,18 @@ Effectline 1 None  None        DIM     Abs   Pwm 4  0.50  30.0 BPM              
         self.assertEqual(parsed["qty_values"], ["NONE"])
         self.assertEqual(parsed["reason"], "ALL_EFFECT_LINES_QTY_NONE")
 
+    def test_effect_detail_parser_marks_real_ma2_tabular_numeric_qty_selective(self):
+        provider = EffectProvider()
+        raw = """Executing : List Effect 1.2500.*
+             QTY   Interleave  Attrib  Mode  Form
+Effectline 1 8     None        DIM     Abs   Pwm
+"""
+        parsed = provider.parse_template_detail(raw)
+        self.assertEqual(parsed["status"], "VERIFIED")
+        self.assertEqual(parsed["kind"], "SELECTIVE")
+        self.assertEqual(parsed["qty_values"], [8])
+        self.assertEqual(parsed["reason"], "ALL_EFFECT_LINES_QTY_NUMERIC")
+
     def test_reconcile_reuses_only_exact_template_kind(self):
         specs, existing = reconcile_template_effect_specs([
             {"number": 88, "name": "FX_DIM_CHASE_SLOW", "kind": "TEMPLATE"},
