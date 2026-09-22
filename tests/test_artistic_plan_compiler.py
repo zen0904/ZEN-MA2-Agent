@@ -81,6 +81,59 @@ class ArtisticPlanCompilerTests(unittest.TestCase):
         with self.assertRaisesRegex(ArtisticPlanCompileError, "not in the verified Effect"):
             self.compile(provider_plan)
 
+
+    def test_group_bound_preset_and_effect_applicability_is_enforced_when_supplied(self):
+        provider_plan = {
+            "cues": [{
+                "fade": 0.2,
+                "actions": [
+                    {"group": 1, "color_preset": "4.1"},
+                    {"group": 1, "effect": 3520},
+                ],
+            }]
+        }
+        plan, audit = compile_artistic_cue_plan(
+            provider_plan,
+            song="SHEESH",
+            target_executor="2.001",
+            active_sequence_range=[301, 400],
+            verified_group_ids=self.groups,
+            verified_preset_refs=self.presets,
+            verified_preset_types=self.preset_types,
+            verified_effect_ids=self.effects,
+            verified_preset_applicability={1: {"4.1"}, 2: set(), 3: set()},
+            verified_effect_applicability={1: {3520}, 2: set(), 3: set()},
+        )
+        self.assertEqual(len(plan["cues"][0]["actions"]), 2)
+        self.assertTrue(audit["preset_applicability_enforced"])
+        self.assertTrue(audit["effect_applicability_enforced"])
+
+        with self.assertRaisesRegex(ArtisticPlanCompileError, "not verified applicable to Group 2"):
+            compile_artistic_cue_plan(
+                {"cues": [{"fade": 1, "actions": [{"group": 2, "color_preset": "4.1"}]}]},
+                song="SHEESH",
+                target_executor="2.001",
+                active_sequence_range=[301, 400],
+                verified_group_ids=self.groups,
+                verified_preset_refs=self.presets,
+                verified_preset_types=self.preset_types,
+                verified_effect_ids=self.effects,
+                verified_preset_applicability={1: {"4.1"}, 2: set(), 3: set()},
+            )
+
+        with self.assertRaisesRegex(ArtisticPlanCompileError, "not verified applicable to Group 2"):
+            compile_artistic_cue_plan(
+                {"cues": [{"fade": 1, "actions": [{"group": 2, "effect": 3520}]}]},
+                song="SHEESH",
+                target_executor="2.001",
+                active_sequence_range=[301, 400],
+                verified_group_ids=self.groups,
+                verified_preset_refs=self.presets,
+                verified_preset_types=self.preset_types,
+                verified_effect_ids=self.effects,
+                verified_effect_applicability={1: {3520}, 2: set(), 3: set()},
+            )
+
     def test_caller_owns_experiment_specific_labels(self):
         provider_plan = {
             "cues": [
