@@ -50,6 +50,18 @@ class TestShowResourcesTests(unittest.TestCase):
         )
         self.assertEqual((mixed["status"], mixed["kind"]), ("UNKNOWN", None))
 
+    def test_effect_detail_parser_accepts_real_ma2_tabular_qty_column(self):
+        provider = EffectProvider()
+        raw = """Executing : List Effect 1.2500.*
+             QTY   Interleave  Attrib  Mode  Form   Rate  Speed     SpeedGroup  Dir  LowValue  HighValue  Phase         Width   Attack  Decay  Groups  Blocks  Wings  SingleShot
+Effectline 1 None  None        DIM     Abs   Pwm 4  0.50  30.0 BPM              >    0.00      100.00     0.0 .. 360.0  100.00  0       0      1       None    None   No
+"""
+        parsed = provider.parse_template_detail(raw)
+        self.assertEqual(parsed["status"], "VERIFIED")
+        self.assertEqual(parsed["kind"], "TEMPLATE")
+        self.assertEqual(parsed["qty_values"], ["NONE"])
+        self.assertEqual(parsed["reason"], "ALL_EFFECT_LINES_QTY_NONE")
+
     def test_reconcile_reuses_only_exact_template_kind(self):
         specs, existing = reconcile_template_effect_specs([
             {"number": 88, "name": "FX_DIM_CHASE_SLOW", "kind": "TEMPLATE"},
