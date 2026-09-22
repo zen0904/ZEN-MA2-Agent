@@ -35,6 +35,7 @@ from zen_ma2_agent.state.providers.show_pools import EffectProvider
 from zen_ma2_agent.test_show_resources import (
     reconcile_template_effect_specs,
     template_effect_commands,
+    template_effect_labels,
     verify_template_effect_rows,
 )
 from zen_ma2_agent.telnet_client import ConnectionState
@@ -186,9 +187,33 @@ def _write_palette(core: AgentCore, plan: dict[str, Any], audit: list[dict[str, 
     return results
 
 
+def _read_effect_line_detail(core: AgentCore, effect_id: int, reads: dict[str, str]) -> str:
+    if isinstance(effect_id, bool) or not isinstance(effect_id, int) or effect_id < 1:
+        raise ValueError("Effect detail read requires a positive integer ID.")
+    if not core.runtime.client:
+        raise RuntimeError("MA2 client unavailable")
+    command = f"List Effect 1.{effect_id}.*"
+    value = core.runtime.client.execute(command)
+    reads[command] = value
+    return value
+
+
 def _effect_rows(core: AgentCore, reads: dict[str, str]) -> list[dict[str, Any]]:
     output = _read(core, "List Effect", reads)
-    return EffectProvider().parse(output)
+    provider = EffectProvider()
+    rows = provider.parse(output)
+    reserved = {label.upper() for label in template_effect_labels()}
+    for row in rows:
+        label = str(row.get("name") or "").strip().upper()
+        if label not in reserved:
+            continue
+        detail = provider.parse_template_detail(
+            _read_effect_line_detail(core, int(row["number"]), reads)
+        )
+        row["template_detail"] = detail
+        if detail.get("status") == "VERIFIED":
+            row["kind"] = detail.get("kind")
+    return rows
 
 
 def _write_template_effects(
@@ -208,9 +233,10 @@ def _write_template_effects(
             _run(core, command, audit)
         one = verify_template_effect_rows(_effect_rows(core, reads), (spec,))[spec.effect_id]
         if not one["verified"]:
+            detail = reads.get(f"List Effect 1.{spec.effect_id}.*", "")
             raise RuntimeError(
                 f"Effect {spec.effect_id} read-back did not prove exact label + TEMPLATE kind; "
-                "stopping before creating additional Effects."
+                f"detail_evidence={detail!r}; stopping before creating additional Effects."
             )
         created.append(spec.summary())
 
