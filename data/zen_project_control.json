@@ -2,29 +2,30 @@
   "schema": "zen.project_control.v0.1",
   "source_of_truth": "REPOSITORY_COMMITTED_STATE",
   "current_milestone": {
-    "id": "M2_EXPRESSIVE_CAPABILITY",
-    "title": "Expressive Capability",
+    "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
+    "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "Owner continues to reject the prior 64-placement Position artifact as a redesign; preserve it unchanged as negative evidence. The conceptual SHEESH goal is a complete virtual fixture layout from existing inventory, independent of initial fixture XYZ. NEW_UNDESIGNED_SHOW uses owner-defined ZEN_STAGE_FRAME_V1 bound to the current operator-confirmed square Stage View (fingerprint 145be3835bf8d23cf4cb416535a7313d90240077954594e33c4c995337023340), front-weighted performer context, and exact Show-bound capability profiles. Raw MA2 XYZ sign mapping remains UNKNOWN and is not inferred from Pan/Tilt or fixture extrema; metric scale/installation feasibility remain unknown and out of scope. Regression/self-check passed and conceptual readiness is READY. No artistic provider was called; no writeback occurred. MA2_WRITES=0."
+    "active_objective": "Use the lean Design Mode as the default product path: verified Knowledge/State and cached compact context -> one primary LIGHTING_DESIGNER call -> optional one delta revision -> ZEN Artistic Plan Compiler -> strict internal ShowPlan -> deterministic MA2 Builder -> readback. ARTISTIC_CUES_V0_1 is the default provider contract; ZEN owns backend metadata and strict schema. The historical full multi-agent role chain is explicit/research-only, not the ordinary song-programming default. Preserve FREE_ONLY routing, CODEX_ARTISTIC_INTERVENTION=NONE, Fixture 9999 protection, Group/XYZ state, and verified readback boundaries."
   },
   "last_closed_task": {
-    "id": "SHEESH_ZEN_SPATIAL_ARTIFACT_HUMAN_REVIEW_001_AND_SPATIAL_FACT_CALIBRATION_001",
-    "status": "HUMAN_REVIEW_REJECTED_CALIBRATION_BLOCKED_MISSING_EVIDENCE",
-    "result": "Owner decision REJECT_FOR_REVISION is recorded. The completed six-role run is preserved unchanged as negative evidence: technical Position validation passed, all 64 placements and rotations equal scanned geometry, and Critic severity BLOCKER is accepted. Runtime now separates execution completion from design review, keeps writeback/Resolver/preview eligibility NO, and provides a max-two-cycle provider-authored revision path. Calibration against the fingerprinted Phase A snapshot remains BLOCKED_MISSING_EVIDENCE; no new provider run or MA2 write occurred."
+    "id": "SHEESH_ARTISTIC_CUES_V0_1_SEQUENCE_2_EXECUTOR_2_002",
+    "status": "CLOSED_SUCCESS",
+    "result": "The lean AI programming path executed successfully on the Test Show. Provider artistic intent used ARTISTIC_CUES_V0_1, ZEN compiled strict zen.show_plan.v0.1, Sequence 2 was created and assigned to Executor 2.002 with six cues, MA2 programming readback passed, Sequence 301 / Executor 2.001 remained untouched, Phase A was not rerun, Groups and XYZ were not modified, Fixture 9999 was untouched, no paid provider was used, and CODEX_ARTISTIC_INTERVENTION=NONE. The generic compiler has since been refactored so SHEESH-specific six-cue labels live at the experiment boundary rather than in the compiler."
   },
   "next_acceptance_gate": {
-    "id": "SHEESH_CONCEPTUAL_SPATIAL_BOOTSTRAP_DESIGN_001",
+    "id": "LEAN_DESIGN_MODE_REGRESSION_AND_DELTA_REVISION_001",
     "classification": "REQUIRED",
-    "status": "CONCEPTUAL_READINESS_READY_PROVIDER_NOT_RUN",
-    "why_it_matters": "New ZEN-designed Shows may begin with all fixtures at origin; existing fixture extrema must not define the Stage Frame or target layout. The current Test Show has operator-confirmed square visual stage bounds, audience/upstage/left/right orientation, front-weighted performer context, and 56 exact fingerprint-bound non-protected capability profiles. ZEN_STAGE_FRAME_V1 is a design-space convention; raw MA2 fixture XYZ signs and metric units remain UNKNOWN.",
+    "status": "READY",
+    "why_it_matters": "The default product path must stay lean enough for free-provider quota while preserving artistic quality. The compiler is now song-agnostic and the full historical role chain is no longer default. Verify the refactor on the Windows runtime, then add delta-first revision/context reuse without reintroducing mandatory Researcher/Rig/Position/Critic/Finalizer calls.",
     "blocks_current_milestone": true,
     "dependencies": [
-      "ZEN_SHEESH_LIVE_SNAPSHOT_UPSTREAM_SPATIAL_RUNTIME_001.md",
-      "ZEN_HOME/projects/runs/SHEESH_CURRENT_SHOW_REFRESH_001/current_show_snapshot/snapshot.json",
-      "ZEN_HOME/projects/runs/SHEESH_CURRENT_SHOW_REFRESH_001/current_show_snapshot/operator_stage_context.json",
-      "ZEN_HOME/projects/runs/SHEESH_CURRENT_SHOW_REFRESH_001/current_show_snapshot/show_bound_capability_profiles.json"
+      "docs/ZEN_DESIGN_MODE.md",
+      "docs/ZEN_PRODUCT_ROADMAP.md",
+      "zen_ma2_agent/designer/artistic_plan.py",
+      "scripts/run_sheesh_programming_test.py",
+      "tests/test_artistic_plan_compiler.py"
     ],
-    "next_review_condition": "A read-only spatial readiness preflight on the current 145be fingerprint returned READY after the full test suite and self-check. No artistic provider was called in that checkpoint. A provider-authored SHEESH spatial bootstrap remains a separate next action; keep the prior b41d run unchanged. Do not require raw MA2 XYZ mapping or compare conceptual coordinates numerically with scanned MA2 positions. No Resolver, Builder, Move3D, MA2 coordinate transform, or MA2 write is authorized."
+    "next_review_condition": "Full suite, self-check and git diff --check pass on the real development machine; the generic compiler accepts non-six-cue plans; the SHEESH bounded runner still enforces its six-cue experiment locally; no MA2 writes occur during regression verification. Then implement one bounded delta-revision path that reuses cached compact context and performs at most one artistic provider revision call."
   },
   "human_review_decisions": [
     {
@@ -326,5 +327,20 @@
     "zen_style_profile": "DEFERRED",
     "real_venue_validation": "WAIT_FOR_REAL_CASE",
     "ma3_builder": "NOT_STARTED"
+  },
+  "design_mode_policy": {
+    "default": "LEAN_SINGLE_DESIGNER",
+    "provider_contract": "ARTISTIC_CUES_V0_1",
+    "primary_design_calls": 1,
+    "optional_delta_revision_calls": 1,
+    "legacy_multi_agent_default": false,
+    "strict_internal_schema_authority": "ZEN",
+    "paid_provider_allowed": false,
+    "notes": [
+      "Do not spend provider calls on backend metadata or representation-only repair.",
+      "Do not use the LLM as the Show database; retrieve compact verified context from Knowledge/State/cache.",
+      "Song-specific cue counts and labels belong to the calling task, not the generic compiler.",
+      "Live mode is local/event-driven first; call an LLM only for meaningful interpretation."
+    ]
   }
 }
