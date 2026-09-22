@@ -168,6 +168,18 @@ matches, merges those verified rows into the scanned profile, and recomputes
 the Show identity before deriving Group/Preset applicability. This is not a
 general Preset-number sweep.
 
+
+Template Effect exposure also needs target Dimmer evidence. FixtureType DIMMER
+profiles remain the preferred technical proof, but this Test Show has a second
+bounded path: Build 001 successfully used SET_DIMMER on all seven Groups. ZEN
+may recover that Group-level application evidence only when Sequence 901 still
+matches the owned Test Show identity and the current Group member set exactly
+matches the historical eight fixtures for that Group. Selection order may
+change without invalidating capability evidence; the current order is preserved
+as runtime context because it affects chase appearance, not Dimmer existence.
+This evidence unlocks reusable native TEMPLATE Dimmer Chase resources without
+pretending it is a universal FixtureType capability.
+
 ## Smoke test versus product design
 
 `scripts/run_sheesh_programming_test.py` is a six-cue bounded smoke test only.
