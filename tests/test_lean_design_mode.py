@@ -232,6 +232,8 @@ class LeanDesignModeTests(unittest.TestCase):
         self.assertIn('refresh_state("fixture_type_profiles")', source)
         self.assertIn("load_or_build_compact_context", source)
         self.assertIn("model_resource_contract", source)
+        self.assertIn("_augment_bounded_test_show_color_inventory", source)
+        self.assertIn("bounded_test_show_color_rows", source)
         self.assertNotIn('"verified_effects": [', source)
 
     def test_raw_transport_fields_are_rejected(self):
