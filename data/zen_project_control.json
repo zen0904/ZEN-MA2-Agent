@@ -25,9 +25,10 @@
       "zen_ma2_agent/artistic_resources.py",
       "tests/test_test_show_resources.py",
       "tests/test_artistic_resources.py",
-      "tests/test_effect_resources.py"
+      "tests/test_effect_resources.py",
+      "bounded direct List Preset 4.101-4.113 inventory augmentation in scripts/run_sheesh_programming_test.py"
     ],
-    "next_review_condition": "First run the full offline regression at current HEAD. If clean, run the explicitly-authorized Test Show resource-only builder once. Require exact Color label readback and exact Effect label + native TEMPLATE-kind readback. If Effect kind is not provable, stop after the first Effect and do not run Lighting Designer. Then perform a fresh read-only resource-map scan before any artistic programming write."
+    "next_review_condition": "Run full offline regression at current HEAD. If clean, run the explicitly-authorized Test Show resource-only builder once. Require 13/13 exact Color label readback and exact Effect label + native TEMPLATE-kind readback. If TEMPLATE kind is not provable, stop after the first Effect and do not run Lighting Designer. Then run a fresh read-only resource-map scan using the bounded direct 4.101-4.113 lookups; require nonzero recovered Color bindings before any artistic programming write."
   },
   "human_review_decisions": [
     {
@@ -387,7 +388,8 @@
       "arbitrary_name_recovery": false,
       "semantic_expansion": false,
       "selective_effect_same_label_reusable_across_groups": false,
-      "test_show_resource_restore": "BOUNDED_RESOURCES_ONLY: COLOR_PRESETS_4.101_4.113 + THREE_NATIVE_TEMPLATE_DIMMER_CHASE_EFFECTS; NO_GEOMETRY_OR_SEQUENCE_WRITE"
+      "test_show_resource_restore": "BOUNDED_RESOURCES_ONLY: COLOR_PRESETS_4.101_4.113 + THREE_NATIVE_TEMPLATE_DIMMER_CHASE_EFFECTS; NO_GEOMETRY_OR_SEQUENCE_WRITE",
+      "color_inventory_discovery": "LIST_PRESET_ALL_MAY_OMIT_TEST_COLORS; ONLY_BOUNDED_DIRECT_4.101_4.113_EXACT_LABEL_READBACK_MAY_AUGMENT_PROFILE"
     }
   }
 }
