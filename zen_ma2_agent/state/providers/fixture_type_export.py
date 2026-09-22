@@ -277,9 +277,11 @@ def fixture_type_capability_inventory(channels: list[dict[str, Any]]) -> dict[st
 
     pan = any_token("PAN")
     tilt = any_token("TILT")
+    rgb_color = all(any_token(attribute) for attribute in ("COLORRGB1", "COLORRGB2", "COLORRGB3"))
     return {
         "DIMMER": state(any_token("DIM", "DIMMER") or "DIMMER" in tokens["features"] or "DIMMER" in tokens["presets"]),
         "COLOR": state(any(value.startswith("COLOR") for where in tokens for value in tokens[where]) or "COLOR" in tokens["presets"]),
+        "RGB_COLOR": state(rgb_color),
         "PAN": state(pan),
         "TILT": state(tilt),
         "POSITION": state(pan and tilt),
