@@ -13,23 +13,21 @@
     "result": "The lean AI programming path executed successfully on the Test Show. Provider artistic intent used ARTISTIC_CUES_V0_1, ZEN compiled strict zen.show_plan.v0.1, Sequence 2 was created and assigned to Executor 2.002 with six cues, MA2 programming readback passed, Sequence 301 / Executor 2.001 remained untouched, Phase A was not rerun, Groups and XYZ were not modified, Fixture 9999 was untouched, no paid provider was used, and CODEX_ARTISTIC_INTERVENTION=NONE. The generic compiler has since been refactored so SHEESH-specific six-cue labels live at the experiment boundary rather than in the compiler."
   },
   "next_acceptance_gate": {
-    "id": "FULL_ARTISTIC_PATH_001",
+    "id": "SHEESH_ARTISTIC_RESOURCE_RESTORE_001",
     "classification": "REQUIRED",
-    "status": "ACTIVE",
-    "why_it_matters": "The resource-map architecture is implemented. The remaining proof is runtime evidence: recover only exact current-Test-Show Color Group/Preset pairs from the successful SHEESH Build 001 when the current Sequence/Preset identities still match, recover only exact strict semantic Effect templates when Dimmer capability and Effect-call grammar are verified, then verify the resulting model-facing toolbox before any new artistic write.",
+    "status": "READY_FOR_BOUNDED_TEST_SHOW_WRITE",
+    "why_it_matters": "Read-only verification proved the current Test Show has Sequence 901 but no current 4.101-4.113 Color resources, no verified Effect catalog entries, and no strict reusable template Effects. The code path is now implemented to restore only the missing Agent-owned artistic resources without touching geometry, cues, Sequence 901, its Executor, Patch/Address, or Fixture 9999.",
     "blocks_current_milestone": true,
     "dependencies": [
-      "zen_ma2_agent/artistic_resources.py",
+      "scripts/build_real_ma2_test_show_sheesh.py --resources-only",
+      "zen_ma2_agent/test_show_resources.py",
       "zen_ma2_agent/test_show_evidence.py",
-      "zen_ma2_agent/designer/artistic_plan.py",
-      "zen_ma2_agent/designer/lean_design_mode.py",
-      "scripts/run_sheesh_programming_test.py",
+      "zen_ma2_agent/artistic_resources.py",
+      "tests/test_test_show_resources.py",
       "tests/test_artistic_resources.py",
-      "tests/test_test_show_evidence.py",
-      "tests/test_artistic_plan_compiler.py",
-      "tests/test_lean_design_mode.py"
+      "tests/test_effect_resources.py"
     ],
-    "next_review_condition": "Full suite/self-check/diff-check pass at current HEAD. On the real Test Show, perform read-only scan only and report recovered Color binding count/pairs, strict-template Effect IDs, total designer-exposed Effect IDs, and whether the resulting resource map contains at least one non-Dimmer artistic resource. Do not run the provider or write MA2 until this read-only report is clean."
+    "next_review_condition": "First run the full offline regression at current HEAD. If clean, run the explicitly-authorized Test Show resource-only builder once. Require exact Color label readback and exact Effect label + native TEMPLATE-kind readback. If Effect kind is not provable, stop after the first Effect and do not run Lighting Designer. Then perform a fresh read-only resource-map scan before any artistic programming write."
   },
   "human_review_decisions": [
     {
@@ -385,9 +383,11 @@
     },
     "resource_recovery": {
       "test_show_color": "ONLY_OBSERVED_BUILD_001_GROUP_PRESET_PAIRS_WITH_CURRENT_SEQUENCE_AND_PRESET_IDENTITY_MATCH",
-      "effect_without_catalog": "ONLY_EXACT_FX_DIM_CHASE_SLOW_MED_FAST_WITH_SHOW_BOUND_DIMMER_AND_REAL_MACHINE_EFFECT_CALL_GRAMMAR",
+      "effect_without_catalog": "ONLY_EXACT_FX_DIM_CHASE_SLOW_MED_FAST_WITH_NATIVE_TEMPLATE_KIND + SHOW_BOUND_DIMMER + REAL_MACHINE_EFFECT_POOL_CALL",
       "arbitrary_name_recovery": false,
-      "semantic_expansion": false
+      "semantic_expansion": false,
+      "selective_effect_same_label_reusable_across_groups": false,
+      "test_show_resource_restore": "BOUNDED_RESOURCES_ONLY: COLOR_PRESETS_4.101_4.113 + THREE_NATIVE_TEMPLATE_DIMMER_CHASE_EFFECTS; NO_GEOMETRY_OR_SEQUENCE_WRITE"
     }
   }
 }
