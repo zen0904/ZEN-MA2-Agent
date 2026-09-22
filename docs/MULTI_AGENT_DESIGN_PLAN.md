@@ -1,5 +1,7 @@
 # Multi-Agent Design Plan
 
+> **DEFAULT DESIGN PATH STATUS:** This document describes the historical/explicit multi-agent runtime. It is retained for research, spatial-bootstrap experiments, independent deep review, and regression evidence. It is **not** the default ordinary song-programming path. See `docs/ZEN_DESIGN_MODE.md` for the current default: one primary Lighting Designer call, optional one delta revision, then ZEN Compiler/Builder/readback.
+
 Status: the bounded four-role MVP (`RESEARCHER -> LIGHTING_DESIGNER -> CRITIC
 -> FINALIZER`) is implemented in `zen_ma2_agent.llm.multi_agent_runtime`.
 It is portable, sequential, checkpointed, and ends at a validated
