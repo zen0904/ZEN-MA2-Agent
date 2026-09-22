@@ -1,9 +1,4 @@
-"""Run the bounded AI-authored SHEESH programming test on Executor 2.002.
-
-The provider supplies artistic cue intent only. ZEN compiles that loose intent
-into the strict internal zen.show_plan.v0.1 document before the existing First
-Song Builder and MA2 safety path see it.
-"""
+"""Run the bounded SHEESH six-cue smoke test through the real MA2 build path.\n\nThis is intentionally a smoke test, not the full-song Design Mode. The provider\nsupplies artistic cue intent only; ZEN compiles verified Preset/Effect resource\nchoices into the strict internal ShowPlan before the Builder sees them.\n"""
 from __future__ import annotations
 
 import argparse
@@ -57,14 +52,16 @@ def _await_ready(core: AgentCore) -> None:
 
 
 def _load_spatial_context() -> dict:
+    # Spatial context may inform a new design; an old Lighting Designer output
+    # must never be injected as accepted artistic truth.
     candidates = [
-        USB_HOME / "projects" / "runs" / RUN_ID / "steps" / "lighting_designer.json",
-        ROOT / "projects" / "runs" / RUN_ID / "steps" / "lighting_designer.json",
+        USB_HOME / "projects" / "runs" / RUN_ID / "steps" / "position_designer.json",
+        ROOT / "projects" / "runs" / RUN_ID / "steps" / "position_designer.json",
     ]
     for path in candidates:
         if path.is_file():
             return json.loads(path.read_text(encoding="utf-8"))
-    return {"status": "UNAVAILABLE", "reason": "accepted lighting artifact not found"}
+    return {"status": "UNAVAILABLE", "reason": "accepted spatial artifact not found"}
 
 
 def _router() -> ProviderRouter:
@@ -88,13 +85,19 @@ def _router() -> ProviderRouter:
     return router
 
 
-def _provider_contract(groups: list[dict], presets: list[dict]) -> dict:
+def _provider_contract(groups: list[dict], presets: list[dict], effects: list[dict]) -> dict:
     return {
         "cue": {
             "fade": "<non-negative seconds>",
             "actions": [
                 {"group": "<verified Group ID>", "dimmer": "<0..100>"},
                 {"group": "<verified Group ID>", "preset": "<verified preset reference>"},
+                {"group": "<verified Group ID>", "color_preset": "<verified COLOR preset reference>"},
+                {"group": "<verified Group ID>", "position_preset": "<verified POSITION preset reference>"},
+                {"group": "<verified Group ID>", "focus_preset": "<verified FOCUS preset reference>"},
+                {"group": "<verified Group ID>", "beam_preset": "<verified BEAM preset reference>"},
+                {"group": "<verified Group ID>", "gobo_preset": "<verified GOBO preset reference>"},
+                {"group": "<verified Group ID>", "effect": "<verified Effect ID>"},
             ],
         },
         "cue_order": list(SHEESH_CUE_LABELS),
@@ -110,20 +113,27 @@ def _provider_contract(groups: list[dict], presets: list[dict]) -> dict:
             }
             for item in presets
         ],
+        "verified_effects": [
+            {"effect_id": item.get("effect_id"), "name": item.get("name")}
+            for item in effects
+            if isinstance(item.get("effect_id"), int)
+        ],
     }
 
 
 def _prompt(profile: dict, lighting_artifact: dict) -> tuple[str, str]:
     groups = profile.get("groups", [])
     presets = [item for item in profile.get("presets", []) if item.get("reference")]
-    contract = _provider_contract(groups, presets)
+    effects = [item for item in profile.get("effects", []) if isinstance(item.get("effect_id"), int)]
+    contract = _provider_contract(groups, presets, effects)
     system = (
         "You are the ZEN LIGHTING_DESIGNER for a disposable grandMA2 programming test. "
         "Make the artistic lighting decisions. Return JSON only with one top-level key: cues. "
         "Return exactly six cues in this order: INTRO, BUILD, VERSE, PRE_DROP, "
         "SHEESH_IMPACT, AFTER_IMPACT. Each cue only needs fade and actions. "
-        "Use compact actions: {group: ID, dimmer: 0..100} or "
-        "{group: ID, preset: verified_reference}. Use only supplied Groups and Presets. "
+        "Use only the supplied verified resources. Compact actions may use dimmer, "
+        "generic preset, typed color/position/focus/beam/gobo preset, or verified Effect ID. "
+        "Do not invent a Preset/Effect or assume capability from a Group name. "
         "Do not output schema names, song metadata, cue numbers, cue IDs, executor addresses, "
         "Sequence ranges, MA2 commands, Lua, Telnet, Markdown, or implementation details. "
         "ZEN owns all operational metadata and exact internal schema formatting."
@@ -135,7 +145,7 @@ def _prompt(profile: dict, lighting_artifact: dict) -> tuple[str, str]:
                 "space, purposeful hierarchy, strong silhouette and restrained progression"
             ),
             "artistic_contract": contract,
-            "accepted_lighting_designer_artifact": lighting_artifact,
+            "spatial_context": lighting_artifact,
             "safety": {
                 "fixture_9999": "forbidden",
                 "geometry_changes": False,
@@ -180,7 +190,9 @@ def _compile_provider_plan(
     *,
     groups: list[dict],
     presets: list[dict],
+    effects: list[dict],
     active_sequence_range: list[int],
+    target_executor: str,
 ) -> tuple[dict, dict[str, object], dict]:
     provider_plan = _parse_provider_json(content)
     cues = provider_plan.get("cues")
@@ -198,13 +210,25 @@ def _compile_provider_plan(
         for item in presets
         if item.get("reference")
     }
+    verified_preset_types = {
+        str(item["reference"]): str(item.get("preset_type") or "").upper()
+        for item in presets
+        if item.get("reference") and item.get("preset_type")
+    }
+    verified_effect_ids = {
+        int(item["effect_id"])
+        for item in effects
+        if isinstance(item.get("effect_id"), int)
+    }
     plan, audit = compile_artistic_cue_plan(
         provider_plan,
         song=SONG,
-        target_executor=TARGET_EXECUTOR_DISPLAY,
+        target_executor=target_executor,
         active_sequence_range=active_sequence_range,
         verified_group_ids=verified_group_ids,
         verified_preset_refs=verified_preset_refs,
+        verified_preset_types=verified_preset_types,
+        verified_effect_ids=verified_effect_ids,
         cue_labels=SHEESH_CUE_LABELS,
     )
     validate_ma_payload(plan["cues"], path="show_plan.cues")
@@ -235,13 +259,15 @@ def _repair_prompt(
     error: str,
     groups: list[dict],
     presets: list[dict],
+    effects: list[dict],
 ) -> tuple[str, str]:
-    contract = _provider_contract(groups, presets)
+    contract = _provider_contract(groups, presets, effects)
     system = (
         "Repair the rejected artistic cue plan without changing its artistic intention more "
         "than necessary. Return JSON only with one top-level key: cues. Return exactly six "
-        "cues. Each cue needs fade and actions. Use only {group, dimmer} or {group, preset} "
-        "actions from the supplied verified resources. Do not output backend metadata or MA2 "
+        "cues. Each cue needs fade and actions. Use only the compact artistic actions in the "
+        "supplied verified resource contract, including verified Presets and Effects. "
+        "Do not output backend metadata or MA2 "
         "commands."
     )
     user = json.dumps(
@@ -256,19 +282,25 @@ def _repair_prompt(
     return system, user
 
 
-def run(real_machine: bool, *, saved_result_path: Path | None = None) -> dict:
+def run(real_machine: bool, *, saved_result_path: Path | None = None, target_executor: str = TARGET_EXECUTOR_DISPLAY) -> dict:
     if not real_machine:
         raise RuntimeError("Refusing Test Show programming writes without --real-machine.")
 
-    lighting_artifact = _load_spatial_context()
+    spatial_artifact = _load_spatial_context()
+    executor_match = re.fullmatch(r"([1-9]\d*)\.(0*[1-9]\d*)", str(target_executor).strip())
+    if not executor_match:
+        raise RuntimeError("TARGET_EXECUTOR_INVALID")
+    target_page = int(executor_match.group(1))
+    target_exec = int(executor_match.group(2))
     core = AgentCore(AgentRuntime(ROOT))
     router: ProviderRouter | None = None
     result: dict = {
-        "schema": "zen.sheesh_programming_test.v0.2",
+        "schema": "zen.sheesh_programming_smoke.v0.3",
         "run_id": RUN_ID,
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "target_executor": TARGET_EXECUTOR_DISPLAY,
-        "provider_contract": "ARTISTIC_CUES_V0_1",
+        "target_executor": target_executor,
+        "provider_contract": "ARTISTIC_CUES_V0_2",
+        "test_scope": "SMOKE_TEST_ONLY",
         "paid_provider_used": False,
         "codex_artistic_intervention": "NONE",
         "fixture_9999_touched": False,
@@ -283,11 +315,11 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None) -> dict:
         _await_ready(core)
 
         pages = core.runtime.read_state("List Page")
-        if not re.search(r"(?:Page\s+)?2\b", pages, re.I):
-            raise RuntimeError("TARGET_PAGE_2_NOT_PRESENT")
+        if not re.search(rf"(?:Page\\s+)?{target_page}\\b", pages, re.I):
+            raise RuntimeError(f"TARGET_PAGE_{target_page}_NOT_PRESENT")
         executor_before = core.runtime.read_state("List Executor")
-        if re.search(r"(?:Executor|Exec)\s+2\.0*2\b", executor_before, re.I):
-            raise RuntimeError("TARGET_EXECUTOR_2_002_OCCUPIED")
+        if re.search(rf"(?:Executor|Exec)\\s+{target_page}\\.0*{target_exec}\\b", executor_before, re.I):
+            raise RuntimeError(f"TARGET_EXECUTOR_{target_page}_{target_exec:03d}_OCCUPIED")
 
         for resource, kwargs in (
             ("groups", {}),
@@ -304,6 +336,7 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None) -> dict:
         }
         groups = context.get("groups", [])
         presets = [item for item in context.get("presets", []) if item.get("reference")]
+        effects = [item for item in context.get("effects", []) if isinstance(item.get("effect_id"), int)]
         selected_sequence = _lowest_safe_sequence_id(context)
         active_sequence_range = [selected_sequence, selected_sequence]
         result["selected_sequence_id"] = selected_sequence
@@ -324,7 +357,7 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None) -> dict:
             result["provider_attempts"] = saved.get("provider_attempts", [])
         else:
             router = _router()
-            system, user = _prompt(context, lighting_artifact)
+            system, user = _prompt(context, spatial_artifact)
             content, provider, attempts = router.complete_with_diagnostics(
                 role="LIGHTING_DESIGNER",
                 system=system,
@@ -342,7 +375,9 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None) -> dict:
                 content,
                 groups=groups,
                 presets=presets,
+                effects=effects,
                 active_sequence_range=active_sequence_range,
+                target_executor=target_executor,
             )
         except ArtisticPlanCompileError as first_error:
             # One bounded free repair is allowed only for a true artistic-plan
@@ -355,6 +390,7 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None) -> dict:
                 error=str(first_error),
                 groups=groups,
                 presets=presets,
+                effects=effects,
             )
             repaired, repair_provider, repair_attempts = router.complete_with_diagnostics(
                 role="LIGHTING_DESIGNER",
@@ -375,9 +411,19 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None) -> dict:
                 repaired,
                 groups=groups,
                 presets=presets,
+                effects=effects,
                 active_sequence_range=active_sequence_range,
+                target_executor=target_executor,
             )
 
+        if any(
+            action.get("operation") == "CALL_EFFECT"
+            for cue in plan.get("cues", [])
+            for action in cue.get("actions", [])
+        ):
+            capability = core.cue_effect_application_capability.load_verified()
+            if capability is not None:
+                plan["effect_application_capability"] = capability
         result["provider_artistic_plan"] = provider_plan
         result["provider_plan_compile"] = compile_audit
         result["canonical_artifact"] = plan
@@ -403,7 +449,12 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None) -> dict:
         result["sequence"] = execution.get("result", "")
         result["status"] = "SUCCESS"
         result["ma2_writes"] = len(workflow.commands)
-        result["readback_verification"] = "PASS"
+        result["readback_verification"] = "METADATA_PASS_CUE_CONTENT_PARTIAL"
+        result["readback_detail"] = {
+            "sequence_executor_metadata": "PASS",
+            "cue_labels_and_fades": "PASS",
+            "cue_attribute_content": "PARTIAL_UNVERIFIED",
+        }
         result["executor_before"] = executor_before
         result["executor_after"] = core.runtime.read_state("List Executor")
         result["sequence_after"] = core.runtime.read_state("List Sequence")
@@ -432,10 +483,11 @@ def main() -> int:
     parser.add_argument("--real-machine", action="store_true")
     parser.add_argument("--result", type=Path, default=None)
     parser.add_argument("--saved-result", type=Path, default=None)
+    parser.add_argument("--target-executor", default=TARGET_EXECUTOR_DISPLAY)
     args = parser.parse_args()
 
     try:
-        output = run(args.real_machine, saved_result_path=args.saved_result)
+        output = run(args.real_machine, saved_result_path=args.saved_result, target_executor=args.target_executor)
         if args.result:
             args.result.parent.mkdir(parents=True, exist_ok=True)
             args.result.write_text(
@@ -465,7 +517,7 @@ def main() -> int:
                 {
                     "status": output.get("status"),
                     "provider": (output.get("provider") or {}).get("model"),
-                    "target_executor": TARGET_EXECUTOR_DISPLAY,
+                    "target_executor": output.get("target_executor"),
                 },
                 ensure_ascii=True,
             )
