@@ -11,6 +11,10 @@ For substantial work, read these in order:
    knowledge/cache -> one primary Lighting Designer call -> optional one delta
    revision -> ZEN Compiler -> deterministic Builder/readback. Ordinary song
    programming must not automatically invoke the historical full role chain.
+   - Also read `docs/FULL_ARTISTIC_PATH_001.md` for any task touching the
+     artistic contract, Preset/Effect resources, Color, Position, Beam, Gobo,
+     Movement, Strobe, or the SHEESH programming runner. Execution limitations
+     must not be promoted into artistic limitations.
    - Read `docs/MULTI_AGENT_DESIGN_PLAN.md` only when the task explicitly
      concerns the legacy/research multi-agent runtime, spatial bootstrap roles,
      or an intentionally independent deep review.
