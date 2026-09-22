@@ -150,7 +150,7 @@ class ArtisticResourceMapTests(unittest.TestCase):
         profile = {
             **self.profile,
             "effects": [
-                {"effect_id": 88, "name": "FX_DIM_CHASE_FAST"},
+                {"effect_id": 88, "name": "FX_DIM_CHASE_FAST", "kind": "TEMPLATE"},
                 {"effect_id": 89, "name": "Almost Fast Chase"},
             ],
         }
@@ -170,7 +170,7 @@ class ArtisticResourceMapTests(unittest.TestCase):
     def test_strict_template_effect_needs_dimmer_capability_and_verified_application(self):
         no_capability = {
             **self.profile,
-            "effects": [{"effect_id": 88, "name": "FX_DIM_CHASE_FAST"}],
+            "effects": [{"effect_id": 88, "name": "FX_DIM_CHASE_FAST", "kind": "TEMPLATE"}],
             "fixture_type_profiles": [],
         }
         result = build_artistic_resource_map(
@@ -180,7 +180,7 @@ class ArtisticResourceMapTests(unittest.TestCase):
         self.assertEqual(effect_applicability_from_map(result)[1], set())
 
         result = build_artistic_resource_map(
-            {**self.profile, "effects": [{"effect_id": 88, "name": "FX_DIM_CHASE_FAST"}]},
+            {**self.profile, "effects": [{"effect_id": 88, "name": "FX_DIM_CHASE_FAST", "kind": "TEMPLATE"}]},
             effect_application_capability=None,
         )
         self.assertEqual(effect_applicability_from_map(result)[1], set())
