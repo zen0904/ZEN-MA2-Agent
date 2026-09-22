@@ -20,6 +20,12 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from zen_ma2_agent.core import AgentCore
+from zen_ma2_agent.artistic_resources import (
+    build_artistic_resource_map,
+    effect_applicability_from_map,
+    model_resource_contract,
+    preset_applicability_from_map,
+)
 from zen_ma2_agent.designer.artistic_plan import (
     ArtisticPlanCompileError,
     compile_artistic_cue_plan,
@@ -90,7 +96,23 @@ def _router() -> ProviderRouter:
     return router
 
 
-def _provider_contract(groups: list[dict], presets: list[dict], effects: list[dict]) -> dict:
+def _load_preset_bindings() -> list[dict]:
+    candidates = [
+        USB_HOME / "data" / "ZEN_ARTISTIC_PRESET_BINDINGS.json",
+        ROOT / "data" / "ZEN_ARTISTIC_PRESET_BINDINGS.json",
+    ]
+    for path in candidates:
+        if not path.is_file():
+            continue
+        value = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(value, dict) and isinstance(value.get("bindings"), list):
+            return [item for item in value["bindings"] if isinstance(item, dict)]
+        if isinstance(value, list):
+            return [item for item in value if isinstance(item, dict)]
+    return []
+
+
+def _provider_contract(resource_map: dict) -> dict:
     return {
         "cue": {
             "fade": "<non-negative seconds>",
@@ -106,39 +128,22 @@ def _provider_contract(groups: list[dict], presets: list[dict], effects: list[di
             ],
         },
         "cue_order": list(SHEESH_CUE_LABELS),
-        "verified_groups": [
-            {"group_id": item.get("group_id"), "name": item.get("name")}
-            for item in groups
-        ],
-        "verified_presets": [
-            {
-                "reference": item.get("reference"),
-                "preset_type": item.get("preset_type"),
-                "name": item.get("name"),
-            }
-            for item in presets
-        ],
-        "verified_effects": [
-            {"effect_id": item.get("effect_id"), "name": item.get("name")}
-            for item in effects
-            if isinstance(item.get("effect_id"), int)
-        ],
+        "group_resources": model_resource_contract(resource_map),
+        "resource_rules": resource_map.get("rules", {}),
     }
 
 
-def _prompt(profile: dict, spatial_artifact: dict) -> tuple[str, str]:
-    groups = profile.get("groups", [])
-    presets = [item for item in profile.get("presets", []) if item.get("reference")]
-    effects = [item for item in profile.get("effects", []) if isinstance(item.get("effect_id"), int)]
-    contract = _provider_contract(groups, presets, effects)
+def _prompt(profile: dict, resource_map: dict, spatial_artifact: dict) -> tuple[str, str]:
+    contract = _provider_contract(resource_map)
     system = (
         "You are the ZEN LIGHTING_DESIGNER for a disposable grandMA2 programming test. "
         "Make the artistic lighting decisions. Return JSON only with one top-level key: cues. "
         "Return exactly six cues in this order: INTRO, BUILD, VERSE, PRE_DROP, "
         "SHEESH_IMPACT, AFTER_IMPACT. Each cue only needs fade and actions. "
-        "Use only the supplied verified resources. Compact actions may use dimmer, "
-        "generic preset, typed color/position/focus/beam/gobo preset, or verified Effect ID. "
-        "Do not invent a Preset/Effect or assume capability from a Group name. "
+        "Use only resources listed under that exact Group in group_resources. Compact actions "
+        "may use dimmer, generic preset, typed color/position/focus/beam/gobo preset, or verified "
+        "Effect ID only when the resource map exposes it for that Group. Do not use unbound "
+        "Preset inventory or arbitrary MA2 Effect IDs. Do not infer capability from a Group name. "
         "Do not output schema names, song metadata, cue numbers, cue IDs, executor addresses, "
         "Sequence ranges, MA2 commands, Lua, Telnet, Markdown, or implementation details. "
         "ZEN owns all operational metadata and exact internal schema formatting."
@@ -196,6 +201,7 @@ def _compile_provider_plan(
     groups: list[dict],
     presets: list[dict],
     effects: list[dict],
+    resource_map: dict,
     active_sequence_range: list[int],
     target_executor: str,
 ) -> tuple[dict, dict[str, object], dict]:
@@ -220,10 +226,12 @@ def _compile_provider_plan(
         for item in presets
         if item.get("reference") and item.get("preset_type")
     }
+    preset_applicability = preset_applicability_from_map(resource_map)
+    effect_applicability = effect_applicability_from_map(resource_map)
     verified_effect_ids = {
-        int(item["effect_id"])
-        for item in effects
-        if isinstance(item.get("effect_id"), int)
+        effect_id
+        for effect_ids in effect_applicability.values()
+        for effect_id in effect_ids
     }
     plan, audit = compile_artistic_cue_plan(
         provider_plan,
@@ -234,6 +242,8 @@ def _compile_provider_plan(
         verified_preset_refs=verified_preset_refs,
         verified_preset_types=verified_preset_types,
         verified_effect_ids=verified_effect_ids,
+        verified_preset_applicability=preset_applicability,
+        verified_effect_applicability=effect_applicability,
         cue_labels=SHEESH_CUE_LABELS,
     )
     validate_ma_payload(plan["cues"], path="show_plan.cues")
@@ -262,11 +272,9 @@ def _repair_prompt(
     *,
     rejected_content: str,
     error: str,
-    groups: list[dict],
-    presets: list[dict],
-    effects: list[dict],
+    resource_map: dict,
 ) -> tuple[str, str]:
-    contract = _provider_contract(groups, presets, effects)
+    contract = _provider_contract(resource_map)
     system = (
         "Repair the rejected artistic cue plan without changing its artistic intention more "
         "than necessary. Return JSON only with one top-level key: cues. Return exactly six "
@@ -342,6 +350,14 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
         groups = context.get("groups", [])
         presets = [item for item in context.get("presets", []) if item.get("reference")]
         effects = [item for item in context.get("effects", []) if isinstance(item.get("effect_id"), int)]
+        effect_application_capability = core.cue_effect_application_capability.load_verified()
+        resource_map = build_artistic_resource_map(
+            profile,
+            preset_bindings=_load_preset_bindings(),
+            effect_catalog_entries=core.effect_catalog.load().get("entries", []),
+            effect_application_capability=effect_application_capability,
+        )
+        result["artistic_resource_map"] = resource_map
         selected_sequence = _lowest_safe_sequence_id(context)
         active_sequence_range = [selected_sequence, selected_sequence]
         result["selected_sequence_id"] = selected_sequence
@@ -362,7 +378,7 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
             result["provider_attempts"] = saved.get("provider_attempts", [])
         else:
             router = _router()
-            system, user = _prompt(context, spatial_artifact)
+            system, user = _prompt(context, resource_map, spatial_artifact)
             content, provider, attempts = router.complete_with_diagnostics(
                 role="LIGHTING_DESIGNER",
                 system=system,
@@ -381,6 +397,7 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
                 groups=groups,
                 presets=presets,
                 effects=effects,
+                resource_map=resource_map,
                 active_sequence_range=active_sequence_range,
                 target_executor=target_executor,
             )
@@ -393,9 +410,7 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
             repair_system, repair_user = _repair_prompt(
                 rejected_content=content,
                 error=str(first_error),
-                groups=groups,
-                presets=presets,
-                effects=effects,
+                resource_map=resource_map,
             )
             repaired, repair_provider, repair_attempts = router.complete_with_diagnostics(
                 role="LIGHTING_DESIGNER",
@@ -417,6 +432,7 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
                 groups=groups,
                 presets=presets,
                 effects=effects,
+                resource_map=resource_map,
                 active_sequence_range=active_sequence_range,
                 target_executor=target_executor,
             )
@@ -426,7 +442,7 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
             for cue in plan.get("cues", [])
             for action in cue.get("actions", [])
         ):
-            capability = core.cue_effect_application_capability.load_verified()
+            capability = effect_application_capability
             if capability is not None:
                 plan["effect_application_capability"] = capability
         result["provider_artistic_plan"] = provider_plan
