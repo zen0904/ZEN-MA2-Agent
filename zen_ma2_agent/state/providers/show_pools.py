@@ -55,6 +55,50 @@ class EffectProvider:
         return rows
 
     @staticmethod
+    def parse_template_detail(output: str) -> dict:
+        """Classify Effect template/selective state only from explicit QTY evidence.
+
+        grandMA2 documents QTY=None as a template Effect and a numeric QTY as
+        a selective Effect. Generic List Effect pool rows do not reliably
+        expose that column, so callers should use a bounded line-detail read
+        when this distinction matters.
+        """
+        tokens = re.findall(
+            r"\bQTY\b\s*(?:[:=]\s*|\s+)(None|\d+)\b",
+            output or "",
+            re.I,
+        )
+        normalized = [token.upper() if token.lower() == "none" else token for token in tokens]
+        if not normalized:
+            return {
+                "status": "UNKNOWN",
+                "kind": None,
+                "qty_values": [],
+                "reason": "NO_EXPLICIT_QTY_EVIDENCE",
+            }
+        if all(token == "NONE" for token in normalized):
+            return {
+                "status": "VERIFIED",
+                "kind": "TEMPLATE",
+                "qty_values": normalized,
+                "reason": "ALL_EFFECT_LINES_QTY_NONE",
+            }
+        numeric = [int(token) for token in normalized if token.isdigit()]
+        if len(numeric) == len(normalized) and all(value > 0 for value in numeric):
+            return {
+                "status": "VERIFIED",
+                "kind": "SELECTIVE",
+                "qty_values": numeric,
+                "reason": "ALL_EFFECT_LINES_QTY_NUMERIC",
+            }
+        return {
+            "status": "UNKNOWN",
+            "kind": None,
+            "qty_values": normalized,
+            "reason": "MIXED_OR_ZERO_QTY_EVIDENCE",
+        }
+
+    @staticmethod
     def diagnostics(rows: list[dict]) -> dict:
         numbers=[item["number"] for item in rows]
         unlabeled=[item for item in rows if not str(item.get("name") or "").strip() or str(item.get("name")).strip()==str(item["number"])]
