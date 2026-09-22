@@ -7,9 +7,13 @@ For substantial work, read these in order:
 2. `docs/CODING_AGENT_COLLABORATION.md` -- required if you are Claude Code or
    Codex: how the two coexist on this repo, and which tasks need the project
    owner present versus which are safe to run unattended.
-3. `docs/MULTI_AGENT_DESIGN_PLAN.md` -- the implemented four-role Designer
-   pipeline and its current multi-provider extension boundary, if the task
-   touches autonomous design.
+3. `docs/ZEN_DESIGN_MODE.md` -- the default product design path: verified
+   knowledge/cache -> one primary Lighting Designer call -> optional one delta
+   revision -> ZEN Compiler -> deterministic Builder/readback. Ordinary song
+   programming must not automatically invoke the historical full role chain.
+   - Read `docs/MULTI_AGENT_DESIGN_PLAN.md` only when the task explicitly
+     concerns the legacy/research multi-agent runtime, spatial bootstrap roles,
+     or an intentionally independent deep review.
    - If the task touches multi-song variety, song identity, repeated visual
      structure, callbacks, or anti-template review, also read
      `docs/SHOW_LEVEL_VISUAL_IDENTITY.md`.
@@ -38,10 +42,12 @@ If the user says “continue”, “keep going”, or “next” in this project
 state from this repository and continue without requiring old handoffs.
 
 The user-facing product is one ZEN MA2 Agent. Internal modules may remain
-specialized, but routing is automatic. Designers emit typed intent only;
-Builder/compiler is the sole MA2 command boundary and Preview/Approval precede
-writes. Preserve the stable operator contract and treat workflow changes as
-explicit proposals.
+specialized, but routing is automatic. The default design path is deliberately
+lean: do not add a Researcher/Critic/Finalizer call, song-specific compiler
+rule, or provider-facing backend metadata requirement unless the task actually
+needs it. Designers emit artistic intent only; Builder/compiler is the sole MA2
+command boundary and Preview/Approval precede writes. Preserve the stable
+operator contract and treat workflow changes as explicit proposals.
 
 Never guess undocumented MA2 behavior, mutate production objects during
 research, or commit caches/build outputs. Check current status and safety
