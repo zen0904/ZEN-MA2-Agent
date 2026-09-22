@@ -5,7 +5,7 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "Use the lean single-designer path while restoring full artistic expression. Current mainline: verified Knowledge/State/cache -> one LIGHTING_DESIGNER call -> ARTISTIC_CUES_V0_2 -> verified Preset/Effect resource resolution -> strict internal ShowPlan -> deterministic MA2 Builder -> explicit readback scope. Execution limits must not become artistic-language limits. Preserve FREE_ONLY routing, CODEX_ARTISTIC_INTERVENTION=NONE, Fixture 9999 protection, protected object boundaries and no raw LLM-to-MA2 command path."
+    "active_objective": "Complete FULL_ARTISTIC_PATH_001 through the current-Show ARTISTIC_RESOURCE_MAP: verified Show state -> Group x technical capability x explicitly applicable Preset/Effect resources -> one Lighting Designer -> ARTISTIC_CUES_V0_2 -> strict ShowPlan -> deterministic Builder/readback. Never expose arbitrary MA2 Effect IDs or infer Preset applicability from type/name alone. Keep FREE_ONLY routing, CODEX_ARTISTIC_INTERVENTION=NONE, Fixture 9999 protection and no raw LLM-to-MA2 commands."
   },
   "last_closed_task": {
     "id": "SHEESH_ARTISTIC_CUES_V0_1_SEQUENCE_2_EXECUTOR_2_002",
@@ -16,20 +16,19 @@
     "id": "FULL_ARTISTIC_PATH_001",
     "classification": "REQUIRED",
     "status": "ACTIVE",
-    "why_it_matters": "The lean architecture regressed artistically because the provider-facing path was narrowed to dimmer/generic preset behavior even though richer Test Show Color and Effect evidence already exists. Restore verified Preset/Effect dimensions now while keeping the artistic vocabulary broader than current execution capability.",
+    "why_it_matters": "The artistic vocabulary is restored, but safe useful design now depends on one authoritative resource boundary. A Group name, Preset type, or Effect existence must not be mistaken for executable artistic capability. The new resource map must be regression-tested and then populated from the actual current Test Show before the next artistic write.",
     "blocks_current_milestone": true,
     "dependencies": [
       "docs/FULL_ARTISTIC_PATH_001.md",
-      "docs/ZEN_DESIGN_MODE.md",
+      "zen_ma2_agent/artistic_resources.py",
       "zen_ma2_agent/designer/artistic_plan.py",
       "zen_ma2_agent/designer/lean_design_mode.py",
       "scripts/run_sheesh_programming_test.py",
-      "zen_ma2_agent/builder/draft.py",
-      "zen_ma2_agent/effect_resources.py",
+      "tests/test_artistic_resources.py",
       "tests/test_artistic_plan_compiler.py",
       "tests/test_lean_design_mode.py"
     ],
-    "next_review_condition": "On the real development machine: full tests/self-check/diff-check pass; ARTISTIC_CUES_V0_2 compiles verified typed Preset dimensions and verified Effect IDs; lean compact/delta context carries Effects and never guesses Cue 1; the six-cue SHEESH runner is clearly smoke-only and accepts an explicit target Executor; no MA2 write is required for regression verification. A later real-machine smoke may prove current-Show Color/Effect resource flow with explicit metadata-vs-cue-content readback reporting."
+    "next_review_condition": "On the real development machine: full tests/self-check/diff-check pass; current Group membership and FixtureType capability evidence are refreshed; the artistic resource map exposes zero arbitrary Effect inventory rows, enforces Group-bound Preset/Effect applicability, and is included in the lean context. Then create/update current-Show preset-binding evidence only for resources actually verified on this Test Show. No MA2 artistic write is required for regression verification."
   },
   "human_review_decisions": [
     {
@@ -371,6 +370,17 @@
       "BEAM_PRESET",
       "GOBO_PRESET",
       "VERIFIED_EFFECT_ID"
-    ]
+    ],
+    "artistic_resource_map": {
+      "schema": "zen.artistic_resource_map.v0.1",
+      "authoritative_for_model_resource_selection": true,
+      "rules": [
+        "Group name does not imply capability.",
+        "Preset type does not imply Group applicability.",
+        "Effect existence/ID does not imply artistic verification.",
+        "Only Group-bound executable Preset/Effect resources may be offered to the designer.",
+        "Unknown or unsupported dimensions remain explicit and are never semantically substituted."
+      ]
+    }
   }
 }
