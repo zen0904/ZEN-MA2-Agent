@@ -159,3 +159,46 @@ def derive_sheesh_test_preset_bindings(
     result["bindings"] = bindings
     result["reason"] = None
     return result
+
+
+def test_show_palette_manifest(plan: Mapping[str, Any]) -> dict[str, str]:
+    """Return the fixed Build 001 Color reference -> label manifest."""
+    result: dict[str, str] = {}
+    for item in plan.get("test_palette", []) if isinstance(plan.get("test_palette"), list) else []:
+        if not isinstance(item, Mapping):
+            continue
+        number = item.get("preset")
+        label = str(item.get("label") or "").strip()
+        if isinstance(number, int) and not isinstance(number, bool) and 101 <= number <= 113 and label:
+            result[f"4.{number}"] = label
+    return result
+
+
+def bounded_test_show_color_rows(
+    plan: Mapping[str, Any],
+    readbacks: Mapping[str, str],
+) -> list[dict[str, Any]]:
+    """Build current Color inventory rows only from exact bounded readback.
+
+    List Preset All on the verified Test Show can omit the newly-created
+    4.101-4.113 Color rows. This helper accepts only the thirteen known Build
+    001 references and only when the exact committed label is present in the
+    fresh per-reference List response.
+    """
+    manifest = test_show_palette_manifest(plan)
+    rows: list[dict[str, Any]] = []
+    for reference, expected_label in sorted(manifest.items()):
+        output = str(readbacks.get(reference) or "")
+        upper = output.upper()
+        if "OBJECT DOES NOT EXIST" in upper or "NO OBJECTS FOUND" in upper:
+            continue
+        if expected_label not in output:
+            continue
+        rows.append({
+            "preset_type": "COLOR",
+            "number": int(reference.split(".", 1)[1]),
+            "reference": reference,
+            "name": expected_label,
+            "source": "FRESH_LIST_PRESET_REFERENCE_TEST_SHOW",
+        })
+    return rows
