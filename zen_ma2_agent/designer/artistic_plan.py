@@ -1,15 +1,19 @@
 """Compile provider-facing artistic cue intent into the strict internal ShowPlan.
 
 The provider owns artistic choices. ZEN owns operational metadata and exact
-internal schema shape. The compiler is deliberately song-agnostic: cue count
-and cue naming belong to the calling design task, not to this module.
+internal schema shape. The compiler is deliberately song-agnostic and
+transport-agnostic.
+
+ARTISTIC_CUES_V0_2 keeps the provider-facing language richer than the MA2
+command boundary. It accepts verified resource selections for multiple
+artistic dimensions while still compiling only to typed ShowPlan actions.
 """
 from __future__ import annotations
 
 from copy import deepcopy
 import math
 import re
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
 from .schema import ShowPlanSchemaError, validate_show_plan
 
@@ -19,6 +23,21 @@ class ArtisticPlanCompileError(ValueError):
 
 
 _FORBIDDEN_KEYS = {"command", "commands", "telnet", "ma_command", "raw_command", "lua"}
+
+_PRESET_DIMENSION_KEYS = {
+    "color_preset": "COLOR",
+    "position_preset": "POSITION",
+    "focus_preset": "FOCUS",
+    "beam_preset": "BEAM",
+    "gobo_preset": "GOBO",
+}
+
+_COMPACT_ACTION_KEYS = {
+    "dimmer",
+    "preset",
+    "effect",
+    *_PRESET_DIMENSION_KEYS.keys(),
+}
 
 
 def _walk_forbidden(value: Any) -> None:
@@ -90,16 +109,67 @@ def _preset_ref(value: object, verified: set[str]) -> str:
     return reference
 
 
+def _effect_id(value: object, verified: set[int]) -> int:
+    candidate = value
+    if isinstance(value, Mapping):
+        candidate = value.get("id")
+    if isinstance(candidate, bool):
+        raise ArtisticPlanCompileError("Effect reference must be a verified integer Effect ID.")
+    if isinstance(candidate, int):
+        effect_id = candidate
+    elif isinstance(candidate, str) and re.fullmatch(r"[0-9]+", candidate.strip()):
+        effect_id = int(candidate.strip())
+    else:
+        raise ArtisticPlanCompileError("Effect reference must be a verified integer Effect ID.")
+    if effect_id not in verified:
+        raise ArtisticPlanCompileError(
+            f"Effect {effect_id} is not in the verified Effect allowlist."
+        )
+    return effect_id
+
+
+def _preset_action(
+    *,
+    group: int,
+    value: object,
+    verified_preset_refs: set[str],
+    verified_preset_types: Mapping[str, str],
+    required_type: str | None = None,
+) -> dict[str, object]:
+    reference = _preset_ref(value, verified_preset_refs)
+    if required_type is not None:
+        actual = str(verified_preset_types.get(reference) or "").upper()
+        if not actual:
+            raise ArtisticPlanCompileError(
+                f"Preset {reference} has no verified Preset type; cannot use it as {required_type}."
+            )
+        if actual != required_type:
+            raise ArtisticPlanCompileError(
+                f"Preset {reference} is verified as {actual}, not {required_type}."
+            )
+    action: dict[str, object] = {
+        "operation": "CALL_PRESET",
+        "target": {"type": "group", "ref": group},
+        "preset_ref": reference,
+    }
+    if required_type is not None:
+        action["preset_type"] = required_type
+    return action
+
+
 def _compile_action(
     action: object,
     *,
     verified_group_ids: set[int],
     verified_preset_refs: set[str],
+    verified_preset_types: Mapping[str, str],
+    verified_effect_ids: set[int],
 ) -> dict[str, object]:
     if not isinstance(action, dict):
         raise ArtisticPlanCompileError("Each artistic action must be an object.")
 
-    # Backward compatibility: legacy typed provider actions remain readable.
+    # Backward compatibility: typed provider actions remain readable, but the
+    # provider still never supplies MA command text.
     operation = action.get("operation")
     if operation is not None:
         target = action.get("target")
@@ -113,32 +183,57 @@ def _compile_action(
                 "level": _dimmer_level(action.get("level")),
             }
         if operation == "CALL_PRESET":
+            required_type = str(action.get("preset_type") or "").upper() or None
+            return _preset_action(
+                group=group,
+                value=action.get("preset_ref"),
+                verified_preset_refs=verified_preset_refs,
+                verified_preset_types=verified_preset_types,
+                required_type=required_type,
+            )
+        if operation == "CALL_EFFECT":
             return {
-                "operation": "CALL_PRESET",
+                "operation": "CALL_EFFECT",
                 "target": {"type": "group", "ref": group},
-                "preset_ref": _preset_ref(action.get("preset_ref"), verified_preset_refs),
+                "effect_ref": {"id": _effect_id(action.get("effect_ref"), verified_effect_ids)},
             }
         raise ArtisticPlanCompileError(f"Unsupported artistic operation: {operation!r}.")
 
-    # Preferred provider-facing compact form.
     group = _group_id(action.get("group"), verified_group_ids)
-    has_dimmer = "dimmer" in action
-    has_preset = "preset" in action
-    if has_dimmer == has_preset:
+    present = [key for key in _COMPACT_ACTION_KEYS if key in action]
+    if len(present) != 1:
         raise ArtisticPlanCompileError(
-            "Compact artistic action must contain exactly one of 'dimmer' or 'preset'."
+            "Compact artistic action must contain exactly one artistic value "
+            "from dimmer, preset, effect, color_preset, position_preset, "
+            "focus_preset, beam_preset, or gobo_preset."
         )
-    if has_dimmer:
+    key = present[0]
+    if key == "dimmer":
         return {
             "operation": "SET_DIMMER",
             "target": {"type": "group", "ref": group},
             "level": _dimmer_level(action.get("dimmer")),
         }
-    return {
-        "operation": "CALL_PRESET",
-        "target": {"type": "group", "ref": group},
-        "preset_ref": _preset_ref(action.get("preset"), verified_preset_refs),
-    }
+    if key == "effect":
+        return {
+            "operation": "CALL_EFFECT",
+            "target": {"type": "group", "ref": group},
+            "effect_ref": {"id": _effect_id(action.get("effect"), verified_effect_ids)},
+        }
+    if key == "preset":
+        return _preset_action(
+            group=group,
+            value=action.get("preset"),
+            verified_preset_refs=verified_preset_refs,
+            verified_preset_types=verified_preset_types,
+        )
+    return _preset_action(
+        group=group,
+        value=action.get(key),
+        verified_preset_refs=verified_preset_refs,
+        verified_preset_types=verified_preset_types,
+        required_type=_PRESET_DIMENSION_KEYS[key],
+    )
 
 
 def _cue_labels(
@@ -171,13 +266,16 @@ def compile_artistic_cue_plan(
     active_sequence_range: Iterable[int],
     verified_group_ids: set[int],
     verified_preset_refs: set[str],
+    verified_preset_types: Mapping[str, str] | None = None,
+    verified_effect_ids: set[int] | None = None,
     cue_labels: Iterable[str] | None = None,
 ) -> tuple[dict[str, Any], dict[str, object]]:
     """Compile provider art intent into strict zen.show_plan.v0.1.
 
-    This module does not decide how many cues a song should have and does not
-    contain song-specific section names. A bounded experiment may supply cue
-    labels/count constraints at its caller boundary.
+    The generic compiler does not decide cue count or song structure. It also
+    does not invent unverified artistic resources. Dimension-specific Preset
+    actions require a verified Preset type; Effect actions require a verified
+    Effect ID.
     """
     if not isinstance(provider_plan, dict):
         raise ArtisticPlanCompileError("Provider artistic plan must be a JSON object.")
@@ -191,6 +289,12 @@ def compile_artistic_cue_plan(
     if len(limits) != 2 or any(not isinstance(item, int) or isinstance(item, bool) for item in limits):
         raise ArtisticPlanCompileError("Internal active Sequence range is invalid.")
 
+    preset_types = {
+        str(reference): str(kind).upper()
+        for reference, kind in (verified_preset_types or {}).items()
+        if reference is not None and kind is not None
+    }
+    effect_ids = set(verified_effect_ids or ())
     labels = _cue_labels(cues, cue_labels)
     compiled_cues: list[dict[str, object]] = []
     for index, source_cue in enumerate(cues, start=1):
@@ -204,6 +308,8 @@ def compile_artistic_cue_plan(
                 item,
                 verified_group_ids=verified_group_ids,
                 verified_preset_refs=verified_preset_refs,
+                verified_preset_types=preset_types,
+                verified_effect_ids=effect_ids,
             )
             for item in actions
         ]
@@ -228,7 +334,7 @@ def compile_artistic_cue_plan(
         raise ArtisticPlanCompileError(f"Compiled ShowPlan failed strict validation: {exc}") from exc
 
     audit = {
-        "provider_contract": "ARTISTIC_CUES_V0_1",
+        "provider_contract": "ARTISTIC_CUES_V0_2",
         "backend_owned_fields": [
             "schema",
             "song",
@@ -238,6 +344,16 @@ def compile_artistic_cue_plan(
             "cues[].cue_number",
         ],
         "provider_owned_fields": ["cues[].fade", "cues[].actions"],
+        "supported_compact_dimensions": [
+            "DIMMER",
+            "PRESET",
+            "COLOR_PRESET",
+            "POSITION_PRESET",
+            "FOCUS_PRESET",
+            "BEAM_PRESET",
+            "GOBO_PRESET",
+            "EFFECT",
+        ],
         "cue_labels_source": "CALLER" if cue_labels is not None else "PROVIDER_OR_GENERIC",
         "legacy_typed_actions_accepted": True,
         "artistic_values_changed": False,
