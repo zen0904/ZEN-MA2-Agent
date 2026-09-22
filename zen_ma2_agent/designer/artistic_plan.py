@@ -1,8 +1,8 @@
-"""Compile a provider-facing artistic cue plan into the strict internal ShowPlan.
+"""Compile provider-facing artistic cue intent into the strict internal ShowPlan.
 
 The provider owns artistic choices. ZEN owns operational metadata and exact
-internal schema shape. This keeps large-model output small and tolerant of
-harmless representation differences while preserving strict downstream safety.
+internal schema shape. The compiler is deliberately song-agnostic: cue count
+and cue naming belong to the calling design task, not to this module.
 """
 from __future__ import annotations
 
@@ -19,7 +19,6 @@ class ArtisticPlanCompileError(ValueError):
 
 
 _FORBIDDEN_KEYS = {"command", "commands", "telnet", "ma_command", "raw_command", "lua"}
-_CUE_LABELS = ("INTRO", "BUILD", "VERSE", "PRE_DROP", "SHEESH_IMPACT", "AFTER_IMPACT")
 
 
 def _walk_forbidden(value: Any) -> None:
@@ -100,6 +99,7 @@ def _compile_action(
     if not isinstance(action, dict):
         raise ArtisticPlanCompileError("Each artistic action must be an object.")
 
+    # Backward compatibility: legacy typed provider actions remain readable.
     operation = action.get("operation")
     if operation is not None:
         target = action.get("target")
@@ -120,6 +120,7 @@ def _compile_action(
             }
         raise ArtisticPlanCompileError(f"Unsupported artistic operation: {operation!r}.")
 
+    # Preferred provider-facing compact form.
     group = _group_id(action.get("group"), verified_group_ids)
     has_dimmer = "dimmer" in action
     has_preset = "preset" in action
@@ -140,6 +141,28 @@ def _compile_action(
     }
 
 
+def _cue_labels(
+    provider_cues: list[object],
+    supplied: Iterable[str] | None,
+) -> list[str]:
+    if supplied is not None:
+        labels = [str(value).strip() for value in supplied]
+        if len(labels) != len(provider_cues):
+            raise ArtisticPlanCompileError(
+                "Caller-supplied cue labels must match the provider cue count."
+            )
+        if any(not label for label in labels):
+            raise ArtisticPlanCompileError("Caller-supplied cue labels may not be empty.")
+        return labels
+
+    labels: list[str] = []
+    for index, cue in enumerate(provider_cues, start=1):
+        label = cue.get("label") if isinstance(cue, dict) else None
+        text = str(label).strip() if label is not None else ""
+        labels.append(text or f"CUE_{index:03d}")
+    return labels
+
+
 def compile_artistic_cue_plan(
     provider_plan: dict[str, Any],
     *,
@@ -148,20 +171,27 @@ def compile_artistic_cue_plan(
     active_sequence_range: Iterable[int],
     verified_group_ids: set[int],
     verified_preset_refs: set[str],
+    cue_labels: Iterable[str] | None = None,
 ) -> tuple[dict[str, Any], dict[str, object]]:
-    """Compile provider art intent into strict zen.show_plan.v0.1."""
+    """Compile provider art intent into strict zen.show_plan.v0.1.
+
+    This module does not decide how many cues a song should have and does not
+    contain song-specific section names. A bounded experiment may supply cue
+    labels/count constraints at its caller boundary.
+    """
     if not isinstance(provider_plan, dict):
         raise ArtisticPlanCompileError("Provider artistic plan must be a JSON object.")
     _walk_forbidden(provider_plan)
 
     cues = provider_plan.get("cues")
-    if not isinstance(cues, list) or len(cues) != 6:
-        raise ArtisticPlanCompileError("Provider artistic plan must contain exactly six cues.")
+    if not isinstance(cues, list) or not cues:
+        raise ArtisticPlanCompileError("Provider artistic plan must contain at least one cue.")
 
     limits = list(active_sequence_range)
     if len(limits) != 2 or any(not isinstance(item, int) or isinstance(item, bool) for item in limits):
         raise ArtisticPlanCompileError("Internal active Sequence range is invalid.")
 
+    labels = _cue_labels(cues, cue_labels)
     compiled_cues: list[dict[str, object]] = []
     for index, source_cue in enumerate(cues, start=1):
         if not isinstance(source_cue, dict):
@@ -177,11 +207,10 @@ def compile_artistic_cue_plan(
             )
             for item in actions
         ]
-        label = _CUE_LABELS[index - 1]
         compiled_cues.append({
-            "id": label.lower(),
+            "id": f"cue_{index:03d}",
             "cue_number": index,
-            "label": label,
+            "label": labels[index - 1],
             "fade": _fade(source_cue.get("fade")),
             "actions": compiled_actions,
         })
@@ -207,9 +236,9 @@ def compile_artistic_cue_plan(
             "active_sequence_range",
             "cues[].id",
             "cues[].cue_number",
-            "cues[].label",
         ],
         "provider_owned_fields": ["cues[].fade", "cues[].actions"],
+        "cue_labels_source": "CALLER" if cue_labels is not None else "PROVIDER_OR_GENERIC",
         "legacy_typed_actions_accepted": True,
         "artistic_values_changed": False,
     }
