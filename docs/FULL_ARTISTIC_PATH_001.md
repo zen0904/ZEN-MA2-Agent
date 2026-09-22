@@ -120,6 +120,29 @@ The bounded SHEESH smoke runner now refreshes Group membership and FixtureType
 capability evidence before building the resource map, then feeds only
 Group-bound executable resources to the provider contract.
 
+
+### Current Test Show evidence recovery
+
+The fingerprinted SHEESH Test Show has one additional bounded evidence path.
+
+`zen_ma2_agent/test_show_evidence.py` may recover Color Preset applicability
+only for Group/Preset pairs that were actually present in the committed real
+MA2 Build 001 plan, and only while the current Show still exposes the exact
+Test Show Sequence identity and exact current Color Preset references/types/
+labels from that build.
+
+This does **not** generalize one observed Color call to every Group or every
+Color. It reuses only observed pairs and binds them to the current scanned Show
+identity.
+
+Effect recovery has a similarly narrow fallback already recognized by the
+Effect Resource Resolver: exact current Effect labels
+`FX_DIM_CHASE_SLOW`, `FX_DIM_CHASE_MED`, and `FX_DIM_CHASE_FAST` may be
+offered without a portable Agent catalog only when the target Group has
+Show-bound verified Dimmer capability and the Cue Effect application grammar is
+`REAL_MACHINE_VERIFIED`. Near-matching or arbitrary Effect names remain
+unavailable.
+
 ## Smoke test versus product design
 
 `scripts/run_sheesh_programming_test.py` is a six-cue bounded smoke test only.
