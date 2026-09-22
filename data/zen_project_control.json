@@ -16,19 +16,20 @@
     "id": "FULL_ARTISTIC_PATH_001",
     "classification": "REQUIRED",
     "status": "ACTIVE",
-    "why_it_matters": "The artistic vocabulary is restored, but safe useful design now depends on one authoritative resource boundary. A Group name, Preset type, or Effect existence must not be mistaken for executable artistic capability. The new resource map must be regression-tested and then populated from the actual current Test Show before the next artistic write.",
+    "why_it_matters": "The resource-map architecture is implemented. The remaining proof is runtime evidence: recover only exact current-Test-Show Color Group/Preset pairs from the successful SHEESH Build 001 when the current Sequence/Preset identities still match, recover only exact strict semantic Effect templates when Dimmer capability and Effect-call grammar are verified, then verify the resulting model-facing toolbox before any new artistic write.",
     "blocks_current_milestone": true,
     "dependencies": [
-      "docs/FULL_ARTISTIC_PATH_001.md",
       "zen_ma2_agent/artistic_resources.py",
+      "zen_ma2_agent/test_show_evidence.py",
       "zen_ma2_agent/designer/artistic_plan.py",
       "zen_ma2_agent/designer/lean_design_mode.py",
       "scripts/run_sheesh_programming_test.py",
       "tests/test_artistic_resources.py",
+      "tests/test_test_show_evidence.py",
       "tests/test_artistic_plan_compiler.py",
       "tests/test_lean_design_mode.py"
     ],
-    "next_review_condition": "On the real development machine: full tests/self-check/diff-check pass; current Group membership and FixtureType capability evidence are refreshed; the artistic resource map exposes zero arbitrary Effect inventory rows, enforces Group-bound Preset/Effect applicability, and is included in the lean context. Then create/update current-Show preset-binding evidence only for resources actually verified on this Test Show. No MA2 artistic write is required for regression verification."
+    "next_review_condition": "Full suite/self-check/diff-check pass at current HEAD. On the real Test Show, perform read-only scan only and report recovered Color binding count/pairs, strict-template Effect IDs, total designer-exposed Effect IDs, and whether the resulting resource map contains at least one non-Dimmer artistic resource. Do not run the provider or write MA2 until this read-only report is clean."
   },
   "human_review_decisions": [
     {
@@ -381,6 +382,12 @@
         "Only Group-bound executable Preset/Effect resources may be offered to the designer.",
         "Unknown or unsupported dimensions remain explicit and are never semantically substituted."
       ]
+    },
+    "resource_recovery": {
+      "test_show_color": "ONLY_OBSERVED_BUILD_001_GROUP_PRESET_PAIRS_WITH_CURRENT_SEQUENCE_AND_PRESET_IDENTITY_MATCH",
+      "effect_without_catalog": "ONLY_EXACT_FX_DIM_CHASE_SLOW_MED_FAST_WITH_SHOW_BOUND_DIMMER_AND_REAL_MACHINE_EFFECT_CALL_GRAMMAR",
+      "arbitrary_name_recovery": false,
+      "semantic_expansion": false
     }
   }
 }
