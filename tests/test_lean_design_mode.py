@@ -238,6 +238,8 @@ class LeanDesignModeTests(unittest.TestCase):
         self.assertIn("parse_template_detail", source)
         self.assertIn("derive_sheesh_test_dimmer_bindings", source)
         self.assertIn("dimmer_bindings=historical_dimmer_bindings", source)
+        self.assertIn("if saved_result_path is not None:", source)
+        self.assertIn("Never\n            # spend another provider call", source)
         self.assertNotIn('"verified_effects": [', source)
 
     def test_raw_transport_fields_are_rejected(self):
