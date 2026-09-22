@@ -114,6 +114,66 @@ class FirstSongBuilderTests(unittest.TestCase):
         self.assertEqual(workflow.task.intent.parameters["sequence"], 302)
         self.assertNotIn("Store Cue 1 Sequence 301", workflow.preview_note)
 
+    def test_repeated_song_label_uses_sequence_scoped_operational_label(self):
+        profile = {
+            "groups": [{"group_id": 1, "name": "HYBRID"}],
+            "presets": [],
+            "effects": [],
+            "sequences": [
+                {"number": 2, "name": "ZEN_AI_TEST_SHEESH"},
+            ],
+        }
+        plan = {
+            "schema": "zen.show_plan.v0.1",
+            "song": "SHEESH",
+            "target_executor": "2.003",
+            "active_sequence_range": [3, 3],
+            "cues": [{
+                "id": "intro",
+                "cue_number": 1,
+                "label": "INTRO",
+                "fade": 1.0,
+                "actions": [
+                    {"operation": "SET_DIMMER", "target": {"type": "group", "ref": 1}, "level": 20},
+                ],
+            }],
+        }
+        workflow = ShowPlanBuilder().build_first_song(plan, profile)
+        self.assertEqual(workflow.task.intent.parameters["sequence"], 3)
+        self.assertEqual(
+            workflow.task.intent.parameters["sequence_label"],
+            "ZEN_AI_TEST_SHEESH_SEQ3",
+        )
+        self.assertIn('Label Sequence 3 "ZEN_AI_TEST_SHEESH_SEQ3" /nc', workflow.commands)
+        self.assertIn('Label Executor 2.3 "ZEN_AI_TEST_SHEESH_SEQ3" /nc', workflow.commands)
+
+    def test_sequence_scoped_label_still_fails_closed_if_already_ambiguous(self):
+        profile = {
+            "groups": [{"group_id": 1, "name": "HYBRID"}],
+            "presets": [],
+            "effects": [],
+            "sequences": [
+                {"number": 1, "name": "ZEN_AI_TEST_SHEESH"},
+                {"number": 2, "name": "ZEN_AI_TEST_SHEESH_SEQ3"},
+            ],
+        }
+        plan = {
+            "schema": "zen.show_plan.v0.1",
+            "song": "SHEESH",
+            "active_sequence_range": [3, 3],
+            "cues": [{
+                "id": "intro",
+                "cue_number": 1,
+                "label": "INTRO",
+                "fade": 1.0,
+                "actions": [
+                    {"operation": "SET_DIMMER", "target": {"type": "group", "ref": 1}, "level": 20},
+                ],
+            }],
+        }
+        with self.assertRaisesRegex(FirstSongBuildError, "Sequence-scoped"):
+            ShowPlanBuilder().build_first_song(plan, profile)
+
     def test_optional_page_two_executor_assignment_is_allowlisted(self):
         profile = {
             "groups": [{"group_id": 1, "name": "HYBRID"}],
