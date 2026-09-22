@@ -99,11 +99,16 @@ class EffectResourceResolverTests(unittest.TestCase):
         self.assertEqual(stale.status, "CREATE_REQUIRED")
 
     def test_strict_template_reuse_and_name_only_candidate_rejection(self):
-        exact = self.resolver.resolve(requirement("MED"), profile=profile(effects=[{"effect_id": 37, "name": "FX_DIM_CHASE_MED"}]))
+        exact = self.resolver.resolve(requirement("MED"), profile=profile(effects=[{"effect_id": 37, "name": "FX_DIM_CHASE_MED", "kind": "TEMPLATE"}]))
         self.assertEqual((exact.status, exact.effect_ref["ownership"], exact.effect_ref["match"]), ("EXISTING_MATCH", "TEMPLATE", "STRICT_SEMANTIC_TEMPLATE"))
         candidate = self.resolver.resolve(requirement(), profile=profile(effects=[{"effect_id": 37, "name": "DIM PWM FAST CHASE"}]))
         self.assertEqual(candidate.status, "CREATE_REQUIRED")
         self.assertEqual(candidate.candidates[0]["id"], 37)
+        selective_same_name = self.resolver.resolve(
+            requirement("MED"),
+            profile=profile(effects=[{"effect_id": 38, "name": "FX_DIM_CHASE_MED", "kind": "SELECTIVE"}]),
+        )
+        self.assertEqual(selective_same_name.status, "CREATE_REQUIRED")
 
     def test_create_required_converts_only_to_existing_effect_builder_spec_and_deduplicates_key(self):
         first = self.resolver.resolve(requirement(), profile=profile())
