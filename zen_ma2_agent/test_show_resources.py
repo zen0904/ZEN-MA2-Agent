@@ -22,6 +22,10 @@ _TEMPLATE_EFFECTS = (
 )
 
 
+def template_effect_labels() -> tuple[str, ...]:
+    return tuple(label for label, _ in _TEMPLATE_EFFECTS)
+
+
 @dataclass(frozen=True)
 class TemplateEffectSpec:
     effect_id: int
