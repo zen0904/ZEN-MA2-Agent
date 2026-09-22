@@ -1,4 +1,9 @@
-"""Run the bounded SHEESH six-cue smoke test through the real MA2 build path.\n\nThis is intentionally a smoke test, not the full-song Design Mode. The provider\nsupplies artistic cue intent only; ZEN compiles verified Preset/Effect resource\nchoices into the strict internal ShowPlan before the Builder sees them.\n"""
+"""Run the bounded SHEESH six-cue smoke test through the real MA2 build path.
+
+This is intentionally a smoke test, not the full-song Design Mode. The provider
+supplies artistic cue intent only; ZEN compiles verified Preset/Effect resource
+choices into the strict internal ShowPlan before the Builder sees them.
+"""
 from __future__ import annotations
 
 import argparse
@@ -121,7 +126,7 @@ def _provider_contract(groups: list[dict], presets: list[dict], effects: list[di
     }
 
 
-def _prompt(profile: dict, lighting_artifact: dict) -> tuple[str, str]:
+def _prompt(profile: dict, spatial_artifact: dict) -> tuple[str, str]:
     groups = profile.get("groups", [])
     presets = [item for item in profile.get("presets", []) if item.get("reference")]
     effects = [item for item in profile.get("effects", []) if isinstance(item.get("effect_id"), int)]
@@ -145,7 +150,7 @@ def _prompt(profile: dict, lighting_artifact: dict) -> tuple[str, str]:
                 "space, purposeful hierarchy, strong silhouette and restrained progression"
             ),
             "artistic_contract": contract,
-            "spatial_context": lighting_artifact,
+            "spatial_context": spatial_artifact,
             "safety": {
                 "fixture_9999": "forbidden",
                 "geometry_changes": False,
@@ -315,10 +320,10 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
         _await_ready(core)
 
         pages = core.runtime.read_state("List Page")
-        if not re.search(rf"(?:Page\\s+)?{target_page}\\b", pages, re.I):
+        if not re.search(rf"(?:Page\s+)?{target_page}\b", pages, re.I):
             raise RuntimeError(f"TARGET_PAGE_{target_page}_NOT_PRESENT")
         executor_before = core.runtime.read_state("List Executor")
-        if re.search(rf"(?:Executor|Exec)\\s+{target_page}\\.0*{target_exec}\\b", executor_before, re.I):
+        if re.search(rf"(?:Executor|Exec)\s+{target_page}\.0*{target_exec}\b", executor_before, re.I):
             raise RuntimeError(f"TARGET_EXECUTOR_{target_page}_{target_exec:03d}_OCCUPIED")
 
         for resource, kwargs in (
