@@ -15,20 +15,17 @@
   "next_acceptance_gate": {
     "id": "SHEESH_ARTISTIC_RESOURCE_RESTORE_001",
     "classification": "REQUIRED",
-    "status": "READY_FOR_BOUNDED_TEST_SHOW_WRITE",
-    "why_it_matters": "Read-only verification proved the current Test Show has Sequence 901 but no current 4.101-4.113 Color resources, no verified Effect catalog entries, and no strict reusable template Effects. The code path is now implemented to restore only the missing Agent-owned artistic resources without touching geometry, cues, Sequence 901, its Executor, Patch/Address, or Fixture 9999.",
+    "status": "READY_FOR_RETRY_AFTER_EXECUTOR_PRECHECK_FIX",
+    "why_it_matters": "The first resource-only run failed before any resource write because the restore preflight incorrectly required the historical Executor 1.201 -> Sequence 901 assignment even though resources-only mode never touches Executor/Sequence. The live Test Show currently uses Executor 2.002 -> Sequence 2. Resource-only preflight is now decoupled from that stale executor binding while retaining Group/Fixture/Fixture9999/Sequence901/Test-Show identity checks.",
     "blocks_current_milestone": true,
     "dependencies": [
       "scripts/build_real_ma2_test_show_sheesh.py --resources-only",
+      "tests/test_sheesh_resource_restore_script.py",
       "zen_ma2_agent/test_show_resources.py",
       "zen_ma2_agent/test_show_evidence.py",
-      "zen_ma2_agent/artistic_resources.py",
-      "tests/test_test_show_resources.py",
-      "tests/test_artistic_resources.py",
-      "tests/test_effect_resources.py",
-      "bounded direct List Preset 4.101-4.113 inventory augmentation in scripts/run_sheesh_programming_test.py"
+      "zen_ma2_agent/artistic_resources.py"
     ],
-    "next_review_condition": "Run full offline regression at current HEAD. If clean, run the explicitly-authorized Test Show resource-only builder once. Require 13/13 exact Color label readback and exact Effect label + native TEMPLATE-kind readback. If TEMPLATE kind is not provable, stop after the first Effect and do not run Lighting Designer. Then run a fresh read-only resource-map scan using the bounded direct 4.101-4.113 lookups; require nonzero recovered Color bindings before any artistic programming write."
+    "next_review_condition": "Run offline regression at current HEAD, then retry only the bounded resource restore using a new result filename so the failed precheck evidence is preserved. Require 13/13 Color exact-label readback. Require each reusable Effect to read back with exact label and native TEMPLATE kind; stop before additional Effects on the first mismatch. Resource-only mode must not modify Executor 2.002, Sequence 2, Sequence 901 contents, geometry, Patch/Address, or Fixture 9999."
   },
   "human_review_decisions": [
     {
@@ -389,7 +386,9 @@
       "semantic_expansion": false,
       "selective_effect_same_label_reusable_across_groups": false,
       "test_show_resource_restore": "BOUNDED_RESOURCES_ONLY: COLOR_PRESETS_4.101_4.113 + THREE_NATIVE_TEMPLATE_DIMMER_CHASE_EFFECTS; NO_GEOMETRY_OR_SEQUENCE_WRITE",
-      "color_inventory_discovery": "LIST_PRESET_ALL_MAY_OMIT_TEST_COLORS; ONLY_BOUNDED_DIRECT_4.101_4.113_EXACT_LABEL_READBACK_MAY_AUGMENT_PROFILE"
+      "color_inventory_discovery": "LIST_PRESET_ALL_MAY_OMIT_TEST_COLORS; ONLY_BOUNDED_DIRECT_4.101_4.113_EXACT_LABEL_READBACK_MAY_AUGMENT_PROFILE",
+      "resource_only_executor_policy": "EXECUTOR_ASSIGNMENT_NOT_REQUIRED_AND_NOT_MODIFIED; current live Executor 2.002 -> Sequence 2 may remain untouched",
+      "preflight_failure_cleanup": "NO_CLEARALL_IF_NO_WRITE_STARTED"
     }
   }
 }
