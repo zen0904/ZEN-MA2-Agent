@@ -145,6 +145,46 @@ class ArtisticResourceMapTests(unittest.TestCase):
         self.assertEqual(group2["dimensions"]["COLOR"]["technical_capability"]["status"], "UNKNOWN")
         self.assertEqual(group2["dimensions"]["POSITION"]["technical_capability"]["status"], "UNKNOWN")
 
+
+    def test_strict_semantic_template_effect_can_recover_without_catalog(self):
+        profile = {
+            **self.profile,
+            "effects": [
+                {"effect_id": 88, "name": "FX_DIM_CHASE_FAST"},
+                {"effect_id": 89, "name": "Almost Fast Chase"},
+            ],
+        }
+        result = build_artistic_resource_map(
+            profile,
+            preset_bindings=self.preset_bindings,
+            effect_catalog_entries=[],
+            effect_application_capability=self.effect_application,
+        )
+        group1 = result["groups"][0]
+        ids = {item["effect_id"] for item in group1["effect_resources"]}
+        self.assertIn(88, ids)
+        self.assertNotIn(89, ids)
+        self.assertIn(88, effect_applicability_from_map(result)[1])
+        self.assertEqual(result["effect_inventory_summary"]["unverified_effects_exposed_to_designer"], 0)
+
+    def test_strict_template_effect_needs_dimmer_capability_and_verified_application(self):
+        no_capability = {
+            **self.profile,
+            "effects": [{"effect_id": 88, "name": "FX_DIM_CHASE_FAST"}],
+            "fixture_type_profiles": [],
+        }
+        result = build_artistic_resource_map(
+            no_capability,
+            effect_application_capability=self.effect_application,
+        )
+        self.assertEqual(effect_applicability_from_map(result)[1], set())
+
+        result = build_artistic_resource_map(
+            {**self.profile, "effects": [{"effect_id": 88, "name": "FX_DIM_CHASE_FAST"}]},
+            effect_application_capability=None,
+        )
+        self.assertEqual(effect_applicability_from_map(result)[1], set())
+
     def test_unbound_presets_are_context_only_not_group_resources(self):
         result = self.build()
         refs = {item["reference"] for item in result["unbound_presets"]}
