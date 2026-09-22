@@ -31,6 +31,12 @@ ARTISTIC_DIMENSIONS = (
 )
 
 _PRESET_DIMENSIONS = {"COLOR", "POSITION", "FOCUS", "BEAM", "GOBO"}
+_STRICT_EFFECT_TEMPLATES = {
+    "FX_DIM_CHASE_SLOW": ("DIMMER_CHASE", "SLOW"),
+    "FX_DIM_CHASE_MED": ("DIMMER_CHASE", "MED"),
+    "FX_DIM_CHASE_FAST": ("DIMMER_CHASE", "FAST"),
+}
+
 _CAPABILITY_KEYS = {
     "DIMMER": "DIMMER",
     "COLOR": "COLOR",
@@ -237,6 +243,30 @@ def _verified_effect_bindings(
     return result
 
 
+def _strict_template_effect_inventory(profile: Mapping[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for effect_id, item in sorted(_effect_inventory(profile).items()):
+        label = str(item.get("name") or "").strip().upper()
+        template = _STRICT_EFFECT_TEMPLATES.get(label)
+        if template is None:
+            continue
+        kind, speed_class = template
+        rows.append({
+            "effect_id": effect_id,
+            "name": item.get("name"),
+            "semantic_label": label,
+            "kind": kind,
+            "speed_class": speed_class,
+            "verification": {
+                "object": "FRESH_LIST_VERIFIED",
+                "label": "STRICT_SEMANTIC_TEMPLATE",
+                "parameters": "UNAVAILABLE",
+            },
+            "source": "EFFECT_RESOURCE_RESOLVER_STRICT_TEMPLATE",
+        })
+    return rows
+
+
 def build_artistic_resource_map(
     profile: Mapping[str, Any],
     *,
@@ -263,6 +293,12 @@ def build_artistic_resource_map(
         catalog_entries=effect_catalog_entries,
         effect_application_capability=effect_application_capability,
     )
+    application_verified = bool(
+        isinstance(effect_application_capability, Mapping)
+        and effect_application_capability.get("status") == "REAL_MACHINE_VERIFIED"
+        and effect_application_capability.get("grammar") == "EFFECT_POOL_CALL"
+    )
+    strict_template_effects = _strict_template_effect_inventory(profile)
 
     groups_out: list[dict[str, Any]] = []
     groups = profile.get("groups")
@@ -300,7 +336,19 @@ def build_artistic_resource_map(
         presets = bound_presets.get(group_id, [])
         for preset in presets:
             dimensions[preset["dimension"]]["execution_status"] = "VERIFIED_PRESET_RESOURCE"
-        effects = bound_effects.get(group_id, [])
+        effects = list(bound_effects.get(group_id, []))
+        dimmer_verified = dimensions["DIMMER"]["technical_capability"].get("status") == "SHOW_BOUND_VERIFIED"
+        if application_verified and dimmer_verified:
+            existing_ids = {item.get("effect_id") for item in effects}
+            for template in strict_template_effects:
+                if template["effect_id"] in existing_ids:
+                    continue
+                effects.append({
+                    **deepcopy(template),
+                    "application_status": "REAL_MACHINE_VERIFIED",
+                    "group_binding": "GROUP_SELECTED_BEFORE_EFFECT_CALL",
+                })
+        effects.sort(key=lambda item: int(item.get("effect_id") or 0))
         if any(item.get("application_status") == "REAL_MACHINE_VERIFIED" for item in effects):
             dimensions["EFFECT"]["execution_status"] = "VERIFIED_EFFECT_RESOURCE"
         elif effects:
@@ -345,6 +393,7 @@ def build_artistic_resource_map(
         "unbound_presets": unbound_presets,
         "effect_inventory_summary": {
             "current_show_total": len(_effect_inventory(profile)),
+            "strict_semantic_template_count": len(strict_template_effects),
             "verified_group_bound": sum(len(group["effect_resources"]) for group in groups_out),
             "executable_effect_ids": sorted(executable_effect_ids),
             "unverified_effects_exposed_to_designer": 0,
