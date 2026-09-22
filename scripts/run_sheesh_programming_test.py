@@ -35,6 +35,14 @@ TARGET_EXECUTOR_ADDRESS = "2.1"
 PLAN_RANGE = [301, 400]
 
 
+class ProgrammingRunError(RuntimeError):
+    """Bounded failure carrying secret-safe run evidence."""
+
+    def __init__(self, message: str, *, result: dict) -> None:
+        super().__init__(message)
+        self.result = result
+
+
 def _await_ready(core: AgentCore) -> None:
     deadline = time.monotonic() + 10
     while core.runtime.state is ConnectionState.AUTHENTICATING and time.monotonic() < deadline:
@@ -76,6 +84,23 @@ def _router() -> ProviderRouter:
     return router
 
 
+def _typed_action_contract(groups: list[dict], presets: list[dict]) -> dict:
+    return {
+        "SET_DIMMER": {
+            "operation": "SET_DIMMER",
+            "target": {"type": "group", "ref": "<integer Group ID>"},
+            "level": "<integer 0..100>",
+        },
+        "CALL_PRESET": {
+            "operation": "CALL_PRESET",
+            "target": {"type": "group", "ref": "<integer Group ID>"},
+            "preset_ref": "<exact verified preset reference>",
+        },
+        "verified_group_ids": [item.get("group_id") for item in groups],
+        "verified_preset_references": [item.get("reference") for item in presets],
+    }
+
+
 def _prompt(profile: dict, lighting_artifact: dict) -> tuple[str, str]:
     groups = [{"group_id": item.get("group_id"), "name": item.get("name")} for item in profile.get("groups", [])]
     presets = [
@@ -83,14 +108,18 @@ def _prompt(profile: dict, lighting_artifact: dict) -> tuple[str, str]:
         for item in profile.get("presets", [])
         if item.get("reference")
     ]
+    contract = _typed_action_contract(groups, presets)
     system = (
         "You are the ZEN LIGHTING_DESIGNER for a bounded disposable grandMA2 test. "
         "Return exactly one compact JSON object with schema zen.show_plan.v0.1. "
         "The object must contain song, target_executor=2.001, active_sequence_range=[301,400], "
         "and exactly six cues numbered 1 through 6. Each cue requires id, cue_number, "
-        "ASCII label, non-negative fade, and typed actions only. Allowed operations are "
-        "CALL_PRESET with an exact supplied preset reference and SET_DIMMER with an "
-        "integer level 0..100. Every action target must be an exact supplied Group ID. "
+        "ASCII label, non-negative fade, and typed actions only. Every action MUST "
+        "match exactly one of these JSON shapes: "
+        + json.dumps(contract, ensure_ascii=True, separators=(",", ":")) + ". "
+        "Allowed operations are only CALL_PRESET and SET_DIMMER. Every action target "
+        "must be an exact supplied Group ID and every preset_ref an exact supplied "
+        "preset reference. "
         "Do not emit effects, MA2 commands, Lua, Telnet, raw text, Markdown, or comments. "
         "The six cue arc is INTRO, BUILD, VERSE, PRE-DROP, SHEESH_IMPACT, AFTER_IMPACT. "
         "This is typed intent, not execution; make all artistic decisions yourself."
@@ -109,7 +138,7 @@ def _prompt(profile: dict, lighting_artifact: dict) -> tuple[str, str]:
     return system, user
 
 
-def _parse_plan(content: str) -> dict:
+def _parse_plan(content: str, *, verified_group_ids: set[int], verified_preset_refs: set[str]) -> dict:
     try:
         parsed = json.loads(content)
     except json.JSONDecodeError as exc:
@@ -127,10 +156,60 @@ def _parse_plan(content: str) -> dict:
         raise RuntimeError("AI_OUTPUT_REQUIRES_EXACTLY_SIX_ORDERED_CUES")
     for cue in cues:
         for action in cue.get("actions", []):
-            if action.get("operation") not in {"CALL_PRESET", "SET_DIMMER"}:
+            if not isinstance(action, dict):
+                raise RuntimeError("AI_OUTPUT_SCHEMA_INVALID: typed action must be an object")
+            operation = action.get("operation")
+            target = action.get("target")
+            if operation not in {"CALL_PRESET", "SET_DIMMER"}:
                 raise RuntimeError("AI_OUTPUT_UNSUPPORTED_OPERATION")
+            if not isinstance(target, dict) or target.get("type") != "group" or not isinstance(target.get("ref"), int):
+                raise RuntimeError("AI_OUTPUT_SCHEMA_INVALID: typed action target must be a group object with integer ref")
+            if target["ref"] not in verified_group_ids:
+                raise RuntimeError("AI_OUTPUT_SCHEMA_INVALID: typed action target Group ID is not verified")
+            if operation == "SET_DIMMER":
+                if not isinstance(action.get("level"), int) or not 0 <= action["level"] <= 100:
+                    raise RuntimeError("AI_OUTPUT_SCHEMA_INVALID: SET_DIMMER level must be integer 0..100")
+                if set(action) != {"operation", "target", "level"}:
+                    raise RuntimeError("AI_OUTPUT_SCHEMA_INVALID: SET_DIMMER shape is not exact")
+            else:
+                if not isinstance(action.get("preset_ref"), str) or action["preset_ref"] not in verified_preset_refs:
+                    raise RuntimeError("AI_OUTPUT_SCHEMA_INVALID: CALL_PRESET preset_ref is not verified")
+                if set(action) != {"operation", "target", "preset_ref"}:
+                    raise RuntimeError("AI_OUTPUT_SCHEMA_INVALID: CALL_PRESET shape is not exact")
     validate_ma_payload(cues, path="show_plan.cues")
     return plan
+
+
+def _safe_provider_response(provider, content: str | None) -> dict[str, object]:
+    """Persist bounded provider output without ever persisting a credential."""
+    if not isinstance(content, str):
+        return {"present": False, "secret_check": "NOT_RUN", "response_characters": 0, "raw_response": None}
+    secret = bool(provider.api_key and provider.api_key in content)
+    return {
+        "present": True,
+        "secret_check": "FAIL" if secret else "PASS",
+        "response_characters": len(content),
+        "raw_response": None if secret else content[:200000],
+    }
+
+
+def _schema_repair_prompt(*, rejected_content: str, error: str, groups: list[dict], presets: list[dict]) -> tuple[str, str]:
+    contract = _typed_action_contract(groups, presets)
+    system = (
+        "You are repairing one rejected ZEN show plan. Return exactly one complete "
+        "zen.show_plan.v0.1 JSON object. Preserve the six-cue artistic intent and "
+        "repair only typed action structure. Every action must match exactly one of "
+        + json.dumps(contract, ensure_ascii=True, separators=(",", ":"))
+        + ". Do not emit unsupported operations, MA2 commands, Lua, Markdown, or prose."
+    )
+    user = json.dumps({
+        "validator_error": error,
+        "rejected_complete_plan": rejected_content,
+        "supported_typed_action_contract": contract,
+        "verified_groups": groups,
+        "verified_presets": presets,
+    }, ensure_ascii=True, separators=(",", ":"))
+    return system, user
 
 
 def run(real_machine: bool) -> dict:
@@ -149,6 +228,8 @@ def run(real_machine: bool) -> dict:
         "fixture_9999_touched": False,
         "ma2_writes": 0,
     }
+    provider_content: str | None = None
+    provider = None
     try:
         ma2 = core.runtime.preferences["ma2"]
         core.connect(ma2["host"], ma2["port"], ma2["username"], "")
@@ -173,11 +254,43 @@ def run(real_machine: bool) -> dict:
         content, provider, attempts = router.complete_with_diagnostics(
             role="LIGHTING_DESIGNER", system=system, user=user
         )
+        provider_content = content
         result["provider_attempts"] = list(attempts)
         result["provider"] = provider.safe_identity()
+        result["provider_response"] = _safe_provider_response(provider, content)
         if provider.cost_class == "PAID":
             raise RuntimeError("PAID_PROVIDER_USED_UNEXPECTEDLY")
-        plan = _parse_plan(content)
+        groups = context.get("groups", [])
+        presets = [item for item in context.get("presets", []) if item.get("reference")]
+        verified_group_ids = {int(item["group_id"]) for item in groups if isinstance(item.get("group_id"), int)}
+        verified_preset_refs = {str(item["reference"]) for item in presets}
+        try:
+            plan = _parse_plan(
+                content,
+                verified_group_ids=verified_group_ids,
+                verified_preset_refs=verified_preset_refs,
+            )
+        except RuntimeError as first_error:
+            if "invalid typed action" not in str(first_error).casefold() and "AI_OUTPUT_UNSUPPORTED_OPERATION" not in str(first_error):
+                raise
+            repair_system, repair_user = _schema_repair_prompt(
+                rejected_content=content,
+                error=str(first_error),
+                groups=groups,
+                presets=presets,
+            )
+            repaired = router.adapter.complete(provider, system=repair_system, user=repair_user)
+            provider_content = repaired
+            result["schema_repair"] = {
+                "attempted": True,
+                "provider": provider.safe_identity(),
+                "response": _safe_provider_response(provider, repaired),
+            }
+            plan = _parse_plan(
+                repaired,
+                verified_group_ids=verified_group_ids,
+                verified_preset_refs=verified_preset_refs,
+            )
         result["ai_plan"] = plan
         workflow = core.skills.plan_intent(
             Intent("build_first_song", {"first_song_spec": {"show_plan": plan, "profile": context}}, "ZEN_SHOW_PLAN"),
@@ -200,6 +313,12 @@ def run(real_machine: bool) -> dict:
         result["sequence_after"] = core.runtime.read_state("List Sequence")
         result["fixture_9999_touched"] = False
         return result
+    except Exception as exc:
+        result["status"] = "FAILED_PROVIDER_OUTPUT" if str(exc).startswith("AI_OUTPUT_") else "FAILED"
+        result["error"] = f"{type(exc).__name__}: {exc}"
+        if provider is not None and provider_content is not None and "provider_response" not in result:
+            result["provider_response"] = _safe_provider_response(provider, provider_content)
+        raise ProgrammingRunError(str(exc), result=result) from exc
     finally:
         try:
             if core.runtime.ready:
@@ -220,6 +339,12 @@ def main() -> int:
             args.result.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(json.dumps({"status": output.get("status"), "provider": output.get("provider", {}).get("model"), "target_executor": TARGET_EXECUTOR_DISPLAY}, ensure_ascii=True))
         return 0
+    except ProgrammingRunError as exc:
+        if args.result:
+            args.result.parent.mkdir(parents=True, exist_ok=True)
+            args.result.write_text(json.dumps(exc.result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps({"status": exc.result.get("status", "FAILED"), "error": exc.result.get("error"), "ma2_writes": 0, "fixture_9999_touched": False}, ensure_ascii=True))
+        return 1
     except Exception as exc:
         print(json.dumps({"status": "FAILED", "error": f"{type(exc).__name__}: {exc}", "ma2_writes": 0, "fixture_9999_touched": False}, ensure_ascii=True))
         return 1
