@@ -1,4 +1,4 @@
-"""Run the bounded AI-authored SHEESH programming test on Executor 2.001.
+"""Run the bounded AI-authored SHEESH programming test on Executor 2.002.
 
 The provider supplies artistic cue intent only. ZEN compiles that loose intent
 into the strict internal zen.show_plan.v0.1 document before the existing First
@@ -24,6 +24,7 @@ from zen_ma2_agent.designer.artistic_plan import (
     ArtisticPlanCompileError,
     compile_artistic_cue_plan,
 )
+from zen_ma2_agent import protected_objects
 from zen_ma2_agent.llm.router import ProviderRouter
 from zen_ma2_agent.ma_text import validate_ma_payload
 from zen_ma2_agent.models import Intent
@@ -33,8 +34,7 @@ from zen_ma2_agent.telnet_client import ConnectionState
 
 RUN_ID = "SHEESH_NEW_UNDESIGNED_SHOW_001"
 USB_HOME = Path(r"E:\ZEN_MA2_AGENT")
-TARGET_EXECUTOR_DISPLAY = "2.001"
-PLAN_RANGE = [301, 400]
+TARGET_EXECUTOR_DISPLAY = "2.002"
 SONG = "SHEESH"
 
 
@@ -179,6 +179,7 @@ def _compile_provider_plan(
     *,
     groups: list[dict],
     presets: list[dict],
+    active_sequence_range: list[int],
 ) -> tuple[dict, dict[str, object], dict]:
     provider_plan = _parse_provider_json(content)
     verified_group_ids = {
@@ -195,12 +196,30 @@ def _compile_provider_plan(
         provider_plan,
         song=SONG,
         target_executor=TARGET_EXECUTOR_DISPLAY,
-        active_sequence_range=PLAN_RANGE,
+        active_sequence_range=active_sequence_range,
         verified_group_ids=verified_group_ids,
         verified_preset_refs=verified_preset_refs,
     )
     validate_ma_payload(plan["cues"], path="show_plan.cues")
     return plan, audit, provider_plan
+
+
+def _lowest_safe_sequence_id(profile: dict) -> int:
+    """Choose the lowest currently unused, non-protected Sequence number."""
+    used = {
+        int(item["number"])
+        for item in profile.get("sequences", [])
+        if isinstance(item, dict) and isinstance(item.get("number"), int)
+    }
+    for number in range(1, 10000):
+        if number in used:
+            continue
+        try:
+            protected_objects.assert_sequence_allowed(number)
+        except protected_objects.ProtectedObjectError:
+            continue
+        return number
+    raise RuntimeError("NO_SAFE_UNUSED_SEQUENCE_AVAILABLE")
 
 
 def _repair_prompt(
@@ -260,8 +279,8 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None) -> dict:
         if not re.search(r"(?:Page\s+)?2\b", pages, re.I):
             raise RuntimeError("TARGET_PAGE_2_NOT_PRESENT")
         executor_before = core.runtime.read_state("List Executor")
-        if re.search(r"(?:Executor|Exec)\s+2\.0*1\b", executor_before, re.I):
-            raise RuntimeError("TARGET_EXECUTOR_2_001_OCCUPIED")
+        if re.search(r"(?:Executor|Exec)\s+2\.0*2\b", executor_before, re.I):
+            raise RuntimeError("TARGET_EXECUTOR_2_002_OCCUPIED")
 
         for resource, kwargs in (
             ("groups", {}),
@@ -278,6 +297,10 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None) -> dict:
         }
         groups = context.get("groups", [])
         presets = [item for item in context.get("presets", []) if item.get("reference")]
+        selected_sequence = _lowest_safe_sequence_id(context)
+        active_sequence_range = [selected_sequence, selected_sequence]
+        result["selected_sequence_id"] = selected_sequence
+        result["active_sequence_range"] = active_sequence_range
 
         if saved_result_path is not None:
             if not saved_result_path.is_file():
@@ -312,6 +335,7 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None) -> dict:
                 content,
                 groups=groups,
                 presets=presets,
+                active_sequence_range=active_sequence_range,
             )
         except ArtisticPlanCompileError as first_error:
             # One bounded free repair is allowed only for a true artistic-plan
@@ -344,6 +368,7 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None) -> dict:
                 repaired,
                 groups=groups,
                 presets=presets,
+                active_sequence_range=active_sequence_range,
             )
 
         result["provider_artistic_plan"] = provider_plan
