@@ -193,21 +193,6 @@ a Sequence-scoped label such as `ZEN_AI_TEST_SHEESH_SEQ3` for the newly
 allocated Sequence. If that scoped label also already exists, the Builder still
 fails closed. Existing Sequences are never renamed or overwritten.
 
-### Owned RGB palette applicability
-
-A committed Color preset being typed `COLOR` is still not enough to expose it
-to every Group. The Test Show has a stronger bounded proof for the owned
-4.101-4.113 palette: a Group may receive the full owned RGB palette only when
-its exact current member set matches the Test Show Group and every current
-FixtureType used by that Group has Show-bound verified
-`COLORRGB1 + COLORRGB2 + COLORRGB3` channel evidence.
-
-This is intentionally stricter than generic `COLOR` capability. A color-wheel
-fixture may have `COLOR=SHOW_BOUND_VERIFIED` while remaining ineligible for
-the RGB palette. Historical observed Group/Preset pairs remain valid evidence;
-the RGB-channel path only expands applicability where the exact technical
-channel family is proven.
-
 ## Smoke test versus product design
 
 `scripts/run_sheesh_programming_test.py` is a six-cue bounded smoke test only.

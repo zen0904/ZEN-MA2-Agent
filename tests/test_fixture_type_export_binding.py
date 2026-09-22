@@ -104,20 +104,6 @@ class FixtureTypeExportBindingTests(unittest.TestCase):
         self.assertTrue(diagnostic["validation_comparisons"]["label_using_requested_id_matches_list_label"])
         self.assertIsNotNone(diagnostic["observed"]["technical_definition_sha256"])
 
-    def test_rgb_color_capability_requires_all_three_rgb_attributes(self):
-        full_rgb = fixture_type_capability_inventory([
-            {"attribute": "COLORRGB1", "feature": "COLORRGB", "preset": "COLOR", "functions": []},
-            {"attribute": "COLORRGB2", "feature": "COLORRGB", "preset": "COLOR", "functions": []},
-            {"attribute": "COLORRGB3", "feature": "COLORRGB", "preset": "COLOR", "functions": []},
-        ])
-        self.assertEqual(full_rgb["RGB_COLOR"]["status"], "SHOW_BOUND_VERIFIED")
-
-        partial_rgb = fixture_type_capability_inventory([
-            {"attribute": "COLORRGB1", "feature": "COLORRGB", "preset": "COLOR", "functions": []},
-        ])
-        self.assertEqual(partial_rgb["COLOR"]["status"], "SHOW_BOUND_VERIFIED")
-        self.assertEqual(partial_rgb["RGB_COLOR"]["status"], "NOT_PRESENT_IN_EXPORTED_PROFILE")
-
     def test_capability_inventory_uses_channel_function_attribute_evidence(self):
         capabilities = fixture_type_capability_inventory([{
             "attribute": "EFFECTWHEEL", "feature": "EFFECT", "preset": "BEAM",

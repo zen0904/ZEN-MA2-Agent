@@ -7,7 +7,6 @@ from zen_ma2_agent.test_show_evidence import (
     bounded_test_show_color_rows,
     derive_sheesh_test_dimmer_bindings,
     derive_sheesh_test_preset_bindings,
-    derive_sheesh_test_rgb_palette_bindings,
     test_show_palette_manifest,
 )
 
@@ -101,106 +100,6 @@ class TestShowEvidenceTests(unittest.TestCase):
             },
         )
         self.assertEqual(rows, [])
-
-    def test_rgb_palette_bindings_expand_only_for_exact_show_bound_rgb_groups(self):
-        palette = [
-            {"preset": number, "label": f"ZEN_COLOR_{number}", "rgb": [1, 2, 3]}
-            for number in range(101, 114)
-        ]
-        profile = {
-            "groups": [
-                {
-                    "group_id": group_id,
-                    "name": f"G{group_id}",
-                    "fixture_ids_in_selection_order": list(members),
-                }
-                for group_id, members in SHEESH_TEST_GROUP_FIXTURES.items()
-            ],
-            "fixtures": [
-                {
-                    "fixture_id": fixture_id,
-                    "fixture_type": "2 RGB TYPE" if group_id == 6 else "3 OTHER TYPE",
-                }
-                for group_id, members in SHEESH_TEST_GROUP_FIXTURES.items()
-                for fixture_id in members
-            ],
-            "presets": [
-                {
-                    "reference": f"4.{number}",
-                    "preset_type": "COLOR",
-                    "name": f"ZEN_COLOR_{number}",
-                }
-                for number in range(101, 114)
-            ],
-            "sequences": [
-                {"number": SHEESH_TEST_SEQUENCE, "name": SHEESH_TEST_SEQUENCE_LABEL},
-            ],
-            "fixture_type_profiles": [
-                {
-                    "status": "SHOW_BOUND_VERIFIED",
-                    "fixture_type": {"list_label": "2 RGB TYPE"},
-                    "capabilities": {"RGB_COLOR": {"status": "SHOW_BOUND_VERIFIED"}},
-                },
-                {
-                    "status": "SHOW_BOUND_VERIFIED",
-                    "fixture_type": {"list_label": "3 OTHER TYPE"},
-                    "capabilities": {"RGB_COLOR": {"status": "NOT_PRESENT_IN_EXPORTED_PROFILE"}},
-                },
-            ],
-        }
-        plan = {
-            "schema": "zen.show_plan.v0.1",
-            "sequence": SHEESH_TEST_SEQUENCE,
-            "sequence_label": SHEESH_TEST_SEQUENCE_LABEL,
-            "test_palette": palette,
-            "cues": [],
-        }
-        result = derive_sheesh_test_rgb_palette_bindings(profile, plan)
-        self.assertEqual(result["status"], "PARTIAL")
-        self.assertEqual(result["verified_groups"], [6])
-        self.assertEqual(len(result["bindings"]), 13)
-        self.assertTrue(all(row["group_id"] == 6 for row in result["bindings"]))
-        self.assertIn("4.110", {row["reference"] for row in result["bindings"]})
-
-    def test_rgb_palette_binding_rejects_generic_color_without_rgb_channels(self):
-        palette = [
-            {"preset": number, "label": f"ZEN_COLOR_{number}", "rgb": [1, 2, 3]}
-            for number in range(101, 114)
-        ]
-        profile = {
-            "groups": [{
-                "group_id": 6,
-                "name": "G6",
-                "fixture_ids_in_selection_order": list(SHEESH_TEST_GROUP_FIXTURES[6]),
-            }],
-            "fixtures": [
-                {"fixture_id": fixture_id, "fixture_type": "2 COLORWHEEL TYPE"}
-                for fixture_id in SHEESH_TEST_GROUP_FIXTURES[6]
-            ],
-            "presets": [
-                {"reference": f"4.{number}", "preset_type": "COLOR", "name": f"ZEN_COLOR_{number}"}
-                for number in range(101, 114)
-            ],
-            "sequences": [{"number": SHEESH_TEST_SEQUENCE, "name": SHEESH_TEST_SEQUENCE_LABEL}],
-            "fixture_type_profiles": [{
-                "status": "SHOW_BOUND_VERIFIED",
-                "fixture_type": {"list_label": "2 COLORWHEEL TYPE"},
-                "capabilities": {
-                    "COLOR": {"status": "SHOW_BOUND_VERIFIED"},
-                    "RGB_COLOR": {"status": "NOT_PRESENT_IN_EXPORTED_PROFILE"},
-                },
-            }],
-        }
-        plan = {
-            "schema": "zen.show_plan.v0.1",
-            "sequence": SHEESH_TEST_SEQUENCE,
-            "sequence_label": SHEESH_TEST_SEQUENCE_LABEL,
-            "test_palette": palette,
-            "cues": [],
-        }
-        result = derive_sheesh_test_rgb_palette_bindings(profile, plan)
-        self.assertEqual(result["bindings"], [])
-        self.assertEqual(result["verified_groups"], [])
 
     def test_dimmer_bindings_require_exact_current_group_membership_and_observed_set_dimmer(self):
         profile = {

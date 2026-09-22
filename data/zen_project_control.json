@@ -15,19 +15,15 @@
   "next_acceptance_gate": {
     "id": "FULL_ARTISTIC_PATH_001",
     "classification": "REQUIRED",
-    "status": "READY_FOR_RGB_APPLICABILITY_RECHECK_AND_SAVED_RETRY",
-    "why_it_matters": "The saved Lighting Designer plan failed only because Group 6 / Preset 4.110 lacked explicit applicability evidence. Historical use never happened to exercise that exact pair, so observed-pair evidence alone was incomplete. ZEN now has a bounded non-artistic proof: the owned 4.101-4.113 RGB palette may expand to a current Group only when its exact member set matches and every current FixtureType in that Group has SHOW_BOUND_VERIFIED COLORRGB1/2/3 channels. Generic COLOR or Group names are insufficient.",
+    "status": "READY_TO_EXECUTE_VALID_SAVED_ARTISTIC_PLAN",
+    "why_it_matters": "The full resource map is now verified: seven Group Dimmer bindings, 30 Color applicability pairs, and Effects 2500/2501/2502 exposed as native TEMPLATE resources. The first Lighting Designer call returned a valid six-cue plan with Dimmer, Color and Effect actions. MA2 build was blocked only because an earlier Sequence already used the base Agent-owned song label. The Builder now derives a unique Sequence-scoped operational label without changing artistic content or consuming another provider call.",
     "blocks_current_milestone": true,
     "dependencies": [
-      "zen_ma2_agent/state/providers/fixture_type_export.py::RGB_COLOR",
-      "zen_ma2_agent/test_show_evidence.py::derive_sheesh_test_rgb_palette_bindings",
-      "scripts/run_sheesh_programming_test.py",
-      "tests/test_fixture_type_export_binding.py",
-      "tests/test_test_show_evidence.py",
-      "tests/test_lean_design_mode.py",
+      "zen_ma2_agent/builder/draft.py::_sequence_label_for_build",
+      "tests/test_first_song_builder.py",
       "data/sheesh_full_artistic_smoke_001.json"
     ],
-    "next_review_condition": "Run regression and a read-only current FixtureType refresh. If Group 6 is proven RGB_COLOR and 4.110 becomes Group-6 applicable, immediately retry the saved valid provider result with zero provider calls on free Sequence 3 / Executor 2.003. If Group 6 is not RGB_COLOR, stop with that exact technical evidence and do not substitute another Color or recall the provider implicitly."
+    "next_review_condition": "Run regression. Reconfirm Executor 2.003 and Sequence 3 are still unused, then rerun the smoke from the saved valid provider response with zero new provider calls. Require a new Sequence 3 with a unique Agent-owned label, assignment only to free Executor 2.003, METADATA_PASS_CUE_CONTENT_PARTIAL readback, and no change to Sequence 2, Sequence 901, Executor 2.002, geometry or Fixture 9999."
   },
   "human_review_decisions": [
     {
@@ -394,8 +390,7 @@
       "effect_template_kind_evidence": "EXPLICIT_EFFECT_LINE_QTY_ONLY: QTY_NONE=TEMPLATE; POSITIVE_NUMERIC_QTY=SELECTIVE; ABSENT_ZERO_MIXED=UNKNOWN",
       "generic_list_effect_kind_authority": false,
       "effect_template_qty_table_format": "grandMA2_3.9: QTY header + Effectline <n> <QTY_VALUE> data column",
-      "test_show_dimmer": "BUILD_001_OBSERVED_SET_DIMMER + CURRENT_SEQUENCE_901_IDENTITY + EXACT_CURRENT_GROUP_MEMBER_SET; selection order may differ and is context, not capability identity",
-      "rgb_palette_applicability": "EXACT_OWNED_4.101_4.113_LABELS + CURRENT_TEST_GROUP_MEMBER_SET + ALL_GROUP_FIXTURE_TYPES_SHOW_BOUND_COLORRGB1_2_3; GENERIC_COLOR_NOT_ENOUGH"
+      "test_show_dimmer": "BUILD_001_OBSERVED_SET_DIMMER + CURRENT_SEQUENCE_901_IDENTITY + EXACT_CURRENT_GROUP_MEMBER_SET; selection order may differ and is context, not capability identity"
     },
     "repeated_song_label_policy": "BASE_LABEL_FIRST; ON_COLLISION_USE_SEQUENCE_SCOPED_AGENT_LABEL; DO_NOT_RECALL_PROVIDER; FAIL_CLOSED_IF_SCOPED_LABEL_ALSO_EXISTS"
   }

@@ -40,7 +40,6 @@ from zen_ma2_agent.test_show_evidence import (
     bounded_test_show_color_rows,
     derive_sheesh_test_dimmer_bindings,
     derive_sheesh_test_preset_bindings,
-    derive_sheesh_test_rgb_palette_bindings,
     test_show_palette_manifest,
 )
 from zen_ma2_agent.effect_resources import show_identity
@@ -445,14 +444,9 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
             profile,
             test_show_plan,
         )
-        rgb_palette_bindings = derive_sheesh_test_rgb_palette_bindings(
-            profile,
-            test_show_plan,
-        )
         preset_bindings = [
             *_load_preset_bindings(),
             *historical_bindings.get("bindings", []),
-            *rgb_palette_bindings.get("bindings", []),
         ]
         resource_map = build_artistic_resource_map(
             profile,
@@ -462,7 +456,6 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
             effect_application_capability=effect_application_capability,
         )
         result["test_show_preset_binding_recovery"] = historical_bindings
-        result["test_show_rgb_palette_binding_recovery"] = rgb_palette_bindings
         result["test_show_dimmer_binding_recovery"] = historical_dimmer_bindings
         result["artistic_resource_map"] = resource_map
         compact_cache = USB_HOME / "projects" / "runs" / RUN_ID / "programming" / "lean_design_context.json"

@@ -162,7 +162,6 @@ def _verified_preset_bindings(
     current_identity = _show_identity(profile)
     inventory = _preset_inventory(profile)
     result: dict[int, list[dict[str, Any]]] = {}
-    seen: set[tuple[int, str]] = set()
     for binding in bindings:
         if not isinstance(binding, Mapping) or binding.get("status") not in {"VERIFIED", "SHOW_BOUND_VERIFIED"}:
             continue
@@ -181,10 +180,6 @@ def _verified_preset_bindings(
             continue
         if current_type not in _PRESET_DIMENSIONS:
             continue
-        key = (group_id, reference)
-        if key in seen:
-            continue
-        seen.add(key)
         result.setdefault(group_id, []).append({
             "dimension": current_type,
             "reference": reference,

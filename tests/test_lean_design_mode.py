@@ -237,8 +237,6 @@ class LeanDesignModeTests(unittest.TestCase):
         self.assertIn("_augment_bounded_template_effect_inventory", source)
         self.assertIn("parse_template_detail", source)
         self.assertIn("derive_sheesh_test_dimmer_bindings", source)
-        self.assertIn("derive_sheesh_test_rgb_palette_bindings", source)
-        self.assertIn("*rgb_palette_bindings.get(\"bindings\", [])", source)
         self.assertIn("dimmer_bindings=historical_dimmer_bindings", source)
         self.assertIn("if saved_result_path is not None:", source)
         self.assertIn("Never\n            # spend another provider call", source)
