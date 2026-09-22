@@ -36,6 +36,7 @@ from zen_ma2_agent.llm.router import ProviderRouter
 from zen_ma2_agent.ma_text import validate_ma_payload
 from zen_ma2_agent.models import Intent
 from zen_ma2_agent.runtime import AgentRuntime
+from zen_ma2_agent.test_show_evidence import derive_sheesh_test_preset_bindings
 from zen_ma2_agent.telnet_client import ConnectionState
 
 
@@ -95,6 +96,14 @@ def _router() -> ProviderRouter:
     if any(slot.cost_class == "PAID" for slot in candidates):
         raise RuntimeError("PAID_PROVIDER_PRESENT_IN_FREE_ONLY_ROUTING")
     return router
+
+
+def _load_test_show_plan() -> dict:
+    path = ROOT / "data" / "zen_real_ma2_test_show_sheesh_001_plan.json"
+    if not path.is_file():
+        return {}
+    value = json.loads(path.read_text(encoding="utf-8"))
+    return value if isinstance(value, dict) else {}
 
 
 def _load_preset_bindings() -> list[dict]:
@@ -360,12 +369,21 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
         presets = [item for item in context.get("presets", []) if item.get("reference")]
         effects = [item for item in context.get("effects", []) if isinstance(item.get("effect_id"), int)]
         effect_application_capability = core.cue_effect_application_capability.load_verified()
+        historical_bindings = derive_sheesh_test_preset_bindings(
+            profile,
+            _load_test_show_plan(),
+        )
+        preset_bindings = [
+            *_load_preset_bindings(),
+            *historical_bindings.get("bindings", []),
+        ]
         resource_map = build_artistic_resource_map(
             profile,
-            preset_bindings=_load_preset_bindings(),
+            preset_bindings=preset_bindings,
             effect_catalog_entries=core.effect_catalog.load().get("entries", []),
             effect_application_capability=effect_application_capability,
         )
+        result["test_show_preset_binding_recovery"] = historical_bindings
         result["artistic_resource_map"] = resource_map
         compact_cache = USB_HOME / "projects" / "runs" / RUN_ID / "programming" / "lean_design_context.json"
         design_context_artifact = load_or_build_compact_context(
