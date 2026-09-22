@@ -1,5 +1,12 @@
 # SHEESH Current Show Redesign 001
 
+> **Historical experiment contract notice (2026-09-22):** The six-role
+> Researcher/Rig/Position/Lighting/Critic/Finalizer order documented below is
+> retained as experiment evidence only. It is not the ordinary current Design
+> Mode. The active product default is the lean single-designer path in
+> docs/ZEN_DESIGN_MODE.md and docs/FULL_ARTISTIC_PATH_001.md.
+>
+
 **Status:** AUTHORIZED CURRENT EXPERIMENT  
 **Owner decision date:** 2026-09-20  
 **Target:** BABYMONSTER — SHEESH  
