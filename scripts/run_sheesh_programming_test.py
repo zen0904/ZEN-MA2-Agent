@@ -516,7 +516,11 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
                 target_executor=target_executor,
             )
         except ArtisticPlanCompileError as first_error:
-            # One bounded free repair is allowed only for a true artistic-plan
+            # A saved provider result is a deterministic retry artifact. Never
+            # spend another provider call trying to repair it implicitly.
+            if saved_result_path is not None:
+                raise
+            # One bounded free repair is allowed only for a fresh artistic-plan
             # contract failure. Backend metadata/type formatting never reaches
             # this point because ZEN owns it.
             if router is None:
