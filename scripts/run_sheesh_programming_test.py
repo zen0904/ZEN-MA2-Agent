@@ -36,7 +36,12 @@ from zen_ma2_agent.llm.router import ProviderRouter
 from zen_ma2_agent.ma_text import validate_ma_payload
 from zen_ma2_agent.models import Intent
 from zen_ma2_agent.runtime import AgentRuntime
-from zen_ma2_agent.test_show_evidence import derive_sheesh_test_preset_bindings
+from zen_ma2_agent.test_show_evidence import (
+    bounded_test_show_color_rows,
+    derive_sheesh_test_preset_bindings,
+    test_show_palette_manifest,
+)
+from zen_ma2_agent.effect_resources import show_identity
 from zen_ma2_agent.telnet_client import ConnectionState
 
 
@@ -104,6 +109,27 @@ def _load_test_show_plan() -> dict:
         return {}
     value = json.loads(path.read_text(encoding="utf-8"))
     return value if isinstance(value, dict) else {}
+
+
+def _augment_bounded_test_show_color_inventory(core: AgentCore, profile: dict, plan: dict) -> list[dict]:
+    if not core.runtime.client:
+        return []
+    readbacks: dict[str, str] = {}
+    for reference in test_show_palette_manifest(plan):
+        if not re.fullmatch(r"4\.1(?:0[1-9]|1[0-3])", reference):
+            continue
+        readbacks[reference] = core.runtime.client.execute(f"List Preset {reference}")
+    rows = bounded_test_show_color_rows(plan, readbacks)
+    merged = {
+        str(item.get("reference") or ""): item
+        for item in profile.get("presets", [])
+        if isinstance(item, dict) and item.get("reference")
+    }
+    for row in rows:
+        merged[row["reference"]] = row
+    profile["presets"] = list(merged.values())
+    profile["show_identity"] = show_identity(profile)
+    return rows
 
 
 def _load_preset_bindings() -> list[dict]:
@@ -361,6 +387,13 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
         core.refresh_state("fixture_type_profiles")
 
         profile = core.scan_show_profile()
+        test_show_plan = _load_test_show_plan()
+        bounded_color_rows = _augment_bounded_test_show_color_inventory(
+            core,
+            profile,
+            test_show_plan,
+        )
+        result["bounded_test_show_color_inventory"] = bounded_color_rows
         context = {
             key: profile.get(key, [])
             for key in ("groups", "presets", "effects", "sequences")
@@ -371,7 +404,7 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
         effect_application_capability = core.cue_effect_application_capability.load_verified()
         historical_bindings = derive_sheesh_test_preset_bindings(
             profile,
-            _load_test_show_plan(),
+            test_show_plan,
         )
         preset_bindings = [
             *_load_preset_bindings(),
