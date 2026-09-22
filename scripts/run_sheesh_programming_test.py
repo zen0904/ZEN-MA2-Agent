@@ -42,6 +42,8 @@ from zen_ma2_agent.test_show_evidence import (
     test_show_palette_manifest,
 )
 from zen_ma2_agent.effect_resources import show_identity
+from zen_ma2_agent.state.providers.show_pools import EffectProvider
+from zen_ma2_agent.test_show_resources import template_effect_labels
 from zen_ma2_agent.telnet_client import ConnectionState
 
 
@@ -130,6 +132,33 @@ def _augment_bounded_test_show_color_inventory(core: AgentCore, profile: dict, p
     profile["presets"] = list(merged.values())
     profile["show_identity"] = show_identity(profile)
     return rows
+
+
+def _augment_bounded_template_effect_inventory(core: AgentCore, profile: dict) -> list[dict]:
+    if not core.runtime.client:
+        return []
+    provider = EffectProvider()
+    reserved = {label.upper() for label in template_effect_labels()}
+    evidence: list[dict] = []
+    for row in profile.get("effects", []) if isinstance(profile.get("effects"), list) else []:
+        if not isinstance(row, dict):
+            continue
+        label = str(row.get("name") or "").strip().upper()
+        effect_id = row.get("effect_id")
+        if label not in reserved or isinstance(effect_id, bool) or not isinstance(effect_id, int) or effect_id < 1:
+            continue
+        command = f"List Effect 1.{effect_id}.*"
+        raw = core.runtime.client.execute(command)
+        detail = provider.parse_template_detail(raw)
+        evidence.append({
+            "effect_id": effect_id,
+            "name": row.get("name"),
+            "detail": detail,
+        })
+        if detail.get("status") == "VERIFIED":
+            row["kind"] = detail.get("kind")
+            row["template_detail"] = detail
+    return evidence
 
 
 def _load_preset_bindings() -> list[dict]:
@@ -394,6 +423,10 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
             test_show_plan,
         )
         result["bounded_test_show_color_inventory"] = bounded_color_rows
+        result["bounded_template_effect_inventory"] = _augment_bounded_template_effect_inventory(
+            core,
+            profile,
+        )
         context = {
             key: profile.get(key, [])
             for key in ("groups", "presets", "effects", "sequences")
