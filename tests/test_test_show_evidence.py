@@ -138,6 +138,41 @@ class TestShowEvidenceTests(unittest.TestCase):
         self.assertTrue(all(row["capability"] == "DIMMER" for row in result["bindings"]))
         self.assertTrue(all(row["implementation"] == "SET_DIMMER" for row in result["bindings"]))
 
+    def test_dimmer_binding_survives_selection_order_reordering_with_same_members(self):
+        profile = {
+            **self.profile,
+            "groups": [
+                {
+                    "group_id": group_id,
+                    "name": f"G{group_id}",
+                    "fixture_ids_in_selection_order": list(reversed(members)),
+                }
+                for group_id, members in SHEESH_TEST_GROUP_FIXTURES.items()
+            ],
+        }
+        plan = {
+            **self.plan,
+            "cues": [{
+                "cue_number": 1,
+                "actions": [
+                    {
+                        "operation": "SET_DIMMER",
+                        "target": {"type": "group", "ref": group_id},
+                        "level": 50,
+                    }
+                    for group_id in sorted(SHEESH_TEST_GROUP_FIXTURES)
+                ],
+            }],
+        }
+        result = derive_sheesh_test_dimmer_bindings(profile, plan)
+        self.assertEqual(result["status"], "SHOW_BOUND_VERIFIED")
+        self.assertEqual(len(result["bindings"]), 7)
+        first = next(row for row in result["bindings"] if row["group_id"] == 1)
+        self.assertEqual(
+            first["evidence"]["current_fixture_ids_in_selection_order"],
+            list(reversed(SHEESH_TEST_GROUP_FIXTURES[1])),
+        )
+
     def test_dimmer_binding_does_not_survive_group_membership_drift(self):
         profile = {
             **self.profile,
