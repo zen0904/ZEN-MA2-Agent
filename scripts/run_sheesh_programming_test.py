@@ -36,6 +36,7 @@ RUN_ID = "SHEESH_NEW_UNDESIGNED_SHOW_001"
 USB_HOME = Path(r"E:\ZEN_MA2_AGENT")
 TARGET_EXECUTOR_DISPLAY = "2.002"
 SONG = "SHEESH"
+SHEESH_CUE_LABELS = ("INTRO", "BUILD", "VERSE", "PRE_DROP", "SHEESH_IMPACT", "AFTER_IMPACT")
 
 
 class ProgrammingRunError(RuntimeError):
@@ -96,7 +97,7 @@ def _provider_contract(groups: list[dict], presets: list[dict]) -> dict:
                 {"group": "<verified Group ID>", "preset": "<verified preset reference>"},
             ],
         },
-        "cue_order": ["INTRO", "BUILD", "VERSE", "PRE_DROP", "SHEESH_IMPACT", "AFTER_IMPACT"],
+        "cue_order": list(SHEESH_CUE_LABELS),
         "verified_groups": [
             {"group_id": item.get("group_id"), "name": item.get("name")}
             for item in groups
@@ -182,6 +183,11 @@ def _compile_provider_plan(
     active_sequence_range: list[int],
 ) -> tuple[dict, dict[str, object], dict]:
     provider_plan = _parse_provider_json(content)
+    cues = provider_plan.get("cues")
+    if not isinstance(cues, list) or len(cues) != len(SHEESH_CUE_LABELS):
+        raise ArtisticPlanCompileError(
+            f"SHEESH bounded test requires exactly {len(SHEESH_CUE_LABELS)} artistic cues."
+        )
     verified_group_ids = {
         int(item["group_id"])
         for item in groups
@@ -199,6 +205,7 @@ def _compile_provider_plan(
         active_sequence_range=active_sequence_range,
         verified_group_ids=verified_group_ids,
         verified_preset_refs=verified_preset_refs,
+        cue_labels=SHEESH_CUE_LABELS,
     )
     validate_ma_payload(plan["cues"], path="show_plan.cues")
     return plan, audit, provider_plan
