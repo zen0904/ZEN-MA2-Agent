@@ -180,6 +180,19 @@ as runtime context because it affects chase appearance, not Dimmer existence.
 This evidence unlocks reusable native TEMPLATE Dimmer Chase resources without
 pretending it is a universal FixtureType capability.
 
+### Repeated-song Sequence ownership labels
+
+A repeated smoke/A-B build of the same song may encounter an earlier
+Agent-owned Sequence label such as `ZEN_AI_TEST_SHEESH`. That collision is
+operational metadata, not an artistic-plan failure and does not justify another
+Lighting Designer call.
+
+The Builder now preserves the base label for the first build and, when that
+base label already belongs to another scanned Sequence, deterministically uses
+a Sequence-scoped label such as `ZEN_AI_TEST_SHEESH_SEQ3` for the newly
+allocated Sequence. If that scoped label also already exists, the Builder still
+fails closed. Existing Sequences are never renamed or overwritten.
+
 ## Smoke test versus product design
 
 `scripts/run_sheesh_programming_test.py` is a six-cue bounded smoke test only.
