@@ -12,6 +12,7 @@ import os
 import re
 import sys
 import time
+from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -20,6 +21,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from zen_ma2_agent.core import AgentCore
+from zen_ma2_agent.allocation import first_free_executor, first_free_from_front
 from zen_ma2_agent.artistic_resources import (
     build_artistic_resource_map,
     effect_applicability_from_map,
@@ -31,6 +33,7 @@ from zen_ma2_agent.designer.artistic_plan import (
     ArtisticPlanCompileError,
     compile_artistic_cue_plan,
 )
+from zen_ma2_agent.designer.schema import validate_show_plan
 from zen_ma2_agent import protected_objects
 from zen_ma2_agent.llm.router import ProviderRouter
 from zen_ma2_agent.ma_text import validate_ma_payload
@@ -323,15 +326,44 @@ def _lowest_safe_sequence_id(profile: dict) -> int:
         for item in profile.get("sequences", [])
         if isinstance(item, dict) and isinstance(item.get("number"), int)
     }
-    for number in range(1, 10000):
-        if number in used:
-            continue
-        try:
-            protected_objects.assert_sequence_allowed(number)
-        except protected_objects.ProtectedObjectError:
-            continue
-        return number
-    raise RuntimeError("NO_SAFE_UNUSED_SEQUENCE_AVAILABLE")
+    try:
+        return first_free_from_front(
+            used,
+            protected=protected_objects.PROTECTED_SEQUENCES,
+        )
+    except Exception as exc:
+        raise RuntimeError("NO_SAFE_UNUSED_SEQUENCE_AVAILABLE") from exc
+
+
+def _resume_saved_canonical_artifact(
+    saved: dict,
+    *,
+    sequence: int,
+    target_executor: str,
+) -> dict | None:
+    """Reuse a previously compiled plan without re-reading provider art output.
+
+    The only allowed retry edits are ZEN-owned runtime allocation fields.  A
+    fresh Builder still verifies referenced resources and safe writes.
+    """
+    artifact = saved.get("canonical_artifact")
+    if artifact is None:
+        return None
+    if not isinstance(artifact, dict):
+        raise RuntimeError("SAVED_CANONICAL_ARTIFACT_INVALID")
+    compile_audit = saved.get("provider_plan_compile")
+    if not isinstance(compile_audit, dict) or compile_audit.get("provider_contract") != "ARTISTIC_CUES_V0_2":
+        # A typed artifact without its original compile evidence is not proof
+        # that the artifact reached the canonical boundary.  Fall back to the
+        # legacy saved raw-result path, which still never recalls a provider.
+        return None
+    resumed = deepcopy(artifact)
+    resumed["target_executor"] = target_executor
+    resumed["active_sequence_range"] = [sequence, sequence]
+    try:
+        return validate_show_plan(resumed)
+    except Exception as exc:
+        raise RuntimeError("SAVED_CANONICAL_ARTIFACT_INVALID") from exc
 
 
 def _repair_prompt(
@@ -370,7 +402,6 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
     if not executor_match:
         raise RuntimeError("TARGET_EXECUTOR_INVALID")
     target_page = int(executor_match.group(1))
-    target_exec = int(executor_match.group(2))
     core = AgentCore(AgentRuntime(ROOT))
     router: ProviderRouter | None = None
     result: dict = {
@@ -397,163 +428,137 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
         if not re.search(rf"(?:Page\s+)?{target_page}\b", pages, re.I):
             raise RuntimeError(f"TARGET_PAGE_{target_page}_NOT_PRESENT")
         executor_before = core.runtime.read_state("List Executor")
-        if re.search(rf"(?:Executor|Exec)\s+{target_page}\.0*{target_exec}\b", executor_before, re.I):
-            raise RuntimeError(f"TARGET_EXECUTOR_{target_page}_{target_exec:03d}_OCCUPIED")
 
         for resource, kwargs in (
             ("groups", {}),
-            ("fixtures", {}),
             ("presets", {"sequence": "ALL"}),
             ("effects", {}),
             ("sequences", {}),
+            ("executors", {}),
         ):
             core.refresh_state(resource, **kwargs)
-
-        groups_snapshot = core.state.get("groups")
-        for group in (groups_snapshot.values if groups_snapshot else []):
-            group_no = group.get("number")
-            if isinstance(group_no, int) and not isinstance(group_no, bool) and group_no > 0:
-                core.refresh_state("group_membership", group_no=group_no)
-        core.refresh_state("fixture_type_profiles")
-
         profile = core.scan_show_profile()
-        test_show_plan = _load_test_show_plan()
-        bounded_color_rows = _augment_bounded_test_show_color_inventory(
-            core,
-            profile,
-            test_show_plan,
-        )
-        result["bounded_test_show_color_inventory"] = bounded_color_rows
-        result["bounded_template_effect_inventory"] = _augment_bounded_template_effect_inventory(
-            core,
-            profile,
-        )
         context = {
             key: profile.get(key, [])
-            for key in ("groups", "presets", "effects", "sequences")
+            for key in ("groups", "presets", "effects", "sequences", "executors")
         }
         groups = context.get("groups", [])
         presets = [item for item in context.get("presets", []) if item.get("reference")]
         effects = [item for item in context.get("effects", []) if isinstance(item.get("effect_id"), int)]
-        effect_application_capability = core.cue_effect_application_capability.load_verified()
-        historical_bindings = derive_sheesh_test_preset_bindings(
-            profile,
-            test_show_plan,
-        )
-        historical_dimmer_bindings = derive_sheesh_test_dimmer_bindings(
-            profile,
-            test_show_plan,
-        )
-        preset_bindings = [
-            *_load_preset_bindings(),
-            *historical_bindings.get("bindings", []),
-        ]
-        resource_map = build_artistic_resource_map(
-            profile,
-            preset_bindings=preset_bindings,
-            dimmer_bindings=historical_dimmer_bindings.get("bindings", []),
-            effect_catalog_entries=core.effect_catalog.load().get("entries", []),
-            effect_application_capability=effect_application_capability,
-        )
-        result["test_show_preset_binding_recovery"] = historical_bindings
-        result["test_show_dimmer_binding_recovery"] = historical_dimmer_bindings
-        result["artistic_resource_map"] = resource_map
-        compact_cache = USB_HOME / "projects" / "runs" / RUN_ID / "programming" / "lean_design_context.json"
-        design_context_artifact = load_or_build_compact_context(
-            cache_path=compact_cache,
-            song_context={
-                "song": SONG,
-                "artist": "BABYMONSTER",
-                "brief": "KPOP_YG_INSPIRED; strong silhouette, center hierarchy, restrained progression",
-            },
-            spatial_context=spatial_artifact,
-            groups=groups,
-            artistic_resource_map=resource_map,
-        )
-        result["design_context_hash"] = design_context_artifact["context_hash"]
-        result["design_context_cache_reused"] = design_context_artifact.get("cache_reused", False)
         selected_sequence = _lowest_safe_sequence_id(context)
         active_sequence_range = [selected_sequence, selected_sequence]
+        target_executor = first_free_executor(executor_before, page=target_page)
+        result["target_executor"] = target_executor
         result["selected_sequence_id"] = selected_sequence
         result["active_sequence_range"] = active_sequence_range
 
+        saved: dict | None = None
+        plan: dict | None = None
+        compile_audit: dict[str, object] | None = None
+        provider_plan: dict | None = None
         if saved_result_path is not None:
             if not saved_result_path.is_file():
                 raise RuntimeError("SAVED_PROVIDER_RESULT_NOT_FOUND")
             saved = json.loads(saved_result_path.read_text(encoding="utf-8"))
-            raw = saved.get("provider_response", {}).get("raw_response")
-            if not isinstance(raw, str) or not raw:
-                raise RuntimeError("SAVED_PROVIDER_RAW_RESPONSE_NOT_AVAILABLE")
-            content = raw
-            provider_content = content
             result["source_saved_result"] = str(saved_result_path)
             result["provider"] = saved.get("provider")
             result["provider_response"] = saved.get("provider_response")
             result["provider_attempts"] = saved.get("provider_attempts", [])
-        else:
-            router = _router()
-            system, user = _prompt(design_context_artifact["context"], resource_map)
-            content, provider, attempts = router.complete_with_diagnostics(
-                role="LIGHTING_DESIGNER",
-                system=system,
-                user=user,
+            plan = _resume_saved_canonical_artifact(
+                saved,
+                sequence=selected_sequence,
+                target_executor=target_executor,
             )
-            provider_content = content
-            result["provider_attempts"] = list(attempts)
-            result["provider"] = provider.safe_identity()
-            result["provider_response"] = _safe_provider_response(provider, content)
-            if provider.cost_class == "PAID":
-                raise RuntimeError("PAID_PROVIDER_USED_UNEXPECTEDLY")
+            if plan is not None:
+                compile_audit = saved.get("provider_plan_compile") if isinstance(saved.get("provider_plan_compile"), dict) else {}
+                result["saved_retry"] = {
+                    "mode": "RESUME_CANONICAL_ARTIFACT",
+                    "provider_called": False,
+                    "artistic_compile_replayed": False,
+                    "checks": ["CURRENT_RESOURCE_EXISTENCE", "SAFE_WRITE_ALLOCATION"],
+                }
 
-        try:
-            plan, compile_audit, provider_plan = _compile_provider_plan(
-                content,
-                groups=groups,
-                presets=presets,
-                effects=effects,
-                resource_map=resource_map,
-                active_sequence_range=active_sequence_range,
-                target_executor=target_executor,
+        if plan is None:
+            # Fresh art, or an older saved result without a canonical artifact,
+            # needs the normal resource-map preparation. Canonical retries do
+            # not enter this evidence/artist path.
+            core.refresh_state("fixtures")
+            groups_snapshot = core.state.get("groups")
+            for group in (groups_snapshot.values if groups_snapshot else []):
+                group_no = group.get("number")
+                if isinstance(group_no, int) and not isinstance(group_no, bool) and group_no > 0:
+                    core.refresh_state("group_membership", group_no=group_no)
+            core.refresh_state("fixture_type_profiles")
+            profile = core.scan_show_profile()
+            test_show_plan = _load_test_show_plan()
+            result["bounded_test_show_color_inventory"] = _augment_bounded_test_show_color_inventory(core, profile, test_show_plan)
+            result["bounded_template_effect_inventory"] = _augment_bounded_template_effect_inventory(core, profile)
+            context = {key: profile.get(key, []) for key in ("groups", "presets", "effects", "sequences", "executors")}
+            groups = context.get("groups", [])
+            presets = [item for item in context.get("presets", []) if item.get("reference")]
+            effects = [item for item in context.get("effects", []) if isinstance(item.get("effect_id"), int)]
+            effect_application_capability = core.cue_effect_application_capability.load_verified()
+            historical_bindings = derive_sheesh_test_preset_bindings(profile, test_show_plan)
+            historical_dimmer_bindings = derive_sheesh_test_dimmer_bindings(profile, test_show_plan)
+            resource_map = build_artistic_resource_map(
+                profile,
+                preset_bindings=[*_load_preset_bindings(), *historical_bindings.get("bindings", [])],
+                dimmer_bindings=historical_dimmer_bindings.get("bindings", []),
+                effect_catalog_entries=core.effect_catalog.load().get("entries", []),
+                effect_application_capability=effect_application_capability,
             )
-        except ArtisticPlanCompileError as first_error:
-            # A saved provider result is a deterministic retry artifact. Never
-            # spend another provider call trying to repair it implicitly.
-            if saved_result_path is not None:
-                raise
-            # One bounded free repair is allowed only for a fresh artistic-plan
-            # contract failure. Backend metadata/type formatting never reaches
-            # this point because ZEN owns it.
-            if router is None:
+            result["test_show_preset_binding_recovery"] = historical_bindings
+            result["test_show_dimmer_binding_recovery"] = historical_dimmer_bindings
+            result["artistic_resource_map"] = resource_map
+            compact_cache = USB_HOME / "projects" / "runs" / RUN_ID / "programming" / "lean_design_context.json"
+            design_context_artifact = load_or_build_compact_context(
+                cache_path=compact_cache,
+                song_context={"song": SONG, "artist": "BABYMONSTER", "brief": "KPOP_YG_INSPIRED; strong silhouette, center hierarchy, restrained progression"},
+                spatial_context=spatial_artifact,
+                groups=groups,
+                artistic_resource_map=resource_map,
+            )
+            result["design_context_hash"] = design_context_artifact["context_hash"]
+            result["design_context_cache_reused"] = design_context_artifact.get("cache_reused", False)
+            if saved is not None:
+                raw = saved.get("provider_response", {}).get("raw_response")
+                if not isinstance(raw, str) or not raw:
+                    raise RuntimeError("SAVED_PROVIDER_RAW_RESPONSE_NOT_AVAILABLE")
+                content = raw
+                provider_content = content
+            else:
                 router = _router()
-            repair_system, repair_user = _repair_prompt(
-                rejected_content=content,
-                error=str(first_error),
-                resource_map=resource_map,
-            )
-            repaired, repair_provider, repair_attempts = router.complete_with_diagnostics(
-                role="LIGHTING_DESIGNER",
-                system=repair_system,
-                user=repair_user,
-            )
-            if repair_provider.cost_class == "PAID":
-                raise RuntimeError("PAID_PROVIDER_USED_UNEXPECTEDLY")
-            result["artistic_plan_repair"] = {
-                "attempted": True,
-                "initial_error": str(first_error),
-                "provider": repair_provider.safe_identity(),
-                "provider_attempts": list(repair_attempts),
-                "response": _safe_provider_response(repair_provider, repaired),
-            }
-            provider_content = repaired
-            plan, compile_audit, provider_plan = _compile_provider_plan(
-                repaired,
-                groups=groups,
-                presets=presets,
-                effects=effects,
-                resource_map=resource_map,
-                active_sequence_range=active_sequence_range,
-                target_executor=target_executor,
-            )
+                system, user = _prompt(design_context_artifact["context"], resource_map)
+                content, provider, attempts = router.complete_with_diagnostics(role="LIGHTING_DESIGNER", system=system, user=user)
+                provider_content = content
+                result["provider_attempts"] = list(attempts)
+                result["provider"] = provider.safe_identity()
+                result["provider_response"] = _safe_provider_response(provider, content)
+                if provider.cost_class == "PAID":
+                    raise RuntimeError("PAID_PROVIDER_USED_UNEXPECTEDLY")
+            try:
+                plan, compile_audit, provider_plan = _compile_provider_plan(
+                    content, groups=groups, presets=presets, effects=effects, resource_map=resource_map,
+                    active_sequence_range=active_sequence_range, target_executor=target_executor,
+                )
+            except ArtisticPlanCompileError as first_error:
+                # An older saved raw response is never sent back to a provider.
+                if saved is not None:
+                    raise
+                if router is None:
+                    router = _router()
+                repair_system, repair_user = _repair_prompt(rejected_content=content, error=str(first_error), resource_map=resource_map)
+                repaired, repair_provider, repair_attempts = router.complete_with_diagnostics(role="LIGHTING_DESIGNER", system=repair_system, user=repair_user)
+                if repair_provider.cost_class == "PAID":
+                    raise RuntimeError("PAID_PROVIDER_USED_UNEXPECTEDLY")
+                result["artistic_plan_repair"] = {"attempted": True, "initial_error": str(first_error), "provider": repair_provider.safe_identity(), "provider_attempts": list(repair_attempts), "response": _safe_provider_response(repair_provider, repaired)}
+                provider_content = repaired
+                plan, compile_audit, provider_plan = _compile_provider_plan(
+                    repaired, groups=groups, presets=presets, effects=effects, resource_map=resource_map,
+                    active_sequence_range=active_sequence_range, target_executor=target_executor,
+                )
+
+        effect_application_capability = core.cue_effect_application_capability.load_verified()
 
         if any(
             action.get("operation") == "CALL_EFFECT"

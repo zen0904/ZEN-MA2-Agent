@@ -13,9 +13,9 @@ from zen_ma2_agent.test_show_resources import (
 class TestShowResourcesTests(unittest.TestCase):
     def test_allocator_skips_existing_effect_ids(self):
         specs = allocate_template_effect_specs(
-            [{"number": 2500, "name": "Other"}, {"number": 2502, "name": "Other2"}]
+            [{"number": 1, "name": "Other"}, {"number": 3, "name": "Other2"}]
         )
-        self.assertEqual([spec.effect_id for spec in specs], [2501, 2503, 2504])
+        self.assertEqual([spec.effect_id for spec in specs], [2, 4, 5])
 
     def test_template_effect_commands_never_store_fixture_selection(self):
         spec = TemplateEffectSpec(2500, "FX_DIM_CHASE_SLOW", 30)

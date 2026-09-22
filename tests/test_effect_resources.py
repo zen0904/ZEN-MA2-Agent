@@ -115,7 +115,7 @@ class EffectResourceResolverTests(unittest.TestCase):
         second = self.resolver.resolve(requirement(), profile=profile())
         self.assertEqual(first.status, "CREATE_REQUIRED")
         self.assertEqual(first.effect_spec.name, "ZEN_FX_DIM_CHASE_FAST_GROUP1")
-        self.assertEqual(first.effect_spec.effect_number, 2500)
+        self.assertEqual(first.effect_spec.effect_number, 2)
         self.assertEqual(first.requirement.normalized_key, second.requirement.normalized_key)
         self.assertEqual(first.effect_spec.summary(), second.effect_spec.summary())
 

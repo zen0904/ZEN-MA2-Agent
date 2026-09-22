@@ -145,7 +145,7 @@ class FirstSongBuilderTests(unittest.TestCase):
             "ZEN_AI_TEST_SHEESH_SEQ3",
         )
         self.assertIn('Label Sequence 3 "ZEN_AI_TEST_SHEESH_SEQ3" /nc', workflow.commands)
-        self.assertIn('Label Executor 2.3 "ZEN_AI_TEST_SHEESH_SEQ3" /nc', workflow.commands)
+        self.assertIn('Label Executor 2.1 "ZEN_AI_TEST_SHEESH_SEQ3" /nc', workflow.commands)
 
     def test_sequence_scoped_label_still_fails_closed_if_already_ambiguous(self):
         profile = {
@@ -196,6 +196,23 @@ class FirstSongBuilderTests(unittest.TestCase):
         self.assertIn("Assign Sequence 301 At Executor 2.1 /nc", commands)
         self.assertIn('Label Executor 2.1 "ZEN_AI_TEST_SHEESH" /nc', commands)
         self.assertEqual(workflow.task.intent.parameters["target_executor"], "2.001")
+
+    def test_executor_allocator_skips_occupied_slots_from_the_front(self):
+        profile = {
+            "groups": [{"group_id": 1, "name": "HYBRID"}],
+            "presets": [],
+            "effects": [],
+            "sequences": [],
+            "executors": [{"page": 2, "executor": 1}, {"page": 2, "executor": 2}],
+        }
+        plan = {
+            "schema": "zen.show_plan.v0.1", "song": "SHEESH",
+            "target_executor": "2.999", "active_sequence_range": [1, 1],
+            "cues": [{"id": "intro", "cue_number": 1, "label": "INTRO", "fade": 1.0,
+                      "actions": [{"operation": "SET_DIMMER", "target": {"type": "group", "ref": 1}, "level": 20}]}],
+        }
+        workflow = ShowPlanBuilder().build_first_song(plan, profile)
+        self.assertIn("Assign Sequence 1 At Executor 2.3 /nc", workflow.commands)
 
     def test_narrow_rollback_needs_exact_agent_ownership_proof(self):
         command = ShowPlanBuilder.narrow_rollback_command(201, "ZEN_AI_TEST_ZEN_FIRST_SONG_TEST", {"number": 201, "name": "ZEN_AI_TEST_ZEN_FIRST_SONG_TEST"})

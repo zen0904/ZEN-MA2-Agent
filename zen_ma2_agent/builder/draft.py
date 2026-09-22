@@ -8,6 +8,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from ..allocation import AllocationError, first_free_executor, first_free_from_front
 from ..designer.schema import validate_show_plan
 from ..ma_text import validate_ma_text
 from ..models import Intent
@@ -62,7 +63,7 @@ class ShowPlanBuilder:
             sequence,
             profile,
         )
-        target_executor = self._executor_address(plan.get("target_executor"))
+        target_executor = self._allocate_executor(plan, profile)
         group_ids = {item.get("group_id") for item in profile.get("groups", [])}
         preset_refs = {item.get("reference") for item in profile.get("presets", []) if item.get("reference")}
         effect_ids = {item.get("effect_id") for item in profile.get("effects", []) if item.get("effect_id")}
@@ -149,16 +150,31 @@ class ShowPlanBuilder:
         limits = plan.get("active_sequence_range")
         if not isinstance(limits, list) or len(limits) != 2:
             raise FirstSongBuildError("Plan has no explicit active Sequence range.")
-        used = {item.get("number") for item in profile.get("sequences", [])}
-        for number in range(int(limits[0]), int(limits[1]) + 1):
-            # A protected candidate is unavailable just like a scanned used
-            # number; keep looking rather than turning one protected slot into
-            # a false "no sequence available" block for the whole range.
-            if number in used or number in protected_objects.PROTECTED_SEQUENCES:
-                continue
-            protected_objects.assert_sequence_allowed(number)
-            return number
-        raise FirstSongBuildError("BLOCKED: no unused Sequence is available in the active range.")
+        used = [item.get("number") for item in profile.get("sequences", []) if isinstance(item, dict)]
+        try:
+            return first_free_from_front(
+                used,
+                protected=protected_objects.PROTECTED_SEQUENCES,
+                start=int(limits[0]),
+                end=int(limits[1]),
+            )
+        except AllocationError as exc:
+            raise FirstSongBuildError("BLOCKED: no unused Sequence is available in the active range.") from exc
+
+    @classmethod
+    def _allocate_executor(cls, plan: dict[str, Any], profile: dict[str, Any]) -> str | None:
+        requested = cls._executor_address(plan.get("target_executor"))
+        if requested is None:
+            return None
+        page = int(requested.split(".", 1)[0])
+        try:
+            # Executor numbers are ZEN-owned operational metadata.  A supplied
+            # address selects a Page only; allocation always begins at 001.
+            return cls._executor_address(
+                first_free_executor(profile.get("executors", []), page=page)
+            )
+        except AllocationError as exc:
+            raise FirstSongBuildError("BLOCKED: no unused Executor is available on the target Page.") from exc
 
     @staticmethod
     def narrow_rollback_command(sequence: int, label: str, observed_sequence: dict[str, Any] | None) -> str:

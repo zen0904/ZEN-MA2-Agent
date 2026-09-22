@@ -179,7 +179,7 @@ class AgentCore:
         # full Subfixture geometry sweep. Geometry remains available from a
         # prior scan but must not turn an Effect-only Preview into hundreds of
         # unrelated List Fixture reads.
-        for resource, kwargs in (("groups", {}), ("fixtures", {}), ("presets", {"sequence": "ALL"}), ("effects", {}), ("sequences", {})):
+        for resource, kwargs in (("groups", {}), ("fixtures", {}), ("presets", {"sequence": "ALL"}), ("effects", {}), ("sequences", {}), ("executors", {})):
             self.refresh_state(resource, **kwargs)
         data_dir = self.runtime.root / "data"
         data_dir.mkdir(parents=True, exist_ok=True)
@@ -216,7 +216,7 @@ class AgentCore:
             self.runtime.log("effect_resource_resolution", {"status": "EXISTING_MATCH", "requirements": [item.summary() for item in resolutions.values()], "show_identity": show_identity(profile)})
         (data_dir / "ZEN_SHOW_PLAN.json").write_text(json.dumps(show_plan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         write_real_song_design_report(show_plan, profile, self.runtime.root / "ZEN_REAL_SONG_DESIGN_REPORT.md")
-        context = {key: profile.get(key, []) for key in ("groups", "presets", "effects", "sequences")}
+        context = {key: profile.get(key, []) for key in ("groups", "presets", "effects", "sequences", "executors")}
         workflow = self.skills.plan_intent(Intent("build_first_song", {"first_song_spec": {"show_plan": show_plan, "profile": context}}, "ZEN_SHOW_PLAN"), self.state, self.runtime.preferences)
         self.runtime.log("song_analysis_preview" if analysis is not None else "first_song_preview", {"song": show_plan["song"], "cue_count": len(show_plan["cues"]), "sequence_range": show_plan["active_sequence_range"], "analysis_schema": analysis.get("schema") if analysis else None})
         return self._queue_workflow(workflow)
@@ -1281,4 +1281,3 @@ class AgentCore:
         except Exception as exc:
             self.runtime.log("effect_builder_verification", {"effect_number": number, "status": "PARTIAL", "error": str(exc)})
             return execution_result + f"\nVerification: PARTIAL — Effect commands were sent, but read-back failed: {exc}"
-

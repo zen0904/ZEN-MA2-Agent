@@ -14,6 +14,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Iterable, Mapping
 
+from .allocation import AllocationError, first_free_from_front
+
 
 _TEMPLATE_EFFECTS = (
     ("FX_DIM_CHASE_SLOW", 30),
@@ -55,7 +57,7 @@ class TemplateEffectSpec:
 def allocate_template_effect_specs(
     existing_effects: Iterable[Mapping[str, Any]],
     *,
-    start: int = 2500,
+    start: int = 1,
 ) -> tuple[TemplateEffectSpec, ...]:
     """Allocate three unused Test Show Effect IDs without overwriting anything."""
     used = {
@@ -67,13 +69,13 @@ def allocate_template_effect_specs(
         and int(item["number"]) > 0
     }
     specs: list[TemplateEffectSpec] = []
-    candidate = max(1, int(start))
     for label, bpm in _TEMPLATE_EFFECTS:
-        while candidate in used:
-            candidate += 1
+        try:
+            candidate = first_free_from_front(used, start=max(1, int(start)))
+        except AllocationError as exc:
+            raise ValueError("No safe Test Show Effect ID is available.") from exc
         specs.append(TemplateEffectSpec(candidate, label, bpm))
         used.add(candidate)
-        candidate += 1
     return tuple(specs)
 
 
@@ -131,7 +133,7 @@ def verify_template_effect_rows(
 def reconcile_template_effect_specs(
     existing_effects: Iterable[Mapping[str, Any]],
     *,
-    start: int = 2500,
+    start: int = 1,
 ) -> tuple[tuple[TemplateEffectSpec, ...], set[int]]:
     """Reuse exact verified template labels and allocate only missing resources."""
     rows = [item for item in existing_effects if isinstance(item, Mapping)]
@@ -144,7 +146,6 @@ def reconcile_template_effect_specs(
     }
     existing_ids: set[int] = set()
     specs: list[TemplateEffectSpec] = []
-    candidate = max(1, int(start))
     for label, bpm in _TEMPLATE_EFFECTS:
         matches = [item for item in rows if str(item.get("name") or "").strip() == label]
         if len(matches) > 1:
@@ -159,9 +160,10 @@ def reconcile_template_effect_specs(
             specs.append(TemplateEffectSpec(effect_id, label, bpm))
             existing_ids.add(effect_id)
             continue
-        while candidate in used:
-            candidate += 1
+        try:
+            candidate = first_free_from_front(used, start=max(1, int(start)))
+        except AllocationError as exc:
+            raise ValueError("No safe Test Show Effect ID is available.") from exc
         specs.append(TemplateEffectSpec(candidate, label, bpm))
         used.add(candidate)
-        candidate += 1
     return tuple(specs), existing_ids

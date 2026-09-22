@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Any
 
+from .allocation import AllocationError, first_free_from_front
 from .models import Intent
 from .workflow import ActionStep, SkillGraphNode, Subtask, Task, WorkflowPlan
 
@@ -56,20 +57,14 @@ class EffectSpec:
 
 
 def allocate_effect_number(effects: list[dict[str, Any]]) -> int:
-    """Choose only a gap above the observed Effect inventory.
-
-    A caller must already have refreshed `List Effect`; an empty/malformed
-    inventory is not enough evidence to allocate a slot.  v1 intentionally
-    starts above the visible maximum and prefers 2500 for the portable test
-    range when it is demonstrably unused.
-    """
+    """Choose the first safe gap from fresh observed Effect inventory."""
     numbers = {item.get("number") for item in effects if isinstance(item.get("number"), int)}
     if not numbers:
         raise EffectBuildError("Effect number is required because the current Effect inventory cannot prove a free slot.")
-    candidate = max(2500, max(numbers) + 1)
-    while candidate in numbers:
-        candidate += 1
-    return candidate
+    try:
+        return first_free_from_front(numbers)
+    except AllocationError as exc:
+        raise EffectBuildError("No safe free Effect ID is available.") from exc
 
 
 def resolve_effect_spec(intent: Intent, *, groups: list[dict[str, Any]], fixtures: list[dict[str, Any]], effects: list[dict[str, Any]]) -> EffectSpec:

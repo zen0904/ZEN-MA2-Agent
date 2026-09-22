@@ -78,13 +78,13 @@ class EffectBuilderTests(unittest.TestCase):
         self.assertEqual(response["type"], "ACTION_PLAN")
         action = response["action"]
         spec = action["intent"]["parameters"]["effect_spec"]
-        self.assertEqual((spec["effect_number"], spec["target_type"], spec["target_number"], spec["speed_bpm"]), (2500, "group", 1, 60))
-        self.assertIn('Effect: 2500 "HYBRID Dimmer Chase"', response["message"])
+        self.assertEqual((spec["effect_number"], spec["target_type"], spec["target_number"], spec["speed_bpm"]), (2, "group", 1, 60))
+        self.assertIn('Effect: 2 "HYBRID Dimmer Chase"', response["message"])
         self.assertIn("Safety: MODIFY", response["message"])
         self.assertIn("Approval required.", response["message"])
         self.assertEqual(self.client.commands, ["List Group", "List Effect"])
-        self.assertEqual(action["rollback_strategy"], "Suggested rollback: Delete Effect 2500 (never automatic).")
-        self.assertTrue(any(step["command"] == 'Assign Form "PWM" At Effect 1.2500.1' for step in action["steps"]))
+        self.assertEqual(action["rollback_strategy"], "Suggested rollback: Delete Effect 2 (never automatic).")
+        self.assertTrue(any(step["command"] == 'Assign Form "PWM" At Effect 1.2.1' for step in action["steps"]))
 
     def test_existing_effect_is_protected_and_duplicate_group_needs_clarification(self):
         self.client.effects = 'Effect 2500 "Already Here"\n'
