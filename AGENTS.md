@@ -23,8 +23,9 @@ For substantial work, read these in order:
    - If the task touches face/key light, performer visibility, shared fixtures,
      or which resources ZEN may treat as effects, also read
      `docs/LIGHTING_RESOURCE_OWNERSHIP.md`.
-4. `ZEN_MULTI_PROVIDER_PARALLEL_POOL_001.md` -- current provider-pool,
-   FREE_FIRST, parallel Designer/Critic, and lightweight-local-fallback state.
+4. `ZEN_MULTI_PROVIDER_PARALLEL_POOL_001.md` -- provider-pool, FREE_FIRST,
+   and lightweight-local-fallback state. Parallel Designer/Critic fan-out is an
+   explicit deep/research mode, not the ordinary default.
 5. `docs/ZEN_PRODUCT_CONSTITUTION.md`
 6. `docs/ZEN_WORKFLOW_CONTRACT.md`
 7. The relevant console document, normally `docs/MA2_PROGRAMMING_INTELLIGENCE.md`
