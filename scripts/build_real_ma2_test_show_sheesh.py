@@ -199,6 +199,12 @@ def _write_template_effects(
             continue
         for command in template_effect_commands(spec):
             _run(core, command, audit)
+        one = verify_template_effect_rows(_effect_rows(core, reads), (spec,))[spec.effect_id]
+        if not one["verified"]:
+            raise RuntimeError(
+                f"Effect {spec.effect_id} read-back did not prove exact label + TEMPLATE kind; "
+                "stopping before creating additional Effects."
+            )
         created.append(spec.summary())
 
     after = _effect_rows(core, reads)
@@ -213,6 +219,23 @@ def _write_template_effects(
         "reused": reused,
         "verification": verification,
     }
+
+
+def _verify_artistic_resources(
+    core: AgentCore,
+    plan: dict[str, Any],
+    reads: dict[str, str],
+    effect_verification: dict[int, dict[str, Any]],
+) -> dict[str, Any]:
+    verification: dict[str, Any] = {"presets": {}, "template_effects": effect_verification}
+    for entry in _palette(plan):
+        reference = f"4.{entry['preset']}"
+        output = _read_preset_reference(core, reference, reads)
+        verification["presets"][reference] = {
+            "label": entry["label"],
+            "verified": entry["label"] in output,
+        }
+    return verification
 
 
 def _test_geometry(plan: dict[str, Any]) -> dict[int, tuple[float, float, float]]:
@@ -367,10 +390,19 @@ def main() -> int:
             result["created_presets"] = _write_palette(core, plan, audit)
             result["test_stage_layout"] = {"id": LAYOUT_NAME, "coordinates": _write_geometry(core, plan, audit)}
             _write_sequence(core, plan, audit)
-        result["verification"] = _verify(core, plan, reads)
         if args.resources_only:
-            result["verification"]["template_effects"] = result["template_effects"]["verification"]
-        result["build_status"] = "COMPLETE" if all(value["verified"] for value in result["verification"]["presets"].values()) and result["verification"]["sequence"]["verified"] and result["verification"]["executor"]["verified"] else "PARTIAL_READBACK"
+            result["verification"] = _verify_artistic_resources(
+                core,
+                plan,
+                reads,
+                result["template_effects"]["verification"],
+            )
+            preset_ok = all(value["verified"] for value in result["verification"]["presets"].values())
+            effect_ok = all(value["verified"] for value in result["verification"]["template_effects"].values())
+            result["build_status"] = "COMPLETE" if preset_ok and effect_ok else "PARTIAL_READBACK"
+        else:
+            result["verification"] = _verify(core, plan, reads)
+            result["build_status"] = "COMPLETE" if all(value["verified"] for value in result["verification"]["presets"].values()) and result["verification"]["sequence"]["verified"] and result["verification"]["executor"]["verified"] else "PARTIAL_READBACK"
         return_code = 0
     except Exception as exc:
         result["build_status"] = "FAILED_OR_PARTIAL"
