@@ -134,9 +134,16 @@ def _preset_action(
     value: object,
     verified_preset_refs: set[str],
     verified_preset_types: Mapping[str, str],
+    verified_preset_applicability: Mapping[int, set[str]] | None,
     required_type: str | None = None,
 ) -> dict[str, object]:
     reference = _preset_ref(value, verified_preset_refs)
+    if verified_preset_applicability is not None:
+        allowed = verified_preset_applicability.get(group, set())
+        if reference not in allowed:
+            raise ArtisticPlanCompileError(
+                f"Preset {reference} is not verified applicable to Group {group}."
+            )
     if required_type is not None:
         actual = str(verified_preset_types.get(reference) or "").upper()
         if not actual:
@@ -164,6 +171,8 @@ def _compile_action(
     verified_preset_refs: set[str],
     verified_preset_types: Mapping[str, str],
     verified_effect_ids: set[int],
+    verified_preset_applicability: Mapping[int, set[str]] | None,
+    verified_effect_applicability: Mapping[int, set[int]] | None,
 ) -> dict[str, object]:
     if not isinstance(action, dict):
         raise ArtisticPlanCompileError("Each artistic action must be an object.")
@@ -189,13 +198,19 @@ def _compile_action(
                 value=action.get("preset_ref"),
                 verified_preset_refs=verified_preset_refs,
                 verified_preset_types=verified_preset_types,
+                verified_preset_applicability=verified_preset_applicability,
                 required_type=required_type,
             )
         if operation == "CALL_EFFECT":
+            effect_id = _effect_id(action.get("effect_ref"), verified_effect_ids)
+            if verified_effect_applicability is not None and effect_id not in verified_effect_applicability.get(group, set()):
+                raise ArtisticPlanCompileError(
+                    f"Effect {effect_id} is not verified applicable to Group {group}."
+                )
             return {
                 "operation": "CALL_EFFECT",
                 "target": {"type": "group", "ref": group},
-                "effect_ref": {"id": _effect_id(action.get("effect_ref"), verified_effect_ids)},
+                "effect_ref": {"id": effect_id},
             }
         raise ArtisticPlanCompileError(f"Unsupported artistic operation: {operation!r}.")
 
@@ -215,10 +230,15 @@ def _compile_action(
             "level": _dimmer_level(action.get("dimmer")),
         }
     if key == "effect":
+        effect_id = _effect_id(action.get("effect"), verified_effect_ids)
+        if verified_effect_applicability is not None and effect_id not in verified_effect_applicability.get(group, set()):
+            raise ArtisticPlanCompileError(
+                f"Effect {effect_id} is not verified applicable to Group {group}."
+            )
         return {
             "operation": "CALL_EFFECT",
             "target": {"type": "group", "ref": group},
-            "effect_ref": {"id": _effect_id(action.get("effect"), verified_effect_ids)},
+            "effect_ref": {"id": effect_id},
         }
     if key == "preset":
         return _preset_action(
@@ -226,12 +246,14 @@ def _compile_action(
             value=action.get("preset"),
             verified_preset_refs=verified_preset_refs,
             verified_preset_types=verified_preset_types,
+            verified_preset_applicability=verified_preset_applicability,
         )
     return _preset_action(
         group=group,
         value=action.get(key),
         verified_preset_refs=verified_preset_refs,
         verified_preset_types=verified_preset_types,
+        verified_preset_applicability=verified_preset_applicability,
         required_type=_PRESET_DIMENSION_KEYS[key],
     )
 
@@ -268,6 +290,8 @@ def compile_artistic_cue_plan(
     verified_preset_refs: set[str],
     verified_preset_types: Mapping[str, str] | None = None,
     verified_effect_ids: set[int] | None = None,
+    verified_preset_applicability: Mapping[int, Iterable[str]] | None = None,
+    verified_effect_applicability: Mapping[int, Iterable[int]] | None = None,
     cue_labels: Iterable[str] | None = None,
 ) -> tuple[dict[str, Any], dict[str, object]]:
     """Compile provider art intent into strict zen.show_plan.v0.1.
@@ -295,6 +319,22 @@ def compile_artistic_cue_plan(
         if reference is not None and kind is not None
     }
     effect_ids = set(verified_effect_ids or ())
+    preset_applicability = (
+        {
+            int(group): {str(reference) for reference in references}
+            for group, references in verified_preset_applicability.items()
+        }
+        if verified_preset_applicability is not None
+        else None
+    )
+    effect_applicability = (
+        {
+            int(group): {int(effect_id) for effect_id in effect_ids_for_group}
+            for group, effect_ids_for_group in verified_effect_applicability.items()
+        }
+        if verified_effect_applicability is not None
+        else None
+    )
     labels = _cue_labels(cues, cue_labels)
     compiled_cues: list[dict[str, object]] = []
     for index, source_cue in enumerate(cues, start=1):
@@ -310,6 +350,8 @@ def compile_artistic_cue_plan(
                 verified_preset_refs=verified_preset_refs,
                 verified_preset_types=preset_types,
                 verified_effect_ids=effect_ids,
+                verified_preset_applicability=preset_applicability,
+                verified_effect_applicability=effect_applicability,
             )
             for item in actions
         ]
@@ -356,6 +398,8 @@ def compile_artistic_cue_plan(
         ],
         "cue_labels_source": "CALLER" if cue_labels is not None else "PROVIDER_OR_GENERIC",
         "legacy_typed_actions_accepted": True,
+        "preset_applicability_enforced": preset_applicability is not None,
+        "effect_applicability_enforced": effect_applicability is not None,
         "artistic_values_changed": False,
     }
     return deepcopy(compiled), audit
