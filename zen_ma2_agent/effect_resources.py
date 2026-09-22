@@ -204,7 +204,12 @@ class EffectResourceResolver:
         # Existing template labels have a deliberately small exact vocabulary;
         # a generic human label such as "Chase" never becomes an automatic match.
         expected_template = f"FX_DIM_CHASE_{requirement.speed_class}"
-        template = [item for item in effects if str(item.get("name") or "").strip().upper() == expected_template]
+        template = [
+            item
+            for item in effects
+            if str(item.get("name") or "").strip().upper() == expected_template
+            and str(item.get("kind") or "").upper() == "TEMPLATE"
+        ]
         if len(template) == 1:
             effect = template[0]
             return EffectResolution("EXISTING_MATCH", requirement, {
