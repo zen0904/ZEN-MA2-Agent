@@ -31,11 +31,18 @@ from zen_ma2_agent.designer.schema import validate_show_plan
 from zen_ma2_agent.protected_objects import PROTECTED_SEQUENCES
 from zen_ma2_agent.runtime import AgentRuntime
 from zen_ma2_agent.state.providers.fixture_geometry import FixtureGeometryProvider
+from zen_ma2_agent.state.providers.show_pools import EffectProvider
+from zen_ma2_agent.test_show_resources import (
+    reconcile_template_effect_specs,
+    template_effect_commands,
+    verify_template_effect_rows,
+)
 from zen_ma2_agent.telnet_client import ConnectionState
 
 
 PLAN_PATH = ROOT / "data" / "zen_real_ma2_test_show_sheesh_001_plan.json"
 RESULT_PATH = ROOT / "data" / "zen_real_ma2_test_show_sheesh_001_result.json"
+RESOURCE_RESULT_PATH = ROOT / "data" / "zen_sheesh_artistic_resources_001_result.json"
 EXPECTED_GROUPS = {
     1: "HYBRID", 2: "SPOT", 3: "BEAM", 4: "WASH", 5: "B-EYE", 6: "LED PAR", 7: "STROBE"
 }
@@ -172,6 +179,42 @@ def _write_palette(core: AgentCore, plan: dict[str, Any], audit: list[dict[str, 
     return results
 
 
+def _effect_rows(core: AgentCore, reads: dict[str, str]) -> list[dict[str, Any]]:
+    output = _read(core, "List Effect", reads)
+    return EffectProvider().parse(output)
+
+
+def _write_template_effects(
+    core: AgentCore,
+    audit: list[dict[str, str]],
+    reads: dict[str, str],
+) -> dict[str, Any]:
+    before = _effect_rows(core, reads)
+    specs, existing_ids = reconcile_template_effect_specs(before)
+    created: list[dict[str, Any]] = []
+    reused: list[dict[str, Any]] = []
+    for spec in specs:
+        if spec.effect_id in existing_ids:
+            reused.append(spec.summary())
+            continue
+        for command in template_effect_commands(spec):
+            _run(core, command, audit)
+        created.append(spec.summary())
+
+    after = _effect_rows(core, reads)
+    verification = verify_template_effect_rows(after, specs)
+    if not all(item["verified"] for item in verification.values()):
+        raise RuntimeError(
+            "Template Effect read-back did not prove exact label + TEMPLATE kind; "
+            "resources remain unavailable."
+        )
+    return {
+        "created": created,
+        "reused": reused,
+        "verification": verification,
+    }
+
+
 def _test_geometry(plan: dict[str, Any]) -> dict[int, tuple[float, float, float]]:
     layout = plan.get("test_stage_layout")
     if not isinstance(layout, dict) or layout.get("id") != LAYOUT_NAME:
@@ -270,13 +313,19 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Build the user-authorized SHEESH MA2 test Show.")
     parser.add_argument("--real-machine", action="store_true", help="Required before test-show MA2 writes.")
     parser.add_argument("--plan", type=Path, default=PLAN_PATH)
-    parser.add_argument("--result", type=Path, default=RESULT_PATH)
+    parser.add_argument("--result", type=Path, default=None)
+    parser.add_argument(
+        "--resources-only",
+        action="store_true",
+        help="Restore only owned Color presets and verified template Effects; do not touch geometry, cues, Sequence, or Executor.",
+    )
     parser.add_argument("--resume-existing-build", action="store_true", help="Only finish an exact, read-back Agent-owned sequence after a bounded command failure.")
     args = parser.parse_args()
     if not args.real_machine:
         raise SystemExit("Refusing MA2 writes without --real-machine.")
-    if args.result.exists():
-        raise SystemExit(f"Refusing to overwrite prior build evidence: {args.result}")
+    result_path = args.result or (RESOURCE_RESULT_PATH if args.resources_only else RESULT_PATH)
+    if result_path.exists():
+        raise SystemExit(f"Refusing to overwrite prior build evidence: {result_path}")
     plan = _load_plan(args.plan)
     core = AgentCore(AgentRuntime(ROOT))
     audit: list[dict[str, str]] = []
@@ -299,9 +348,17 @@ def main() -> int:
         core.connect(ma2["host"], ma2["port"], ma2["username"], "")
         _await_ready(core)
         result["connection"] = {"host": ma2["host"], "port": ma2["port"], "user": core.runtime.client.authenticated_user if core.runtime.client else None, "ready": core.runtime.ready}
-        _assert_preflight(core, reads, resume_existing_build=args.resume_existing_build)
+        _assert_preflight(
+            core,
+            reads,
+            resume_existing_build=args.resume_existing_build or args.resources_only,
+        )
         result["preflight"] = "PASS"
-        if args.resume_existing_build:
+        if args.resources_only:
+            result["resource_mode"] = "ARTISTIC_RESOURCES_ONLY"
+            result["created_presets"] = _write_palette(core, plan, audit)
+            result["template_effects"] = _write_template_effects(core, audit, reads)
+        elif args.resume_existing_build:
             result["resume"] = "EXACT_AGENT_OWNED_SEQUENCE_VERIFIED"
             if "ZEN_SHEESH_TEST" not in reads.get("List Executor", ""):
                 _run(core, f'Assign Sequence {SEQUENCE} At Executor {EXECUTOR} /nc', audit)
@@ -311,6 +368,8 @@ def main() -> int:
             result["test_stage_layout"] = {"id": LAYOUT_NAME, "coordinates": _write_geometry(core, plan, audit)}
             _write_sequence(core, plan, audit)
         result["verification"] = _verify(core, plan, reads)
+        if args.resources_only:
+            result["verification"]["template_effects"] = result["template_effects"]["verification"]
         result["build_status"] = "COMPLETE" if all(value["verified"] for value in result["verification"]["presets"].values()) and result["verification"]["sequence"]["verified"] and result["verification"]["executor"]["verified"] else "PARTIAL_READBACK"
         return_code = 0
     except Exception as exc:
@@ -326,9 +385,9 @@ def main() -> int:
         core.disconnect()
         result["ma2_write_count"] = len(audit)
         result["fixture_9999_targeted"] = any("9999" in item["command"] for item in audit)
-        args.result.parent.mkdir(parents=True, exist_ok=True)
-        args.result.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        print(json.dumps({"status": result["build_status"], "result": str(args.result), "writes": len(audit), "fixture_9999_targeted": result["fixture_9999_targeted"]}, ensure_ascii=False))
+        result_path.parent.mkdir(parents=True, exist_ok=True)
+        result_path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps({"status": result["build_status"], "result": str(result_path), "writes": len(audit), "fixture_9999_targeted": result["fixture_9999_targeted"]}, ensure_ascii=False))
     return return_code
 
 
