@@ -57,10 +57,12 @@ class ShowPlanBuilder:
         """
         plan = validate_show_plan(plan)
         sequence = self._allocate_sequence(plan, profile)
-        label = self._sequence_label(str(plan.get("song") or "SONG"))
+        label = self._sequence_label_for_build(
+            str(plan.get("song") or "SONG"),
+            sequence,
+            profile,
+        )
         target_executor = self._executor_address(plan.get("target_executor"))
-        if any(item.get("name") == label for item in profile.get("sequences", [])):
-            raise FirstSongBuildError("BLOCKED: an existing Sequence already has this Agent-owned label; refusing an ambiguous build.")
         group_ids = {item.get("group_id") for item in profile.get("groups", [])}
         preset_refs = {item.get("reference") for item in profile.get("presets", []) if item.get("reference")}
         effect_ids = {item.get("effect_id") for item in profile.get("effects", []) if item.get("effect_id")}
@@ -181,6 +183,38 @@ class ShowPlanBuilder:
     def _sequence_label(song: str) -> str:
         safe = "".join(character if character.isalnum() or character in "_-" else "_" for character in song.upper()).strip("_")
         return f"ZEN_AI_TEST_{safe[:40] or 'SONG'}"
+
+    @classmethod
+    def _sequence_label_for_build(
+        cls,
+        song: str,
+        sequence: int,
+        profile: dict[str, Any],
+    ) -> str:
+        """Return a deterministic Agent-owned label without reusing another Sequence's label.
+
+        Song identity is artistic/task metadata; Sequence labels are operational
+        metadata owned by ZEN.  A prior A/B or smoke build may legitimately use
+        the base song label, so a new unused Sequence gets a Sequence-number
+        suffix instead of blocking or forcing another provider call.
+        """
+        base = cls._sequence_label(song)
+        existing = {
+            str(item.get("name"))
+            for item in profile.get("sequences", [])
+            if isinstance(item, dict) and item.get("name")
+        }
+        if base not in existing:
+            return base
+        suffix = f"_SEQ{sequence}"
+        max_base = max(1, 52 - len(suffix))
+        candidate = f"{base[:max_base]}{suffix}"
+        if candidate in existing:
+            raise FirstSongBuildError(
+                "BLOCKED: both the base and Sequence-scoped Agent-owned labels already exist; "
+                "refusing an ambiguous build."
+            )
+        return candidate
 
     @staticmethod
     def _executor_address(value: object) -> str | None:
