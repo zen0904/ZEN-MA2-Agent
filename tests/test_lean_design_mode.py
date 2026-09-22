@@ -223,6 +223,17 @@ class LeanDesignModeTests(unittest.TestCase):
             [1, 2],
         )
 
+
+    def test_smoke_runner_uses_resource_map_and_refreshes_group_capability_evidence(self):
+        runner = Path(__file__).parents[1] / "scripts" / "run_sheesh_programming_test.py"
+        source = runner.read_text(encoding="utf-8")
+        self.assertIn("build_artistic_resource_map", source)
+        self.assertIn('refresh_state("group_membership"', source)
+        self.assertIn('refresh_state("fixture_type_profiles")', source)
+        self.assertIn("load_or_build_compact_context", source)
+        self.assertIn("model_resource_contract", source)
+        self.assertNotIn('"verified_effects": [', source)
+
     def test_raw_transport_fields_are_rejected(self):
         with self.assertRaisesRegex(ValueError, "forbidden transport"):
             self._build(prior_artistic_plan={"cues": [{"actions": [], "command": "Store Cue 1"}]})
