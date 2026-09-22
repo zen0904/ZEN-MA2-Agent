@@ -3,7 +3,9 @@ import unittest
 from zen_ma2_agent.test_show_evidence import (
     SHEESH_TEST_SEQUENCE,
     SHEESH_TEST_SEQUENCE_LABEL,
+    bounded_test_show_color_rows,
     derive_sheesh_test_preset_bindings,
+    test_show_palette_manifest,
 )
 
 
@@ -64,6 +66,38 @@ class TestShowEvidenceTests(unittest.TestCase):
         self.assertEqual(pairs, {(1, "4.101"), (2, "4.112")})
         self.assertTrue(all(row["status"] == "SHOW_BOUND_VERIFIED" for row in result["bindings"]))
         self.assertTrue(all(row["evidence"]["reuse_scope"] == "CURRENT_MATCHING_TEST_SHOW_ONLY" for row in result["bindings"]))
+
+
+    def test_bounded_color_inventory_recovers_only_exact_known_labels(self):
+        manifest = test_show_palette_manifest(self.plan)
+        self.assertEqual(manifest["4.101"], "ZEN_COLOR_01_RED")
+        rows = bounded_test_show_color_rows(
+            self.plan,
+            {
+                "4.101": 'Color 4.101 4.101 ZEN_COLOR_01_RED Normal',
+                "4.112": 'Color 4.112 4.112 WRONG Normal',
+            },
+        )
+        self.assertEqual(
+            rows,
+            [{
+                "preset_type": "COLOR",
+                "number": 101,
+                "reference": "4.101",
+                "name": "ZEN_COLOR_01_RED",
+                "source": "FRESH_LIST_PRESET_REFERENCE_TEST_SHOW",
+            }],
+        )
+
+    def test_bounded_color_inventory_ignores_missing_objects(self):
+        rows = bounded_test_show_color_rows(
+            self.plan,
+            {
+                "4.101": "Error #14: OBJECT DOES NOT EXIST",
+                "4.112": "WARNING, NO OBJECTS FOUND FOR LIST",
+            },
+        )
+        self.assertEqual(rows, [])
 
     def test_sequence_identity_mismatch_blocks_recovery(self):
         profile = dict(self.profile)
