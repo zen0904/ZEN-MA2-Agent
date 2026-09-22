@@ -33,8 +33,12 @@ class LeanDesignModeTests(unittest.TestCase):
             {"group_id": 1, "name": "CENTER"},
         ]
         self.presets = [
-            {"reference": "6.2", "preset_type": "Color", "name": "Impact"},
-            {"reference": "4.1", "preset_type": "Dimmer", "name": "Open"},
+            {"reference": "6.2", "preset_type": "FOCUS", "name": "Impact"},
+            {"reference": "4.1", "preset_type": "COLOR", "name": "Red"},
+        ]
+        self.effects = [
+            {"effect_id": 3600, "name": "FX_HIT"},
+            {"effect_id": 3520, "name": "FX_DIM_CHASE"},
         ]
         self.capabilities = [
             {
@@ -48,11 +52,11 @@ class LeanDesignModeTests(unittest.TestCase):
         ]
         self.plan = {
             "cues": [
-                {"cue_number": 1, "fade": 1, "actions": [{"group": 1, "dimmer": 20}]},
-                {"cue_number": 2, "fade": 1, "actions": [{"group": 2, "preset": "4.1"}]},
-                {"cue_number": 3, "fade": 1, "actions": [{"group": 1, "dimmer": 30}]},
-                {"cue_number": 4, "fade": 1, "actions": [{"group": 2, "preset": "6.2"}]},
-                {"cue_number": 5, "fade": 1, "actions": [{"group": 1, "dimmer": 40}]},
+                {"cue_number": 1, "label": "INTRO", "fade": 1, "actions": [{"group": 1, "dimmer": 20}]},
+                {"cue_number": 2, "label": "VERSE", "fade": 1, "actions": [{"group": 2, "preset": "4.1"}]},
+                {"cue_number": 3, "label": "BUILD", "fade": 1, "actions": [{"group": 1, "dimmer": 30}]},
+                {"cue_number": 4, "label": "PRE_DROP", "fade": 1, "actions": [{"group": 2, "preset": "6.2"}, {"group": 2, "effect": 3520}]},
+                {"cue_number": 5, "label": "IMPACT", "fade": 1, "actions": [{"group": 1, "dimmer": 40}]},
             ]
         }
 
@@ -62,6 +66,7 @@ class LeanDesignModeTests(unittest.TestCase):
             "spatial_context": self.spatial,
             "groups": self.groups,
             "presets": self.presets,
+            "effects": self.effects,
             "capability_profiles": self.capabilities,
             "prior_artistic_plan": self.plan,
             "owner_revision_text": "Cue 4 is too full before the drop.",
@@ -75,6 +80,7 @@ class LeanDesignModeTests(unittest.TestCase):
         self.assertEqual(first, second)
         self.assertEqual(first["context_hash"], stable_context_hash(first["context"]))
         self.assertEqual([row["group_id"] for row in first["context"]["verified_groups"]], [1, 2])
+        self.assertEqual([row["effect_id"] for row in first["context"]["verified_effects"]], [3520, 3600])
         self.assertNotIn("irrelevant_full_show_dump", first["context"]["song"])
         self.assertNotIn("irrelevant_snapshot", first["context"]["spatial"])
         self.assertNotIn("patch", json.dumps(first["context"]))
@@ -90,16 +96,19 @@ class LeanDesignModeTests(unittest.TestCase):
                 "song_context": self.song,
                 "spatial_context": self.spatial,
                 "groups": self.groups,
+                "effects": self.effects,
             })
             second = load_or_build_compact_context(cache_path=path, **{
                 "song_context": self.song,
                 "spatial_context": self.spatial,
                 "groups": self.groups,
+                "effects": self.effects,
             })
             changed = load_or_build_compact_context(cache_path=path, **{
                 "song_context": dict(self.song, song="OTHER"),
                 "spatial_context": self.spatial,
                 "groups": self.groups,
+                "effects": self.effects,
             })
             self.assertFalse(first["cache_reused"])
             self.assertTrue(second["cache_reused"])
@@ -111,6 +120,7 @@ class LeanDesignModeTests(unittest.TestCase):
             owner_revision_text="Cue 4 is too full before the drop.",
             groups=self.groups,
             presets=self.presets,
+            effects=self.effects,
             capability_profiles=self.capabilities,
             song_context=self.song,
             spatial_context=self.spatial,
@@ -118,10 +128,38 @@ class LeanDesignModeTests(unittest.TestCase):
         context = delta["context"]
         self.assertEqual(context["affected_cue_numbers"], [4])
         self.assertEqual(context["cue_neighborhood"], [3, 4, 5])
+        self.assertEqual(context["selection_mode"], "DETERMINISTIC_LOCAL")
         self.assertEqual([cue["cue_number"] for cue in context["accepted_artistic_plan"]["cues"]], [3, 4, 5])
         self.assertEqual({row["group_id"] for row in context["relevant_groups"]}, {1, 2})
         self.assertEqual({row["reference"] for row in context["relevant_presets"]}, {"6.2"})
+        self.assertEqual({row["effect_id"] for row in context["relevant_effects"]}, {3520})
         self.assertEqual(delta["delta_revision_call_budget"], 1)
+
+    def test_label_can_select_revision_region(self):
+        delta = build_delta_revision_context(
+            accepted_artistic_plan=self.plan,
+            owner_revision_text="PRE_DROP is too busy",
+            groups=self.groups,
+            presets=self.presets,
+            effects=self.effects,
+        )
+        self.assertEqual(delta["context"]["affected_cue_numbers"], [4])
+        self.assertEqual(delta["context"]["cue_neighborhood"], [3, 4, 5])
+
+    def test_unresolved_revision_never_guesses_cue_one(self):
+        delta = build_delta_revision_context(
+            accepted_artistic_plan=self.plan,
+            owner_revision_text="make the transition less generic",
+            groups=self.groups,
+            presets=self.presets,
+            effects=self.effects,
+        )
+        context = delta["context"]
+        self.assertEqual(context["affected_cue_numbers"], [])
+        self.assertEqual(context["selection_mode"], "UNRESOLVED_USE_FULL_BOUNDED_PLAN")
+        self.assertEqual(context["cue_neighborhood"], [1, 2, 3, 4, 5])
+        self.assertEqual([cue["cue_number"] for cue in context["accepted_artistic_plan"]["cues"]], [1, 2, 3, 4, 5])
+        self.assertEqual({row["effect_id"] for row in context["relevant_effects"]}, {3520, 3600})
 
     def test_explicit_affected_cues_override_request_inference(self):
         delta = build_delta_revision_context(
