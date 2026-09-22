@@ -236,6 +236,8 @@ class LeanDesignModeTests(unittest.TestCase):
         self.assertIn("bounded_test_show_color_rows", source)
         self.assertIn("_augment_bounded_template_effect_inventory", source)
         self.assertIn("parse_template_detail", source)
+        self.assertIn("derive_sheesh_test_dimmer_bindings", source)
+        self.assertIn("dimmer_bindings=historical_dimmer_bindings", source)
         self.assertNotIn('"verified_effects": [', source)
 
     def test_raw_transport_fields_are_rejected(self):
