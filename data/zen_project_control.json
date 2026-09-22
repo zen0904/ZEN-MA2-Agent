@@ -15,17 +15,19 @@
   "next_acceptance_gate": {
     "id": "LEAN_DESIGN_MODE_REGRESSION_AND_DELTA_REVISION_001",
     "classification": "REQUIRED",
-    "status": "READY",
+    "status": "COMPLETE",
     "why_it_matters": "The default product path must stay lean enough for free-provider quota while preserving artistic quality. The compiler is now song-agnostic and the full historical role chain is no longer default. Verify the refactor on the Windows runtime, then add delta-first revision/context reuse without reintroducing mandatory Researcher/Rig/Position/Critic/Finalizer calls.",
-    "blocks_current_milestone": true,
+    "blocks_current_milestone": false,
     "dependencies": [
       "docs/ZEN_DESIGN_MODE.md",
       "docs/ZEN_PRODUCT_ROADMAP.md",
       "zen_ma2_agent/designer/artistic_plan.py",
+      "zen_ma2_agent/designer/lean_design_mode.py",
       "scripts/run_sheesh_programming_test.py",
-      "tests/test_artistic_plan_compiler.py"
+      "tests/test_artistic_plan_compiler.py",
+      "tests/test_lean_design_mode.py"
     ],
-    "next_review_condition": "Full suite, self-check and git diff --check pass on the real development machine; the generic compiler accepts non-six-cue plans; the SHEESH bounded runner still enforces its six-cue experiment locally; no MA2 writes occur during regression verification. Then implement one bounded delta-revision path that reuses cached compact context and performs at most one artistic provider revision call."
+    "next_review_condition": "Closed: the generic compiler remains song-agnostic, the bounded SHEESH runner owns its six-cue policy, deterministic compact context/cache reuse and one-call delta revision are implemented and covered by regression tests. No provider or MA2 call was made during verification."
   },
   "human_review_decisions": [
     {

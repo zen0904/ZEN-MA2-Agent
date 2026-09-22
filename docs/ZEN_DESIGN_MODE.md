@@ -81,6 +81,16 @@ A request such as "Cue 4 is too full before the drop" should normally send the
 model the affected cue neighborhood and relevant resources, not restart song
 analysis, spatial design, rig design, research, Critic, and Finalizer.
 
+The implementation in `zen_ma2_agent/designer/lean_design_mode.py` assembles
+this bounded context deterministically. Its compact artifact contains only
+selected song, spatial, Group, Preset, capability, and accepted-plan fields;
+the stable context hash permits reuse when those authoritative inputs are
+unchanged. Delta revision selects the requested Cue and its immediate
+neighborhood, then retains only the referenced resources. Both the primary
+design and delta revision budgets are one call at most. Context assembly is
+provider-free and rejects raw MA2/Telnet/Lua transport fields rather than
+turning the cache into a command channel.
+
 ## Compiler boundary
 
 The provider-facing contract is intentionally small.
