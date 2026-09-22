@@ -1,5 +1,12 @@
 # Show-Bound Color Preset Applicability Verification 001
 
+> **Historical evidence notice (2026-09-22):** The UNSUPPORTED result below
+> applies only to the fingerprint/time captured by this verification. Later
+> authorized Test Show work created native Color Presets 4.101-4.113. Do not
+> use this file as a global or current prohibition on Color. Current execution
+> eligibility must come from a fresh Show scan and verified resource map.
+>
+
 **Result:** `UNSUPPORTED` for a current-Show Color preset/action resource.
 
 This is an evidence result, not a failure of Color as a lighting-design
