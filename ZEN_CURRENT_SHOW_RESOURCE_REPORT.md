@@ -1,5 +1,13 @@
 # ZEN Current Show Resource Report
 
+> **Historical snapshot notice (2026-09-22):** This report is evidence for the
+> Show state/fingerprint captured when it was written. It is **not** current
+> resource truth for the active FULL_ARTISTIC_PATH_001 mainline. Later Test Show
+> work created native Color Presets and changed geometry. Always rescan the
+> currently loaded Show before deciding whether Color, Position, Effect, or
+> other resources exist.
+>
+
 **Scope:** fresh read-only discovery of the currently running grandMA2 Show.
 
 ## Show identity
