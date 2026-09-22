@@ -114,10 +114,10 @@ class SheeshResourceRestoreScriptTests(unittest.TestCase):
         rows = MODULE._effect_rows(core, {})
         self.assertEqual(rows[0]["kind"], "SELECTIVE")
 
-    def test_failed_preflight_path_is_guarded_from_final_clear(self):
+    def test_noop_or_failed_read_only_path_is_guarded_from_final_clear(self):
         source = SCRIPT_PATH.read_text(encoding="utf-8")
-        self.assertIn("write_started = False", source)
-        self.assertIn("if core.runtime.ready and write_started:", source)
+        self.assertIn("if core.runtime.ready and audit:", source)
+        self.assertNotIn("write_started = False", source)
 
 
 if __name__ == "__main__":
