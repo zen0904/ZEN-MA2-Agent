@@ -151,6 +151,15 @@ touching geometry, existing Cues, Sequence 901, or its Executor. Every created
 Effect is read back immediately; creation stops before additional Effects if
 exact label + TEMPLATE-kind verification fails.
 
+The first real resource-restore attempt created Effect 2500 but the generic
+List Effect pool row did not expose enough information to prove TEMPLATE kind.
+That is a readback limitation, not permission to trust the label. grandMA2's
+authoritative distinction is the Effect-line QTY field: QTY=None means template,
+while a numeric QTY means selective. ZEN therefore performs a bounded read-only
+List Effect 1.<id>.* query only for the three reserved FX_DIM_CHASE_* labels and
+promotes kind only from explicit QTY evidence. If QTY is absent, zero, mixed, or
+otherwise ambiguous, the resource remains unavailable.
+
 The current Test Show has another native quirk: its generic `List Preset All`
 view can omit the Agent-created 4.101-4.113 Color rows. The smoke runner
 therefore performs thirteen bounded read-only `List Preset 4.xxx` lookups
