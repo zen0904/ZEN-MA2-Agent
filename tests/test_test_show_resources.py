@@ -1,5 +1,6 @@
 import unittest
 
+from zen_ma2_agent.state.providers.show_pools import EffectProvider
 from zen_ma2_agent.test_show_resources import (
     TemplateEffectSpec,
     allocate_template_effect_specs,
@@ -24,6 +25,30 @@ class TestShowResourcesTests(unittest.TestCase):
         self.assertFalse(any(command.startswith(("Group ", "Fixture ")) for command in commands))
         self.assertFalse(any("Store Effect 1.2500.*" in command for command in commands))
         self.assertTrue(any('Assign Attribute "Dim"' in command for command in commands))
+
+
+    def test_effect_detail_parser_uses_only_explicit_qty_evidence(self):
+        provider = EffectProvider()
+
+        template = provider.parse_template_detail(
+            "Effect 1.2500.1\nQTY=None\nAttribute Dim\n"
+        )
+        self.assertEqual((template["status"], template["kind"]), ("VERIFIED", "TEMPLATE"))
+
+        selective = provider.parse_template_detail(
+            "Effect 1.2500.1\nQTY=8\nAttribute Dim\n"
+        )
+        self.assertEqual((selective["status"], selective["kind"]), ("VERIFIED", "SELECTIVE"))
+
+        unknown = provider.parse_template_detail(
+            "Effect 2500 FX_DIM_CHASE_SLOW\n"
+        )
+        self.assertEqual((unknown["status"], unknown["kind"]), ("UNKNOWN", None))
+
+        mixed = provider.parse_template_detail(
+            "QTY=None\nQTY=8\n"
+        )
+        self.assertEqual((mixed["status"], mixed["kind"]), ("UNKNOWN", None))
 
     def test_reconcile_reuses_only_exact_template_kind(self):
         specs, existing = reconcile_template_effect_specs([
