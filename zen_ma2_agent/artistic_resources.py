@@ -248,7 +248,7 @@ def _strict_template_effect_inventory(profile: Mapping[str, Any]) -> list[dict[s
     for effect_id, item in sorted(_effect_inventory(profile).items()):
         label = str(item.get("name") or "").strip().upper()
         template = _STRICT_EFFECT_TEMPLATES.get(label)
-        if template is None:
+        if template is None or str(item.get("kind") or "").upper() != "TEMPLATE":
             continue
         kind, speed_class = template
         rows.append({
