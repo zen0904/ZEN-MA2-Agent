@@ -179,9 +179,11 @@ def derive_sheesh_test_dimmer_bindings(
     """Recover Group-bound Dimmer application evidence from real Build 001.
 
     This does not claim a universal FixtureType DIMMER capability. It only
-    proves that the exact current Group membership matches the membership used
+    proves that the exact current Group member set matches the member set used
     by the successful Test Show build and that the committed Build 001 plan
-    actually applied SET_DIMMER to that Group.
+    actually applied SET_DIMMER to that Group. Selection order may legitimately
+    change later and is recorded as current evidence rather than treated as
+    capability identity.
     """
     identity = show_identity(dict(profile))
     result: dict[str, Any] = {
@@ -246,7 +248,7 @@ def derive_sheesh_test_dimmer_bindings(
             for value in (group.get("fixture_ids_in_selection_order") or [])
             if isinstance(value, int) and not isinstance(value, bool)
         ) if isinstance(group, Mapping) else ()
-        if current_members != expected_members:
+        if len(current_members) != len(expected_members) or set(current_members) != set(expected_members):
             mismatched.append(group_id)
             continue
         cue_numbers = observed_cues.get(group_id, set())
@@ -264,8 +266,9 @@ def derive_sheesh_test_dimmer_bindings(
                 "sequence": SHEESH_TEST_SEQUENCE,
                 "sequence_label": SHEESH_TEST_SEQUENCE_LABEL,
                 "cue_numbers": sorted(cue_numbers),
-                "fixture_ids_in_selection_order": list(expected_members),
-                "reuse_scope": "CURRENT_MATCHING_TEST_SHOW_GROUP_MEMBERSHIP_ONLY",
+                "expected_fixture_member_set": sorted(expected_members),
+                "current_fixture_ids_in_selection_order": list(current_members),
+                "reuse_scope": "CURRENT_MATCHING_TEST_SHOW_GROUP_MEMBER_SET_ONLY",
             },
         })
 
