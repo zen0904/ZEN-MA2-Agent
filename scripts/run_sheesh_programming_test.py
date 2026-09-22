@@ -337,12 +337,20 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
 
         for resource, kwargs in (
             ("groups", {}),
+            ("fixtures", {}),
             ("presets", {"sequence": "ALL"}),
             ("effects", {}),
             ("sequences", {}),
-            ("fixtures", {}),
         ):
             core.refresh_state(resource, **kwargs)
+
+        groups_snapshot = core.state.get("groups")
+        for group in (groups_snapshot.values if groups_snapshot else []):
+            group_no = group.get("number")
+            if isinstance(group_no, int) and not isinstance(group_no, bool) and group_no > 0:
+                core.refresh_state("group_membership", group_no=group_no)
+        core.refresh_state("fixture_type_profiles")
+
         profile = core.scan_show_profile()
         context = {
             key: profile.get(key, [])
