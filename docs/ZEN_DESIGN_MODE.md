@@ -93,16 +93,25 @@ turning the cache into a command channel.
 
 ## Compiler boundary
 
-The provider-facing contract is intentionally small.
+The provider-facing contract is intentionally compact but must not cripple the
+artistic vocabulary.
 
 Provider owns artistic choices such as:
 
 - cue structure when the calling task allows it;
 - Group participation;
 - intensity;
-- verified Preset choice;
+- Color;
+- Position and Focus;
+- Beam / Gobo / Prism / Zoom / Frost intent;
+- Effect / Movement / Strobe intent;
 - fade;
 - density, hierarchy, contrast, restraint, and impact.
+
+Preset and Effect pool objects are implementation resources, not the artistic
+ontology. ARTISTIC_CUES_V0_2 may select only verified current-Show resources
+for executable actions; unsupported dimensions remain explicit rather than
+being silently replaced with Dimmer or a generic Preset.
 
 ZEN owns operational representation such as:
 
@@ -115,9 +124,11 @@ ZEN owns operational representation such as:
 - strict validation and readback.
 
 Song-specific constraints belong to the calling task, not the generic compiler.
-For example, a bounded SHEESH six-cue experiment may require six named sections,
-but `compile_artistic_cue_plan()` must not encode "six cues" as a universal
-rule.
+For example, the bounded SHEESH runner is a six-cue smoke test and may require
+six named sections, but `compile_artistic_cue_plan()` must not encode "six
+cues" as a universal product rule.
+
+The active expressive-path specification is `docs/FULL_ARTISTIC_PATH_001.md`.
 
 ## Safety that remains
 
