@@ -114,6 +114,29 @@ class FirstSongBuilderTests(unittest.TestCase):
         self.assertEqual(workflow.task.intent.parameters["sequence"], 302)
         self.assertNotIn("Store Cue 1 Sequence 301", workflow.preview_note)
 
+    def test_optional_page_two_executor_assignment_is_allowlisted(self):
+        profile = {
+            "groups": [{"group_id": 1, "name": "HYBRID"}],
+            "presets": [{"reference": "6.2", "preset_type": "FOCUS", "name": "normal"}],
+            "effects": [],
+            "sequences": [],
+        }
+        plan = {
+            "schema": "zen.show_plan.v0.1",
+            "song": "SHEESH",
+            "target_executor": "2.001",
+            "active_sequence_range": [301, 400],
+            "cues": [{
+                "id": "intro", "cue_number": 1, "label": "INTRO", "fade": 1.0,
+                "actions": [{"operation": "SET_DIMMER", "target": {"type": "group", "ref": 1}, "level": 20}],
+            }],
+        }
+        workflow = ShowPlanBuilder().build_first_song(plan, profile)
+        commands = workflow.commands
+        self.assertIn("Assign Sequence 301 At Executor 2.1 /nc", commands)
+        self.assertIn('Label Executor 2.1 "ZEN_AI_TEST_SHEESH" /nc', commands)
+        self.assertEqual(workflow.task.intent.parameters["target_executor"], "2.001")
+
     def test_narrow_rollback_needs_exact_agent_ownership_proof(self):
         command = ShowPlanBuilder.narrow_rollback_command(201, "ZEN_AI_TEST_ZEN_FIRST_SONG_TEST", {"number": 201, "name": "ZEN_AI_TEST_ZEN_FIRST_SONG_TEST"})
         self.assertEqual(command, "Delete Sequence 201 /nc")

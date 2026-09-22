@@ -5,9 +5,11 @@ syntax for a plan whose Fixture/Preset/Effect semantics are not yet readable.
 """
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from ..designer.schema import validate_show_plan
+from ..ma_text import validate_ma_text
 from ..models import Intent
 from .. import protected_objects
 from ..workflow import ActionStep, SkillGraphNode, Subtask, Task, WorkflowPlan
@@ -56,6 +58,7 @@ class ShowPlanBuilder:
         plan = validate_show_plan(plan)
         sequence = self._allocate_sequence(plan, profile)
         label = self._sequence_label(str(plan.get("song") or "SONG"))
+        target_executor = self._executor_address(plan.get("target_executor"))
         if any(item.get("name") == label for item in profile.get("sequences", [])):
             raise FirstSongBuildError("BLOCKED: an existing Sequence already has this Agent-owned label; refusing an ambiguous build.")
         group_ids = {item.get("group_id") for item in profile.get("groups", [])}
@@ -73,6 +76,7 @@ class ShowPlanBuilder:
         effect_application_blocked: list[int] = []
         for cue in plan["cues"]:
             cue_no, cue_label, fade = cue["cue_number"], cue["label"], float(cue["fade"])
+            validate_ma_text(str(cue_label), field=f"cue[{cue_no}].label")
             for index, action in enumerate(cue["actions"], start=1):
                 target = action["target"]
                 group = target.get("ref")
@@ -107,6 +111,10 @@ class ShowPlanBuilder:
             if not labelled:
                 steps.append(("label-sequence", "Label new Agent-owned Sequence", f'Label Sequence {sequence} "{label}" /nc'))
                 labelled = True
+        if target_executor is not None:
+            steps.append(("assign-executor", f"Assign Sequence {sequence} to Page 2 Executor", f"Assign Sequence {sequence} At Executor {target_executor} /nc"))
+            validate_ma_text(label, field="sequence.label")
+            steps.append(("label-executor", "Label the owned target Executor", f'Label Executor {target_executor} "{label}" /nc'))
         steps.append(("clear-after", "Clear Agent build Programmer values", "ClearAll"))
         action_steps = tuple(ActionStep(step_id, title, "command", command, "MODIFY") for step_id, title, command in steps)
         effect_line = "Effects: none" if not referenced_effects else (
@@ -127,7 +135,7 @@ class ShowPlanBuilder:
             "Existing production objects modified: NONE", f"Will create: Sequence {sequence}; Cues {len(plan['cues'])}", "", "Safety: MODIFY", "Approval required.", "", "Generated MA2 commands:", *[f"- {command}" for _, _, command in steps],
         ])
         effect_application = "EFFECT_APPLICATION_UNVERIFIED" if effect_application_blocked else "REAL_MACHINE_VERIFIED" if referenced_effects else "NOT_REQUESTED"
-        intent = Intent("build_first_song", {"song": plan["song"], "sequence": sequence, "sequence_label": label, "cue_count": len(plan["cues"]), "cue_labels": [cue["label"] for cue in plan["cues"]], "cues": plan["cues"], "referenced_groups": sorted(referenced_groups), "referenced_presets": sorted(referenced_presets), "referenced_effects": sorted(referenced_effects), "effect_application": effect_application, "warnings": plan.get("warnings", [])}, "ZEN_SHOW_PLAN")
+        intent = Intent("build_first_song", {"song": plan["song"], "sequence": sequence, "sequence_label": label, "target_executor": plan.get("target_executor"), "cue_count": len(plan["cues"]), "cue_labels": [cue["label"] for cue in plan["cues"]], "cues": plan["cues"], "referenced_groups": sorted(referenced_groups), "referenced_presets": sorted(referenced_presets), "referenced_effects": sorted(referenced_effects), "effect_application": effect_application, "warnings": plan.get("warnings", [])}, "ZEN_SHOW_PLAN")
         executable = not effect_application_blocked
         verification = "Read Sequence and Cue metadata after build; Preset/Cue Effect content read-back is PARTIAL because no Cue-content provider is verified."
         if effect_application_blocked:
@@ -173,3 +181,21 @@ class ShowPlanBuilder:
     def _sequence_label(song: str) -> str:
         safe = "".join(character if character.isalnum() or character in "_-" else "_" for character in song.upper()).strip("_")
         return f"ZEN_AI_TEST_{safe[:40] or 'SONG'}"
+
+    @staticmethod
+    def _executor_address(value: object) -> str | None:
+        """Validate a display target (for example ``2.001``) and return MA2's
+        canonical page.executor address (``2.1``). Pages are pre-existing;
+        this builder never creates or changes a Page.
+        """
+        if value is None or value == "":
+            return None
+        if not isinstance(value, str):
+            raise FirstSongBuildError("target_executor must be a display string such as 2.001.")
+        match = re.fullmatch(r"([1-9]\d*)\.(0*[1-9]\d*)", value.strip())
+        if not match:
+            raise FirstSongBuildError("target_executor must use page.executor form such as 2.001.")
+        page, executor = int(match.group(1)), int(match.group(2))
+        if page < 1 or executor < 1:
+            raise FirstSongBuildError("target_executor must address positive Page and Executor numbers.")
+        return f"{page}.{executor}"

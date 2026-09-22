@@ -40,7 +40,7 @@ from .geometry_test_environment import (
 from .models import Intent
 from .designer import FirstSongDesigner
 from .designer.report import write_real_song_design_report
-from .builder import FirstSongBuildError
+from .builder import FirstSongBuildError, ShowPlanBuilder
 from .song_analysis import SongAnalysisAdapter, validate_song_analysis
 
 
@@ -1052,6 +1052,15 @@ class AgentCore:
         if not isinstance(sequence, int) or not isinstance(label, str) or not isinstance(expected_labels, list):
             raise FirstSongBuildError("First Song verification metadata is incomplete.")
         metadata = self.verify_first_song_metadata(sequence, label, data.get("cues", []), expected_labels)
+        target_executor = data.get("target_executor")
+        if target_executor:
+            address = ShowPlanBuilder._executor_address(target_executor)
+            if address is None:
+                raise FirstSongBuildError("First Song target Executor metadata is invalid during verification.")
+            executor_output = self.runtime.read_state("List Executor")
+            if not re.search(rf"(?:Executor|Exec)\s+{re.escape(address)}\b", executor_output, re.I) or not re.search(rf"(?:Sequence\s*=\s*Seq|Sequence)\s*{sequence}\b", executor_output, re.I) or label not in executor_output:
+                raise FirstSongBuildError(f"Verification failed: Page/Executor {target_executor} is not assigned to the owned Sequence.")
+            metadata += f"\nExecutor {target_executor} assignment verified."
         effect_lines = self._fresh_verify_effect_references({"cues": data.get("cues", [])})
         preset_refs = set(data.get("referenced_presets") or [])
         if preset_refs:

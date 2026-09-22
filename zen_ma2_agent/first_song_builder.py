@@ -32,6 +32,10 @@ class FirstSongBuildSkill:
         label = plan.task.intent.parameters.get("sequence_label")
         if not isinstance(sequence, int) or not isinstance(label, str) or not label.startswith("ZEN_AI_TEST_"):
             raise FirstSongBuildError("First Song workflow must own an explicitly labelled new Sequence.")
+        target_executor = plan.task.intent.parameters.get("target_executor")
+        executor_address = ShowPlanBuilder._executor_address(target_executor)
+        if target_executor is not None and executor_address is None:
+            raise FirstSongBuildError("First Song target Executor metadata is invalid.")
         for command in plan.commands:
             allowed = (
                 command == "ClearAll"
@@ -41,6 +45,8 @@ class FirstSongBuildSkill:
                 or re.fullmatch(r"At (?:100|[1-9]?\d)", command)
                 or re.fullmatch(rf'Store Cue [1-9]\d* Sequence {sequence} "[^"\r\n]+" Fade \d+(?:\.\d+)? /nc', command)
                 or command == f'Label Sequence {sequence} "{label}" /nc'
+                or (executor_address is not None and command == f"Assign Sequence {sequence} At Executor {executor_address} /nc")
+                or (executor_address is not None and command == f'Label Executor {executor_address} "{label}" /nc')
             )
             if not allowed:
                 raise FirstSongBuildError(f"First Song Builder rejected non-allow-listed command: {command}")
