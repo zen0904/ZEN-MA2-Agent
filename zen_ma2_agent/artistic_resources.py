@@ -193,6 +193,32 @@ def _verified_preset_bindings(
     return result
 
 
+def _verified_dimmer_bindings(
+    *,
+    profile: Mapping[str, Any],
+    bindings: Iterable[Mapping[str, Any]],
+) -> dict[int, dict[str, Any]]:
+    current_identity = _show_identity(profile)
+    result: dict[int, dict[str, Any]] = {}
+    for binding in bindings:
+        if not isinstance(binding, Mapping) or binding.get("status") not in {"VERIFIED", "SHOW_BOUND_VERIFIED"}:
+            continue
+        if not _same_identity(binding.get("show_identity"), current_identity):
+            continue
+        if str(binding.get("capability") or "").upper() != "DIMMER":
+            continue
+        group_id = binding.get("group_id")
+        if isinstance(group_id, bool) or not isinstance(group_id, int) or group_id < 1:
+            continue
+        result[group_id] = {
+            "status": str(binding.get("status")),
+            "source": binding.get("source"),
+            "implementation": binding.get("implementation") or "SET_DIMMER",
+            "evidence": deepcopy(binding.get("evidence") or {}),
+        }
+    return result
+
+
 def _verified_effect_bindings(
     *,
     profile: Mapping[str, Any],
@@ -271,6 +297,7 @@ def build_artistic_resource_map(
     profile: Mapping[str, Any],
     *,
     preset_bindings: Iterable[Mapping[str, Any]] = (),
+    dimmer_bindings: Iterable[Mapping[str, Any]] = (),
     effect_catalog_entries: Iterable[Mapping[str, Any]] = (),
     effect_application_capability: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
@@ -288,6 +315,7 @@ def build_artistic_resource_map(
     }
     profiles = _profile_lookup(profile)
     bound_presets = _verified_preset_bindings(profile=profile, bindings=preset_bindings)
+    bound_dimmers = _verified_dimmer_bindings(profile=profile, bindings=dimmer_bindings)
     bound_effects = _verified_effect_bindings(
         profile=profile,
         catalog_entries=effect_catalog_entries,
@@ -321,10 +349,16 @@ def build_artistic_resource_map(
         dimensions: dict[str, Any] = {}
         for dimension in ARTISTIC_DIMENSIONS:
             if dimension == "DIMMER":
+                direct_evidence = bound_dimmers.get(group_id)
                 dimensions[dimension] = {
-                    "execution_status": "VERIFIED_DIRECT_GROUP_LEVEL" if member_ids else "UNAVAILABLE_EMPTY_GROUP",
+                    "execution_status": (
+                        "SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL"
+                        if direct_evidence
+                        else ("DIRECT_GROUP_LEVEL_UNVERIFIED_CAPABILITY" if member_ids else "UNAVAILABLE_EMPTY_GROUP")
+                    ),
                     "implementation": "SET_DIMMER",
                     "technical_capability": _technical_dimension_status("DIMMER", type_labels, profiles),
+                    "application_evidence": deepcopy(direct_evidence) if direct_evidence else None,
                 }
                 continue
             technical = _technical_dimension_status(dimension, type_labels, profiles)
@@ -337,7 +371,10 @@ def build_artistic_resource_map(
         for preset in presets:
             dimensions[preset["dimension"]]["execution_status"] = "VERIFIED_PRESET_RESOURCE"
         effects = list(bound_effects.get(group_id, []))
-        dimmer_verified = dimensions["DIMMER"]["technical_capability"].get("status") == "SHOW_BOUND_VERIFIED"
+        dimmer_verified = (
+            dimensions["DIMMER"]["technical_capability"].get("status") == "SHOW_BOUND_VERIFIED"
+            or dimensions["DIMMER"]["execution_status"] == "SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL"
+        )
         if application_verified and dimmer_verified:
             existing_ids = {item.get("effect_id") for item in effects}
             for template in strict_template_effects:
