@@ -26,6 +26,7 @@ from zen_ma2_agent.artistic_resources import (
     model_resource_contract,
     preset_applicability_from_map,
 )
+from zen_ma2_agent.designer.lean_design_mode import load_or_build_compact_context
 from zen_ma2_agent.designer.artistic_plan import (
     ArtisticPlanCompileError,
     compile_artistic_cue_plan,
@@ -133,7 +134,7 @@ def _provider_contract(resource_map: dict) -> dict:
     }
 
 
-def _prompt(profile: dict, resource_map: dict, spatial_artifact: dict) -> tuple[str, str]:
+def _prompt(design_context: dict, resource_map: dict) -> tuple[str, str]:
     contract = _provider_contract(resource_map)
     system = (
         "You are the ZEN LIGHTING_DESIGNER for a disposable grandMA2 programming test. "
@@ -155,7 +156,7 @@ def _prompt(profile: dict, resource_map: dict, spatial_artifact: dict) -> tuple[
                 "space, purposeful hierarchy, strong silhouette and restrained progression"
             ),
             "artistic_contract": contract,
-            "spatial_context": spatial_artifact,
+            "design_context": design_context,
             "safety": {
                 "fixture_9999": "forbidden",
                 "geometry_changes": False,
@@ -358,6 +359,20 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
             effect_application_capability=effect_application_capability,
         )
         result["artistic_resource_map"] = resource_map
+        compact_cache = USB_HOME / "projects" / "runs" / RUN_ID / "programming" / "lean_design_context.json"
+        design_context_artifact = load_or_build_compact_context(
+            cache_path=compact_cache,
+            song_context={
+                "song": SONG,
+                "artist": "BABYMONSTER",
+                "brief": "KPOP_YG_INSPIRED; strong silhouette, center hierarchy, restrained progression",
+            },
+            spatial_context=spatial_artifact,
+            groups=groups,
+            artistic_resource_map=resource_map,
+        )
+        result["design_context_hash"] = design_context_artifact["context_hash"]
+        result["design_context_cache_reused"] = design_context_artifact.get("cache_reused", False)
         selected_sequence = _lowest_safe_sequence_id(context)
         active_sequence_range = [selected_sequence, selected_sequence]
         result["selected_sequence_id"] = selected_sequence
@@ -378,7 +393,7 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
             result["provider_attempts"] = saved.get("provider_attempts", [])
         else:
             router = _router()
-            system, user = _prompt(context, resource_map, spatial_artifact)
+            system, user = _prompt(design_context_artifact["context"], resource_map)
             content, provider, attempts = router.complete_with_diagnostics(
                 role="LIGHTING_DESIGNER",
                 system=system,
