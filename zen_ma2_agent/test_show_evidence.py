@@ -161,6 +161,124 @@ def derive_sheesh_test_preset_bindings(
     return result
 
 
+SHEESH_TEST_GROUP_FIXTURES: dict[int, tuple[int, ...]] = {
+    1: tuple(range(101, 109)),
+    2: tuple(range(301, 309)),
+    3: tuple(range(201, 209)),
+    4: tuple(range(501, 509)),
+    5: tuple(range(401, 409)),
+    6: tuple(range(601, 609)),
+    7: tuple(range(701, 709)),
+}
+
+
+def derive_sheesh_test_dimmer_bindings(
+    profile: Mapping[str, Any],
+    plan: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Recover Group-bound Dimmer application evidence from real Build 001.
+
+    This does not claim a universal FixtureType DIMMER capability. It only
+    proves that the exact current Group membership matches the membership used
+    by the successful Test Show build and that the committed Build 001 plan
+    actually applied SET_DIMMER to that Group.
+    """
+    identity = show_identity(dict(profile))
+    result: dict[str, Any] = {
+        "schema": "zen.test_show_dimmer_binding_recovery.v0.1",
+        "source": SOURCE,
+        "show_identity": identity,
+        "sequence": {
+            "number": SHEESH_TEST_SEQUENCE,
+            "label": SHEESH_TEST_SEQUENCE_LABEL,
+            "current_match": False,
+        },
+        "status": "UNAVAILABLE",
+        "bindings": [],
+        "mismatched_groups": [],
+        "reason": None,
+    }
+
+    if str(plan.get("schema") or "") != "zen.show_plan.v0.1" or plan.get("sequence") != SHEESH_TEST_SEQUENCE:
+        result["reason"] = "COMMITTED_TEST_PLAN_IDENTITY_MISMATCH"
+        return result
+    if str(plan.get("sequence_label") or "") != SHEESH_TEST_SEQUENCE_LABEL:
+        result["reason"] = "COMMITTED_TEST_SEQUENCE_LABEL_MISMATCH"
+        return result
+    if not _current_sequence_matches(profile):
+        result["reason"] = "CURRENT_TEST_SEQUENCE_IDENTITY_NOT_PRESENT"
+        return result
+    result["sequence"]["current_match"] = True
+
+    groups = {
+        item.get("group_id"): item
+        for item in profile.get("groups", [])
+        if isinstance(item, Mapping) and isinstance(item.get("group_id"), int)
+    }
+
+    observed_cues: dict[int, set[int]] = {}
+    for cue in plan.get("cues", []) if isinstance(plan.get("cues"), list) else []:
+        if not isinstance(cue, Mapping):
+            continue
+        cue_number = cue.get("cue_number")
+        for action in cue.get("actions", []) if isinstance(cue.get("actions"), list) else []:
+            if not isinstance(action, Mapping) or action.get("operation") != "SET_DIMMER":
+                continue
+            target = action.get("target")
+            group_id = target.get("ref") if isinstance(target, Mapping) and target.get("type") == "group" else None
+            level = action.get("level")
+            if (
+                isinstance(group_id, int)
+                and not isinstance(group_id, bool)
+                and isinstance(level, (int, float))
+                and not isinstance(level, bool)
+                and 0 <= float(level) <= 100
+                and isinstance(cue_number, int)
+            ):
+                observed_cues.setdefault(group_id, set()).add(cue_number)
+
+    bindings: list[dict[str, Any]] = []
+    mismatched: list[int] = []
+    for group_id, expected_members in sorted(SHEESH_TEST_GROUP_FIXTURES.items()):
+        group = groups.get(group_id)
+        current_members = tuple(
+            value
+            for value in (group.get("fixture_ids_in_selection_order") or [])
+            if isinstance(value, int) and not isinstance(value, bool)
+        ) if isinstance(group, Mapping) else ()
+        if current_members != expected_members:
+            mismatched.append(group_id)
+            continue
+        cue_numbers = observed_cues.get(group_id, set())
+        if not cue_numbers:
+            continue
+        bindings.append({
+            "status": "SHOW_BOUND_VERIFIED",
+            "show_identity": deepcopy(identity),
+            "group_id": group_id,
+            "capability": "DIMMER",
+            "implementation": "SET_DIMMER",
+            "source": SOURCE,
+            "evidence": {
+                "kind": "OBSERVED_REAL_MA2_TEST_BUILD_APPLICATION",
+                "sequence": SHEESH_TEST_SEQUENCE,
+                "sequence_label": SHEESH_TEST_SEQUENCE_LABEL,
+                "cue_numbers": sorted(cue_numbers),
+                "fixture_ids_in_selection_order": list(expected_members),
+                "reuse_scope": "CURRENT_MATCHING_TEST_SHOW_GROUP_MEMBERSHIP_ONLY",
+            },
+        })
+
+    result["bindings"] = bindings
+    result["mismatched_groups"] = mismatched
+    if bindings:
+        result["status"] = "SHOW_BOUND_VERIFIED" if not mismatched else "PARTIAL"
+        result["reason"] = None if not mismatched else "SOME_CURRENT_GROUP_MEMBERSHIP_MISMATCH"
+    else:
+        result["reason"] = "NO_CURRENT_GROUP_MATCHES_OBSERVED_DIMMER_APPLICATION"
+    return result
+
+
 def test_show_palette_manifest(plan: Mapping[str, Any]) -> dict[str, str]:
     """Return the fixed Build 001 Color reference -> label manifest."""
     result: dict[str, str] = {}
