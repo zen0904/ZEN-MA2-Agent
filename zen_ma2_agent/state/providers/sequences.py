@@ -14,7 +14,7 @@ class SequenceProvider:
     # ``Sequ 201 201  ZEN_AI_TEST_SONG  On ...``.  The first two columns
     # both represent the Sequence number; retain the explicit pool column
     # instead of treating the row as an arbitrary display string.
-    _table = re.compile(r"^\s*sequ(?:ence)?\s+(\d+)\s+(\d+)\s+(.+?)\s{2,}(?:on|off)\b", re.I)
+    _table = re.compile(r"^\s*sequ(?:ence)?\s+(\d+)\s+(\d+)\s+(.+?)\s+(?:on|off)\b", re.I)
 
     def parse(self, output: str) -> list[Sequence]:
         sequences: list[Sequence] = []
