@@ -192,25 +192,41 @@ def _allocate_fresh_palette(
     plan: dict[str, Any],
     reads: dict[str, str],
 ) -> dict[str, Any]:
-    """Remap the historical 13-color intent onto the first thirteen safe free Color slots."""
+    """Reuse exact owned colors; allocate only missing colors from the front."""
     remapped = deepcopy(plan)
     original_palette = _palette(remapped)
     unavailable: set[int] = set()
     ref_map: dict[str, str] = {}
     new_palette: list[dict[str, Any]] = []
 
+    # Semantic reuse wins over creating a duplicate. The historical refs are
+    # bounded known-owned locations, so checking them does not turn this into
+    # an arbitrary Preset sweep.
+    reusable: dict[str, int] = {}
     for entry in original_palette:
-        while True:
-            try:
-                candidate = first_free_from_front(unavailable, start=1)
-            except AllocationError as exc:
-                raise RuntimeError("No safe free Color preset slot remains for the Test Show palette.") from exc
-            reference = f"4.{candidate}"
-            output = _read_preset_reference(core, reference, reads)
-            if _object_missing(output):
-                break
-            unavailable.add(candidate)
+        original_number = int(entry["preset"])
+        original_reference = f"4.{original_number}"
+        output = _read_preset_reference(core, original_reference, reads)
+        if str(entry["label"]) in output:
+            reusable[str(entry["label"])] = original_number
+
+    for entry in original_palette:
+        label = str(entry["label"])
         original_reference = f"4.{int(entry['preset'])}"
+        if label in reusable:
+            candidate = reusable[label]
+            reference = f"4.{candidate}"
+        else:
+            while True:
+                try:
+                    candidate = first_free_from_front(unavailable, start=1)
+                except AllocationError as exc:
+                    raise RuntimeError("No safe free Color preset slot remains for the Test Show palette.") from exc
+                reference = f"4.{candidate}"
+                output = _read_preset_reference(core, reference, reads)
+                if _object_missing(output):
+                    break
+                unavailable.add(candidate)
         ref_map[original_reference] = reference
         updated = deepcopy(entry)
         updated["preset"] = candidate
