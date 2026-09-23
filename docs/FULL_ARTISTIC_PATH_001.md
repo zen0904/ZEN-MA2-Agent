@@ -190,8 +190,55 @@ Lighting Designer call.
 The Builder now preserves the base label for the first build and, when that
 base label already belongs to another scanned Sequence, deterministically uses
 a Sequence-scoped label such as `ZEN_AI_TEST_SHEESH_SEQ3` for the newly
-allocated Sequence. If that scoped label also already exists, the Builder still
-fails closed. Existing Sequences are never renamed or overwritten.
+allocated Sequence. If that label is also occupied, ZEN appends the next unique
+suffix instead of stopping the operator. Existing Sequences are never renamed
+or overwritten.
+
+## Operational self-heal and front-first allocation
+
+Safety constrains consequences, not problem-solving.
+
+For a new ZEN-owned object, a high numeric ID is not considered safer. ZEN
+first reads the current pool, starts at the front, skips every occupied or
+protected slot, and uses the first safe free slot. This policy is shared by
+Sequence/Executor/Effect allocation and the disposable-test helpers for Color
+Presets, Groups and Timecodes.
+
+Examples:
+
+```text
+Sequence 1 occupied
+Sequence 2 occupied
+Sequence 3 free
+=> create Sequence 3
+
+Executor 2.001 occupied
+Executor 2.002 occupied
+Executor 2.003 free
+=> use Executor 2.003
+```
+
+Ordinary operational problems are self-healed rather than escalated:
+
+- occupied IDs advance to the next free ID;
+- repeated Agent-owned labels receive a deterministic unique suffix;
+- duplicate exact verified semantic Effects reuse the lowest verified ID;
+- stale runtime state is refreshed;
+- a canonical ShowPlan that already passed compilation is resumed after a
+  backend failure instead of replaying provider output or artistic compilation.
+
+A canonical retry may change only ZEN-owned operational metadata such as a new
+Sequence/Executor allocation. It refreshes the exact current Preset/Effect
+objects referenced by the frozen plan. If an object is actually missing, the
+runtime reports that concrete resource loss; it does not silently substitute
+art or recall a provider for a metadata problem.
+
+Hard stops remain for destructive boundaries: Patch/Address, Fixture identity
+or type, Fixture 9999, foreign/production object overwrite, arbitrary raw
+MA2/Telnet/Lua, unauthorized deletion and paid-provider use.
+
+A genuine artistic-resource mismatch may use the one bounded Designer delta
+already allowed by Design Mode. Backend collisions do not consume that budget.
 
 ## Smoke test versus product design
 
