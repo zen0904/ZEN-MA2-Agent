@@ -18,10 +18,8 @@ from .workflow import ActionStep, SkillGraphNode, Subtask, Task, WorkflowPlan
 TEST_MODE_ENV = "ZEN_MA2_GEOMETRY_TEST_MODE"
 TEST_SHOW = "MA2_EFFECT_PROBE_WORK"
 PRODUCTION_SHOW = "zen templ show"
-# Legacy numbers are retained only as historical documentation. New isolated
-# test Groups are allocated from the first free slots by AgentCore.
-SOURCE_GROUP = 90
-DESTINATION_GROUP = 91
+# Isolated test Group numbers are runtime allocations. No numeric reserve is
+# part of the product contract.
 SOURCE_LABEL = "ZEN Clone Src TEST"
 DESTINATION_LABEL = "ZEN Clone Dst TEST"
 
