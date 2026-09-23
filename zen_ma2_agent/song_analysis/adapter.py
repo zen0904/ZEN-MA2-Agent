@@ -12,9 +12,7 @@ class SongAnalysisAdapter:
 
     def to_designer_input(self, analysis: dict[str, Any]) -> dict[str, Any]:
         analysis = validate_song_analysis(analysis)
-        active_range = analysis["build"].get("active_sequence_range")
-        if active_range is None:
-            raise SongAnalysisError("Song analysis needs build.active_sequence_range before a Builder preview.")
+        active_range = analysis["build"].get("active_sequence_range") or [1, 9999]
         sections = []
         for section in analysis["sections"]:
             sections.append({
