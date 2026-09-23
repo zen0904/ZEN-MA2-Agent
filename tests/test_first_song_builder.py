@@ -100,6 +100,14 @@ class FirstSongBuilderTests(unittest.TestCase):
         self.assertEqual(len(self.runtime.client.cues), 7)
         self.assertEqual(self.runtime.client.commands.count("ClearAll"), 2)
 
+    def test_runtime_allows_exact_preset_ref_and_still_rejects_arbitrary_preset_text(self):
+        self.assertIn(
+            "ZEN_COLOR_01_RED",
+            self.runtime.read_state("List Preset 4.101"),
+        )
+        with self.assertRaises(PermissionError):
+            self.runtime.read_state('List Preset 4.101 /nc')
+
     def test_post_build_verification_uses_exact_preset_lookup_when_all_inventory_omits_it(self):
         lines = self.core._fresh_verify_preset_references({"4.101"})
         self.assertEqual(lines, ["4.101 — ZEN_COLOR_01_RED"])
