@@ -243,6 +243,18 @@ class SheeshSavedRetryTests(unittest.TestCase):
         self.assertTrue(recovered["executor_verified"])
         self.assertEqual(recovered["preset_lines"], ["4.101 — COLOR"])
 
+    def test_runner_checks_postwrite_recovery_before_new_allocation_or_broad_refresh(self):
+        from pathlib import Path
+        source = (Path(__file__).resolve().parents[1] / "scripts" / "run_sheesh_programming_test.py").read_text(encoding="utf-8")
+        run_source = source[source.index("def run(real_machine"):]
+        recovery = run_source.index("recovered = _recover_prior_postwrite_build(core, saved)")
+        broad_refresh = run_source.index('for resource, kwargs in (')
+        sequence_allocation = run_source.index("selected_sequence = _lowest_safe_sequence_id(context)")
+        executor_allocation = run_source.index("target_executor = first_free_executor(executor_before, page=target_page)")
+        self.assertLess(recovery, broad_refresh)
+        self.assertLess(recovery, sequence_allocation)
+        self.assertLess(recovery, executor_allocation)
+
     def test_non_postwrite_failure_does_not_trigger_existing_build_recovery(self):
         class Core:
             pass
