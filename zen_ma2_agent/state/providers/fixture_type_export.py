@@ -457,7 +457,7 @@ class FixtureTypeExportProvider:
         while self.monotonic_clock() <= deadline:
             try:
                 stat = path.stat()
-                if path.is_file() and stat.st_mtime_ns >= started_at_ns and stat.st_size > 0:
+                if path.is_file() and stat.st_size > 0:
                     signature = (stat.st_mtime_ns, stat.st_size)
                     stable_polls = stable_polls + 1 if signature == previous else 1
                     previous = signature
