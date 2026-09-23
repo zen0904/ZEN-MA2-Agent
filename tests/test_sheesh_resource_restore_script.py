@@ -11,31 +11,32 @@ SPEC.loader.exec_module(MODULE)
 
 
 class _Client:
-    def __init__(self, detail_outputs=None):
+    def __init__(self, detail_outputs=None, preset_outputs=None):
         self.commands = []
         self.detail_outputs = dict(detail_outputs or {})
+        self.preset_outputs = dict(preset_outputs or {})
 
     def execute(self, command):
         self.commands.append(command)
         if command.startswith("List Preset 4."):
-            return "Error #14: OBJECT DOES NOT EXIST"
+            return self.preset_outputs.get(command, "Error #14: OBJECT DOES NOT EXIST")
         if command.startswith("List Effect 1."):
             return self.detail_outputs.get(command, "")
         return ""
 
 
 class _Runtime:
-    def __init__(self, outputs, detail_outputs=None):
+    def __init__(self, outputs, detail_outputs=None, preset_outputs=None):
         self.outputs = outputs
-        self.client = _Client(detail_outputs)
+        self.client = _Client(detail_outputs, preset_outputs)
 
     def read_state(self, command):
         return self.outputs[command]
 
 
 class _Core:
-    def __init__(self, outputs, detail_outputs=None):
-        self.runtime = _Runtime(outputs, detail_outputs)
+    def __init__(self, outputs, detail_outputs=None, preset_outputs=None):
+        self.runtime = _Runtime(outputs, detail_outputs, preset_outputs)
 
 
 def _outputs():
@@ -161,6 +162,64 @@ class SheeshResourceRestoreScriptTests(unittest.TestCase):
         )
         rows = MODULE._effect_rows(core, {})
         self.assertEqual(rows[0]["kind"], "SELECTIVE")
+
+    def test_fresh_build_uses_first_free_sequence_executor_and_color_slots(self):
+        outputs = _outputs()
+        outputs["List Sequence"] = (
+            'Sequ 1 1 FIRST On 0 0\n'
+            'Sequ 2 2 SECOND On 0 0\n'
+        )
+        outputs["List Executor"] = (
+            'Executor 1.001 Sequence=Seq 1 "FIRST"\n'
+            'Executor 1.002 Sequence=Seq 2 "SECOND"\n'
+        )
+        core = _Core(
+            outputs,
+            preset_outputs={
+                "List Preset 4.1": 'Color 4.1 4.1 FOREIGN Normal\n',
+            },
+        )
+        plan = MODULE._load_plan(MODULE.PLAN_PATH)
+
+        remapped, sequence, label, executor_display, executor_address = MODULE._allocate_fresh_build(
+            core,
+            plan,
+            {},
+        )
+
+        self.assertEqual(sequence, 3)
+        self.assertEqual(executor_display, "1.003")
+        self.assertEqual(executor_address, "1.3")
+        self.assertEqual(label, "ZEN_SHEESH_TEST")
+        self.assertEqual(
+            [entry["preset"] for entry in remapped["test_palette"]],
+            list(range(2, 15)),
+        )
+        refs = {
+            action["preset_ref"]
+            for cue in remapped["cues"]
+            for action in cue["actions"]
+            if action.get("operation") == "CALL_PRESET"
+        }
+        self.assertNotIn("4.101", refs)
+        self.assertTrue(refs <= {f"4.{number}" for number in range(2, 15)})
+
+    def test_runtime_cue_commands_use_allocated_ids_not_legacy_tail_ids(self):
+        plan = MODULE._load_plan(MODULE.PLAN_PATH)
+        commands = [
+            command
+            for command, _step in MODULE._cue_commands(
+                plan,
+                sequence=3,
+                sequence_label="ZEN_SHEESH_TEST_SEQ3",
+                executor_address="1.3",
+            )
+        ]
+        self.assertTrue(any("Sequence 3" in command for command in commands))
+        self.assertIn('Assign Sequence 3 At Executor 1.3 /nc', commands)
+        self.assertIn('Label Executor 1.3 "ZEN_SHEESH_TEST_SEQ3" /nc', commands)
+        self.assertFalse(any("Sequence 901" in command for command in commands))
+        self.assertFalse(any("Executor 201" in command for command in commands))
 
     def test_noop_or_failed_read_only_path_is_guarded_from_final_clear(self):
         source = SCRIPT_PATH.read_text(encoding="utf-8")
