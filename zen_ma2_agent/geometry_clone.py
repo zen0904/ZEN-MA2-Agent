@@ -220,10 +220,11 @@ class GeometryCloneSkill:
         isolated_test = bool(task.intent.parameters.get("isolated_test_show"))
         test_pair = (
             os.environ.get("ZEN_MA2_GEOMETRY_TEST_MODE") == "1"
-            and spec.source_group_number == 90
-            and spec.destination_group_number == 91
             and spec.source_group_name == "ZEN Clone Src TEST"
             and spec.destination_group_name == "ZEN Clone Dst TEST"
+            and spec.source_group_number != spec.destination_group_number
+            and spec.source_group_number > 0
+            and spec.destination_group_number > 0
         )
         executable = bool((self.manifest.enabled or (isolated_test and test_pair)) and spec.mapping_mode == "ORDERED_1_TO_1" and commands)
         return WorkflowPlan(
