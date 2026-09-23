@@ -3,6 +3,7 @@ import unittest
 from scripts.run_sheesh_programming_test import (
     _attach_effect_identity_labels,
     _augment_canonical_referenced_resources,
+    _recover_prior_postwrite_build,
     _resume_saved_canonical_artifact,
 )
 
@@ -182,6 +183,76 @@ class SheeshSavedRetryTests(unittest.TestCase):
                 {"presets": [], "effects": []},
                 plan,
             )
+
+    def test_postwrite_verification_failure_recovers_existing_build_without_writes(self):
+        class Runtime:
+            def read_state(self, command):
+                if command == "List Executor":
+                    return 'Executor 2.3 Sequence=Seq 3 "ZEN_AI_TEST_SHEESH_SEQ3"'
+                raise AssertionError(command)
+
+        class Core:
+            runtime = Runtime()
+
+            def verify_first_song_metadata(self, sequence, label, cues, cue_labels):
+                self.metadata = (sequence, label, cues, cue_labels)
+                return "Verification: PARTIAL"
+
+            def _fresh_verify_effect_references(self, show_plan):
+                return ["2500 — FX_DIM_CHASE_SLOW"]
+
+            def _fresh_verify_preset_references(self, references):
+                return [f"{reference} — COLOR" for reference in sorted(references)]
+
+        saved = {
+            "status": "FAILED",
+            "error": "FirstSongBuildError: Verification failed: referenced Preset is no longer present: 4.101",
+            "preview": {
+                "action": {
+                    "task": {
+                        "intent": {
+                            "parameters": {
+                                "sequence": 3,
+                                "sequence_label": "ZEN_AI_TEST_SHEESH_SEQ3",
+                                "target_executor": "2.003",
+                                "cue_labels": ["INTRO"],
+                                "cues": [{
+                                    "cue_number": 1,
+                                    "label": "INTRO",
+                                    "fade": 1,
+                                    "actions": [{
+                                        "operation": "CALL_EFFECT",
+                                        "target": {"type": "group", "ref": 1},
+                                        "effect_ref": {"id": 2500, "label": "FX_DIM_CHASE_SLOW"},
+                                    }],
+                                }],
+                                "referenced_presets": ["4.101"],
+                            },
+                        },
+                    },
+                },
+            },
+        }
+
+        recovered = _recover_prior_postwrite_build(Core(), saved)
+
+        self.assertEqual(recovered["sequence"], 3)
+        self.assertEqual(recovered["sequence_label"], "ZEN_AI_TEST_SHEESH_SEQ3")
+        self.assertEqual(recovered["target_executor"], "2.003")
+        self.assertEqual(recovered["cue_count"], 1)
+        self.assertTrue(recovered["executor_verified"])
+        self.assertEqual(recovered["preset_lines"], ["4.101 — COLOR"])
+
+    def test_non_postwrite_failure_does_not_trigger_existing_build_recovery(self):
+        class Core:
+            pass
+
+        self.assertIsNone(
+            _recover_prior_postwrite_build(
+                Core(),
+                {"status": "FAILED", "error": "ArtisticPlanCompileError: nope"},
+            )
+        )
 
     def test_invalid_saved_canonical_artifact_fails_closed(self):
         with self.assertRaisesRegex(RuntimeError, "SAVED_CANONICAL_ARTIFACT_INVALID"):
