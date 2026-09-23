@@ -15,6 +15,8 @@ from pathlib import Path
 from typing import Any
 
 from .models import Intent
+from .allocation import AllocationError, first_free_from_front
+from .protected_objects import PROTECTED_SEQUENCES
 from .workflow import ActionStep, SkillGraphNode, Subtask, Task, WorkflowPlan
 
 
@@ -42,19 +44,35 @@ class CueEffectApplicationSpec:
         return asdict(self)
 
 
-def allocate_sequence(sequences: list[dict[str, Any]], active_range: tuple[int, int] = (201, 300)) -> int:
-    """Allocate from the established Agent ACTIVE range only after a fresh scan."""
-    start, end = active_range
+def allocate_sequence(
+    sequences: list[dict[str, Any]],
+    active_range: tuple[int, int] | None = None,
+) -> int:
+    """Allocate the first safe Sequence from the front after a fresh scan.
+
+    An explicit range remains supported for a caller that truly needs one,
+    but the default no longer hides test objects in a high-number reserve.
+    """
+    start, end = active_range if active_range is not None else (1, 9999)
     if start < 1 or end < start:
         raise CueEffectApplicationError("Cue Effect POC has an invalid active Sequence range.")
-    used = {item.get("number") for item in sequences if isinstance(item, dict) and isinstance(item.get("number"), int)}
-    for number in range(start, end + 1):
-        if number not in used:
-            return number
-    raise CueEffectApplicationError("BLOCKED: no unused Sequence is available in the active range.")
+    used = {
+        item.get("number")
+        for item in sequences
+        if isinstance(item, dict) and isinstance(item.get("number"), int)
+    }
+    try:
+        return first_free_from_front(
+            used,
+            protected=PROTECTED_SEQUENCES,
+            start=start,
+            end=end,
+        )
+    except AllocationError as exc:
+        raise CueEffectApplicationError("BLOCKED: no unused Sequence is available in the requested range.") from exc
 
 
-def resolve_spec(*, effect: dict[str, Any] | None, catalog_entry: dict[str, Any] | None, group: dict[str, Any] | None, membership: dict[str, Any] | None, sequences: list[dict[str, Any]], active_range: tuple[int, int] = (201, 300)) -> CueEffectApplicationSpec:
+def resolve_spec(*, effect: dict[str, Any] | None, catalog_entry: dict[str, Any] | None, group: dict[str, Any] | None, membership: dict[str, Any] | None, sequences: list[dict[str, Any]], active_range: tuple[int, int] | None = None) -> CueEffectApplicationSpec:
     """Bind every POC object from fresh evidence; never trust a stale catalog alone."""
     if not effect or not isinstance(effect.get("effect_id"), int) or not isinstance(effect.get("name"), str):
         raise CueEffectApplicationError("STALE_EFFECT_RESOURCE: Effect was not found by fresh List Effect.")
