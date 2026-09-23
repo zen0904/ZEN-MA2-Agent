@@ -1,6 +1,7 @@
 import unittest
 
 from scripts.run_sheesh_programming_test import (
+    _attach_effect_identity_labels,
     _augment_canonical_referenced_resources,
     _resume_saved_canonical_artifact,
 )
@@ -71,6 +72,115 @@ class SheeshSavedRetryTests(unittest.TestCase):
                 Core(),
                 {"presets": [], "effects": []},
                 {"cues": [{"actions": [{"operation": "CALL_PRESET", "preset_ref": "4.110"}]}]},
+            )
+
+    def test_compile_boundary_attaches_exact_verified_effect_label(self):
+        plan = {
+            "schema": "zen.show_plan.v0.1",
+            "song": "SHEESH",
+            "target_executor": "2.001",
+            "active_sequence_range": [3, 3],
+            "cues": [{
+                "id": "cue_001",
+                "cue_number": 1,
+                "label": "HIT",
+                "fade": 0,
+                "actions": [{
+                    "operation": "CALL_EFFECT",
+                    "target": {"type": "group", "ref": 1},
+                    "effect_ref": {"id": 2500},
+                }],
+            }],
+        }
+        resource_map = {
+            "groups": [{
+                "group_id": 1,
+                "effect_resources": [{
+                    "effect_id": 2500,
+                    "name": "FX_DIM_CHASE_SLOW",
+                    "application_status": "REAL_MACHINE_VERIFIED",
+                }],
+            }],
+        }
+
+        normalized = _attach_effect_identity_labels(plan, resource_map)
+
+        self.assertEqual(
+            normalized["cues"][0]["actions"][0]["effect_ref"],
+            {"id": 2500, "label": "FX_DIM_CHASE_SLOW"},
+        )
+        self.assertEqual(plan["cues"][0]["actions"][0]["effect_ref"], {"id": 2500})
+
+    def test_old_id_only_canonical_retry_hydrates_effect_label_from_saved_verified_map(self):
+        saved = {
+            "provider_plan_compile": {"provider_contract": "ARTISTIC_CUES_V0_2"},
+            "artistic_resource_map": {
+                "groups": [{
+                    "group_id": 1,
+                    "effect_resources": [{
+                        "effect_id": 2500,
+                        "name": "FX_DIM_CHASE_SLOW",
+                        "application_status": "REAL_MACHINE_VERIFIED",
+                    }],
+                }],
+            },
+            "canonical_artifact": {
+                "schema": "zen.show_plan.v0.1",
+                "song": "SHEESH",
+                "target_executor": "2.002",
+                "active_sequence_range": [2, 2],
+                "cues": [{
+                    "id": "cue_001",
+                    "cue_number": 1,
+                    "label": "HIT",
+                    "fade": 0,
+                    "actions": [{
+                        "operation": "CALL_EFFECT",
+                        "target": {"type": "group", "ref": 1},
+                        "effect_ref": {"id": 2500},
+                    }],
+                }],
+            },
+        }
+
+        resumed = _resume_saved_canonical_artifact(
+            saved,
+            sequence=3,
+            target_executor="2.003",
+        )
+
+        self.assertEqual(
+            resumed["cues"][0]["actions"][0]["effect_ref"],
+            {"id": 2500, "label": "FX_DIM_CHASE_SLOW"},
+        )
+        self.assertEqual(saved["canonical_artifact"]["cues"][0]["actions"][0]["effect_ref"], {"id": 2500})
+
+    def test_canonical_retry_rejects_current_effect_label_drift_before_writes(self):
+        class Client:
+            def execute(self, command):
+                if command == "List Effect 2500":
+                    return 'Effect 2500 "WRONG_EFFECT"'
+                raise AssertionError(command)
+
+        class Runtime:
+            client = Client()
+
+        class Core:
+            runtime = Runtime()
+
+        plan = {
+            "cues": [{
+                "actions": [{
+                    "operation": "CALL_EFFECT",
+                    "effect_ref": {"id": 2500, "label": "FX_DIM_CHASE_SLOW"},
+                }],
+            }],
+        }
+        with self.assertRaisesRegex(RuntimeError, "SAVED_CANONICAL_EFFECT_IDENTITY_MISMATCH:2500"):
+            _augment_canonical_referenced_resources(
+                Core(),
+                {"presets": [], "effects": []},
+                plan,
             )
 
     def test_invalid_saved_canonical_artifact_fails_closed(self):
