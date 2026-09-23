@@ -28,7 +28,7 @@ def _song_input() -> dict[str, object]:
     # schema and do not create more Effect resources.
     return {
         "song_name": "ZEN_AI_EFFECT_RESOURCE_TEST",
-        "active_sequence_range": [201, 300],
+        "active_sequence_range": [1, 9999],
         "effect_policy": "DIMMER_CHASE_V1",
         "sections": [
             {"name": "INTRO", "role": "INTRO", "energy": 0.2},
