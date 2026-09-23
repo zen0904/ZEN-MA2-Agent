@@ -121,7 +121,7 @@ class TimecodeOffsetTests(unittest.TestCase):
         self.assertEqual(events["type"], "ANSWER")
         self.assertIn("UNSUPPORTED", events["message"])
 
-    def test_explicit_test_setup_is_environment_gated_and_never_overwrites(self):
+    def test_explicit_test_setup_is_environment_gated_and_allocates_first_free(self):
         with self.assertRaises(ParseError):
             parse("ZEN TEST create Timecode 9001")
         with patch.dict("os.environ", {"ZEN_MA2_TIMECODE_TEST_MODE": "1"}, clear=False):
@@ -129,8 +129,9 @@ class TimecodeOffsetTests(unittest.TestCase):
         self.assertEqual(setup["type"], "ACTION_PLAN")
         self.assertIn("TEST-ONLY", setup["message"])
         self.assertEqual(self.client.commands, ["List Timecode"])
+        self.assertIn("Create empty Timecode 1.", setup["message"])
         self.core.approve_action(setup["action"]["id"])
-        self.assertEqual(self.client.commands[-1], "Store Timecode 9001 /nc")
+        self.assertEqual(self.client.commands[-1], "Store Timecode 1 /nc")
 
 
 if __name__ == "__main__":
