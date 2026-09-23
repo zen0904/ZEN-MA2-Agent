@@ -59,8 +59,6 @@ class EffectSpec:
 def allocate_effect_number(effects: list[dict[str, Any]]) -> int:
     """Choose the first safe gap from fresh observed Effect inventory."""
     numbers = {item.get("number") for item in effects if isinstance(item.get("number"), int)}
-    if not numbers:
-        raise EffectBuildError("Effect number is required because the current Effect inventory cannot prove a free slot.")
     try:
         return first_free_from_front(numbers)
     except AllocationError as exc:
@@ -91,14 +89,22 @@ def resolve_effect_spec(intent: Intent, *, groups: list[dict[str, Any]], fixture
     target_number = int(target["number"])
     target_name = str(target.get("name") or f"{target_type.title()} {target_number}")
     requested_number = parameters.get("effect_number")
+    existing_numbers = {
+        item.get("number")
+        for item in effects
+        if isinstance(item.get("number"), int) and not isinstance(item.get("number"), bool)
+    }
     if requested_number is None:
         effect_number = allocate_effect_number(effects)
-    elif isinstance(requested_number, int) and requested_number > 0:
-        effect_number = requested_number
+    elif isinstance(requested_number, int) and not isinstance(requested_number, bool) and requested_number > 0:
+        try:
+            # Treat an explicit number as a preferred starting point, not as
+            # permission to collide. If occupied, advance to the next free ID.
+            effect_number = first_free_from_front(existing_numbers, start=requested_number)
+        except AllocationError as exc:
+            raise EffectBuildError("No safe free Effect ID is available at or after the requested number.") from exc
     else:
         raise EffectBuildError("Effect number must be a positive integer.")
-    if effect_number in {item.get("number") for item in effects}:
-        raise EffectBuildError(f"Effect {effect_number} already exists. Effect Builder v1 never overwrites an existing Effect.")
     speed = parameters.get("speed_bpm", DEFAULT_DIMMER_CHASE["speed_bpm"])
     if not isinstance(speed, int) or not 1 <= speed <= 999:
         raise EffectBuildError("Dimmer Chase BPM must be an integer from 1 to 999.")
