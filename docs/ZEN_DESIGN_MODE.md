@@ -191,3 +191,10 @@ Agent loop provides reasoning flow.
 Compiler/Builder provides deterministic hands.
 Everything else must justify its existence.
 ```
+
+The `show.program` root may enter `LEAN_SINGLE_DESIGNER` when an injected,
+provider-independent design-intelligence service is available. It receives
+one bounded request and compact verified context, returns artistic JSON only,
+and then hands the result to ZEN's deterministic compiler and existing
+`show.builder` approval path. Without injection, broad requests remain
+`NEEDS_INTELLIGENCE`; deterministic requests remain model-free.

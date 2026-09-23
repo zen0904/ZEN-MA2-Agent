@@ -99,7 +99,7 @@ class SheeshSavedRetryTests(unittest.TestCase):
                 "effect_resources": [{
                     "effect_id": 2500,
                     "name": "FX_DIM_CHASE_SLOW",
-                    "application_status": "REAL_MACHINE_VERIFIED",
+                    "application_status": "REAL_MACHINE_CONTENT_VERIFIED",
                 }],
             }],
         }
@@ -121,8 +121,8 @@ class SheeshSavedRetryTests(unittest.TestCase):
                     "effect_resources": [{
                         "effect_id": 2500,
                         "name": "FX_DIM_CHASE_SLOW",
-                        "application_status": "REAL_MACHINE_VERIFIED",
-                    }],
+                    "application_status": "REAL_MACHINE_CONTENT_VERIFIED",
+                }],
                 }],
             },
             "canonical_artifact": {

@@ -39,6 +39,10 @@ from .geometry_test_environment import (
 )
 from .models import Intent
 from .designer import FirstSongDesigner
+from .designer.lean_design_mode import assemble_compact_design_context
+from .designer.lean_provider import LeanDesignIntelligence, LeanDesignProviderError, build_provider_resource_contract, compile_lean_artistic_intent, invoke_primary_design
+from .designer.artistic_plan import ArtisticPlanCompileError
+from .artistic_resources import build_artistic_resource_map
 from .designer.report import write_real_song_design_report
 from .builder import FirstSongBuildError, ShowPlanBuilder
 from .song_analysis import SongAnalysisAdapter, validate_song_analysis
@@ -60,7 +64,8 @@ class AgentCore:
     """Single backend control boundary used by OpenClaw and headless ZEN services."""
     CHAT_ROW_LIMIT = 30
 
-    def __init__(self, runtime: AgentRuntime | None = None, group_membership_provider: GroupMembershipProvider | None = None):
+    def __init__(self, runtime: AgentRuntime | None = None, group_membership_provider: GroupMembershipProvider | None = None,
+                 design_intelligence_provider: LeanDesignIntelligence | None = None):
         self.runtime = runtime or AgentRuntime()
         self.build_identity = load_build_identity(self.runtime.root)
         self.events = EventBus()
@@ -68,6 +73,7 @@ class AgentCore:
         self.actions: dict[str, ActionRecord] = {}
         self.state = StateStore()
         self.group_membership_provider = group_membership_provider or ExportFileGroupMembershipProvider()
+        self.design_intelligence_provider = design_intelligence_provider
         self.fixture_type_export_provider = FixtureTypeExportProvider()
         self.layout_export_provider = LayoutExportProvider()
         self.skills = SkillRegistry(self.runtime.root)
@@ -528,6 +534,100 @@ class AgentCore:
         self.events.emit("plan", self.snapshot())
         return {"type": ResponseType.ACTION_PLAN.value, "message": response, "action": {"id": action_id, "status": record.status, **record.plan}}
 
+    def _collect_lean_design_profile(self) -> dict[str, Any]:
+        """Build the normalized read-only profile used by the lean Designer."""
+        if self.runtime.ready:
+            for resource, kwargs in (
+                ("groups", {}),
+                ("fixtures", {}),
+                ("presets", {"sequence": "ALL"}),
+                ("effects", {}),
+                ("sequences", {}),
+                ("executors", {}),
+            ):
+                self.refresh_state(resource, **kwargs)
+            groups = self.state.get("groups")
+            for item in (groups.values if groups else []):
+                number = item.get("number")
+                if isinstance(number, int) and not isinstance(number, bool) and number > 0:
+                    self.refresh_state("group_membership", group_no=number)
+            # Fixture-type capability is useful to the resource map but remains
+            # read-only and fail-closed when native export is unavailable.
+            try:
+                self.refresh_state("fixture_type_profiles")
+            except (FixtureTypeExportError, GroupMembershipProviderUnavailable, GroupMembershipProviderError):
+                pass
+
+        profile = self.scan_show_profile()
+        if not profile.get("groups") or not profile.get("fixtures"):
+            raise ValueError(
+                "Read-only show discovery is required before lean design can continue."
+            )
+        return profile
+
+    def _plan_lean_design_child(self, root: WorkflowPlan, request: str) -> WorkflowPlan:
+        """Run one injected artistic call, compile it, then reuse show.builder."""
+        if self.design_intelligence_provider is None:
+            raise ValueError("No design intelligence provider is configured.")
+
+        profile = self._collect_lean_design_profile()
+        effect_application = self.cue_effect_application_capability.load_verified()
+        resource_map = build_artistic_resource_map(
+            profile,
+            effect_catalog_entries=self.effect_catalog.load().get("entries", []),
+            effect_application_capability=effect_application,
+        )
+        compact = assemble_compact_design_context(
+            song_context={"song": request, "brief": request},
+            groups=profile.get("groups", []),
+            presets=profile.get("presets", []),
+            effects=profile.get("effects", []),
+            capability_profiles=profile.get("fixture_type_profiles", []),
+            artistic_resource_map=resource_map,
+        )
+        design_context = dict(compact["context"])
+        design_context["verified_resource_contract"] = build_provider_resource_contract(resource_map)
+
+        provider_output = invoke_primary_design(self.design_intelligence_provider, request, design_context)
+        compiled, audit = compile_lean_artistic_intent(
+            provider_output,
+            request=request,
+            resource_map=resource_map,
+            active_sequence_range=(301, 400),
+            target_executor="2.001",
+        )
+        if effect_application and any(
+            action.get("operation") == "CALL_EFFECT"
+            for cue in compiled.get("cues", [])
+            for action in cue.get("actions", [])
+            if isinstance(action, dict)
+        ):
+            compiled["effect_application_capability"] = effect_application
+
+        builder_profile = {
+            key: profile.get(key, [])
+            for key in ("groups", "presets", "effects", "sequences", "executors")
+        }
+        child = self.skills.plan_intent(
+            Intent(
+                "build_first_song",
+                {"first_song_spec": {"show_plan": compiled, "profile": builder_profile}},
+                "LEAN_SINGLE_DESIGNER",
+            ),
+            self.state,
+            self.runtime.preferences,
+        )
+        self.runtime.log(
+            "lean_design",
+            {
+                "provider": "injected",
+                "primary_call_count": 1,
+                "audit": audit,
+                "context_hash": compact["context_hash"],
+            },
+        )
+        return compose_show_program_child(root, child)
+
     def _plan_routed_intent(self, intent: Intent) -> WorkflowPlan:
         """Plan one already-routed intent through the existing safe child planners."""
         if intent.kind == "build_dimmer_chase":
@@ -560,12 +660,13 @@ class AgentCore:
         route = self.router.route(request, self.skills)
 
         if route.response_type is ResponseType.NEEDS_CLARIFICATION:
-            workflow = set_show_program_state(
-                root,
-                "NEEDS_INTELLIGENCE",
-                "The request needs bounded design intelligence before a child workflow can be selected.",
-                phase="UNDERSTAND",
-            )
+            if self.design_intelligence_provider is None:
+                workflow = set_show_program_state(root, "NEEDS_INTELLIGENCE", "The request needs bounded design intelligence before a child workflow can be selected.", phase="UNDERSTAND")
+            else:
+                try:
+                    workflow = self._plan_lean_design_child(root, request)
+                except (FirstSongBuildError, SkillError, ArtisticPlanCompileError, LeanDesignProviderError, ValueError) as exc:
+                    workflow = set_show_program_state(root, "NEEDS_RESEARCH", str(exc) or "Lean design could not be safely compiled.", phase="RESEARCH_IF_NEEDED")
         elif route.response_type is ResponseType.NOT_IMPLEMENTED:
             workflow = set_show_program_state(
                 root,

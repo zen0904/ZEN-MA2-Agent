@@ -34,3 +34,8 @@ placeholders. `skills/installed` is portable and discoverable, but installed
 This prevents a copied USB skill from escaping the safety boundary.
 
 The Skills page reads the registry and supports Enable, Disable and Inspect.
+
+For broad programming requests, an injected provider-independent one-call
+artistic service may supply `LEAN_SINGLE_DESIGNER` intent. It is compiled by
+ZEN and composed with the existing `show.builder` child; no provider is called
+when the service is absent, and deterministic child requests stay model-free.

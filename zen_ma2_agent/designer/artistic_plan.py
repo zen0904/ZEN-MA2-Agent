@@ -173,6 +173,7 @@ def _compile_action(
     verified_effect_ids: set[int],
     verified_preset_applicability: Mapping[int, set[str]] | None,
     verified_effect_applicability: Mapping[int, set[int]] | None,
+    verified_dimmer_applicability: Mapping[int, Any] | None,
 ) -> dict[str, object]:
     if not isinstance(action, dict):
         raise ArtisticPlanCompileError("Each artistic action must be an object.")
@@ -186,6 +187,8 @@ def _compile_action(
             raise ArtisticPlanCompileError("Typed action target must identify one verified Group.")
         group = _group_id(target.get("ref"), verified_group_ids)
         if operation == "SET_DIMMER":
+            if verified_dimmer_applicability is not None and group not in verified_dimmer_applicability:
+                raise ArtisticPlanCompileError(f"Dimmer application is not verified for Group {group}.")
             return {
                 "operation": "SET_DIMMER",
                 "target": {"type": "group", "ref": group},
@@ -224,6 +227,8 @@ def _compile_action(
         )
     key = present[0]
     if key == "dimmer":
+        if verified_dimmer_applicability is not None and group not in verified_dimmer_applicability:
+            raise ArtisticPlanCompileError(f"Dimmer application is not verified for Group {group}.")
         return {
             "operation": "SET_DIMMER",
             "target": {"type": "group", "ref": group},
@@ -292,6 +297,7 @@ def compile_artistic_cue_plan(
     verified_effect_ids: set[int] | None = None,
     verified_preset_applicability: Mapping[int, Iterable[str]] | None = None,
     verified_effect_applicability: Mapping[int, Iterable[int]] | None = None,
+    verified_dimmer_applicability: Mapping[int, Any] | None = None,
     cue_labels: Iterable[str] | None = None,
 ) -> tuple[dict[str, Any], dict[str, object]]:
     """Compile provider art intent into strict zen.show_plan.v0.1.
@@ -352,6 +358,7 @@ def compile_artistic_cue_plan(
                 verified_effect_ids=effect_ids,
                 verified_preset_applicability=preset_applicability,
                 verified_effect_applicability=effect_applicability,
+                verified_dimmer_applicability=verified_dimmer_applicability,
             )
             for item in actions
         ]

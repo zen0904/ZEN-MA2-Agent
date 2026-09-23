@@ -275,7 +275,7 @@ def _effect_labels_from_resource_map(resource_map: dict) -> dict[tuple[int, int]
         for effect in group.get("effect_resources", []) if isinstance(group.get("effect_resources"), list) else []:
             if (
                 not isinstance(effect, dict)
-                or effect.get("application_status") != "REAL_MACHINE_VERIFIED"
+                or effect.get("application_status") != "REAL_MACHINE_CONTENT_VERIFIED"
                 or not isinstance(effect.get("effect_id"), int)
             ):
                 continue
