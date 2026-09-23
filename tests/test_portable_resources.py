@@ -37,7 +37,7 @@ class PortableResourceTests(unittest.TestCase):
             files = portable_resources.assert_portable_resources(bundle)
             self.assertEqual(
                 files,
-                ["gma2\\plugins\\ZEN_AGENT.xml", "gma2\\plugins\\ZEN_AGENT.lua"],
+                ["gma2/plugins/ZEN_AGENT.xml", "gma2/plugins/ZEN_AGENT.lua"],
             )
             self.assertTrue((bundle / "geometry" / "ZEN_STAGE_AXIS_PROFILE.json").is_file())
             (bundle / "gma2" / "plugins" / "ZEN_AGENT.lua").unlink()
