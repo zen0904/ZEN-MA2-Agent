@@ -16,6 +16,7 @@ import argparse
 import json
 import re
 import time
+from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -27,11 +28,13 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from zen_ma2_agent.core import AgentCore
+from zen_ma2_agent.allocation import AllocationError, first_free_executor, first_free_from_front
 from zen_ma2_agent.designer.schema import validate_show_plan
 from zen_ma2_agent.protected_objects import PROTECTED_SEQUENCES
 from zen_ma2_agent.runtime import AgentRuntime
 from zen_ma2_agent.state.providers.fixture_geometry import FixtureGeometryProvider
 from zen_ma2_agent.state.providers.show_pools import EffectProvider
+from zen_ma2_agent.state.providers.sequences import SequenceProvider
 from zen_ma2_agent.test_show_resources import (
     reconcile_template_effect_specs,
     template_effect_commands,
@@ -92,10 +95,10 @@ def _read(core: AgentCore, command: str, reads: dict[str, str]) -> str:
 def _read_preset_reference(core: AgentCore, reference: str, reads: dict[str, str]) -> str:
     """Read a numeric preset reference MA2's generic state allow-list cannot yet express.
 
-    It is constrained to ``4.101``-style Color references and sends only a
-    native ``List`` command; it is intentionally not a general raw transport.
+    It is constrained to a positive Color-pool reference and sends only a
+    native ``List`` command; callers still own the exact authorized refs.
     """
-    if not re.fullmatch(r"4\.1(?:0[1-9]|1[0-3])", reference):
+    if not re.fullmatch(r"4\.[1-9]\d*", reference):
         raise ValueError("Unexpected SHEESH owned Color preset reference.")
     if not core.runtime.client:
         raise RuntimeError("MA2 client unavailable")
@@ -105,11 +108,13 @@ def _read_preset_reference(core: AgentCore, reference: str, reads: dict[str, str
     return value
 
 
-def _load_plan(path: Path) -> dict[str, Any]:
+def _load_plan(path: Path, *, require_legacy_identity: bool = False) -> dict[str, Any]:
     plan = json.loads(path.read_text(encoding="utf-8"))
     validate_show_plan(plan)
-    if plan.get("sequence") != SEQUENCE or plan.get("sequence_label") != SEQUENCE_LABEL:
-        raise ValueError("SHEESH test plan must target its fixed, owned Sequence identity.")
+    if require_legacy_identity and (
+        plan.get("sequence") != SEQUENCE or plan.get("sequence_label") != SEQUENCE_LABEL
+    ):
+        raise ValueError("Legacy SHEESH restore requires the historical owned Sequence identity.")
     return plan
 
 
@@ -158,13 +163,18 @@ def _assert_preflight(
             raise RuntimeError(f"Color Preset 4.{reference} is occupied by a non-owned object; refusing to overwrite.")
 
 
-def _palette(plan: dict[str, Any]) -> list[dict[str, Any]]:
+def _palette(plan: dict[str, Any], *, require_legacy_ids: bool = False) -> list[dict[str, Any]]:
     palette = plan.get("test_palette")
     if not isinstance(palette, list) or len(palette) != 13:
         raise ValueError("SHEESH test palette requires exactly 13 entries.")
-    expected = list(range(101, 114))
-    if [entry.get("preset") for entry in palette] != expected:
-        raise ValueError("SHEESH palette must use the owned Color IDs 4.101 through 4.113 in order.")
+    numbers = [entry.get("preset") for entry in palette]
+    if any(
+        not isinstance(number, int) or isinstance(number, bool) or number < 1
+        for number in numbers
+    ) or len(set(numbers)) != 13:
+        raise ValueError("SHEESH palette requires thirteen distinct positive Color-pool IDs.")
+    if require_legacy_ids and numbers != list(range(101, 114)):
+        raise ValueError("Legacy SHEESH palette restore requires Color IDs 4.101 through 4.113.")
     return palette
 
 
