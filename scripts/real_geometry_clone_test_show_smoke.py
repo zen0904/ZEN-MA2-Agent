@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import socket
 import subprocess
 import time
@@ -177,24 +178,42 @@ def main() -> int:
         if len(test_fixtures) < 2:
             raise RuntimeError("The isolated candidate Show does not contain two Fixtures; no production state was modified.")
         source, destination = int(test_fixtures[0]["number"]), int(test_fixtures[1]["number"])
-        if any(item.get("number") in {90, 91} for item in _groups(test_browser)):
-            raise RuntimeError("The isolated candidate already contains Group 90 or 91; refusing to overwrite it.")
         report["test_fixtures"] = [{"number": item.get("number"), "name": item.get("name")} for item in test_fixtures]
         report["selected_pair"] = [source, destination]
 
         setup_preview = _submit(port, f"ZEN TEST setup geometry groups {source} {destination}")
         if "Geometry Clone Test Groups Preview" not in setup_preview:
             raise RuntimeError("Test Group setup did not render the expected Desktop Preview.")
+        source_group_match = re.search(r'Source:\s*Group\s+(\d+)\s+"ZEN Clone Src TEST"', setup_preview)
+        destination_group_match = re.search(r'Destination:\s*Group\s+(\d+)\s+"ZEN Clone Dst TEST"', setup_preview)
+        if not source_group_match or not destination_group_match:
+            raise RuntimeError(f"Allocated test Group IDs were not exposed in Preview: {setup_preview}")
+        source_group = int(source_group_match.group(1))
+        destination_group = int(destination_group_match.group(1))
         setup_action = _execute_pending(port)
-        report["group_setup"] = {"preview": "Geometry Clone Test Groups Preview", "result": setup_action.get("result")}
+        report["group_setup"] = {
+            "preview": "Geometry Clone Test Groups Preview",
+            "source_group": source_group,
+            "destination_group": destination_group,
+            "result": setup_action.get("result"),
+        }
 
-        test_browser = _refresh(port, "有哪些 Group", "Group 90 裡有哪些燈？", "Group 91 裡有哪些燈？", "有哪些 Fixture")
-        memberships = {90: _membership(test_browser, 90), 91: _membership(test_browser, 91)}
-        if memberships != {90: [source], 91: [destination]}:
+        test_browser = _refresh(
+            port,
+            "有哪些 Group",
+            f"Group {source_group} 裡有哪些燈？",
+            f"Group {destination_group} 裡有哪些燈？",
+            "有哪些 Fixture",
+        )
+        memberships = {
+            source_group: _membership(test_browser, source_group),
+            destination_group: _membership(test_browser, destination_group),
+        }
+        if memberships != {source_group: [source], destination_group: [destination]}:
             raise RuntimeError(f"Test Group membership mismatch: {memberships}")
         report["test_memberships"] = memberships
 
-        clone_preview = _submit(port, "預覽 Group 90 → Group 91 Clone")
+        clone_preview = _submit(port, f"預覽 Group {source_group} → Group {destination_group} Clone")
         if not all(marker in clone_preview for marker in ("Geometry Clone Preview", "Safety: MODIFY", f"{source} → {destination}")):
             raise RuntimeError("Clone preview did not contain the expected deterministic mapping.")
         pending = _action(port)
