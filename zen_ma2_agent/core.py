@@ -1173,23 +1173,56 @@ class AgentCore:
     def _verify_geometry_test_groups(self, action: ActionRecord, execution_result: str) -> str:
         raw = action.workflow.task.intent.parameters.get("geometry_test_group_spec")
         try:
-            spec = GeometryTestGroupSpec(int(raw["source_fixture"]), int(raw["destination_fixture"])) if isinstance(raw, dict) else None
+            spec = (
+                GeometryTestGroupSpec(
+                    int(raw["source_fixture"]),
+                    int(raw["destination_fixture"]),
+                    int(raw["source_group"]),
+                    int(raw["destination_group"]),
+                )
+                if isinstance(raw, dict)
+                else None
+            )
             if not spec:
                 raise GeometryTestEnvironmentError("Test Group setup metadata is incomplete.")
             self.refresh_state("groups")
             groups = self.state.get("groups")
-            expected_names = {SOURCE_GROUP: SOURCE_LABEL, DESTINATION_GROUP: DESTINATION_LABEL}
+            expected_names = {
+                spec.source_group: SOURCE_LABEL,
+                spec.destination_group: DESTINATION_LABEL,
+            }
             for number, name in expected_names.items():
-                group = next((item for item in (groups.values if groups else []) if item.get("number") == number and item.get("name") == name), None)
+                group = next(
+                    (
+                        item
+                        for item in (groups.values if groups else [])
+                        if item.get("number") == number and item.get("name") == name
+                    ),
+                    None,
+                )
                 if not group:
-                    raise GeometryTestEnvironmentError(f"Group {number} was not returned with its expected test-only label.")
-            expected_members = {SOURCE_GROUP: spec.source_fixture, DESTINATION_GROUP: spec.destination_fixture}
+                    raise GeometryTestEnvironmentError(
+                        f"Group {number} was not returned with its expected test-only label."
+                    )
+            expected_members = {
+                spec.source_group: spec.source_fixture,
+                spec.destination_group: spec.destination_fixture,
+            }
             for number, fixture in expected_members.items():
                 refreshed = self.refresh_state("group_membership", group_no=number)
-                member = next((item for item in refreshed["values"] if item.get("group_no") == number), None)
+                member = next(
+                    (item for item in refreshed["values"] if item.get("group_no") == number),
+                    None,
+                )
                 if not member or list(member.get("fixtures") or []) != [fixture]:
-                    raise GeometryTestEnvironmentError(f"Group {number} does not contain exactly Fixture {fixture}.")
-            return execution_result + f"\nVerification: PASSED — Group {SOURCE_GROUP} contains Fixture {spec.source_fixture}; Group {DESTINATION_GROUP} contains Fixture {spec.destination_fixture}."
+                    raise GeometryTestEnvironmentError(
+                        f"Group {number} does not contain exactly Fixture {fixture}."
+                    )
+            return (
+                execution_result
+                + f"\nVerification: PASSED — Group {spec.source_group} contains Fixture {spec.source_fixture}; "
+                + f"Group {spec.destination_group} contains Fixture {spec.destination_fixture}."
+            )
         except Exception as exc:
             self.runtime.log("geometry_test_group_verification", {"status": "FAILED", "error": str(exc)})
             raise GeometryTestEnvironmentError(
