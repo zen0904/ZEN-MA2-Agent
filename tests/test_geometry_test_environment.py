@@ -1,3 +1,4 @@
+import inspect
 import os
 import tempfile
 import unittest
@@ -92,6 +93,13 @@ class GeometryTestEnvironmentTests(unittest.TestCase):
         commands = [step["command"] for step in response["action"]["steps"]]
         self.assertIn("Store Group 3 /nc", commands)
         self.assertIn("Store Group 4 /nc", commands)
+
+    def test_post_write_verifier_uses_allocated_group_ids_not_legacy_constants(self):
+        source = inspect.getsource(AgentCore._verify_geometry_test_groups)
+        self.assertIn("spec.source_group", source)
+        self.assertIn("spec.destination_group", source)
+        self.assertNotIn("SOURCE_GROUP", source)
+        self.assertNotIn("DESTINATION_GROUP", source)
 
     def test_restore_cannot_be_requested_until_this_process_loaded_the_test_show(self):
         with patch.dict(os.environ, {"ZEN_MA2_GEOMETRY_TEST_MODE": "1"}, clear=False):
