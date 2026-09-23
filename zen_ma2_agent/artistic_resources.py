@@ -13,6 +13,8 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any, Iterable, Mapping, Sequence
 
+from .cue_effect_application import cue_effect_capability_is_content_verified
+
 ARTISTIC_RESOURCE_MAP_SCHEMA = "zen.artistic_resource_map.v0.1"
 
 ARTISTIC_DIMENSIONS = (
@@ -227,11 +229,7 @@ def _verified_effect_bindings(
 ) -> dict[int, list[dict[str, Any]]]:
     current_identity = _show_identity(profile)
     inventory = _effect_inventory(profile)
-    application_verified = bool(
-        isinstance(effect_application_capability, Mapping)
-        and effect_application_capability.get("status") == "REAL_MACHINE_VERIFIED"
-        and effect_application_capability.get("grammar") == "EFFECT_POOL_CALL"
-    )
+    application_verified = cue_effect_capability_is_content_verified(effect_application_capability)
     result: dict[int, list[dict[str, Any]]] = {}
     for entry in catalog_entries:
         if not isinstance(entry, Mapping):
@@ -261,7 +259,7 @@ def _verified_effect_bindings(
             "semantic_label": requirement.get("semantic_label"),
             "kind": requirement.get("kind"),
             "verification": deepcopy(dict(verification)),
-            "application_status": "REAL_MACHINE_VERIFIED" if application_verified else "APPLICATION_UNVERIFIED",
+            "application_status": "REAL_MACHINE_CONTENT_VERIFIED" if application_verified else "APPLICATION_UNVERIFIED",
             "source": entry.get("source"),
         })
     for rows in result.values():
@@ -321,11 +319,7 @@ def build_artistic_resource_map(
         catalog_entries=effect_catalog_entries,
         effect_application_capability=effect_application_capability,
     )
-    application_verified = bool(
-        isinstance(effect_application_capability, Mapping)
-        and effect_application_capability.get("status") == "REAL_MACHINE_VERIFIED"
-        and effect_application_capability.get("grammar") == "EFFECT_POOL_CALL"
-    )
+    application_verified = cue_effect_capability_is_content_verified(effect_application_capability)
     strict_template_effects = _strict_template_effect_inventory(profile)
 
     groups_out: list[dict[str, Any]] = []
@@ -382,11 +376,11 @@ def build_artistic_resource_map(
                     continue
                 effects.append({
                     **deepcopy(template),
-                    "application_status": "REAL_MACHINE_VERIFIED",
+                    "application_status": "REAL_MACHINE_CONTENT_VERIFIED",
                     "group_binding": "GROUP_SELECTED_BEFORE_EFFECT_CALL",
                 })
         effects.sort(key=lambda item: int(item.get("effect_id") or 0))
-        if any(item.get("application_status") == "REAL_MACHINE_VERIFIED" for item in effects):
+        if any(item.get("application_status") == "REAL_MACHINE_CONTENT_VERIFIED" for item in effects):
             dimensions["EFFECT"]["execution_status"] = "VERIFIED_EFFECT_RESOURCE"
         elif effects:
             dimensions["EFFECT"]["execution_status"] = "RESOURCE_VERIFIED_APPLICATION_UNVERIFIED"
@@ -421,7 +415,7 @@ def build_artistic_resource_map(
         effect["effect_id"]
         for group in groups_out
         for effect in group["effect_resources"]
-        if effect.get("application_status") == "REAL_MACHINE_VERIFIED"
+        if effect.get("application_status") == "REAL_MACHINE_CONTENT_VERIFIED"
     }
     return {
         "schema": ARTISTIC_RESOURCE_MAP_SCHEMA,
@@ -468,7 +462,7 @@ def effect_applicability_from_map(resource_map: Mapping[str, Any]) -> dict[int, 
             for item in (group.get("effect_resources") or [])
             if isinstance(item, Mapping)
             and isinstance(item.get("effect_id"), int)
-            and item.get("application_status") == "REAL_MACHINE_VERIFIED"
+            and item.get("application_status") == "REAL_MACHINE_CONTENT_VERIFIED"
         }
         result[group["group_id"]] = ids
     return result
@@ -498,7 +492,7 @@ def model_resource_contract(resource_map: Mapping[str, Any]) -> list[dict[str, A
                 "kind": item.get("kind"),
             }
             for item in (group.get("effect_resources") or [])
-            if isinstance(item, Mapping) and item.get("application_status") == "REAL_MACHINE_VERIFIED"
+            if isinstance(item, Mapping) and item.get("application_status") == "REAL_MACHINE_CONTENT_VERIFIED"
         ]
         rows.append({
             "group_id": group.get("group_id"),

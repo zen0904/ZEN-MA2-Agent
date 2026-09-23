@@ -12,6 +12,7 @@ refresh replaces them.
 | `layouts` | `List Layout` + adapter for an individual layout | Pool metadata; item type/reference/XY and optional width/height/rotation |
 | `layout_items` | Partial LayoutState: native Export XML CObjects + Fixture geometry capability | Exported CObject references/geometry; Fixture/Subfixture XY currently `UNSUPPORTED` pending a separate safe provider |
 | `group_membership` | Local native Export XML provider | Group number/name, ordered `Subfixture@fix_id` members, when the Agent can read onPC `importexport` |
+| `sequence_export_discovery` | Local native `Export Sequence <n>` XML provider | **REAL-MACHINE PARTIAL** on grandMA2 3.9.60: Cue/CuePart/CueData identity, Fixture/Attribute identity, raw values/timing, and Color Preset references were captured from Sequence 5. The same capture contained no Effect element for the expected Effect calls, so Effect Cue-content remains unverified and must not be inferred from command success. |
 | `sequences` | `List Sequence` | Number and name |
 | `cues` | `List Cue <sequence>` | Number, name, and parsed trigger/fade/delay when present |
 | `presets` | `List Preset <type>` | Type, number and label only; no content/value inspection |
@@ -30,6 +31,11 @@ The runtime accepts only these state commands:
 - `List Timecode`
 - `Export Group <n> "ZEN_AGENT_G<n>_<request-id>.xml" /nc` for temporary local
   Group membership state only
+- `Export Sequence <n> "ZEN_AGENT_SEQUENCE_<n>_<request-id>.xml" /nc` for the
+  read-only Sequence export provider. A real grandMA2 3.9.60 Sequence 5 capture
+  verified the structural/raw-value path and Color Preset evidence; Effect
+  Cue-content remains explicitly PARTIAL because the capture contained no
+  Effect element for the expected Effect calls
 - `SetUserVar $ZEN_AGENT_REQUEST="<request_id> <allow-listed request> <argument>"`
   followed by `Plugin <configured numeric Plugin Pool slot>`
 

@@ -20,3 +20,4 @@ dist/
 build_identity.json
 *.gguf
 models/
+cache/sequence_export_diagnostics/

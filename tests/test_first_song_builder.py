@@ -293,7 +293,10 @@ class FirstSongBuilderTests(unittest.TestCase):
             "target_type": "group", "target_ref": 1, "target_name": "HYBRID",
         })
         self.core.effect_catalog.record(requirement=requirement, effect_id=3520, label="ZEN_FX_DIM_CHASE_SLOW_GROUP1", identity=show_identity(profile), verification={"object": "VERIFIED", "label": "VERIFIED", "parameters": "PARTIAL"})
-        CueEffectApplicationCapability(self.runtime.root).record(CueEffectApplicationSpec(3520, "ZEN_FX_DIM_CHASE_SLOW_GROUP1", 1, "HYBRID", 299, "ZEN_AI_EFFECT_CALL_TEST_299"))
+        CueEffectApplicationCapability(self.runtime.root).record_content_verified(
+            CueEffectApplicationSpec(3520, "ZEN_FX_DIM_CHASE_SLOW_GROUP1", 1, "HYBRID", 299, "ZEN_AI_EFFECT_CALL_TEST_299"),
+            sequence_export_sha256="a" * 64,
+        )
         preview = self.core.preview_song_analysis(REAL_ANALYSIS)
         self.assertIn("ZEN AI REAL SONG BUILD PREVIEW", preview["message"])
         self.assertIn("ZEN_FX_DIM_CHASE_SLOW_GROUP1", preview["message"])

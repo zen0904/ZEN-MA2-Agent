@@ -14,6 +14,7 @@ from ..ma_text import validate_ma_text
 from ..models import Intent
 from .. import protected_objects
 from ..workflow import ActionStep, SkillGraphNode, Subtask, Task, WorkflowPlan
+from ..cue_effect_application import cue_effect_capability_is_content_verified
 
 
 class FirstSongBuildError(ValueError):
@@ -75,7 +76,7 @@ class ShowPlanBuilder:
         labelled = False
         referenced_groups, referenced_presets, referenced_effects = set(), set(), set()
         capability = plan.get("effect_application_capability")
-        effect_application_verified = isinstance(capability, dict) and capability.get("status") == "REAL_MACHINE_VERIFIED" and capability.get("grammar") == "EFFECT_POOL_CALL" and capability.get("ma2_version_family") == "grandMA2_3.9"
+        effect_application_verified = cue_effect_capability_is_content_verified(capability)
         effect_application_blocked: list[int] = []
         for cue in plan["cues"]:
             cue_no, cue_label, fade = cue["cue_number"], cue["label"], float(cue["fade"])
@@ -134,15 +135,15 @@ class ShowPlanBuilder:
             "Cue design:", *[f"- {line}" for line in cue_preview], "", "Resources:",
             f"Groups: {', '.join(map(str, sorted(referenced_groups)))}", f"Presets: {', '.join(sorted(referenced_presets)) or 'NONE'}", effect_line,
             "New Effects to create: NONE", f"Geometry usage: {'neutral numeric geometry available' if plan.get('designer', {}).get('uses_neutral_geometry') else 'FALLBACK — no fresh geometry profile required for this safe Group build'}",
-            f"Warnings: {'; '.join(plan.get('warnings') or ['None'])}", "Effect application: " + ("REAL_MACHINE_VERIFIED" if effect_application_verified else "EFFECT_APPLICATION_UNVERIFIED"),
+            f"Warnings: {'; '.join(plan.get('warnings') or ['None'])}", "Effect application: " + ("REAL_MACHINE_CONTENT_VERIFIED" if effect_application_verified else "EFFECT_APPLICATION_UNVERIFIED"),
             "Existing production objects modified: NONE", f"Will create: Sequence {sequence}; Cues {len(plan['cues'])}", "", "Safety: MODIFY", "Approval required.", "", "Generated MA2 commands:", *[f"- {command}" for _, _, command in steps],
         ])
-        effect_application = "EFFECT_APPLICATION_UNVERIFIED" if effect_application_blocked else "REAL_MACHINE_VERIFIED" if referenced_effects else "NOT_REQUESTED"
+        effect_application = "EFFECT_APPLICATION_UNVERIFIED" if effect_application_blocked else "REAL_MACHINE_CONTENT_VERIFIED" if referenced_effects else "NOT_REQUESTED"
         intent = Intent("build_first_song", {"song": plan["song"], "sequence": sequence, "sequence_label": label, "target_executor": plan.get("target_executor"), "cue_count": len(plan["cues"]), "cue_labels": [cue["label"] for cue in plan["cues"]], "cues": plan["cues"], "referenced_groups": sorted(referenced_groups), "referenced_presets": sorted(referenced_presets), "referenced_effects": sorted(referenced_effects), "effect_application": effect_application, "warnings": plan.get("warnings", [])}, "ZEN_SHOW_PLAN")
         executable = not effect_application_blocked
-        verification = "Read Sequence and Cue metadata after build; Preset/Cue Effect content read-back is PARTIAL because no Cue-content provider is verified."
+        verification = "Verify Sequence/Cue metadata and exported Cue content. Raw Dimmer/Color Preset content is readable; Effect application is executable only from REAL_MACHINE_CONTENT_VERIFIED capability evidence."
         if effect_application_blocked:
-            verification = "EFFECT_APPLICATION_UNVERIFIED: typed Effect references were resolved, but MA2 Cue Effect-call grammar has no real-machine evidence. No Sequence commands may run."
+            verification = "EFFECT_APPLICATION_UNVERIFIED: typed Effect references were resolved, but no content-level Sequence Export evidence proves that the Effect is stored in the Cue. No Sequence commands may run."
         return WorkflowPlan(Task("first-song-build", "Build First Song", intent, "show.builder", ("groups", "presets", "effects", "sequences")), (Subtask("resolve", "Resolve scanned resources and unused Sequence", "Planning"), Subtask("preview", "Preview Agent-owned Sequence build", "Planning"), Subtask("execute", "Execute approved cue build", "Execution"), Subtask("verify", "Verify Sequence/Cue metadata", "Verification")), (SkillGraphNode("root", "show.builder", "First Song Builder"),), action_steps, "MODIFY", preview, ("PREVIEW",), verification, f"Narrow rollback: Delete Sequence {sequence} only after exact Agent-owned label verification.", executable)
 
     @staticmethod

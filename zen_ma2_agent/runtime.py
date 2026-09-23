@@ -128,6 +128,20 @@ class AgentRuntime:
         self.log("state_export", {"command": command, "group_no": group_no, "filename": filename})
         return response
 
+    def export_sequence_file(self, sequence_no: int, filename: str) -> str:
+        """Run the narrow, Agent-owned read-only Sequence export command."""
+        if not self.ready or not self.client:
+            raise ConnectionError("Connect and reach MA2 READY before exporting show state.")
+        if isinstance(sequence_no, bool) or not isinstance(sequence_no, int) or sequence_no < 1:
+            raise ValueError("Export Sequence requires a positive sequence number.")
+        if not re.fullmatch(r"ZEN_AGENT_SEQUENCE_[1-9]\d*_[A-Za-z0-9_-]{1,64}\.xml", filename):
+            raise PermissionError("Export state only permits Agent-owned temporary Sequence XML filenames.")
+        command = f'Export Sequence {sequence_no} "{filename}" /nc'
+        with self._export_state_lock:
+            response = self.client.execute(command)
+        self.log("state_export", {"command": command, "sequence_no": sequence_no, "filename": filename})
+        return response
+
     def export_layout_file(self, layout_no: int, filename: str) -> str:
         if not self.ready or not self.client: raise ConnectionError("Connect and reach MA2 READY before exporting show state.")
         if isinstance(layout_no, bool) or not isinstance(layout_no, int) or layout_no < 1: raise ValueError("Export Layout requires a positive number.")

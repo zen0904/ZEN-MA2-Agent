@@ -20,7 +20,7 @@ from .protected_objects import PROTECTED_SEQUENCES
 from .workflow import ActionStep, SkillGraphNode, Subtask, Task, WorkflowPlan
 
 
-CAPABILITY_SCHEMA = "zen.cue_effect_application.v0.1"
+CAPABILITY_SCHEMA = "zen.cue_effect_application.v0.2"
 GRAMMAR_ID = "EFFECT_POOL_CALL"
 MA2_VERSION_FAMILY = "grandMA2_3.9"
 
@@ -159,6 +159,22 @@ class CueEffectApplicationSkill:
         return approved_plan.commands
 
 
+def cue_effect_capability_is_content_verified(value: object) -> bool:
+    """Single source of truth for whether CALL_EFFECT may become executable."""
+    if not isinstance(value, dict):
+        return False
+    verification = value.get("verification")
+    return bool(
+        value.get("schema") == CAPABILITY_SCHEMA
+        and value.get("status") == "REAL_MACHINE_CONTENT_VERIFIED"
+        and value.get("grammar") == GRAMMAR_ID
+        and value.get("ma2_version_family") == MA2_VERSION_FAMILY
+        and isinstance(verification, dict)
+        and verification.get("cue_content_readback") == "VERIFIED"
+        and verification.get("application") == "REAL_MACHINE_CONTENT_VERIFIED"
+    )
+
+
 class CueEffectApplicationCapability:
     """Persist only a completed real-machine grammar verification, never a proposal."""
 
@@ -172,16 +188,69 @@ class CueEffectApplicationCapability:
             return None
         if not isinstance(value, dict) or value.get("schema") != CAPABILITY_SCHEMA:
             return None
-        if value.get("status") != "REAL_MACHINE_VERIFIED" or value.get("grammar") != GRAMMAR_ID or value.get("ma2_version_family") != MA2_VERSION_FAMILY:
+        verification = value.get("verification") if isinstance(value.get("verification"), dict) else {}
+        if (
+            value.get("status") != "REAL_MACHINE_CONTENT_VERIFIED"
+            or value.get("grammar") != GRAMMAR_ID
+            or value.get("ma2_version_family") != MA2_VERSION_FAMILY
+            or verification.get("cue_content_readback") != "VERIFIED"
+        ):
             return None
+        return value
+
+    def record_content_verified(self, spec: CueEffectApplicationSpec, *, sequence_export_sha256: str) -> dict[str, Any]:
+        """Persist executable capability only after content-level Sequence readback."""
+        if not re.fullmatch(r"[0-9a-f]{64}", sequence_export_sha256 or ""):
+            raise CueEffectApplicationError("Content verification requires a lowercase SHA-256.")
+        value = {
+            "schema": CAPABILITY_SCHEMA,
+            "status": "REAL_MACHINE_CONTENT_VERIFIED",
+            "grammar": GRAMMAR_ID,
+            "ma2_version_family": MA2_VERSION_FAMILY,
+            "verified_at": datetime.now(timezone.utc).isoformat(),
+            "evidence": {
+                "effect_id": spec.effect_id,
+                "effect_label": spec.effect_label,
+                "target_group": spec.target_group,
+                "sequence": spec.sequence,
+                "cue": spec.cue_number,
+                "sequence_export_sha256": sequence_export_sha256,
+            },
+            "verification": {
+                "effect_reference": "VERIFIED",
+                "target": "VERIFIED",
+                "sequence": "VERIFIED",
+                "cue": "VERIFIED",
+                "application": "REAL_MACHINE_CONTENT_VERIFIED",
+                "cue_content_readback": "VERIFIED",
+            },
+        }
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         return value
 
     def record(self, spec: CueEffectApplicationSpec) -> dict[str, Any]:
         value = {
-            "schema": CAPABILITY_SCHEMA, "status": "REAL_MACHINE_VERIFIED", "grammar": GRAMMAR_ID,
-            "ma2_version_family": MA2_VERSION_FAMILY, "verified_at": datetime.now(timezone.utc).isoformat(),
-            "evidence": {"effect_id": spec.effect_id, "effect_label": spec.effect_label, "target_group": spec.target_group, "sequence": spec.sequence, "cue": spec.cue_number},
-            "verification": {"effect_reference": "VERIFIED", "target": "VERIFIED", "sequence": "VERIFIED", "cue": "VERIFIED", "application": "REAL_MACHINE_VERIFIED", "cue_content_readback": "PARTIAL"},
+            "schema": CAPABILITY_SCHEMA,
+            "status": "REAL_MACHINE_METADATA_ONLY",
+            "grammar": GRAMMAR_ID,
+            "ma2_version_family": MA2_VERSION_FAMILY,
+            "verified_at": datetime.now(timezone.utc).isoformat(),
+            "evidence": {
+                "effect_id": spec.effect_id,
+                "effect_label": spec.effect_label,
+                "target_group": spec.target_group,
+                "sequence": spec.sequence,
+                "cue": spec.cue_number,
+            },
+            "verification": {
+                "effect_reference": "VERIFIED",
+                "target": "VERIFIED",
+                "sequence": "VERIFIED",
+                "cue": "VERIFIED",
+                "application": "COMMAND_ACCEPTED_ONLY",
+                "cue_content_readback": "PARTIAL",
+            },
         }
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

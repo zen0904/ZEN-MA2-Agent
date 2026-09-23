@@ -15,7 +15,7 @@
   "next_acceptance_gate": {
     "id": "FULL_ARTISTIC_PATH_001_CUE_CONTENT_READBACK",
     "classification": "RESEARCH_UNKNOWN",
-    "status": "READY_FOR_READ_ONLY_REAL_MACHINE_INVESTIGATION",
+    "status": "IN_PROGRESS_REAL_MACHINE_PARTIAL",
     "why_it_matters": "The Full Artistic Path now has verified post-write recovery, Sequence/Cue metadata, Executor assignment, and exact referenced Preset/Effect identity. M4 still must distinguish object/metadata readback from actual stored Cue content; a generic PASS must not imply that Dimmer/Preset/Effect actions were read back from each Cue.",
     "blocks_current_milestone": true,
     "dependencies": [
@@ -24,7 +24,15 @@
       "zen_ma2_agent/core.py::verify_first_song_metadata",
       "AgentRuntime read-only List Cue allow-list"
     ],
-    "next_review_condition": "Perform a bounded read-only investigation against the already verified Sequence 5 Cues. Determine which stored Cue content dimensions can be read and matched deterministically to the frozen canonical ShowPlan. Record VERIFIED, PARTIAL or UNSUPPORTED per dimension. Make zero MA2 writes, zero provider calls, no artistic changes and no Patch/Address/Fixture identity/type changes."
+    "next_review_condition": "Establish and real-machine verify the correct Effect-to-Cue storage grammar using content-level Sequence Export evidence, then integrate Cue-content verification into the root show programming workflow. Do not re-enable CALL_EFFECT from command-success metadata alone.",
+    "current_evidence": [
+      "grandMA2_3_9_60_SEQUENCE_5_EXPORT_CAPTURED",
+      "CUE_LABEL_PART_AND_CHANNEL_ATTRIBUTE_PATH_READABLE",
+      "RAW_DIMMER_VALUES_READABLE",
+      "COLOR_PRESET_REFERENCE_EVIDENCE_READABLE",
+      "EXPECTED_EFFECT_CALLS_ABSENT_FROM_CAPTURED_SEQUENCE_XML",
+      "OLD_COMMAND_ACCEPTED_EFFECT_CAPABILITY_DOWNGRADED"
+    ]
   },
   "human_review_decisions": [
     {
