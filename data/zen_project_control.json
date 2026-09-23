@@ -5,7 +5,7 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "Complete FULL_ARTISTIC_PATH_001 through the current-Show ARTISTIC_RESOURCE_MAP: verified Show state -> Group x technical capability x explicitly applicable Preset/Effect resources -> one Lighting Designer -> ARTISTIC_CUES_V0_2 -> strict ShowPlan -> deterministic Builder/readback. Never expose arbitrary MA2 Effect IDs or infer Preset applicability from type/name alone. Keep FREE_ONLY routing, CODEX_ARTISTIC_INTERVENTION=NONE, Fixture 9999 protection and no raw LLM-to-MA2 commands."
+    "active_objective": "Complete FULL_ARTISTIC_PATH_001 with a convenient autonomous runtime: one Lighting Designer produces artistic intent; ZEN resolves implementation details, allocates new MA2 objects from the first safe free slot, self-heals ordinary collisions and resumes compiled canonical plans after backend failures. Hard stops are reserved for destructive/unsafe boundaries such as Patch/Address/Fixture identity, Fixture 9999, foreign-object overwrite, arbitrary raw MA/Lua/Telnet or paid-provider use."
   },
   "last_closed_task": {
     "id": "SHEESH_ARTISTIC_CUES_V0_1_SEQUENCE_2_EXECUTOR_2_002",
@@ -13,17 +13,20 @@
     "result": "The lean AI programming path executed successfully on the Test Show. Provider artistic intent used ARTISTIC_CUES_V0_1, ZEN compiled strict zen.show_plan.v0.1, Sequence 2 was created and assigned to Executor 2.002 with six cues, MA2 programming readback passed, Sequence 301 / Executor 2.001 remained untouched, Phase A was not rerun, Groups and XYZ were not modified, Fixture 9999 was untouched, no paid provider was used, and CODEX_ARTISTIC_INTERVENTION=NONE. The generic compiler has since been refactored so SHEESH-specific six-cue labels live at the experiment boundary rather than in the compiler."
   },
   "next_acceptance_gate": {
-    "id": "FULL_ARTISTIC_PATH_001",
-    "classification": "REQUIRED",
-    "status": "READY_TO_EXECUTE_VALID_SAVED_ARTISTIC_PLAN",
-    "why_it_matters": "The full resource map is now verified: seven Group Dimmer bindings, 30 Color applicability pairs, and Effects 2500/2501/2502 exposed as native TEMPLATE resources. The first Lighting Designer call returned a valid six-cue plan with Dimmer, Color and Effect actions. MA2 build was blocked only because an earlier Sequence already used the base Agent-owned song label. The Builder now derives a unique Sequence-scoped operational label without changing artistic content or consuming another provider call.",
+    "id": "FULL_ARTISTIC_PATH_001_RUNTIME_RESUME",
+    "classification": "EXECUTION_ONLY",
+    "status": "IMPLEMENTED_READY_FOR_RUNTIME_RESUME",
+    "why_it_matters": "The valid SHEESH artistic plan already crossed the canonical compiler boundary. Runtime code now resumes that frozen canonical artifact without replaying artistic compilation, refreshes only its exact referenced Preset/Effect objects, allocates Sequence/Executor and other new test objects from the first safe free slot, advances past collisions automatically, and does not recall the provider for backend metadata failures.",
     "blocks_current_milestone": true,
     "dependencies": [
+      "zen_ma2_agent/allocation.py",
+      "scripts/run_sheesh_programming_test.py::_resume_saved_canonical_artifact",
+      "scripts/run_sheesh_programming_test.py::_augment_canonical_referenced_resources",
       "zen_ma2_agent/builder/draft.py::_sequence_label_for_build",
-      "tests/test_first_song_builder.py",
-      "data/sheesh_full_artistic_smoke_001.json"
+      "tests/test_allocation.py",
+      "tests/test_sheesh_retry.py"
     ],
-    "next_review_condition": "Run regression. Reconfirm Executor 2.003 and Sequence 3 are still unused, then rerun the smoke from the saved valid provider response with zero new provider calls. Require a new Sequence 3 with a unique Agent-owned label, assignment only to free Executor 2.003, METADATA_PASS_CUE_CONTENT_PARTIAL readback, and no change to Sequence 2, Sequence 901, Executor 2.002, geometry or Fixture 9999."
+    "next_review_condition": "Run one local regression, then execute the saved canonical SHEESH artifact against the disposable Test Show. If a candidate Sequence/Executor/Effect/Preset/Group/Timecode slot is occupied, advance automatically. No new provider call or artistic recompile is warranted for operational collisions."
   },
   "human_review_decisions": [
     {
@@ -320,7 +323,7 @@
     "experimental_b3": "GUIDANCE_ASSISTED_AB_ONLY",
     "ab002_actions": "UNCHANGED",
     "ma2_write_audit": "The original SHEESH_CURRENT_SHOW_REDESIGN_001 six-role run remains preserved unchanged. This owner-review, spatial-fact-calibration and runtime-plumbing task used no provider, MA2 transport, Resolver, Builder, Stage geometry writeback, or Show write path. All spatial eligibility flags remain NO. MA2_WRITES=0.",
-    "test_show_mode": "TEST_SHOW_WRITE_AUTHORIZATION_RETAINED_BUT_SPATIAL_WRITEBACK_NOT_APPROVED_AND_CALIBRATION_BLOCKED",
+    "test_show_mode": "DISPOSABLE_TEST_SHOW: NEW_AGENT_OWNED_OBJECTS_USE_FIRST_FREE_FROM_FRONT; EXISTING_VERIFIED_SEMANTIC_RESOURCES_MAY_BE_REUSED; NO_FOREIGN_OVERWRITE; PATCH_ADDRESS_FIXTURE_ID_TYPE_AND_FIXTURE_9999_REMAIN_PROTECTED",
     "fixture_9999": "UNTOUCHED",
     "zen_style_profile": "DEFERRED",
     "real_venue_validation": "WAIT_FOR_REAL_CASE",
@@ -335,10 +338,12 @@
     "strict_internal_schema_authority": "ZEN",
     "paid_provider_allowed": false,
     "notes": [
-      "Do not spend provider calls on backend metadata or representation-only repair.",
+      "Do not spend provider calls on backend metadata, allocation collisions, retry plumbing or representation-only repair.",
       "Do not use the LLM as the Show database; retrieve compact verified context from Knowledge/State/cache.",
       "Song-specific cue counts and labels belong to the calling task, not the generic compiler.",
       "Preset and Effect objects are implementation resources, not the artistic ontology.",
+      "Ordinary implementation collisions self-heal; they are not human-review events.",
+      "A ShowPlan that already passed canonical compilation is frozen for backend retry unless a referenced runtime resource actually disappears.",
       "Unsupported artistic dimensions stay explicit; never silently substitute another meaning.",
       "Live mode is local/event-driven first; call an LLM only for meaningful interpretation."
     ],
@@ -392,6 +397,36 @@
       "effect_template_qty_table_format": "grandMA2_3.9: QTY header + Effectline <n> <QTY_VALUE> data column",
       "test_show_dimmer": "BUILD_001_OBSERVED_SET_DIMMER + CURRENT_SEQUENCE_901_IDENTITY + EXACT_CURRENT_GROUP_MEMBER_SET; selection order may differ and is context, not capability identity"
     },
-    "repeated_song_label_policy": "BASE_LABEL_FIRST; ON_COLLISION_USE_SEQUENCE_SCOPED_AGENT_LABEL; DO_NOT_RECALL_PROVIDER; FAIL_CLOSED_IF_SCOPED_LABEL_ALSO_EXISTS"
+    "repeated_song_label_policy": "BASE_LABEL_FIRST; ON_COLLISION_USE_SEQUENCE_SCOPED_AGENT_LABEL; IF_STILL_COLLIDING_APPEND_NEXT_UNIQUE_SUFFIX; DO_NOT_RECALL_PROVIDER",
+    "allocation_policy": {
+      "default": "FIRST_FREE_FROM_FRONT",
+      "rule": "Scan fresh inventory, start at the front of the relevant pool, skip occupied/protected/foreign slots, use the first safe free slot.",
+      "applies_to": [
+        "SEQUENCE",
+        "EXECUTOR",
+        "EFFECT",
+        "TEST_SHOW_COLOR_PRESET",
+        "ISOLATED_TEST_GROUP",
+        "ISOLATED_TEST_TIMECODE"
+      ],
+      "high_numeric_reserve_as_safety": false
+    },
+    "operational_self_heal": {
+      "principle": "LIMIT_DANGEROUS_OUTCOMES_NOT_PROBLEM_SOLVING",
+      "ordinary_collisions": "AUTO_ADVANCE_OR_RENAME_WITHOUT_HUMAN_PROMPT",
+      "canonical_retry": "FREEZE_COMPILE_PASS_CANONICAL_SHOWPLAN_AND_RESUME_BUILDER",
+      "backend_failure_provider_recall": false,
+      "exact_duplicate_verified_resource": "REUSE_LOWEST_SAFE_VERIFIED_ID",
+      "artistic_resource_mismatch": "AT_MOST_ONE_BOUNDED_DESIGNER_DELTA_WHEN_TRULY_ARTISTIC",
+      "hard_stop_only_for": [
+        "PATCH_OR_ADDRESS_WRITE",
+        "FIXTURE_ID_OR_TYPE_WRITE",
+        "FIXTURE_9999",
+        "FOREIGN_OR_PRODUCTION_OBJECT_OVERWRITE",
+        "ARBITRARY_RAW_MA2_TELNET_OR_LUA",
+        "UNAUTHORIZED_DESTRUCTIVE_DELETE",
+        "PAID_PROVIDER"
+      ]
+    }
   }
 }
