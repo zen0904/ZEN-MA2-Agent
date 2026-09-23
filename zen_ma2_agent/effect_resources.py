@@ -192,14 +192,13 @@ class EffectResourceResolver:
             if not effect or effect.get("name") != entry.get("label"):
                 continue
             catalog_matches.append((entry, effect))
-        if len(catalog_matches) == 1:
-            entry, effect = catalog_matches[0]
+        if catalog_matches:
+            entry, effect = min(catalog_matches, key=lambda pair: int(pair[1]["effect_id"]))
             return EffectResolution("EXISTING_MATCH", requirement, {
                 "id": effect["effect_id"], "label": effect.get("name"), "source": "EFFECT_RESOURCE_RESOLVER", "ownership": "ZEN_AGENT",
-                "verification": entry.get("verification"), "match": "VERIFIED_AGENT_CATALOG",
+                "verification": entry.get("verification"),
+                "match": "VERIFIED_AGENT_CATALOG" if len(catalog_matches) == 1 else "VERIFIED_AGENT_CATALOG_LOWEST_ID",
             }, None)
-        if len(catalog_matches) > 1:
-            return EffectResolution("AMBIGUOUS", requirement, None, None, tuple({"id": effect["effect_id"], "label": effect.get("name")} for _, effect in catalog_matches), "Multiple verified Agent-owned catalog entries match this requirement.")
 
         # Existing template labels have a deliberately small exact vocabulary;
         # a generic human label such as "Chase" never becomes an automatic match.
@@ -210,14 +209,13 @@ class EffectResourceResolver:
             if str(item.get("name") or "").strip().upper() == expected_template
             and str(item.get("kind") or "").upper() == "TEMPLATE"
         ]
-        if len(template) == 1:
-            effect = template[0]
+        if template:
+            effect = min(template, key=lambda item: int(item["effect_id"]))
             return EffectResolution("EXISTING_MATCH", requirement, {
                 "id": effect["effect_id"], "label": effect.get("name"), "source": "EFFECT_RESOURCE_RESOLVER", "ownership": "TEMPLATE",
-                "verification": {"object": "FRESH_LIST_VERIFIED", "label": "STRICT_SEMANTIC_TEMPLATE", "parameters": "UNAVAILABLE"}, "match": "STRICT_SEMANTIC_TEMPLATE",
+                "verification": {"object": "FRESH_LIST_VERIFIED", "label": "STRICT_SEMANTIC_TEMPLATE", "parameters": "UNAVAILABLE"},
+                "match": "STRICT_SEMANTIC_TEMPLATE" if len(template) == 1 else "STRICT_SEMANTIC_TEMPLATE_LOWEST_ID",
             }, None)
-        if len(template) > 1:
-            return EffectResolution("AMBIGUOUS", requirement, None, None, tuple({"id": item["effect_id"], "label": item.get("name")} for item in template), "Multiple strict semantic template Effects match.")
 
         candidates = tuple({"id": item["effect_id"], "label": item.get("name"), "reason": "Name-only candidate; not an exact verified specification."} for item in effects if "CHASE" in str(item.get("name") or "").upper())
         try:
