@@ -505,11 +505,11 @@ def _verify(
             parsed = geometry_provider.parse_subfixture(output, fixture_id=fixture_id, instance=instance)
             listed[str(instance)] = bool(parsed and parsed.get("position") == {"x": expected[0], "y": expected[1], "z": expected[2]})
         verification["geometry"][str(fixture_id)] = {"expected": expected, "listed": listed, "fixture_9999": fixture_id == 9999}
-    sequence = _read(core, "List Sequence", reads)
+    sequence_output = _read(core, "List Sequence", reads)
     verification["sequence"] = {
         "id": sequence,
         "label": sequence_label,
-        "verified": f"Sequ {sequence}" in sequence and sequence_label in sequence,
+        "verified": f"Sequ {sequence}" in sequence_output and sequence_label in sequence_output,
     }
     cue_metadata = {}
     for cue in plan["cues"]:
@@ -546,10 +546,16 @@ def main() -> int:
     result_path = args.result or (RESOURCE_RESULT_PATH if args.resources_only else RESULT_PATH)
     if result_path.exists():
         raise SystemExit(f"Refusing to overwrite prior build evidence: {result_path}")
-    plan = _load_plan(args.plan)
+    legacy_mode = bool(args.resources_only or args.resume_existing_build)
+    plan = _load_plan(args.plan, require_legacy_identity=legacy_mode)
     core = AgentCore(AgentRuntime(ROOT))
     audit: list[dict[str, str]] = []
     reads: dict[str, str] = {}
+    runtime_sequence = SEQUENCE
+    runtime_sequence_label = SEQUENCE_LABEL
+    runtime_executor_display = EXECUTOR_DISPLAY
+    runtime_executor_address = EXECUTOR
+
     result: dict[str, Any] = {
         "schema": "zen.real_ma2_test_show_sheesh_build.v0.1",
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -557,8 +563,8 @@ def main() -> int:
         "production_show_mode": "PREVIEW_APPROVAL_REQUIRED",
         "song": plan.get("song"),
         "plan_schema": plan.get("schema"),
-        "sequence": {"id": SEQUENCE, "label": SEQUENCE_LABEL},
-        "executor": EXECUTOR,
+        "sequence": {"id": runtime_sequence, "label": runtime_sequence_label},
+        "executor": runtime_executor_display,
         "fixture_9999_targeted": False,
         "write_audit": audit,
         "readbacks": reads,
@@ -568,12 +574,36 @@ def main() -> int:
         core.connect(ma2["host"], ma2["port"], ma2["username"], "")
         _await_ready(core)
         result["connection"] = {"host": ma2["host"], "port": ma2["port"], "user": core.runtime.client.authenticated_user if core.runtime.client else None, "ready": core.runtime.ready}
-        _assert_preflight(
-            core,
-            reads,
-            resume_existing_build=args.resume_existing_build or args.resources_only,
-            require_owned_executor=not args.resources_only,
-        )
+        if legacy_mode:
+            _assert_preflight(
+                core,
+                reads,
+                resume_existing_build=True,
+                require_owned_executor=not args.resources_only,
+            )
+            result["allocation_policy"] = "LEGACY_EXISTING_OBJECT_REUSE"
+        else:
+            _assert_test_show_identity(core, reads)
+            (
+                plan,
+                runtime_sequence,
+                runtime_sequence_label,
+                runtime_executor_display,
+                runtime_executor_address,
+            ) = _allocate_fresh_build(core, plan, reads)
+            result["allocation_policy"] = "FIRST_FREE_FROM_FRONT"
+            result["sequence"] = {
+                "id": runtime_sequence,
+                "label": runtime_sequence_label,
+            }
+            result["executor"] = runtime_executor_display
+            result["runtime_palette"] = [
+                {
+                    "reference": f"4.{entry['preset']}",
+                    "label": entry["label"],
+                }
+                for entry in _palette(plan)
+            ]
         result["preflight"] = "PASS"
         if args.resources_only:
             result["resource_mode"] = "ARTISTIC_RESOURCES_ONLY"
@@ -582,12 +612,19 @@ def main() -> int:
         elif args.resume_existing_build:
             result["resume"] = "EXACT_AGENT_OWNED_SEQUENCE_VERIFIED"
             if "ZEN_SHEESH_TEST" not in reads.get("List Executor", ""):
-                _run(core, f'Assign Sequence {SEQUENCE} At Executor {EXECUTOR} /nc', audit)
-                _run(core, f'Label Executor {EXECUTOR} "ZEN_SHEESH_TEST" /nc', audit)
+                _run(core, f'Assign Sequence {runtime_sequence} At Executor {runtime_executor_address} /nc', audit)
+                _run(core, f'Label Executor {runtime_executor_address} "{runtime_sequence_label}" /nc', audit)
         else:
             result["created_presets"] = _write_palette(core, plan, audit)
             result["test_stage_layout"] = {"id": LAYOUT_NAME, "coordinates": _write_geometry(core, plan, audit)}
-            _write_sequence(core, plan, audit)
+            _write_sequence(
+                core,
+                plan,
+                audit,
+                sequence=runtime_sequence,
+                sequence_label=runtime_sequence_label,
+                executor_address=runtime_executor_address,
+            )
         if args.resources_only:
             result["verification"] = _verify_artistic_resources(
                 core,
@@ -599,7 +636,14 @@ def main() -> int:
             effect_ok = all(value["verified"] for value in result["verification"]["template_effects"].values())
             result["build_status"] = "COMPLETE" if preset_ok and effect_ok else "PARTIAL_READBACK"
         else:
-            result["verification"] = _verify(core, plan, reads)
+            result["verification"] = _verify(
+                core,
+                plan,
+                reads,
+                sequence=runtime_sequence,
+                sequence_label=runtime_sequence_label,
+                executor_display=runtime_executor_display,
+            )
             result["build_status"] = "COMPLETE" if all(value["verified"] for value in result["verification"]["presets"].values()) and result["verification"]["sequence"]["verified"] and result["verification"]["executor"]["verified"] else "PARTIAL_READBACK"
         return_code = 0
     except Exception as exc:
