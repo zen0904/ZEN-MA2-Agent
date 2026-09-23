@@ -151,7 +151,10 @@ def _assert_preflight(
                 raise RuntimeError(f"Executor {EXECUTOR_DISPLAY} is not the exact owned SHEESH assignment.")
         elif EXECUTOR_DISPLAY in executors or "ZEN_TEST_SHEESH" in executors:
             raise RuntimeError(f"Executor {EXECUTOR_DISPLAY} is occupied; refusing to overwrite.")
-    palette_labels = {entry["preset"]: entry["label"] for entry in _palette(_load_plan(PLAN_PATH))}
+    palette_labels = {
+        entry["preset"]: entry["label"]
+        for entry in _palette(_load_plan(PLAN_PATH, require_legacy_identity=True), require_legacy_ids=True)
+    }
     for reference in range(101, 114):
         # Individual lookup is required because this MA2 List All display omits
         # newly-created Color pool rows.  4.101 may exist only as the initial
@@ -161,6 +164,115 @@ def _assert_preflight(
         absent = "OBJECT DOES NOT EXIST" in output or "NO OBJECTS FOUND" in output.upper()
         if not absent and expected_label not in output:
             raise RuntimeError(f"Color Preset 4.{reference} is occupied by a non-owned object; refusing to overwrite.")
+
+
+def _assert_test_show_identity(core: AgentCore, reads: dict[str, str]) -> None:
+    """Prove only the disposable Test Show identity before allocating new objects."""
+    groups = _read(core, "List Group", reads)
+    for number, label in EXPECTED_GROUPS.items():
+        if f"Group {number}" not in groups or label not in groups:
+            raise RuntimeError(f"Current loaded Show did not prove expected Group {number} {label}.")
+    fixtures = _read(core, "List Fixture", reads)
+    if "Fixture 9999" not in fixtures:
+        raise RuntimeError("Expected protected Fixture 9999 sentinel is absent; refusing a different Show.")
+    for fixture_id in (101, 201, 301, 401, 501, 601, 701):
+        if not re.search(rf"^\s*Fixture\s+{fixture_id}\s", fixtures, re.MULTILINE):
+            raise RuntimeError(f"Current loaded Show is missing expected Fixture {fixture_id}.")
+    _read(core, "List Sequence", reads)
+    _read(core, "List Executor", reads)
+
+
+def _object_missing(output: str) -> bool:
+    upper = str(output or "").upper()
+    return "OBJECT DOES NOT EXIST" in upper or "NO OBJECTS FOUND" in upper
+
+
+def _allocate_fresh_palette(
+    core: AgentCore,
+    plan: dict[str, Any],
+    reads: dict[str, str],
+) -> dict[str, Any]:
+    """Remap the historical 13-color intent onto the first thirteen safe free Color slots."""
+    remapped = deepcopy(plan)
+    original_palette = _palette(remapped)
+    unavailable: set[int] = set()
+    ref_map: dict[str, str] = {}
+    new_palette: list[dict[str, Any]] = []
+
+    for entry in original_palette:
+        while True:
+            try:
+                candidate = first_free_from_front(unavailable, start=1)
+            except AllocationError as exc:
+                raise RuntimeError("No safe free Color preset slot remains for the Test Show palette.") from exc
+            reference = f"4.{candidate}"
+            output = _read_preset_reference(core, reference, reads)
+            if _object_missing(output):
+                break
+            unavailable.add(candidate)
+        original_reference = f"4.{int(entry['preset'])}"
+        ref_map[original_reference] = reference
+        updated = deepcopy(entry)
+        updated["preset"] = candidate
+        new_palette.append(updated)
+        unavailable.add(candidate)
+
+    remapped["test_palette"] = new_palette
+    for cue in remapped.get("cues", []):
+        for action in cue.get("actions", []):
+            if action.get("operation") == "CALL_PRESET":
+                old = str(action.get("preset_ref") or "")
+                if old not in ref_map:
+                    raise RuntimeError(f"Fresh palette remap has no mapping for {old}.")
+                action["preset_ref"] = ref_map[old]
+    validate_show_plan(remapped)
+    return remapped
+
+
+def _executor_command_address(display: str) -> str:
+    match = re.fullmatch(r"([1-9]\d*)\.(0*[1-9]\d*)", display)
+    if not match:
+        raise RuntimeError("Allocated Executor address is invalid.")
+    return f"{int(match.group(1))}.{int(match.group(2))}"
+
+
+def _allocate_fresh_build(
+    core: AgentCore,
+    plan: dict[str, Any],
+    reads: dict[str, str],
+) -> tuple[dict[str, Any], int, str, str, str]:
+    """Allocate Sequence, Executor and Color resources from the front without overwrites."""
+    sequences_raw = reads.get("List Sequence") or _read(core, "List Sequence", reads)
+    sequence_rows = SequenceProvider().parse(sequences_raw)
+    used_sequences = [row.number for row in sequence_rows]
+    try:
+        sequence = first_free_from_front(
+            used_sequences,
+            protected=PROTECTED_SEQUENCES,
+            start=1,
+        )
+    except AllocationError as exc:
+        raise RuntimeError("No safe free Sequence slot remains.") from exc
+
+    executors_raw = reads.get("List Executor") or _read(core, "List Executor", reads)
+    try:
+        executor_display = first_free_executor(executors_raw, page=1, start=1)
+    except AllocationError as exc:
+        raise RuntimeError("No safe free Executor slot remains on Page 1.") from exc
+    executor_address = _executor_command_address(executor_display)
+
+    existing_labels = {row.name for row in sequence_rows}
+    sequence_label = SEQUENCE_LABEL
+    if sequence_label in existing_labels:
+        sequence_label = f"{SEQUENCE_LABEL}_SEQ{sequence}"
+        if sequence_label in existing_labels:
+            raise RuntimeError("Allocated Sequence still collides with an existing Agent-owned label.")
+
+    remapped = _allocate_fresh_palette(core, plan, reads)
+    remapped["sequence"] = sequence
+    remapped["sequence_label"] = sequence_label
+    validate_show_plan(remapped)
+    return remapped, sequence, sequence_label, executor_display, executor_address
 
 
 def _palette(plan: dict[str, Any], *, require_legacy_ids: bool = False) -> list[dict[str, Any]]:
