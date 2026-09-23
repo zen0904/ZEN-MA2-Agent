@@ -18,6 +18,8 @@ from .workflow import ActionStep, SkillGraphNode, Subtask, Task, WorkflowPlan
 TEST_MODE_ENV = "ZEN_MA2_GEOMETRY_TEST_MODE"
 TEST_SHOW = "MA2_EFFECT_PROBE_WORK"
 PRODUCTION_SHOW = "zen templ show"
+# Legacy numbers are retained only as historical documentation. New isolated
+# test Groups are allocated from the first free slots by AgentCore.
 SOURCE_GROUP = 90
 DESTINATION_GROUP = 91
 SOURCE_LABEL = "ZEN Clone Src TEST"
@@ -36,9 +38,16 @@ def test_mode_enabled() -> bool:
 class GeometryTestGroupSpec:
     source_fixture: int
     destination_fixture: int
+    source_group: int
+    destination_group: int
 
     def summary(self) -> dict[str, int]:
-        return {"source_fixture": self.source_fixture, "destination_fixture": self.destination_fixture}
+        return {
+            "source_fixture": self.source_fixture,
+            "destination_fixture": self.destination_fixture,
+            "source_group": self.source_group,
+            "destination_group": self.destination_group,
+        }
 
 
 class GeometryTestEnvironmentSkill:
@@ -94,27 +103,34 @@ class GeometryTestEnvironmentSkill:
             raw = task.intent.parameters.get("geometry_test_group_spec")
             if not isinstance(raw, dict):
                 raise GeometryTestEnvironmentError("Geometry test Group setup has no verified Fixture pair.")
-            spec = GeometryTestGroupSpec(int(raw["source_fixture"]), int(raw["destination_fixture"]))
+            spec = GeometryTestGroupSpec(
+                int(raw["source_fixture"]),
+                int(raw["destination_fixture"]),
+                int(raw["source_group"]),
+                int(raw["destination_group"]),
+            )
             if spec.source_fixture < 1 or spec.destination_fixture < 1 or spec.source_fixture == spec.destination_fixture:
                 raise GeometryTestEnvironmentError("Geometry test Group setup requires two distinct positive Fixture IDs.")
+            if spec.source_group < 1 or spec.destination_group < 1 or spec.source_group == spec.destination_group:
+                raise GeometryTestEnvironmentError("Geometry test Group setup requires two distinct positive Group IDs.")
             steps = (
                 ActionStep("select-source", f"Select test Fixture {spec.source_fixture}", "command", f"Fixture {spec.source_fixture}", "MODIFY"),
-                ActionStep("store-source", f"Store Group {SOURCE_GROUP}", "command", f"Store Group {SOURCE_GROUP} /nc", "MODIFY", depends_on=("select-source",)),
-                ActionStep("label-source", "Label test source Group", "command", f'Label Group {SOURCE_GROUP} "{SOURCE_LABEL}"', "MODIFY", depends_on=("store-source",)),
+                ActionStep("store-source", f"Store Group {spec.source_group}", "command", f"Store Group {spec.source_group} /nc", "MODIFY", depends_on=("select-source",)),
+                ActionStep("label-source", "Label test source Group", "command", f'Label Group {spec.source_group} "{SOURCE_LABEL}"', "MODIFY", depends_on=("store-source",)),
                 ActionStep("select-destination", f"Select test Fixture {spec.destination_fixture}", "command", f"Fixture {spec.destination_fixture}", "MODIFY", depends_on=("label-source",)),
-                ActionStep("store-destination", f"Store Group {DESTINATION_GROUP}", "command", f"Store Group {DESTINATION_GROUP} /nc", "MODIFY", depends_on=("select-destination",)),
-                ActionStep("label-destination", "Label test destination Group", "command", f'Label Group {DESTINATION_GROUP} "{DESTINATION_LABEL}"', "MODIFY", depends_on=("store-destination",)),
+                ActionStep("store-destination", f"Store Group {spec.destination_group}", "command", f"Store Group {spec.destination_group} /nc", "MODIFY", depends_on=("select-destination",)),
+                ActionStep("label-destination", "Label test destination Group", "command", f'Label Group {spec.destination_group} "{DESTINATION_LABEL}"', "MODIFY", depends_on=("store-destination",)),
                 ActionStep("clear-test-selection", "Clear test setup selection", "command", "ClearAll", "MODIFY", depends_on=("label-destination",)),
             )
             return self._workflow(
                 task,
                 steps,
                 "Geometry Clone Test Groups Preview\n\n"
-                f'Source: Group {SOURCE_GROUP} "{SOURCE_LABEL}" ← Fixture {spec.source_fixture}\n'
-                f'Destination: Group {DESTINATION_GROUP} "{DESTINATION_LABEL}" ← Fixture {spec.destination_fixture}\n'
+                f'Source: Group {spec.source_group} "{SOURCE_LABEL}" ← Fixture {spec.source_fixture}\n'
+                f'Destination: Group {spec.destination_group} "{DESTINATION_LABEL}" ← Fixture {spec.destination_fixture}\n'
                 "Only the currently loaded isolated Test Show is affected.\n\n"
                 "Safety: MODIFY\nApproval required.",
-                "Export Group 90 and Group 91, then verify each has exactly its expected Fixture.",
+                f"Export Group {spec.source_group} and Group {spec.destination_group}, then verify each has exactly its expected Fixture.",
             )
         raise GeometryTestEnvironmentError("Unsupported isolated Geometry test operation.")
 
@@ -138,12 +154,19 @@ class GeometryTestEnvironmentSkill:
         allowed = {
             f'LoadShow "{TEST_SHOW}" /nc',
             f'LoadShow "{PRODUCTION_SHOW}" /nc',
-            f"Store Group {SOURCE_GROUP} /nc",
-            f"Store Group {DESTINATION_GROUP} /nc",
-            f'Label Group {SOURCE_GROUP} "{SOURCE_LABEL}"',
-            f'Label Group {DESTINATION_GROUP} "{DESTINATION_LABEL}"',
             "ClearAll",
         }
+        raw = plan.task.intent.parameters.get("geometry_test_group_spec")
+        if isinstance(raw, dict):
+            source_group = raw.get("source_group")
+            destination_group = raw.get("destination_group")
+            if all(isinstance(value, int) and not isinstance(value, bool) and value > 0 for value in (source_group, destination_group)):
+                allowed.update({
+                    f"Store Group {source_group} /nc",
+                    f"Store Group {destination_group} /nc",
+                    f'Label Group {source_group} "{SOURCE_LABEL}"',
+                    f'Label Group {destination_group} "{DESTINATION_LABEL}"',
+                })
         for command in plan.commands:
             if command not in allowed and not command.startswith("Fixture "):
                 raise GeometryTestEnvironmentError("Isolated Geometry test workflow contains a disallowed command.")
