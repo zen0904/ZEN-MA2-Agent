@@ -494,6 +494,7 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
     }
     provider_content: str | None = None
     provider = None
+    build_execution_attempted = False
 
     try:
         ma2 = core.runtime.preferences["ma2"]
@@ -673,6 +674,7 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
             raise RuntimeError("FIRST_SONG_WORKFLOW_NOT_EXECUTABLE")
 
         result["preview"] = queued
+        build_execution_attempted = True
         execution = core.approve_action(action_id)
         result["execution"] = execution
         result["sequence"] = execution.get("result", "")
@@ -701,7 +703,7 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
         raise ProgrammingRunError(str(exc), result=result) from exc
     finally:
         try:
-            if core.runtime.ready:
+            if core.runtime.ready and build_execution_attempted:
                 core.runtime.execute_approved_commands(("ClearAll",))
         finally:
             core.disconnect()
