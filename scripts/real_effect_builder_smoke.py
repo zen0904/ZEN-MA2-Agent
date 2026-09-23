@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import socket
 import subprocess
 import sys
@@ -12,7 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 EXE = ROOT / "dist" / "ZEN_MA2_Agent" / "ZEN_MA2_Agent.exe"
-QUERY = "幫 Group 1 建立 Effect 2500 Dimmer Chase"
+QUERY = "幫 Group 1 建立 Dimmer Chase"
 
 
 def _free_port() -> int:
@@ -71,7 +72,7 @@ def main() -> int:
     port = _free_port()
     environment = dict(os.environ, ZEN_MA2_AUTOMATION="1", ZEN_MA2_AUTOMATION_PORT=str(port))
     process = subprocess.Popen([str(EXE), "--automation-test"], cwd=bundle, env=environment)
-    report: dict[str, object] = {"query": QUERY, "effect_number": 2500, "mode": "verify_existing" if verify_existing else "create"}
+    report: dict[str, object] = {"query": QUERY, "effect_number": 2500 if verify_existing else None, "mode": "verify_existing" if verify_existing else "create"}
     try:
         status = _wait_for(port)
         if status.get("build_head") != expected_head:
@@ -104,6 +105,11 @@ def main() -> int:
         preview = _request(port, "chat_text")["chat_text"]
         if "Effect Builder Preview" not in preview or "Approval required." not in preview:
             raise RuntimeError(f"Effect Builder preview missing: {preview}")
+        allocated = re.search(r'Effect:\s+(\d+)\s+"', preview)
+        if not allocated:
+            raise RuntimeError(f"Allocated Effect ID was not exposed in Preview: {preview}")
+        effect_number = int(allocated.group(1))
+        report["effect_number"] = effect_number
         preview_records = _new_records(log_path, offset)
         premature = [item.get("data", {}).get("commands", []) for item in preview_records if item.get("event") == "workflow_execute"]
         if premature:
@@ -116,10 +122,10 @@ def main() -> int:
         records = _new_records(log_path, offset)
         workflow = [item.get("data", {}) for item in records if item.get("event") == "workflow_execute"]
         verification = [item.get("data", {}) for item in records if item.get("event") == "effect_builder_verification"]
-        if len(workflow) != 1 or workflow[0].get("commands", [None])[0] != "Store Effect 2500 /nc":
+        if len(workflow) != 1 or workflow[0].get("commands", [None])[0] != f"Store Effect {effect_number} /nc":
             raise RuntimeError(f"Unexpected approved Effect workflow audit: {workflow}")
         if not verification or not verification[-1].get("exists") or not verification[-1].get("label_verified"):
-            raise RuntimeError(f"Effect 2500 was not verified after execution: {verification}")
+            raise RuntimeError(f"Effect {effect_number} was not verified after execution: {verification}")
         report["chat"] = transcript
         report["workflow"] = workflow
         report["verification"] = verification
