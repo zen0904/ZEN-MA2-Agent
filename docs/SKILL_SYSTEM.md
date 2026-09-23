@@ -39,3 +39,10 @@ For broad programming requests, an injected provider-independent one-call
 artistic service may supply `LEAN_SINGLE_DESIGNER` intent. It is compiled by
 ZEN and composed with the existing `show.builder` child; no provider is called
 when the service is absent, and deterministic child requests stay model-free.
+
+FieldHost can supply that artistic service from the existing portable
+`ProviderRouter`. The adapter is role-locked to `LIGHTING_DESIGNER`, filters
+runtime candidates to explicit `FREE`/`LOCAL` cost classes, disables parallel
+candidate fan-out, and never calls a provider during startup. Missing or invalid
+provider configuration leaves broad requests resumable at
+`NEEDS_INTELLIGENCE` while deterministic child Skills continue normally.

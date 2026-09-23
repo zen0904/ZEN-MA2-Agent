@@ -130,6 +130,29 @@ class LeanRootProviderTests(unittest.TestCase):
             self.assertEqual(plan["active_sequence_range"], [301, 400])
             self.assertEqual(plan["target_executor"], "2.001")
 
+    def test_integer_group_id_alias_is_canonicalized_without_guessing(self):
+        plan, _ = compile_lean_artistic_intent(
+            {"cues": [{"fade": 0, "actions": [{"group_id": 1, "dimmer": 50}]}]},
+            request="x",
+            resource_map=resource_map(),
+        )
+        action = plan["cues"][0]["actions"][0]
+        self.assertEqual(action["target"]["ref"], 1)
+
+        with self.assertRaisesRegex(ArtisticPlanCompileError, "group_id alias must be an integer"):
+            compile_lean_artistic_intent(
+                {"cues": [{"fade": 0, "actions": [{"group_id": "1", "dimmer": 50}]}]},
+                request="x",
+                resource_map=resource_map(),
+            )
+
+        with self.assertRaisesRegex(ArtisticPlanCompileError, "conflicting Group identities"):
+            compile_lean_artistic_intent(
+                {"cues": [{"fade": 0, "actions": [{"group": 1, "group_id": 2, "dimmer": 50}]}]},
+                request="x",
+                resource_map=resource_map(),
+            )
+
     def test_unknown_dimmer_fails_closed(self):
         with self.assertRaisesRegex(ArtisticPlanCompileError, "Dimmer application"):
             compile_lean_artistic_intent(

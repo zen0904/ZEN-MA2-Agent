@@ -198,3 +198,17 @@ one bounded request and compact verified context, returns artistic JSON only,
 and then hands the result to ZEN's deterministic compiler and existing
 `show.builder` approval path. Without injection, broad requests remain
 `NEEDS_INTELLIGENCE`; deterministic requests remain model-free.
+
+### Portable ProviderRouter integration
+
+FieldHost may adapt the existing portable `ProviderRouter` into the
+`LEAN_SINGLE_DESIGNER` seam. Loading provider configuration performs no
+network call. Normal show programming accepts only provider slots explicitly
+declared `COST_CLASS=FREE` or `COST_CLASS=LOCAL` for the
+`LIGHTING_DESIGNER` role. `UNKNOWN` and `PAID` slots are excluded rather than
+inferred from model/provider names.
+
+The ordinary path remains one logical Lighting Designer request. Ordered
+transport fallback may occur only across eligible FREE/LOCAL slots; parallel
+Designer candidate generation remains explicit deep/research mode. Deterministic
+requests continue to bypass the provider entirely.

@@ -117,6 +117,40 @@ def _verified_preset_inventory(
     return references, types
 
 
+def canonicalize_provider_artistic_shape(value: Mapping[str, Any]) -> dict[str, Any]:
+    """Normalize only schema aliases that preserve an already-verified identity.
+
+    group_id is accepted solely as an integer alias for compact-action group.
+    Names, strings, conflicting identities, and any broader semantic guessing
+    remain rejected.
+    """
+    normalized = deepcopy(dict(value))
+    cues = normalized.get("cues")
+    if not isinstance(cues, list):
+        return normalized
+    for cue_index, cue in enumerate(cues, start=1):
+        if not isinstance(cue, Mapping):
+            continue
+        actions = cue.get("actions")
+        if not isinstance(actions, list):
+            continue
+        for action_index, action in enumerate(actions, start=1):
+            if not isinstance(action, dict) or "group_id" not in action:
+                continue
+            alias = action.get("group_id")
+            if not isinstance(alias, int) or isinstance(alias, bool):
+                raise ArtisticPlanCompileError(
+                    f"Cue {cue_index} action {action_index} group_id alias must be an integer."
+                )
+            if "group" in action and action.get("group") != alias:
+                raise ArtisticPlanCompileError(
+                    f"Cue {cue_index} action {action_index} contains conflicting Group identities."
+                )
+            action["group"] = alias
+            action.pop("group_id", None)
+    return normalized
+
+
 def compile_lean_artistic_intent(
     provider_output: Mapping[str, Any] | str,
     *,
@@ -129,6 +163,7 @@ def compile_lean_artistic_intent(
         raise ArtisticPlanCompileError("Lean design request must be a non-empty bounded string.")
     artistic = parse_artistic_json(provider_output)
     reject_transport_fields(artistic)
+    artistic = canonicalize_provider_artistic_shape(artistic)
     groups = [item for item in resource_map.get("groups", []) if isinstance(item, Mapping)]
     verified_groups = {
         int(item["group_id"])
@@ -211,6 +246,7 @@ __all__ = [
     "build_provider_resource_contract",
     "parse_artistic_json",
     "reject_transport_fields",
+    "canonicalize_provider_artistic_shape",
     "compile_lean_artistic_intent",
     "attach_verified_effect_identity_labels",
 ]

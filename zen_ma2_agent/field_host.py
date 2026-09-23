@@ -6,6 +6,7 @@ from typing import Any, Iterable
 
 from .core import AgentCore
 from .host_metrics import HostMetricsProvider
+from .llm.lean_design_adapter import load_portable_lean_design_intelligence
 from .ma_bridge.server import (
     DEFAULT_BRIDGE_HOST,
     DEFAULT_BRIDGE_PORT,
@@ -53,7 +54,27 @@ class FieldHost:
         worker_endpoints: Iterable[WorkerEndpoint] = (),
     ) -> None:
         self.config = config or FieldHostConfig()
-        self.core = core or AgentCore()
+        self.design_intelligence_status: dict[str, Any] = {
+            "configured": False,
+            "source": "portable_provider_router",
+            "error_class": None,
+        }
+        if core is None:
+            try:
+                design_intelligence = load_portable_lean_design_intelligence()
+            except (OSError, ValueError):
+                design_intelligence = None
+                self.design_intelligence_status["error_class"] = "CONFIGURATION_ERROR"
+            self.design_intelligence_status["configured"] = design_intelligence is not None
+            self.core = AgentCore(design_intelligence_provider=design_intelligence)
+        else:
+            # Explicit Core injection remains authoritative for tests,
+            # embedding, and alternate runtimes.
+            self.core = core
+            self.design_intelligence_status["source"] = "injected_core"
+            self.design_intelligence_status["configured"] = (
+                getattr(core, "design_intelligence_provider", None) is not None
+            )
         endpoints = tuple(worker_endpoints)
         if worker_registry is None:
             self.worker_registry = WorkerRegistry(

@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 from types import SimpleNamespace
 
 from zen_ma2_agent.field_host import FieldHost, FieldHostConfig
@@ -9,6 +10,7 @@ from zen_ma2_agent.worker_health import WorkerEndpoint
 
 class _FakeCore:
     def __init__(self):
+        self.design_intelligence_provider = None
         self.runtime = SimpleNamespace(
             state=SimpleNamespace(value="DISCONNECTED"),
             preferences={"ma2": {"host": "127.0.0.1", "port": 30000}},
@@ -81,6 +83,50 @@ class FieldHostTests(unittest.TestCase):
         severities = [event["severity"] for event in snapshot["recent_events"]]
         self.assertIn("CRITICAL", severities)
         self.assertIn("WARNING", severities)
+
+    def test_default_field_host_injects_portable_lean_provider_without_network_call(self):
+        provider = object()
+        fake_core = _FakeCore()
+        with patch(
+            "zen_ma2_agent.field_host.load_portable_lean_design_intelligence",
+            return_value=provider,
+        ) as load, patch("zen_ma2_agent.field_host.AgentCore", return_value=fake_core) as core_cls:
+            host = FieldHost(
+                FieldHostConfig(operator_port=8876, bridge_port=8877),
+                worker_registry=WorkerRegistry(),
+            )
+        load.assert_called_once_with()
+        core_cls.assert_called_once_with(design_intelligence_provider=provider)
+        self.assertIs(host.core, fake_core)
+        self.assertTrue(host.design_intelligence_status["configured"])
+        self.assertEqual(host.design_intelligence_status["source"], "portable_provider_router")
+
+    def test_injected_core_never_loads_portable_provider_config(self):
+        fake_core = _FakeCore()
+        with patch("zen_ma2_agent.field_host.load_portable_lean_design_intelligence") as load:
+            host = FieldHost(
+                FieldHostConfig(operator_port=8876, bridge_port=8877),
+                core=fake_core,
+                worker_registry=WorkerRegistry(),
+            )
+        load.assert_not_called()
+        self.assertIs(host.core, fake_core)
+        self.assertEqual(host.design_intelligence_status["source"], "injected_core")
+
+    def test_invalid_provider_config_degrades_to_no_design_provider(self):
+        fake_core = _FakeCore()
+        with patch(
+            "zen_ma2_agent.field_host.load_portable_lean_design_intelligence",
+            side_effect=ValueError("bad provider config"),
+        ), patch("zen_ma2_agent.field_host.AgentCore", return_value=fake_core) as core_cls:
+            host = FieldHost(
+                FieldHostConfig(operator_port=8876, bridge_port=8877),
+                worker_registry=WorkerRegistry(),
+            )
+        core_cls.assert_called_once_with(design_intelligence_provider=None)
+        self.assertFalse(host.design_intelligence_status["configured"])
+        self.assertEqual(host.design_intelligence_status["error_class"], "CONFIGURATION_ERROR")
+
 
 
 if __name__ == "__main__":
