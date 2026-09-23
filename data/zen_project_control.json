@@ -15,18 +15,21 @@
   "next_acceptance_gate": {
     "id": "FULL_ARTISTIC_PATH_001_RUNTIME_RESUME",
     "classification": "EXECUTION_ONLY",
-    "status": "IMPLEMENTED_READY_FOR_RUNTIME_RESUME",
-    "why_it_matters": "The valid SHEESH artistic plan already crossed the canonical compiler boundary. Runtime code now resumes that frozen canonical artifact without replaying artistic compilation, refreshes only its exact referenced Preset/Effect objects, allocates Sequence/Executor and other new test objects from the first safe free slot, advances past collisions automatically, and does not recall the provider for backend metadata failures.",
+    "status": "READY_FOR_REAL_MACHINE_CANONICAL_EXECUTION",
+    "why_it_matters": "The self-healing runtime is implemented and cross-platform regression is green. A previously compile-passed SHEESH canonical ShowPlan can now resume directly at the Builder boundary with zero provider calls. New Sequence/Executor/Effect/Test Show Color/isolated Group/isolated Timecode allocations use first-free-from-front behavior; ordinary ID and label collisions auto-advance instead of stopping. Exact owned semantic resources are reused when safely recognized.",
     "blocks_current_milestone": true,
     "dependencies": [
-      "zen_ma2_agent/allocation.py",
+      "GitHub Actions ZEN CI run 35826992692: SUCCESS on Ubuntu and Windows",
       "scripts/run_sheesh_programming_test.py::_resume_saved_canonical_artifact",
       "scripts/run_sheesh_programming_test.py::_augment_canonical_referenced_resources",
-      "zen_ma2_agent/builder/draft.py::_sequence_label_for_build",
-      "tests/test_allocation.py",
-      "tests/test_sheesh_retry.py"
+      "zen_ma2_agent/allocation.py",
+      "zen_ma2_agent/builder/draft.py",
+      "zen_ma2_agent/effect_builder.py",
+      "zen_ma2_agent/geometry_test_environment.py",
+      "zen_ma2_agent/core.py",
+      "scripts/build_real_ma2_test_show_sheesh.py"
     ],
-    "next_review_condition": "Run one local regression, then execute the saved canonical SHEESH artifact against the disposable Test Show. If a candidate Sequence/Executor/Effect/Preset/Group/Timecode slot is occupied, advance automatically. No new provider call or artistic recompile is warranted for operational collisions."
+    "next_review_condition": "Execute the saved canonical SHEESH artifact on the disposable Test Show. The runtime itself must choose the first safe free Sequence and Executor on the selected Page, preserve the six-cue artistic content, make zero new provider calls, and stop only on a true hard-safety boundary or disappearance of a referenced runtime resource."
   },
   "human_review_decisions": [
     {
@@ -426,7 +429,13 @@
         "ARBITRARY_RAW_MA2_TELNET_OR_LUA",
         "UNAUTHORIZED_DESTRUCTIVE_DELETE",
         "PAID_PROVIDER"
-      ]
+      ],
+      "last_regression": {
+        "head": "bcb19de6771b5f0ab18a1a20843e58d5289d7e30",
+        "github_actions_run": 35826992692,
+        "ubuntu": "PASS",
+        "windows": "PASS"
+      }
     }
   }
 }
