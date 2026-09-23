@@ -1,8 +1,10 @@
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
 from shutil import copytree
+from unittest.mock import patch
 
 from zen_ma2_agent.core import AgentCore
 from zen_ma2_agent.parser import parse
@@ -174,6 +176,29 @@ class GeometryCloneTests(unittest.TestCase):
         self.assertIn("Verification: PARTIAL", result["result"])
         self.assertIn("Internal cloned fixture data", result["result"])
         self.assertIn("Rollback: Not automatically available", action["rollback_strategy"])
+
+    def test_isolated_test_clone_accepts_dynamically_allocated_group_ids(self):
+        self.client.execute = lambda command: (
+            'Group 3 "ZEN Clone Src TEST"\r\nGroup 4 "ZEN Clone Dst TEST"\r\n'
+            if command == "List Group"
+            else CloneClient.execute(self.client, command)
+        )
+        self.provider.memberships = {
+            3: {"group_no": 3, "name": "ZEN Clone Src TEST", "fixtures": [101, 102], "source": self.provider.source},
+            4: {"group_no": 4, "name": "ZEN Clone Dst TEST", "fixtures": [201, 202], "source": self.provider.source},
+        }
+        self.core._isolated_geometry_test_loaded = True
+        with patch.dict(os.environ, {"ZEN_MA2_GEOMETRY_TEST_MODE": "1"}, clear=False):
+            response = self.core.handle_request("Clone Group 3 到 Group 4")
+        self.assertEqual(response["type"], "ACTION_PLAN")
+        self.assertEqual(response["action"]["status"], "PENDING_APPROVAL")
+        self.assertEqual(
+            [step["command"] for step in response["action"]["steps"]],
+            [
+                "Clone Fixture 101 At Fixture 201 /nc",
+                "Clone Fixture 102 At Fixture 202 /nc",
+            ],
+        )
 
     def test_operator_cannot_enable_clone_before_safe_real_target_exists(self):
         with self.assertRaisesRegex(ValueError, "safe real-MA2 write target"):
