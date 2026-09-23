@@ -28,11 +28,11 @@ class FirstSongDesigner:
     def design(self, song_input: dict[str, Any], profile: dict[str, Any]) -> dict[str, Any]:
         song = str(song_input.get("song_name") or "").strip()
         sections = song_input.get("sections")
-        active_range = song_input.get("active_sequence_range")
+        active_range = song_input.get("active_sequence_range") or [1, 9999]
         if not song or not isinstance(sections, list) or len(sections) < 5:
             raise FirstSongDesignError("First Song input requires a song_name and at least five sections.")
         if not isinstance(active_range, list) or len(active_range) != 2 or not all(isinstance(value, int) for value in active_range) or active_range[0] < 1 or active_range[0] > active_range[1]:
-            raise FirstSongDesignError("First Song input requires an explicit active_sequence_range.")
+            raise FirstSongDesignError("First Song active_sequence_range must be an increasing positive pair when supplied.")
         groups = [item for item in profile.get("groups", []) if isinstance(item.get("group_id"), int)]
         presets = [item for item in profile.get("presets", []) if item.get("reference")]
         if not groups:
