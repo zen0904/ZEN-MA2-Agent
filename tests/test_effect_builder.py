@@ -86,17 +86,24 @@ class EffectBuilderTests(unittest.TestCase):
         self.assertEqual(action["rollback_strategy"], "Suggested rollback: Delete Effect 2 (never automatic).")
         self.assertTrue(any(step["command"] == 'Assign Form "PWM" At Effect 1.2.1' for step in action["steps"]))
 
-    def test_existing_effect_is_protected_and_duplicate_group_needs_clarification(self):
+    def test_existing_effect_is_skipped_and_duplicate_group_needs_clarification(self):
         self.client.effects = 'Effect 2500 "Already Here"\n'
         exists = self.core.handle_request("做 Effect 2500 給 HYBRID")
-        self.assertEqual(exists["type"], "ERROR")
-        self.assertIn("already exists", exists["message"])
-        self.assertFalse(self.core.actions)
+        self.assertEqual(exists["type"], "ACTION_PLAN")
+        self.assertEqual(exists["action"]["intent"]["parameters"]["effect_spec"]["effect_number"], 2501)
+        self.assertFalse(any(command.startswith("Store Effect") for command in self.client.commands))
+        self.core.actions.clear()
         self.client.groups = 'Group 1 "HYBRID"\nGroup 2 "HYBRID"\n'
         self.core.state.mark_stale("groups")
         duplicate = self.core.handle_request("幫 HYBRID 做 Dimmer Chase")
         self.assertEqual(duplicate["type"], "NEEDS_CLARIFICATION")
         self.assertIn("Multiple Groups", duplicate["message"])
+
+    def test_empty_effect_inventory_allocates_from_one(self):
+        self.client.effects = ""
+        response = self.core.handle_request("幫 HYBRID 做一個 Dimmer Chase")
+        self.assertEqual(response["type"], "ACTION_PLAN")
+        self.assertEqual(response["action"]["intent"]["parameters"]["effect_spec"]["effect_number"], 1)
 
     def test_missing_target_and_unverified_reverse_do_not_create_action(self):
         missing = self.core.handle_request("幫 UNKNOWN 做 Dimmer Chase")
