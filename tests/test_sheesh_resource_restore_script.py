@@ -86,6 +86,54 @@ class SheeshResourceRestoreScriptTests(unittest.TestCase):
             )
 
 
+    def test_fresh_build_allocates_sequence_executor_and_palette_from_front(self):
+        outputs = _outputs()
+        outputs["List Sequence"] = 'Sequence 1 "A"\nSequence 2 "B"\n'
+        outputs["List Executor"] = (
+            'Executor 1.001 Sequence=Seq 1 "A"\n'
+            'Executor 1.002 Sequence=Seq 2 "B"\n'
+        )
+        core = _Core(outputs)
+        reads = {}
+        plan = MODULE._load_plan(MODULE.PLAN_PATH)
+        MODULE._assert_test_show_identity(core, reads)
+        remapped, sequence, label, executor_display, executor_address = MODULE._allocate_fresh_build(
+            core,
+            plan,
+            reads,
+        )
+        self.assertEqual(sequence, 3)
+        self.assertEqual(executor_display, "1.003")
+        self.assertEqual(executor_address, "1.3")
+        self.assertEqual(label, "ZEN_SHEESH_TEST")
+        self.assertEqual(
+            [entry["preset"] for entry in remapped["test_palette"]],
+            list(range(1, 14)),
+        )
+        self.assertTrue(
+            all(
+                action.get("preset_ref", "").split(".", 1)[1].isdigit()
+                for cue in remapped["cues"]
+                for action in cue["actions"]
+                if action.get("operation") == "CALL_PRESET"
+            )
+        )
+
+    def test_fresh_cue_commands_never_fall_back_to_legacy_901_or_executor_201(self):
+        plan = MODULE._load_plan(MODULE.PLAN_PATH)
+        commands = [
+            command
+            for command, _ in MODULE._cue_commands(
+                plan,
+                sequence=3,
+                sequence_label="ZEN_SHEESH_TEST_SEQ3",
+                executor_address="1.3",
+            )
+        ]
+        self.assertTrue(any("Sequence 3" in command for command in commands))
+        self.assertIn('Assign Sequence 3 At Executor 1.3 /nc', commands)
+        self.assertNotIn('Assign Sequence 901 At Executor 201 /nc', commands)
+
     def test_effect_rows_upgrade_exact_reserved_label_only_from_qty_none(self):
         outputs = _outputs()
         outputs["List Effect"] = (
