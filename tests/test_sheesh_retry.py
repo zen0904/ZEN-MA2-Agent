@@ -1,6 +1,9 @@
 import unittest
 
-from scripts.run_sheesh_programming_test import _resume_saved_canonical_artifact
+from scripts.run_sheesh_programming_test import (
+    _augment_canonical_referenced_resources,
+    _resume_saved_canonical_artifact,
+)
 
 
 class SheeshSavedRetryTests(unittest.TestCase):
@@ -22,6 +25,53 @@ class SheeshSavedRetryTests(unittest.TestCase):
         self.assertEqual(resumed["active_sequence_range"], [3, 3])
         self.assertEqual(resumed["target_executor"], "2.003")
         self.assertEqual(resumed["cues"], saved["canonical_artifact"]["cues"])
+
+    def test_canonical_retry_refreshes_exact_referenced_preset_and_effect_without_artistic_recompile(self):
+        class Client:
+            def execute(self, command):
+                if command == "List Preset 4.110":
+                    return "Color 4.110 4.110 ZEN_COLOR_10_MAGENTA Normal"
+                if command == "List Effect 2500":
+                    return 'Effect 2500 "FX_DIM_CHASE_SLOW"'
+                raise AssertionError(command)
+
+        class Runtime:
+            client = Client()
+
+        class Core:
+            runtime = Runtime()
+
+        profile = {"presets": [], "effects": []}
+        plan = {
+            "cues": [{
+                "actions": [
+                    {"operation": "CALL_PRESET", "preset_ref": "4.110"},
+                    {"operation": "CALL_EFFECT", "effect_ref": {"id": 2500}},
+                ],
+            }],
+        }
+        refreshed = _augment_canonical_referenced_resources(Core(), profile, plan)
+        self.assertEqual(refreshed, {"presets": ["4.110"], "effects": [2500]})
+        self.assertEqual(profile["presets"][0]["reference"], "4.110")
+        self.assertEqual(profile["effects"][0]["effect_id"], 2500)
+
+    def test_canonical_retry_fails_only_when_a_referenced_resource_is_actually_missing(self):
+        class Client:
+            def execute(self, command):
+                return "Error #14: OBJECT DOES NOT EXIST"
+
+        class Runtime:
+            client = Client()
+
+        class Core:
+            runtime = Runtime()
+
+        with self.assertRaisesRegex(RuntimeError, "SAVED_CANONICAL_PRESET_NOT_PRESENT"):
+            _augment_canonical_referenced_resources(
+                Core(),
+                {"presets": [], "effects": []},
+                {"cues": [{"actions": [{"operation": "CALL_PRESET", "preset_ref": "4.110"}]}]},
+            )
 
     def test_invalid_saved_canonical_artifact_fails_closed(self):
         with self.assertRaisesRegex(RuntimeError, "SAVED_CANONICAL_ARTIFACT_INVALID"):
