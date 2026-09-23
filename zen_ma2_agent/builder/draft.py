@@ -225,12 +225,15 @@ class ShowPlanBuilder:
         suffix = f"_SEQ{sequence}"
         max_base = max(1, 52 - len(suffix))
         candidate = f"{base[:max_base]}{suffix}"
-        if candidate in existing:
-            raise FirstSongBuildError(
-                "BLOCKED: both the base and Sequence-scoped Agent-owned labels already exist; "
-                "refusing an ambiguous build."
-            )
-        return candidate
+        if candidate not in existing:
+            return candidate
+        for ordinal in range(2, 1000):
+            extra = f"_{ordinal}"
+            max_base = max(1, 52 - len(suffix) - len(extra))
+            candidate = f"{base[:max_base]}{suffix}{extra}"
+            if candidate not in existing:
+                return candidate
+        raise FirstSongBuildError("BLOCKED: no unique Agent-owned Sequence label could be allocated.")
 
     @staticmethod
     def _executor_address(value: object) -> str | None:
