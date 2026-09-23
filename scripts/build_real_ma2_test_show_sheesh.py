@@ -280,9 +280,14 @@ def _allocate_fresh_build(
     existing_labels = {row.name for row in sequence_rows}
     sequence_label = SEQUENCE_LABEL
     if sequence_label in existing_labels:
-        sequence_label = f"{SEQUENCE_LABEL}_SEQ{sequence}"
-        if sequence_label in existing_labels:
-            raise RuntimeError("Allocated Sequence still collides with an existing Agent-owned label.")
+        scoped = f"{SEQUENCE_LABEL}_SEQ{sequence}"
+        sequence_label = scoped
+        ordinal = 2
+        while sequence_label in existing_labels:
+            sequence_label = f"{scoped}_{ordinal}"
+            ordinal += 1
+            if ordinal > 10000:
+                raise RuntimeError("No unique Agent-owned Sequence label could be allocated.")
 
     remapped = _allocate_fresh_palette(core, plan, reads)
     remapped["sequence"] = sequence
