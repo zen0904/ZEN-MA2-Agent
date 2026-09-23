@@ -29,7 +29,7 @@ def bound_spec():
     return resolve_spec(
         effect={"effect_id": 3520, "name": "ZEN_FX_DIM_CHASE_SLOW_GROUP1"}, catalog_entry=catalog_entry(),
         group={"number": 1, "name": "HYBRID"}, membership={"group_no": 1, "fixtures": [101, 102]},
-        sequences=[{"number": 201}, {"number": 203}],
+        sequences=[{"number": 1}, {"number": 3}],
     )
 
 
@@ -37,10 +37,10 @@ class CueEffectApplicationTests(unittest.TestCase):
     def manifest(self):
         return SkillManifest("effects.cue_application_poc", "Cue Effect Application POC", "0.1", "test", ("verify_cue_effect_application",), ("groups", "group_membership", "effects", "sequences"), "MODIFY", "builtin")
 
-    def test_fresh_allocation_skips_existing_sequences(self):
-        self.assertEqual(allocate_sequence([{"number": 201}, {"number": 202}, {"number": 204}]), 203)
+    def test_fresh_allocation_skips_existing_sequences_from_the_front(self):
+        self.assertEqual(allocate_sequence([{"number": 1}, {"number": 2}, {"number": 4}]), 3)
         with self.assertRaises(CueEffectApplicationError):
-            allocate_sequence([{"number": number} for number in range(201, 301)])
+            allocate_sequence([{"number": number} for number in range(1, 4)], active_range=(1, 3))
 
     def test_stale_effect_and_missing_target_are_blocked(self):
         with self.assertRaisesRegex(CueEffectApplicationError, "STALE_EFFECT_RESOURCE"):
@@ -63,7 +63,7 @@ class CueEffectApplicationTests(unittest.TestCase):
         skill.validate(workflow, None)
         self.assertEqual(workflow.safety, "MODIFY")
         self.assertEqual(workflow.approval_gates, ("PREVIEW",))
-        self.assertEqual(workflow.commands, ("ClearAll", "Group 1", "Effect 3520", 'Store Cue 1 Sequence 202 "FX_CALL_TEST" Fade 0 /nc', 'Label Sequence 202 "ZEN_AI_EFFECT_CALL_TEST_202" /nc', "ClearAll"))
+        self.assertEqual(workflow.commands, ("ClearAll", "Group 1", "Effect 3520", 'Store Cue 1 Sequence 2 "FX_CALL_TEST" Fade 0 /nc', 'Label Sequence 2 "ZEN_AI_EFFECT_CALL_TEST_2" /nc', "ClearAll"))
         self.assertFalse(any("At Effect" in command or "raw" in command.lower() for command in workflow.commands))
 
     def test_error_classifier_blocks_store_boundary(self):
