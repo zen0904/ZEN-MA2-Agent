@@ -227,7 +227,7 @@ class MultiAgentRuntimeTests(unittest.TestCase):
         self.assertEqual([call[1].split(". ", 1)[0] for call in adapter.calls], [
             "ROLE: RESEARCHER", "ROLE: LIGHTING_DESIGNER", "ROLE: CRITIC", "ROLE: FINALIZER",
         ])
-        self.assertEqual(run.run_path, Path(self.temp.name) / "projects" / "runs" / "four-roles")
+        self.assertEqual(run.run_path, Path(self.temp.name).resolve() / "projects" / "runs" / "four-roles")
         for role in ("researcher", "lighting_designer", "critic", "finalizer"):
             self.assertIsNotNone(read_step_artifact("four-roles", role))
         self.assertTrue((run.run_path / "final_design.json").is_file())
