@@ -88,7 +88,7 @@ class FirstSongBuilderTests(unittest.TestCase):
     def test_preview_is_dynamic_approved_and_verifies_owned_sequence_and_cues(self):
         response = self.core.preview_first_song(INPUT)
         self.assertEqual(response["type"], "ACTION_PLAN")
-        self.assertIn("Target Sequence: 301", response["message"])
+        self.assertIn("Target Sequence: 1", response["message"])
         self.assertIn("At Preset 6.2", response["message"])
         self.assertNotIn("Store Cue", self.runtime.client.commands)
         result = self.core.approve_action(response["action"]["id"])
@@ -97,6 +97,17 @@ class FirstSongBuilderTests(unittest.TestCase):
         self.assertEqual(self.runtime.client.sequence_label, "ZEN_AI_TEST_ZEN_FIRST_SONG_TEST")
         self.assertEqual(len(self.runtime.client.cues), 7)
         self.assertEqual(self.runtime.client.commands.count("ClearAll"), 2)
+
+    def test_designer_defaults_missing_sequence_range_to_front_first_pool(self):
+        data = dict(INPUT)
+        data.pop("active_sequence_range", None)
+        profile = {
+            "groups": [{"group_id": 1, "name": "HYBRID"}],
+            "presets": [{"reference": "6.2", "preset_type": "FOCUS", "name": "normal"}],
+            "effects": [],
+        }
+        plan = FirstSongDesigner().design(data, profile)
+        self.assertEqual(plan["active_sequence_range"], [1, 9999])
 
     def test_unavailable_active_range_blocks_without_writes(self):
         bad = dict(INPUT); bad["active_sequence_range"] = [301, 300]
@@ -107,12 +118,12 @@ class FirstSongBuilderTests(unittest.TestCase):
         profile = {
             "groups": [{"group_id": 1, "name": "HYBRID"}],
             "presets": [{"reference": "6.2", "preset_type": "FOCUS", "name": "normal"}],
-            "sequences": [{"number": 301, "name": "USER_SEQUENCE"}],
+            "sequences": [{"number": 1, "name": "USER_SEQUENCE"}],
         }
         plan = FirstSongDesigner().design(INPUT, profile)
         workflow = ShowPlanBuilder().build_first_song(plan, profile)
-        self.assertEqual(workflow.task.intent.parameters["sequence"], 302)
-        self.assertNotIn("Store Cue 1 Sequence 301", workflow.preview_note)
+        self.assertEqual(workflow.task.intent.parameters["sequence"], 2)
+        self.assertNotIn("Store Cue 1 Sequence 1", workflow.preview_note)
 
     def test_repeated_song_label_uses_sequence_scoped_operational_label(self):
         profile = {
@@ -147,7 +158,7 @@ class FirstSongBuilderTests(unittest.TestCase):
         self.assertIn('Label Sequence 3 "ZEN_AI_TEST_SHEESH_SEQ3" /nc', workflow.commands)
         self.assertIn('Label Executor 2.1 "ZEN_AI_TEST_SHEESH_SEQ3" /nc', workflow.commands)
 
-    def test_sequence_scoped_label_still_fails_closed_if_already_ambiguous(self):
+    def test_sequence_scoped_label_collision_advances_to_unique_suffix(self):
         profile = {
             "groups": [{"group_id": 1, "name": "HYBRID"}],
             "presets": [],
@@ -171,8 +182,8 @@ class FirstSongBuilderTests(unittest.TestCase):
                 ],
             }],
         }
-        with self.assertRaisesRegex(FirstSongBuildError, "Sequence-scoped"):
-            ShowPlanBuilder().build_first_song(plan, profile)
+        workflow = ShowPlanBuilder().build_first_song(plan, profile)
+        self.assertEqual(workflow.task.intent.parameters["sequence_label"], "ZEN_AI_TEST_SHEESH_SEQ3_2")
 
     def test_optional_page_two_executor_assignment_is_allowlisted(self):
         profile = {
