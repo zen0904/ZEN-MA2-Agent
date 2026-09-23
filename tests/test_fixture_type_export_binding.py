@@ -1,3 +1,4 @@
+import os
 import tempfile
 import unittest
 from contextlib import contextmanager
@@ -110,6 +111,23 @@ class FixtureTypeExportBindingTests(unittest.TestCase):
             "functions": [{"attribute": "PRISMA1", "feature": "BEAM1", "preset": "BEAM"}],
         }])
         self.assertEqual(capabilities["PRISM"]["status"], "SHOW_BOUND_VERIFIED")
+
+    def test_fresh_unique_fixture_type_export_accepts_filesystem_mtime_skew(self):
+        class SkewedRuntime(ExportRuntime):
+            def export_fixture_type_file(inner, fixture_type_id, filename):
+                inner.commands.append((fixture_type_id, filename))
+                target = inner.directory / filename
+                target.write_bytes(inner.xml)
+                os.utime(target, ns=(1, 1))
+                return "Executing : Export FixtureType"
+
+        runtime = SkewedRuntime(self.directory)
+        result = self.provider(
+            directory=self.directory,
+            wall_clock_ns=lambda: 2_000_000_000,
+            poll_seconds=.001,
+        ).export_and_bind(runtime, "2 ZEN BAW 20R Mode 2", {**self.settings, "timeout_seconds": .5})
+        self.assertEqual(result["status"], "SHOW_BOUND_VERIFIED")
 
     def test_provider_retains_bounded_diagnostic_before_owned_temp_cleanup(self):
         runtime = ExportRuntime(self.directory, xml=fixture_type_xml(index=0))
