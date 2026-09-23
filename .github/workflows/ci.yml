@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: zen-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   regression:
     runs-on: ubuntu-latest
