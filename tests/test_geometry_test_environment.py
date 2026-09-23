@@ -67,17 +67,31 @@ class GeometryTestEnvironmentTests(unittest.TestCase):
         self.assertEqual(self.client.commands, ['LoadShow "MA2_EFFECT_PROBE_WORK" /nc'])
         self.assertTrue(self.core._isolated_geometry_test_loaded)
 
-    def test_group_setup_allowlist_uses_only_test_groups_and_fixture_ids(self):
+    def test_group_setup_allocates_first_free_groups_and_uses_only_fixture_ids(self):
         with patch.dict(os.environ, {"ZEN_MA2_GEOMETRY_TEST_MODE": "1"}, clear=False):
             self.core._isolated_geometry_test_loaded = True
             response = self.core.handle_request("ZEN TEST setup geometry groups 1 2")
         self.assertEqual(response["type"], "ACTION_PLAN")
         commands = [step["command"] for step in response["action"]["steps"]]
         self.assertEqual(commands, [
-            "Fixture 1", "Store Group 90 /nc", 'Label Group 90 "ZEN Clone Src TEST"',
-            "Fixture 2", "Store Group 91 /nc", 'Label Group 91 "ZEN Clone Dst TEST"', "ClearAll",
+            "Fixture 1", "Store Group 1 /nc", 'Label Group 1 "ZEN Clone Src TEST"',
+            "Fixture 2", "Store Group 2 /nc", 'Label Group 2 "ZEN Clone Dst TEST"', "ClearAll",
         ])
-        self.assertFalse(any("Group 1" in command or "Group 7" in command for command in commands))
+
+    def test_group_setup_skips_occupied_front_slots(self):
+        self.client.execute = lambda command: (
+            'Group 1 "Existing"\nGroup 2 "Existing"\n'
+            if command == "List Group"
+            else 'Fixture 1 "Test source"\nFixture 2 "Test destination"\n'
+            if command == "List Fixture"
+            else "Executing : " + command
+        )
+        with patch.dict(os.environ, {"ZEN_MA2_GEOMETRY_TEST_MODE": "1"}, clear=False):
+            self.core._isolated_geometry_test_loaded = True
+            response = self.core.handle_request("ZEN TEST setup geometry groups 1 2")
+        commands = [step["command"] for step in response["action"]["steps"]]
+        self.assertIn("Store Group 3 /nc", commands)
+        self.assertIn("Store Group 4 /nc", commands)
 
     def test_restore_cannot_be_requested_until_this_process_loaded_the_test_show(self):
         with patch.dict(os.environ, {"ZEN_MA2_GEOMETRY_TEST_MODE": "1"}, clear=False):
