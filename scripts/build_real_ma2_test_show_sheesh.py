@@ -431,7 +431,13 @@ def _write_geometry(core: AgentCore, plan: dict[str, Any], audit: list[dict[str,
     return {str(fixture_id): {"x": x, "y": y, "z": z} for fixture_id, (x, y, z) in coordinates.items()}
 
 
-def _cue_commands(plan: dict[str, Any]) -> list[tuple[str, str]]:
+def _cue_commands(
+    plan: dict[str, Any],
+    *,
+    sequence: int,
+    sequence_label: str,
+    executor_address: str,
+) -> list[tuple[str, str]]:
     generated: list[tuple[str, str]] = [("ClearAll", "boundary")]
     for cue in plan["cues"]:
         for action in cue["actions"]:
@@ -444,22 +450,46 @@ def _cue_commands(plan: dict[str, Any]) -> list[tuple[str, str]]:
             else:
                 raise ValueError(f"Unsupported SHEESH test action {action['operation']}")
         fade = float(cue["fade"])
-        generated.append((f'Store Cue {cue["cue_number"]} Sequence {SEQUENCE} "{cue["label"]}" Fade {fade:g} /nc', f"cue-{cue['cue_number']}-store"))
+        generated.append((
+            f'Store Cue {cue["cue_number"]} Sequence {sequence} "{cue["label"]}" Fade {fade:g} /nc',
+            f"cue-{cue['cue_number']}-store",
+        ))
     generated.extend([
-        (f'Label Sequence {SEQUENCE} "{SEQUENCE_LABEL}" /nc', "label-sequence"),
-        (f'Assign Sequence {SEQUENCE} At Executor {EXECUTOR} /nc', "assign-executor"),
-        (f'Label Executor {EXECUTOR} "ZEN_SHEESH_TEST" /nc', "label-executor"),
+        (f'Label Sequence {sequence} "{sequence_label}" /nc', "label-sequence"),
+        (f'Assign Sequence {sequence} At Executor {executor_address} /nc', "assign-executor"),
+        (f'Label Executor {executor_address} "{sequence_label}" /nc', "label-executor"),
         ("ClearAll", "boundary"),
     ])
     return generated
 
 
-def _write_sequence(core: AgentCore, plan: dict[str, Any], audit: list[dict[str, str]]) -> None:
-    for command, _step in _cue_commands(plan):
+def _write_sequence(
+    core: AgentCore,
+    plan: dict[str, Any],
+    audit: list[dict[str, str]],
+    *,
+    sequence: int,
+    sequence_label: str,
+    executor_address: str,
+) -> None:
+    for command, _step in _cue_commands(
+        plan,
+        sequence=sequence,
+        sequence_label=sequence_label,
+        executor_address=executor_address,
+    ):
         _run(core, command, audit)
 
 
-def _verify(core: AgentCore, plan: dict[str, Any], reads: dict[str, str]) -> dict[str, Any]:
+def _verify(
+    core: AgentCore,
+    plan: dict[str, Any],
+    reads: dict[str, str],
+    *,
+    sequence: int,
+    sequence_label: str,
+    executor_display: str,
+) -> dict[str, Any]:
     verification: dict[str, Any] = {"presets": {}, "geometry": {}, "sequence": {}, "executor": {}}
     for entry in _palette(plan):
         reference = f"4.{entry['preset']}"
@@ -476,14 +506,26 @@ def _verify(core: AgentCore, plan: dict[str, Any], reads: dict[str, str]) -> dic
             listed[str(instance)] = bool(parsed and parsed.get("position") == {"x": expected[0], "y": expected[1], "z": expected[2]})
         verification["geometry"][str(fixture_id)] = {"expected": expected, "listed": listed, "fixture_9999": fixture_id == 9999}
     sequence = _read(core, "List Sequence", reads)
-    verification["sequence"] = {"id": SEQUENCE, "label": SEQUENCE_LABEL, "verified": f"Sequ {SEQUENCE}" in sequence and SEQUENCE_LABEL in sequence}
+    verification["sequence"] = {
+        "id": sequence,
+        "label": sequence_label,
+        "verified": f"Sequ {sequence}" in sequence and sequence_label in sequence,
+    }
     cue_metadata = {}
     for cue in plan["cues"]:
-        output = _read(core, f"List Cue {cue['cue_number']} Part 0 Sequence {SEQUENCE}", reads)
+        output = _read(core, f"List Cue {cue['cue_number']} Part 0 Sequence {sequence}", reads)
         cue_metadata[str(cue["cue_number"])] = cue["label"] in output
     verification["sequence"]["cue_metadata"] = cue_metadata
     executors = _read(core, "List Executor", reads)
-    verification["executor"] = {"id": EXECUTOR_DISPLAY, "label": "ZEN_SHEESH_TEST", "verified": EXECUTOR_DISPLAY in executors and "ZEN_SHEESH_TEST" in executors and "Sequence=Seq 901" in executors}
+    verification["executor"] = {
+        "id": executor_display,
+        "label": sequence_label,
+        "verified": (
+            executor_display in executors
+            and sequence_label in executors
+            and f"Sequence=Seq {sequence}" in executors
+        ),
+    }
     return verification
 
 
