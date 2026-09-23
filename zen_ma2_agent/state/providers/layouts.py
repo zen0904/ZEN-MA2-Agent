@@ -104,6 +104,8 @@ class LayoutExportProvider:
         directory = self.resolver.resolve(_configured_path(settings)); request_id = secrets.token_hex(8); filename = f"ZEN_AGENT_LAYOUT_{layout_no}_{request_id}.xml"; path = directory / filename; started = time.time_ns()
         try:
             with _export_transaction(runtime):
+                if path.exists() and path.parent.resolve() == directory.resolve() and self._name.fullmatch(path.name):
+                    path.unlink()
                 runtime.export_layout_file(layout_no, filename)
                 xml = self._wait_for_fresh_stable_xml(path, started, _timeout_seconds(settings))
                 result = self.parse(xml, layout_no)
@@ -128,7 +130,7 @@ class LayoutExportProvider:
         while time.monotonic() <= deadline:
             try:
                 stat = path.stat()
-                if path.is_file() and stat.st_mtime_ns >= started_at_ns and stat.st_size > 0:
+                if path.is_file() and stat.st_size > 0:
                     signature = (stat.st_mtime_ns, stat.st_size)
                     stable_polls = stable_polls + 1 if signature == previous else 1
                     previous = signature
