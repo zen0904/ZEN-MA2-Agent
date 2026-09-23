@@ -188,11 +188,14 @@ class ExportFileGroupMembershipProvider(GroupMembershipProvider):
         }
 
     def _wait_for_fresh_stable_xml(self, path: Path, started_at_ns: int, timeout_seconds: float) -> bytes:
-        """Wait for a new, stable, well-formed MA2 Export file.
+        """Wait for the request-owned, stable, well-formed MA2 Export file.
 
-        The exporter can create the destination before its XML has finished
-        writing.  A candidate must be fresh, non-empty, unchanged across two
-        polls, and XML-well-formed before the membership parser sees it.
+        Freshness is proven before this call by deleting the exact
+        request-owned path, then issuing Export to a unique random filename
+        while the export transaction is held. Filesystem mtimes are not
+        compared with the process wall clock because clock/granularity skew
+        can make a genuinely new file appear older. The candidate must still
+        be non-empty, unchanged across two polls, and XML-well-formed.
         """
         deadline = self.monotonic_clock() + timeout_seconds
         last_signature: tuple[int, int] | None = None
@@ -201,7 +204,7 @@ class ExportFileGroupMembershipProvider(GroupMembershipProvider):
         while self.monotonic_clock() <= deadline:
             try:
                 stat = path.stat()
-                if path.is_file() and stat.st_mtime_ns >= started_at_ns and stat.st_size > 0:
+                if path.is_file() and stat.st_size > 0:
                     signature = (stat.st_mtime_ns, stat.st_size)
                     stable_polls = stable_polls + 1 if signature == last_signature else 1
                     last_signature = signature
