@@ -204,6 +204,24 @@ class SheeshResourceRestoreScriptTests(unittest.TestCase):
         self.assertNotIn("4.101", refs)
         self.assertTrue(refs <= {f"4.{number}" for number in range(2, 15)})
 
+    def test_fresh_palette_reuses_exact_owned_semantic_resource_before_creating_duplicate(self):
+        core = _Core(
+            _outputs(),
+            preset_outputs={
+                "List Preset 4.101": 'Color 4.101 4.101 ZEN_COLOR_01_RED Normal\n',
+            },
+        )
+        plan = MODULE._load_plan(MODULE.PLAN_PATH)
+
+        remapped = MODULE._allocate_fresh_palette(core, plan, {})
+
+        self.assertEqual(remapped["test_palette"][0]["preset"], 101)
+        self.assertEqual(remapped["test_palette"][1]["preset"], 1)
+        self.assertEqual(
+            remapped["cues"][2]["actions"][0]["preset_ref"],
+            "4.101",
+        )
+
     def test_runtime_cue_commands_use_allocated_ids_not_legacy_tail_ids(self):
         plan = MODULE._load_plan(MODULE.PLAN_PATH)
         commands = [
