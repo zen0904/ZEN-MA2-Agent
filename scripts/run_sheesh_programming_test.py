@@ -264,6 +264,57 @@ def _parse_provider_json(content: str) -> dict:
     return value
 
 
+def _effect_labels_from_resource_map(resource_map: dict) -> dict[tuple[int, int], str]:
+    """Return exact compile-time Group/Effect labels from verified resource rows."""
+    labels: dict[tuple[int, int], str] = {}
+    for group in resource_map.get("groups", []) if isinstance(resource_map.get("groups"), list) else []:
+        if not isinstance(group, dict) or not isinstance(group.get("group_id"), int):
+            continue
+        group_id = int(group["group_id"])
+        for effect in group.get("effect_resources", []) if isinstance(group.get("effect_resources"), list) else []:
+            if (
+                not isinstance(effect, dict)
+                or effect.get("application_status") != "REAL_MACHINE_VERIFIED"
+                or not isinstance(effect.get("effect_id"), int)
+            ):
+                continue
+            label = str(effect.get("name") or "").strip()
+            if not label:
+                continue
+            key = (group_id, int(effect["effect_id"]))
+            previous = labels.setdefault(key, label)
+            if previous != label:
+                raise ArtisticPlanCompileError(
+                    f"Verified Effect {effect['effect_id']} has conflicting labels for Group {group_id}."
+                )
+    return labels
+
+
+def _attach_effect_identity_labels(plan: dict, resource_map: dict) -> dict:
+    """Attach compile-time verified Effect identity metadata without changing art."""
+    labels = _effect_labels_from_resource_map(resource_map)
+    normalized = deepcopy(plan)
+    for cue in normalized.get("cues", []):
+        for action in cue.get("actions", []):
+            if action.get("operation") != "CALL_EFFECT":
+                continue
+            target = action.get("target") or {}
+            reference = action.get("effect_ref") or {}
+            group_id = target.get("ref")
+            effect_id = reference.get("id")
+            if not isinstance(group_id, int) or not isinstance(effect_id, int):
+                raise ArtisticPlanCompileError("Compiled Effect action is missing typed Group/Effect identity.")
+            label = labels.get((group_id, effect_id))
+            if not label:
+                raise ArtisticPlanCompileError(
+                    f"Compiled Effect {effect_id} for Group {group_id} has no verified identity label."
+                )
+            reference = dict(reference)
+            reference["label"] = label
+            action["effect_ref"] = reference
+    return normalized
+
+
 def _compile_provider_plan(
     content: str,
     *,
@@ -315,6 +366,7 @@ def _compile_provider_plan(
         verified_effect_applicability=effect_applicability,
         cue_labels=SHEESH_CUE_LABELS,
     )
+    plan = _attach_effect_identity_labels(plan, resource_map)
     validate_ma_payload(plan["cues"], path="show_plan.cues")
     return plan, audit, provider_plan
 
@@ -333,6 +385,42 @@ def _lowest_safe_sequence_id(profile: dict) -> int:
         )
     except Exception as exc:
         raise RuntimeError("NO_SAFE_UNUSED_SEQUENCE_AVAILABLE") from exc
+
+
+def _hydrate_saved_canonical_effect_labels(saved: dict, artifact: dict) -> dict:
+    """Backfill old id-only canonical Effect refs from the saved verified map.
+
+    This is a metadata migration only. It never changes the selected Effect,
+    Group, cue, fade, or any other artistic choice.
+    """
+    resource_map = saved.get("artistic_resource_map")
+    if not isinstance(resource_map, dict):
+        resource_map = {}
+    labels = _effect_labels_from_resource_map(resource_map)
+    normalized = deepcopy(artifact)
+    for cue in normalized.get("cues", []):
+        for action in cue.get("actions", []):
+            if action.get("operation") != "CALL_EFFECT":
+                continue
+            target = action.get("target") or {}
+            reference = action.get("effect_ref")
+            if not isinstance(reference, dict) or not isinstance(reference.get("id"), int):
+                raise RuntimeError("SAVED_CANONICAL_EFFECT_REFERENCE_INVALID")
+            if isinstance(reference.get("label"), str) and reference["label"].strip():
+                continue
+            group_id = target.get("ref")
+            effect_id = reference["id"]
+            if not isinstance(group_id, int):
+                raise RuntimeError("SAVED_CANONICAL_EFFECT_TARGET_INVALID")
+            label = labels.get((group_id, effect_id))
+            if not label:
+                raise RuntimeError(
+                    f"SAVED_CANONICAL_EFFECT_IDENTITY_UNAVAILABLE:{group_id}:{effect_id}"
+                )
+            reference = dict(reference)
+            reference["label"] = label
+            action["effect_ref"] = reference
+    return normalized
 
 
 def _resume_saved_canonical_artifact(
@@ -357,7 +445,7 @@ def _resume_saved_canonical_artifact(
         # that the artifact reached the canonical boundary.  Fall back to the
         # legacy saved raw-result path, which still never recalls a provider.
         return None
-    resumed = deepcopy(artifact)
+    resumed = _hydrate_saved_canonical_effect_labels(saved, artifact)
     resumed["target_executor"] = target_executor
     resumed["active_sequence_range"] = [sequence, sequence]
     try:
@@ -420,6 +508,16 @@ def _augment_canonical_referenced_resources(
         and not isinstance(item.get("effect_id"), bool)
     }
     effect_provider = EffectProvider()
+    expected_effect_labels = {
+        int(reference["id"]): str(reference["label"])
+        for cue in plan.get("cues", [])
+        for action in cue.get("actions", [])
+        if action.get("operation") == "CALL_EFFECT"
+        and isinstance((reference := action.get("effect_ref")), dict)
+        and isinstance(reference.get("id"), int)
+        and isinstance(reference.get("label"), str)
+        and reference["label"].strip()
+    }
     for effect_id in effect_ids:
         raw = core.runtime.client.execute(f"List Effect {effect_id}")
         upper = raw.upper()
@@ -429,6 +527,9 @@ def _augment_canonical_referenced_resources(
         row = next((item for item in rows if item.get("number") == effect_id), None)
         if row is None:
             raise RuntimeError(f"SAVED_CANONICAL_EFFECT_READBACK_UNPARSED:{effect_id}")
+        expected_label = expected_effect_labels.get(effect_id)
+        if expected_label and row.get("name") != expected_label:
+            raise RuntimeError(f"SAVED_CANONICAL_EFFECT_IDENTITY_MISMATCH:{effect_id}")
         effects[effect_id] = {
             "effect_id": effect_id,
             "name": row.get("name"),
