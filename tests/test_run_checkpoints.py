@@ -29,7 +29,7 @@ class RunCheckpointTests(unittest.TestCase):
 
         self.assertEqual(
             path,
-            self.zen_home / "projects" / "runs" / "run-001" / "steps" / "designer.json",
+            self.zen_home.resolve() / "projects" / "runs" / "run-001" / "steps" / "designer.json",
         )
         self.assertEqual(read_step_artifact("run-001", "designer"), artifact)
 
