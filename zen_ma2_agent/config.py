@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import re
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any
 
 from .portable import app_root, ensure_runtime_dirs, portable_state_path, zen_home
@@ -80,7 +80,11 @@ def validate_state_adapter_settings(settings: object) -> dict[str, Any]:
         importexport_path = raw_path.strip() or "auto"
         if importexport_path.casefold() == "auto":
             importexport_path = "auto"
-        elif not (Path(importexport_path).is_absolute() or importexport_path.startswith("\\\\")):
+        elif not (
+            Path(importexport_path).is_absolute()
+            or PureWindowsPath(importexport_path).is_absolute()
+            or importexport_path.startswith("\\\\")
+        ):
             raise SettingsError("MA2 importexport path must be 'auto' or an absolute path.")
     return {"plugin_slot": plugin_slot, "timeout_seconds": timeout_seconds, "importexport_path": importexport_path}
 
