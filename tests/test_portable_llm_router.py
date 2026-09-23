@@ -430,7 +430,7 @@ class PortableLLMRouterTests(unittest.TestCase):
 
     def test_zen_home_redirects_preferences_outside_repository(self):
         with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, {"ZEN_HOME": temp}, clear=False):
-            self.assertEqual(settings_path(), Path(temp) / "config" / "settings.json")
+            self.assertEqual(settings_path(), Path(temp).resolve() / "config" / "settings.json")
 
     def test_ma2_connectivity_is_tcp_only_and_uses_portable_settings(self):
         with tempfile.TemporaryDirectory() as temp:
