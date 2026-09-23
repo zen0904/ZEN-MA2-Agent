@@ -19,7 +19,7 @@ RESOURCE_DIRECTORIES = (
     "examples",
 )
 PLUGIN_FILES = ("ZEN_AGENT.xml", "ZEN_AGENT.lua")
-AXIS_PROFILE_FILE = "geometry\\ZEN_STAGE_AXIS_PROFILE.json"
+AXIS_PROFILE_FILE = "geometry/ZEN_STAGE_AXIS_PROFILE.json"
 
 
 def assert_portable_resources(bundle: Path) -> list[str]:
@@ -32,7 +32,7 @@ def assert_portable_resources(bundle: Path) -> list[str]:
     plugin_dir = bundle / "gma2" / "plugins"
     plugin_paths = [plugin_dir / name for name in PLUGIN_FILES]
     missing.extend(
-        str(path.relative_to(bundle))
+        path.relative_to(bundle).as_posix()
         for path in plugin_paths
         if not path.is_file() or path.stat().st_size <= 0
     )
@@ -61,4 +61,4 @@ def assert_portable_resources(bundle: Path) -> list[str]:
         if not song_input.is_file() or song_input.stat().st_size <= 0:
             raise RuntimeError(f"Portable resource check failed: examples/{filename}")
 
-    return [str(path.relative_to(bundle)) for path in plugin_paths]
+    return [path.relative_to(bundle).as_posix() for path in plugin_paths]
