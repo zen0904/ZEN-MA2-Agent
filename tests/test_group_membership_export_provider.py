@@ -93,8 +93,8 @@ class GroupMembershipExportProviderTests(unittest.TestCase):
         with self.assertRaisesRegex(GroupMembershipProviderError, "NO_MEMBERSHIP"):
             self.provider().get_group_membership(runtime, 1, self.settings)
 
-    def test_stale_mtime_cannot_be_accepted(self):
-        class StaleRuntime(ExportRuntime):
+    def test_fresh_unique_export_accepts_filesystem_mtime_skew(self):
+        class SkewedRuntime(ExportRuntime):
             def export_group_file(inner, group_no, filename):
                 inner.commands.append((group_no, filename))
                 target = inner.directory / filename
@@ -102,21 +102,17 @@ class GroupMembershipExportProviderTests(unittest.TestCase):
                 os.utime(target, ns=(1, 1))
                 return "exported"
 
-        class AdvancingClock:
-            value = 0.0
-            def __call__(self):
-                current = self.value
-                self.value += .2
-                return current
-
         provider = ExportFileGroupMembershipProvider(
             request_id_factory=lambda: "request0001",
-            wall_clock_ns=lambda: 2,
-            monotonic_clock=AdvancingClock(),
-            sleep=lambda _seconds: None,
+            wall_clock_ns=lambda: 2_000_000_000,
+            poll_seconds=.001,
         )
-        with self.assertRaisesRegex(GroupMembershipProviderError, "EXPORT_FILE_TIMEOUT"):
-            provider.get_group_membership(StaleRuntime(self.directory), 1, {**self.settings, "timeout_seconds": 0.5})
+        result = provider.get_group_membership(
+            SkewedRuntime(self.directory),
+            1,
+            {**self.settings, "timeout_seconds": 0.5},
+        )
+        self.assertEqual(result["fixtures"], [101])
 
     def test_cleanup_is_limited_to_agent_owned_prefix(self):
         unrelated = self.directory / "keep-this.xml"
