@@ -22,6 +22,6 @@
   ],
   "performance": {"live": true, "fixed_timeline": false, "may_extend_solo": true, "may_repeat_chorus": false},
   "stage_roles": [{"role": "SAX_SOLO", "semantic_position": "POS_STAGE_L"}],
-  "build": {"active_sequence_range": [301, 400], "max_cues_per_section": 2},
+  "build": {"active_sequence_range": [1, 9999], "max_cues_per_section": 2},
   "source": {"source": "MANUAL", "confidence": 1.0}
 }
