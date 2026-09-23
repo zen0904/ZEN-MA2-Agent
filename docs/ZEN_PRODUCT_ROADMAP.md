@@ -100,6 +100,17 @@ perfect internal JSON document" and no longer "run every historical role on
 every song." The default path is the lean Design Mode defined in
 `docs/ZEN_DESIGN_MODE.md`.
 
+A later real-machine V0.2 retry also verified the self-healing post-write
+recovery boundary: an already-written Sequence 5 / Executor 2.004 build was
+recovered and verified with zero new allocation, zero Builder replay, zero new
+provider calls and zero MA2 writes. Exact referenced Color Presets and the three
+verified Dimmer Chase Effects passed fresh identity/existence readback. See
+`ZEN_FULL_ARTISTIC_PATH_RUNTIME_RESUME_001.md`.
+
+The next M4 evidence gap is Cue-content readback. Metadata PASS is not evidence
+that the actual stored Dimmer/Preset/Effect content of each Cue can be read and
+matched to the canonical ShowPlan.
+
 Song-specific constraints belong at the calling task boundary. The generic
 Artistic Plan Compiler must remain song-agnostic: it may normalize
 representation and attach ZEN-owned operational metadata, but it must not

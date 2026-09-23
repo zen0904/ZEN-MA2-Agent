@@ -286,6 +286,20 @@ Do not weaken:
 - deterministic readback;
 - fail closed on unsupported artistic resources.
 
+## Current real-machine retry status
+
+`ZEN_FULL_ARTISTIC_PATH_RUNTIME_RESUME_001.md` closes the saved post-write
+retry failure on the disposable Test Show. Latest main recovered the existing
+Sequence 5 / Executor 2.004 / six-Cue build before any new allocation, verified
+the current identities of Effects 2500-2502 and the exact referenced Color
+Presets, and completed with zero new provider calls, zero artistic compile
+replay, zero Builder replay and zero MA2 writes.
+
+This verifies backend self-heal and exact referenced-resource refresh. It does
+not upgrade Cue attribute content to VERIFIED. Cue labels/fades and object
+identity are metadata/readback evidence; stored Cue Dimmer/Preset/Effect content
+remains a separate next gate.
+
 ## Acceptance direction
 
 The next real full-design proof should demonstrate that the designer can use

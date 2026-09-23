@@ -8,28 +8,23 @@
     "active_objective": "Complete FULL_ARTISTIC_PATH_001 with a convenient autonomous runtime: one Lighting Designer produces artistic intent; ZEN resolves implementation details, allocates new MA2 objects from the first safe free slot, self-heals ordinary collisions and resumes compiled canonical plans after backend failures. Hard stops are reserved for destructive/unsafe boundaries such as Patch/Address/Fixture identity, Fixture 9999, foreign-object overwrite, arbitrary raw MA/Lua/Telnet or paid-provider use."
   },
   "last_closed_task": {
-    "id": "SHEESH_ARTISTIC_CUES_V0_1_SEQUENCE_2_EXECUTOR_2_002",
+    "id": "FULL_ARTISTIC_PATH_001_POSTWRITE_RECOVERY_REAL_MACHINE_001",
     "status": "CLOSED_SUCCESS",
-    "result": "The lean AI programming path executed successfully on the Test Show. Provider artistic intent used ARTISTIC_CUES_V0_1, ZEN compiled strict zen.show_plan.v0.1, Sequence 2 was created and assigned to Executor 2.002 with six cues, MA2 programming readback passed, Sequence 301 / Executor 2.001 remained untouched, Phase A was not rerun, Groups and XYZ were not modified, Fixture 9999 was untouched, no paid provider was used, and CODEX_ARTISTIC_INTERVENTION=NONE. The generic compiler has since been refactored so SHEESH-specific six-cue labels live at the experiment boundary rather than in the compiler."
+    "result": "On implementation HEAD 6c6222b779e8e1144bea91a5319a335b857598b9, the saved SHEESH ARTISTIC_CUES_V0_2 post-write failure was recovered on the real disposable Test Show without new allocation, Builder replay, artistic compile replay or provider calls. Existing Sequence 5 / Executor 2.004 / six Cues were verified; Effects 2500-2502 and referenced Color Presets 4.101, 4.102, 4.108, 4.109, 4.110, 4.112 and 4.113 passed fresh exact identity/existence readback. MA2_WRITES=0, Fixture 9999 untouched."
   },
   "next_acceptance_gate": {
-    "id": "FULL_ARTISTIC_PATH_001_RUNTIME_RESUME",
-    "classification": "EXECUTION_ONLY",
-    "status": "READY_FOR_REAL_MACHINE_CANONICAL_EXECUTION",
-    "why_it_matters": "The self-healing runtime is implemented and cross-platform regression is green. A previously compile-passed SHEESH canonical ShowPlan can now resume directly at the Builder boundary with zero provider calls. New Sequence/Executor/Effect/Test Show Color/isolated Group/isolated Timecode allocations use first-free-from-front behavior; ordinary ID and label collisions auto-advance instead of stopping. Exact owned semantic resources are reused when safely recognized.",
+    "id": "FULL_ARTISTIC_PATH_001_CUE_CONTENT_READBACK",
+    "classification": "RESEARCH_UNKNOWN",
+    "status": "READY_FOR_READ_ONLY_REAL_MACHINE_INVESTIGATION",
+    "why_it_matters": "The Full Artistic Path now has verified post-write recovery, Sequence/Cue metadata, Executor assignment, and exact referenced Preset/Effect identity. M4 still must distinguish object/metadata readback from actual stored Cue content; a generic PASS must not imply that Dimmer/Preset/Effect actions were read back from each Cue.",
     "blocks_current_milestone": true,
     "dependencies": [
-      "GitHub Actions ZEN CI run 35826992692: SUCCESS on Ubuntu and Windows",
-      "scripts/run_sheesh_programming_test.py::_resume_saved_canonical_artifact",
-      "scripts/run_sheesh_programming_test.py::_augment_canonical_referenced_resources",
-      "zen_ma2_agent/allocation.py",
-      "zen_ma2_agent/builder/draft.py",
-      "zen_ma2_agent/effect_builder.py",
-      "zen_ma2_agent/geometry_test_environment.py",
-      "zen_ma2_agent/core.py",
-      "scripts/build_real_ma2_test_show_sheesh.py"
+      "ZEN_FULL_ARTISTIC_PATH_RUNTIME_RESUME_001.md",
+      "verified existing Sequence 5 / Executor 2.004 / six Cue labels and fades",
+      "zen_ma2_agent/core.py::verify_first_song_metadata",
+      "AgentRuntime read-only List Cue allow-list"
     ],
-    "next_review_condition": "Execute the saved canonical SHEESH artifact on the disposable Test Show. The runtime itself must choose the first safe free Sequence and Executor on the selected Page, preserve the six-cue artistic content, make zero new provider calls, and stop only on a true hard-safety boundary or disappearance of a referenced runtime resource."
+    "next_review_condition": "Perform a bounded read-only investigation against the already verified Sequence 5 Cues. Determine which stored Cue content dimensions can be read and matched deterministically to the frozen canonical ShowPlan. Record VERIFIED, PARTIAL or UNSUPPORTED per dimension. Make zero MA2 writes, zero provider calls, no artistic changes and no Patch/Address/Fixture identity/type changes."
   },
   "human_review_decisions": [
     {
@@ -148,6 +143,25 @@
         "ACTION_BOUNDARY_PARTIAL"
       ],
       "limitations": "Fixture COLOR capability and generic typed CALL_PRESET syntax do not establish a current Show Color preset, applicability, palette, role, or B3 authorization."
+    },
+    {
+      "id": "FULL_ARTISTIC_PATH_001_POSTWRITE_RECOVERY_REAL_MACHINE_001",
+      "source": "ZEN_FULL_ARTISTIC_PATH_RUNTIME_RESUME_001.md",
+      "status": "CLOSED_SUCCESS",
+      "outcomes": [
+        "RECOVER_POSTWRITE_VERIFICATION_PRECEDED_ANY_NEW_ALLOCATION",
+        "EXISTING_SEQUENCE_5_RECOVERED",
+        "EXISTING_EXECUTOR_2_004_VERIFIED",
+        "SIX_CUE_LABELS_AND_FADES_VERIFIED",
+        "EFFECT_2500_2501_2502_EXACT_IDENTITY_VERIFIED",
+        "REFERENCED_COLOR_PRESETS_EXACT_READBACK_VERIFIED",
+        "ARTISTIC_COMPILE_REPLAYED_NO",
+        "NEW_PROVIDER_CALLS_ZERO",
+        "WRITES_REPLAYED_NO",
+        "MA2_WRITES_ZERO",
+        "FIXTURE_9999_UNTOUCHED"
+      ],
+      "limitations": "This closes the backend retry/post-write false-negative path. It does not establish action-by-action Cue content readback; current verification still proves metadata plus referenced resource identity rather than the stored Dimmer/Preset/Effect content inside each Cue."
     }
   ],
   "backlog": [
