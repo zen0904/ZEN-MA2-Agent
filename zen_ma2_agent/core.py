@@ -1095,19 +1095,45 @@ class AgentCore:
             metadata += f"\nExecutor {target_executor} assignment verified."
         effect_lines = self._fresh_verify_effect_references({"cues": data.get("cues", [])})
         preset_refs = set(data.get("referenced_presets") or [])
-        if preset_refs:
-            self.refresh_state("presets", sequence="ALL")
-            snapshot = self.state.get("presets")
-            available = {item.get("reference") for item in (snapshot.values if snapshot else [])}
-            missing = sorted(reference for reference in preset_refs if reference not in available)
-            if missing:
-                raise FirstSongBuildError("Verification failed: referenced Preset is no longer present: " + ", ".join(missing))
+        preset_lines = self._fresh_verify_preset_references(preset_refs)
         details = []
         if effect_lines:
             details.append("Effect references verified: " + "; ".join(effect_lines))
-        if preset_refs:
-            details.append("Preset references verified by fresh List Preset All: " + ", ".join(sorted(preset_refs)))
+        if preset_lines:
+            details.append("Preset references verified by exact fresh List lookup: " + "; ".join(preset_lines))
         return execution_result + "\n" + metadata + ("\n" + "\n".join(details) if details else "")
+
+    def _fresh_verify_preset_references(self, references: set[str] | list[str]) -> list[str]:
+        """Prove each referenced Preset by exact read-only List lookup.
+
+        A broad `List Preset All` is inventory context, not an existence proof:
+        grandMA2 can omit rows that an exact `List Preset <ref>` returns.
+        """
+        verified: list[str] = []
+        provider = PresetProvider()
+        for reference in sorted({str(item) for item in references if str(item).strip()}):
+            if not re.fullmatch(r"[1-9]\d*\.[1-9]\d*", reference):
+                raise FirstSongBuildError(
+                    f"Verification failed: referenced Preset has invalid identity: {reference}"
+                )
+            raw = self.runtime.read_state(f"List Preset {reference}")
+            upper = raw.upper()
+            if "OBJECT DOES NOT EXIST" in upper or "NO OBJECTS FOUND" in upper:
+                raise FirstSongBuildError(
+                    f"Verification failed: referenced Preset is no longer present: {reference}"
+                )
+            rows = provider.parse(raw, "ALL")
+            found = next(
+                (item for item in rows if str(item.get("reference") or "") == reference),
+                None,
+            )
+            if found is None:
+                raise FirstSongBuildError(
+                    f"Verification failed: referenced Preset read-back was not parseable: {reference}"
+                )
+            label = str(found.get("name") or "").strip()
+            verified.append(f"{reference}" + (f" — {label}" if label else ""))
+        return verified
 
     def _fresh_verify_effect_references(self, show_plan: dict[str, Any]) -> list[str]:
         """Prove every typed Effect reference by exact read-only List lookup."""
