@@ -39,6 +39,8 @@ class FirstSongClient:
         if command == "List Fixture": return 'Fixture 101 "Hybrid 1" (Hybrid)\n'
         if command.startswith("List Fixture "): return "WARNING, NO OBJECTS FOUND FOR LIST\n"
         if command == "List Preset All": return "Focus 6.1 6.1  narrow     Normal\nFocus 6.2 6.2  normal     Normal\n"
+        if command == "List Preset 6.2": return "Focus 6.2 6.2  normal     Normal\n"
+        if command == "List Preset 4.101": return "Color 4.101 4.101  ZEN_COLOR_01_RED     Normal\n"
         if command == "List Effect": return 'Effect 1000 DIM Low 1\nEffect 3520 "ZEN_FX_DIM_CHASE_SLOW_GROUP1"\n'
         if command == "List Effect 3520": return 'Effect 3520 "ZEN_FX_DIM_CHASE_SLOW_GROUP1"\n'
         if command == "List Sequence": return f'Sequence {self.sequence_number} "{self.sequence_label}"\n' if self.sequence_label else "WARNING, NO OBJECTS FOUND FOR LIST\n"
@@ -97,6 +99,12 @@ class FirstSongBuilderTests(unittest.TestCase):
         self.assertEqual(self.runtime.client.sequence_label, "ZEN_AI_TEST_ZEN_FIRST_SONG_TEST")
         self.assertEqual(len(self.runtime.client.cues), 7)
         self.assertEqual(self.runtime.client.commands.count("ClearAll"), 2)
+
+    def test_post_build_verification_uses_exact_preset_lookup_when_all_inventory_omits_it(self):
+        lines = self.core._fresh_verify_preset_references({"4.101"})
+        self.assertEqual(lines, ["4.101 — ZEN_COLOR_01_RED"])
+        self.assertIn("List Preset 4.101", self.runtime.client.commands)
+        self.assertNotEqual(self.runtime.client.commands[-1], "List Preset All")
 
     def test_designer_defaults_missing_sequence_range_to_front_first_pool(self):
         data = dict(INPUT)
