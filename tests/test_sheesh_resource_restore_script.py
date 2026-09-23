@@ -222,6 +222,26 @@ class SheeshResourceRestoreScriptTests(unittest.TestCase):
             "4.101",
         )
 
+    def test_fresh_build_sequence_label_collision_self_heals_without_blocking(self):
+        outputs = _outputs()
+        outputs["List Sequence"] = (
+            'Sequ 1 1 ZEN_SHEESH_TEST On 0 0\n'
+            'Sequ 2 2 ZEN_SHEESH_TEST_SEQ3 On 0 0\n'
+        )
+        outputs["List Executor"] = ""
+        core = _Core(outputs)
+        plan = MODULE._load_plan(MODULE.PLAN_PATH)
+
+        _remapped, sequence, label, executor_display, _executor_address = MODULE._allocate_fresh_build(
+            core,
+            plan,
+            {},
+        )
+
+        self.assertEqual(sequence, 3)
+        self.assertEqual(label, "ZEN_SHEESH_TEST_SEQ3_2")
+        self.assertEqual(executor_display, "1.001")
+
     def test_runtime_cue_commands_use_allocated_ids_not_legacy_tail_ids(self):
         plan = MODULE._load_plan(MODULE.PLAN_PATH)
         commands = [
