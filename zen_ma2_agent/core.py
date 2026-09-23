@@ -22,17 +22,16 @@ from .state.store import StateStore
 from .telnet_client import ConnectionState
 from .workflow import WorkflowPlan
 from .effect_builder import EffectBuildError, EffectTargetAmbiguous, resolve_effect_spec
+from .allocation import AllocationError, first_free_from_front
 from .effect_resources import EffectCatalog, EffectRequirement, EffectRequirementError, EffectResourceResolver, apply_effect_references, show_identity
 from .cue_effect_application import CueEffectApplicationCapability, CueEffectApplicationError, CueEffectApplicationSpec, ma2_response_has_error, resolve_spec
 from .geometry_clone import GeometryCloneAmbiguous, GeometryCloneError, GeometryCloneSpec, format_mapping, membership_fingerprint, resolve_geometry_clone_spec
 from .timecode_offset import TimecodeOffsetError, fingerprint_timecode, resolve_timecode_offset_spec
 from .geometry_test_environment import (
-    DESTINATION_GROUP,
     DESTINATION_LABEL,
     GeometryTestEnvironmentError,
     GeometryTestGroupSpec,
     PRODUCTION_SHOW,
-    SOURCE_GROUP,
     SOURCE_LABEL,
     TEST_SHOW,
     test_mode_enabled,
@@ -602,8 +601,6 @@ class AgentCore:
         isolated_test = (
             self._isolated_geometry_test_loaded
             and test_mode_enabled()
-            and spec.source_group_number == SOURCE_GROUP
-            and spec.destination_group_number == DESTINATION_GROUP
             and spec.source_group_name == SOURCE_LABEL
             and spec.destination_group_name == DESTINATION_LABEL
         )
@@ -636,13 +633,29 @@ class AgentCore:
     def _plan_timecode_test_setup(self, intent: Any) -> WorkflowPlan:
         """Only the explicit packaged verifier can reach this test setup intent."""
         self.refresh_state("timecodes")
-        number = intent.parameters.get("timecode_number")
-        if not isinstance(number, int) or number < 1:
+        requested = intent.parameters.get("timecode_number")
+        if not isinstance(requested, int) or isinstance(requested, bool) or requested < 1:
             raise TimecodeOffsetError("Test Timecode setup requires a positive number.")
         current = self.state.get("timecodes")
-        if any(item.get("timecode_number") == number for item in (current.values if current else [])):
-            raise TimecodeOffsetError(f"Test Timecode {number} already exists; refusing to overwrite it.")
-        return self.skills.plan_intent(intent, self.state, self.runtime.preferences)
+        occupied = [
+            item.get("timecode_number")
+            for item in (current.values if current else [])
+            if isinstance(item, dict)
+        ]
+        try:
+            number = first_free_from_front(occupied, start=1)
+        except AllocationError as exc:
+            raise TimecodeOffsetError("No safe free Timecode slot remains.") from exc
+        bound = Intent(
+            intent.kind,
+            {
+                **intent.parameters,
+                "requested_timecode_number": requested,
+                "timecode_number": number,
+            },
+            intent.source_text,
+        )
+        return self.skills.plan_intent(bound, self.state, self.runtime.preferences)
 
     def _plan_geometry_test_groups(self, intent: Any) -> WorkflowPlan:
         """Bind two fresh Fixture identities into an isolated-only Group setup."""
@@ -653,16 +666,35 @@ class AgentCore:
             raise GeometryTestEnvironmentError("Geometry test Group setup requires two distinct positive Fixture IDs.")
         self.refresh_state("groups")
         groups = self.state.get("groups")
-        occupied = [number for number in (SOURCE_GROUP, DESTINATION_GROUP) if any(item.get("number") == number for item in (groups.values if groups else []))]
-        if occupied:
-            raise GeometryTestEnvironmentError(f"Refusing to overwrite existing isolated test Group(s): {', '.join(map(str, occupied))}.")
+        occupied_groups = [
+            item.get("number")
+            for item in (groups.values if groups else [])
+            if isinstance(item, dict)
+        ]
+        try:
+            source_group = first_free_from_front(occupied_groups, start=1)
+            destination_group = first_free_from_front([*occupied_groups, source_group], start=1)
+        except AllocationError as exc:
+            raise GeometryTestEnvironmentError("No two safe free Group slots remain in the isolated Test Show.") from exc
         self.refresh_state("fixtures")
         fixtures = self.state.get("fixtures")
         numbers = {item.get("number") for item in (fixtures.values if fixtures else [])}
         missing = [number for number in (source, destination) if number not in numbers]
         if missing:
             raise GeometryTestEnvironmentError(f"Test Fixture inventory does not contain: {', '.join(map(str, missing))}.")
-        bound = Intent(intent.kind, {**intent.parameters, "geometry_test_group_spec": GeometryTestGroupSpec(source, destination).summary()}, intent.source_text)
+        bound = Intent(
+            intent.kind,
+            {
+                **intent.parameters,
+                "geometry_test_group_spec": GeometryTestGroupSpec(
+                    source,
+                    destination,
+                    source_group,
+                    destination_group,
+                ).summary(),
+            },
+            intent.source_text,
+        )
         return self.skills.plan_intent(bound, self.state, self.runtime.preferences)
 
     def submit_request(self, text: str, source: str = "desktop") -> dict[str, Any]:
