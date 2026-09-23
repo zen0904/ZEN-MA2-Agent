@@ -84,6 +84,12 @@ class SheeshSavedRetryTests(unittest.TestCase):
                 target_executor="2.001",
             )
 
+    def test_runner_guards_cleanup_until_build_execution_is_attempted(self):
+        from pathlib import Path
+        source = (Path(__file__).resolve().parents[1] / "scripts" / "run_sheesh_programming_test.py").read_text(encoding="utf-8")
+        self.assertIn("build_execution_attempted = False", source)
+        self.assertIn("if core.runtime.ready and build_execution_attempted:", source)
+
     def test_canonical_without_compile_evidence_uses_legacy_saved_result_path(self):
         self.assertIsNone(
             _resume_saved_canonical_artifact(
