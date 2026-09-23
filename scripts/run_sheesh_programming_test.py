@@ -21,6 +21,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from zen_ma2_agent.core import AgentCore
+from zen_ma2_agent.builder import ShowPlanBuilder
 from zen_ma2_agent.allocation import first_free_executor, first_free_from_front
 from zen_ma2_agent.artistic_resources import (
     build_artistic_resource_map,
@@ -570,6 +571,75 @@ def _repair_prompt(
     return system, user
 
 
+def _recover_prior_postwrite_build(core: AgentCore, saved: dict) -> dict | None:
+    """Finish verification for a prior approved build without writing again.
+
+    A failure raised from `_verify_first_song` happens after the approved
+    Builder commands were already sent. Re-running allocation at that point
+    would create a duplicate Sequence. For that narrow failure class, recover
+    the exact prior action metadata and repeat only read-back verification.
+    """
+    error = str(saved.get("error") or "")
+    if not error.startswith("FirstSongBuildError: Verification failed:"):
+        return None
+
+    preview = saved.get("preview")
+    action = preview.get("action") if isinstance(preview, dict) else None
+    task = action.get("task") if isinstance(action, dict) else None
+    intent = task.get("intent") if isinstance(task, dict) else None
+    parameters = intent.get("parameters") if isinstance(intent, dict) else None
+    if not isinstance(parameters, dict):
+        raise RuntimeError("POSTWRITE_RECOVERY_METADATA_MISSING")
+
+    sequence = parameters.get("sequence")
+    label = parameters.get("sequence_label")
+    target_executor = parameters.get("target_executor")
+    cues = parameters.get("cues")
+    cue_labels = parameters.get("cue_labels")
+    if (
+        isinstance(sequence, bool)
+        or not isinstance(sequence, int)
+        or sequence < 1
+        or not isinstance(label, str)
+        or not label.startswith("ZEN_AI_TEST_")
+        or not isinstance(cues, list)
+        or not cues
+        or not isinstance(cue_labels, list)
+    ):
+        raise RuntimeError("POSTWRITE_RECOVERY_METADATA_INVALID")
+
+    metadata = core.verify_first_song_metadata(sequence, label, cues, cue_labels)
+
+    executor_verified = target_executor in {None, ""}
+    if target_executor:
+        address = ShowPlanBuilder._executor_address(target_executor)
+        if address is None:
+            raise RuntimeError("POSTWRITE_RECOVERY_EXECUTOR_METADATA_INVALID")
+        output = core.runtime.read_state("List Executor")
+        executor_verified = bool(
+            re.search(rf"(?:Executor|Exec)\s+{re.escape(address)}\b", output, re.I)
+            and re.search(rf"(?:Sequence\s*=\s*Seq|Sequence)\s*{sequence}\b", output, re.I)
+            and label in output
+        )
+        if not executor_verified:
+            raise RuntimeError("POSTWRITE_RECOVERY_EXECUTOR_MISMATCH")
+
+    effect_lines = core._fresh_verify_effect_references({"cues": cues})
+    preset_lines = core._fresh_verify_preset_references(
+        set(parameters.get("referenced_presets") or [])
+    )
+    return {
+        "sequence": sequence,
+        "sequence_label": label,
+        "target_executor": target_executor,
+        "cue_count": len(cues),
+        "metadata": metadata,
+        "executor_verified": executor_verified,
+        "effect_lines": effect_lines,
+        "preset_lines": preset_lines,
+    }
+
+
 def run(real_machine: bool, *, saved_result_path: Path | None = None, target_executor: str = TARGET_EXECUTOR_DISPLAY) -> dict:
     if not real_machine:
         raise RuntimeError("Refusing Test Show programming writes without --real-machine.")
@@ -642,6 +712,40 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
             result["provider"] = saved.get("provider")
             result["provider_response"] = saved.get("provider_response")
             result["provider_attempts"] = saved.get("provider_attempts", [])
+            recovered = _recover_prior_postwrite_build(core, saved)
+            if recovered is not None:
+                result["status"] = "SUCCESS"
+                result["saved_retry"] = {
+                    "mode": "RECOVER_POSTWRITE_VERIFICATION",
+                    "provider_called": False,
+                    "artistic_compile_replayed": False,
+                    "writes_replayed": False,
+                    "checks": [
+                        "EXISTING_SEQUENCE_METADATA",
+                        "EXISTING_EXECUTOR_ASSIGNMENT",
+                        "CURRENT_EFFECT_IDENTITY",
+                        "CURRENT_PRESET_EXISTENCE",
+                    ],
+                }
+                result["canonical_artifact"] = saved.get("canonical_artifact")
+                result["ai_plan"] = saved.get("canonical_artifact")
+                result["sequence"] = recovered["sequence"]
+                result["sequence_label"] = recovered["sequence_label"]
+                result["target_executor"] = recovered["target_executor"]
+                result["cue_count"] = recovered["cue_count"]
+                result["ma2_writes"] = 0
+                result["readback_verification"] = "RECOVERED_POSTWRITE_PASS"
+                result["readback_detail"] = {
+                    "sequence_executor_metadata": "PASS",
+                    "cue_labels_and_fades": "PASS",
+                    "effects": recovered["effect_lines"],
+                    "presets": recovered["preset_lines"],
+                    "writes_replayed": False,
+                }
+                result["executor_before"] = executor_before
+                result["executor_after"] = core.runtime.read_state("List Executor")
+                result["sequence_after"] = core.runtime.read_state("List Sequence")
+                return result
             plan = _resume_saved_canonical_artifact(
                 saved,
                 sequence=selected_sequence,
