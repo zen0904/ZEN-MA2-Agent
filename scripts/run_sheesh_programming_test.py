@@ -46,14 +46,14 @@ from zen_ma2_agent.test_show_evidence import (
     test_show_palette_manifest,
 )
 from zen_ma2_agent.effect_resources import show_identity
-from zen_ma2_agent.state.providers.show_pools import EffectProvider
+from zen_ma2_agent.state.providers.show_pools import EffectProvider, PresetProvider
 from zen_ma2_agent.test_show_resources import template_effect_labels
 from zen_ma2_agent.telnet_client import ConnectionState
 
 
 RUN_ID = "SHEESH_NEW_UNDESIGNED_SHOW_001"
 USB_HOME = Path(r"E:\ZEN_MA2_AGENT")
-TARGET_EXECUTOR_DISPLAY = "2.002"
+TARGET_EXECUTOR_DISPLAY = "2.001"
 SONG = "SHEESH"
 SHEESH_CUE_LABELS = ("INTRO", "BUILD", "VERSE", "PRE_DROP", "SHEESH_IMPACT", "AFTER_IMPACT")
 
@@ -366,6 +366,82 @@ def _resume_saved_canonical_artifact(
         raise RuntimeError("SAVED_CANONICAL_ARTIFACT_INVALID") from exc
 
 
+def _augment_canonical_referenced_resources(
+    core: AgentCore,
+    profile: dict,
+    plan: dict,
+) -> dict[str, list]:
+    """Refresh exact pool objects referenced by a frozen canonical ShowPlan.
+
+    This is runtime existence refresh only. It does not rebuild an artistic
+    resource map, replay applicability compilation, or call a provider.
+    """
+    if not core.runtime.client:
+        raise RuntimeError("MA2_CLIENT_UNAVAILABLE_FOR_CANONICAL_RESUME")
+
+    preset_refs = sorted({
+        str(action.get("preset_ref"))
+        for cue in plan.get("cues", [])
+        for action in cue.get("actions", [])
+        if action.get("operation") == "CALL_PRESET" and action.get("preset_ref")
+    })
+    effect_ids = sorted({
+        int((action.get("effect_ref") or {}).get("id"))
+        for cue in plan.get("cues", [])
+        for action in cue.get("actions", [])
+        if action.get("operation") == "CALL_EFFECT"
+        and isinstance((action.get("effect_ref") or {}).get("id"), int)
+    })
+
+    presets = {
+        str(item.get("reference") or ""): item
+        for item in profile.get("presets", [])
+        if isinstance(item, dict) and item.get("reference")
+    }
+    preset_provider = PresetProvider()
+    for reference in preset_refs:
+        if not re.fullmatch(r"[1-9]\d*\.[1-9]\d*", reference):
+            raise RuntimeError(f"SAVED_CANONICAL_PRESET_REFERENCE_INVALID:{reference}")
+        raw = core.runtime.client.execute(f"List Preset {reference}")
+        upper = raw.upper()
+        if "OBJECT DOES NOT EXIST" in upper or "NO OBJECTS FOUND" in upper:
+            raise RuntimeError(f"SAVED_CANONICAL_PRESET_NOT_PRESENT:{reference}")
+        rows = preset_provider.parse(raw, "ALL")
+        row = next((item for item in rows if str(item.get("reference") or "") == reference), None)
+        if row is None:
+            raise RuntimeError(f"SAVED_CANONICAL_PRESET_READBACK_UNPARSED:{reference}")
+        presets[reference] = row
+
+    effects = {
+        int(item["effect_id"]): item
+        for item in profile.get("effects", [])
+        if isinstance(item, dict)
+        and isinstance(item.get("effect_id"), int)
+        and not isinstance(item.get("effect_id"), bool)
+    }
+    effect_provider = EffectProvider()
+    for effect_id in effect_ids:
+        raw = core.runtime.client.execute(f"List Effect {effect_id}")
+        upper = raw.upper()
+        if "OBJECT DOES NOT EXIST" in upper or "NO OBJECTS FOUND" in upper:
+            raise RuntimeError(f"SAVED_CANONICAL_EFFECT_NOT_PRESENT:{effect_id}")
+        rows = effect_provider.parse(raw)
+        row = next((item for item in rows if item.get("number") == effect_id), None)
+        if row is None:
+            raise RuntimeError(f"SAVED_CANONICAL_EFFECT_READBACK_UNPARSED:{effect_id}")
+        effects[effect_id] = {
+            "effect_id": effect_id,
+            "name": row.get("name"),
+            "kind": row.get("kind"),
+            "line_count": row.get("line_count"),
+            "attributes": row.get("attributes", []),
+        }
+
+    profile["presets"] = list(presets.values())
+    profile["effects"] = list(effects.values())
+    return {"presets": preset_refs, "effects": effect_ids}
+
+
 def _repair_prompt(
     *,
     rejected_content: str,
@@ -471,11 +547,20 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
             )
             if plan is not None:
                 compile_audit = saved.get("provider_plan_compile") if isinstance(saved.get("provider_plan_compile"), dict) else {}
+                refreshed = _augment_canonical_referenced_resources(core, profile, plan)
+                context = {
+                    key: profile.get(key, [])
+                    for key in ("groups", "presets", "effects", "sequences", "executors")
+                }
+                groups = context.get("groups", [])
+                presets = [item for item in context.get("presets", []) if item.get("reference")]
+                effects = [item for item in context.get("effects", []) if isinstance(item.get("effect_id"), int)]
                 result["saved_retry"] = {
                     "mode": "RESUME_CANONICAL_ARTIFACT",
                     "provider_called": False,
                     "artistic_compile_replayed": False,
                     "checks": ["CURRENT_RESOURCE_EXISTENCE", "SAFE_WRITE_ALLOCATION"],
+                    "refreshed_resources": refreshed,
                 }
 
         if plan is None:
