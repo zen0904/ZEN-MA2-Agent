@@ -40,6 +40,16 @@ class ShowStructureProviderTests(unittest.TestCase):
         rows = SequenceProvider().parse('Sequ 201 201  ZEN_AI_TEST_ZEN_FIRST_SONG_TEST  On     On                Off')
         self.assertEqual([(item.number, item.name) for item in rows], [(201, "ZEN_AI_TEST_ZEN_FIRST_SONG_TEST")])
 
+    def test_real_ma2_sequence_table_accepts_compact_spacing_for_allocator_safety(self):
+        rows = SequenceProvider().parse(
+            'Sequ 1 1 FIRST On 0 0\n'
+            'Sequ 2 2 SECOND Off 0 0\n'
+        )
+        self.assertEqual(
+            [(item.number, item.name) for item in rows],
+            [(1, "FIRST"), (2, "SECOND")],
+        )
+
     def test_real_ma2_39_cue_detail_uses_explicit_cue_identity(self):
         provider = CueProvider()
         self.assertEqual(provider.detail_command(201, 1), "List Cue 1 Part 0 Sequence 201")
