@@ -98,6 +98,35 @@ class EffectResourceResolverTests(unittest.TestCase):
         stale = self.resolver.resolve(item, profile=changed)
         self.assertEqual(stale.status, "CREATE_REQUIRED")
 
+    def test_duplicate_verified_resources_self_heal_to_lowest_id(self):
+        current = profile(effects=[
+            {"effect_id": 9, "name": "ZEN_FX_DIM_CHASE_FAST_GROUP1"},
+            {"effect_id": 4, "name": "ZEN_FX_DIM_CHASE_FAST_GROUP1"},
+        ])
+        item = EffectRequirement.from_dict(requirement())
+        identity = show_identity(current)
+        for effect_id in (9, 4):
+            self.catalog.record(
+                requirement=item,
+                effect_id=effect_id,
+                label="ZEN_FX_DIM_CHASE_FAST_GROUP1",
+                identity=identity,
+                verification={"object": "VERIFIED", "label": "VERIFIED", "parameters": "PARTIAL"},
+            )
+        found = self.resolver.resolve(item, profile=current)
+        self.assertEqual(found.status, "EXISTING_MATCH")
+        self.assertEqual(found.effect_ref["id"], 4)
+        self.assertEqual(found.effect_ref["match"], "VERIFIED_AGENT_CATALOG_LOWEST_ID")
+
+        templates = profile(effects=[
+            {"effect_id": 8, "name": "FX_DIM_CHASE_MED", "kind": "TEMPLATE"},
+            {"effect_id": 3, "name": "FX_DIM_CHASE_MED", "kind": "TEMPLATE"},
+        ])
+        found = self.resolver.resolve(requirement("MED"), profile=templates)
+        self.assertEqual(found.status, "EXISTING_MATCH")
+        self.assertEqual(found.effect_ref["id"], 3)
+        self.assertEqual(found.effect_ref["match"], "STRICT_SEMANTIC_TEMPLATE_LOWEST_ID")
+
     def test_strict_template_reuse_and_name_only_candidate_rejection(self):
         exact = self.resolver.resolve(requirement("MED"), profile=profile(effects=[{"effect_id": 37, "name": "FX_DIM_CHASE_MED", "kind": "TEMPLATE"}]))
         self.assertEqual((exact.status, exact.effect_ref["ownership"], exact.effect_ref["match"]), ("EXISTING_MATCH", "TEMPLATE", "STRICT_SEMANTIC_TEMPLATE"))
