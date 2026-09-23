@@ -677,33 +677,15 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
             raise RuntimeError(f"TARGET_PAGE_{target_page}_NOT_PRESENT")
         executor_before = core.runtime.read_state("List Executor")
 
-        for resource, kwargs in (
-            ("groups", {}),
-            ("presets", {"sequence": "ALL"}),
-            ("effects", {}),
-            ("sequences", {}),
-            ("executors", {}),
-        ):
-            core.refresh_state(resource, **kwargs)
-        profile = core.scan_show_profile()
-        context = {
-            key: profile.get(key, [])
-            for key in ("groups", "presets", "effects", "sequences", "executors")
-        }
-        groups = context.get("groups", [])
-        presets = [item for item in context.get("presets", []) if item.get("reference")]
-        effects = [item for item in context.get("effects", []) if isinstance(item.get("effect_id"), int)]
-        selected_sequence = _lowest_safe_sequence_id(context)
-        active_sequence_range = [selected_sequence, selected_sequence]
-        target_executor = first_free_executor(executor_before, page=target_page)
-        result["target_executor"] = target_executor
-        result["selected_sequence_id"] = selected_sequence
-        result["active_sequence_range"] = active_sequence_range
-
         saved: dict | None = None
         plan: dict | None = None
         compile_audit: dict[str, object] | None = None
         provider_plan: dict | None = None
+
+        # A previous post-write verification failure is already past the
+        # Builder boundary. Recover that exact build before doing any new
+        # resource allocation or broad state refresh. This keeps retries fast
+        # and makes duplicate Sequence/Executor creation impossible here.
         if saved_result_path is not None:
             if not saved_result_path.is_file():
                 raise RuntimeError("SAVED_PROVIDER_RESULT_NOT_FOUND")
@@ -746,6 +728,31 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
                 result["executor_after"] = core.runtime.read_state("List Executor")
                 result["sequence_after"] = core.runtime.read_state("List Sequence")
                 return result
+
+        for resource, kwargs in (
+            ("groups", {}),
+            ("presets", {"sequence": "ALL"}),
+            ("effects", {}),
+            ("sequences", {}),
+            ("executors", {}),
+        ):
+            core.refresh_state(resource, **kwargs)
+        profile = core.scan_show_profile()
+        context = {
+            key: profile.get(key, [])
+            for key in ("groups", "presets", "effects", "sequences", "executors")
+        }
+        groups = context.get("groups", [])
+        presets = [item for item in context.get("presets", []) if item.get("reference")]
+        effects = [item for item in context.get("effects", []) if isinstance(item.get("effect_id"), int)]
+        selected_sequence = _lowest_safe_sequence_id(context)
+        active_sequence_range = [selected_sequence, selected_sequence]
+        target_executor = first_free_executor(executor_before, page=target_page)
+        result["target_executor"] = target_executor
+        result["selected_sequence_id"] = selected_sequence
+        result["active_sequence_range"] = active_sequence_range
+
+        if saved is not None:
             plan = _resume_saved_canonical_artifact(
                 saved,
                 sequence=selected_sequence,
