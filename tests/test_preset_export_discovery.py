@@ -1,3 +1,4 @@
+import os
 import tempfile
 import unittest
 from contextlib import contextmanager
@@ -86,6 +87,23 @@ class PresetExportDiscoveryTests(unittest.TestCase):
         retained = Path(result["export"]["retained_copy_path"])
         self.assertTrue(retained.is_file())
         self.assertFalse((self.directory / "ZEN_AGENT_PRESET_2_21_request0001.xml").exists())
+
+    def test_fresh_unique_preset_export_accepts_filesystem_mtime_skew(self):
+        class SkewedRuntime(ExportRuntime):
+            def export_preset_file(inner, preset_ref, filename):
+                inner.commands.append((preset_ref, filename))
+                target = inner.directory / filename
+                target.write_bytes(inner.xml)
+                os.utime(target, ns=(1, 1))
+                return "Executing : Export Preset"
+
+        runtime = SkewedRuntime(self.directory)
+        result = self.provider(wall_clock_ns=lambda: 2_000_000_000, poll_seconds=.001).export_and_discover(
+            runtime,
+            "2.21",
+            {**self.settings, "timeout_seconds": .5},
+        )
+        self.assertEqual(result["status"], "SCHEMA_UNVERIFIED")
 
     def test_malformed_xml_is_rejected_and_never_becomes_an_observation(self):
         runtime = ExportRuntime(self.directory, xml=b"<Root><Broken>")
