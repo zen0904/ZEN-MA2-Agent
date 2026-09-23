@@ -1,0 +1,10 @@
+{
+  "id": "show.program",
+  "name": "Show Program",
+  "version": "0.1",
+  "description": "Normal root orchestration for bounded show and song programming requests.",
+  "intents": ["program_show", "program_song", "design_show", "redesign_song"],
+  "required_state": [],
+  "safety": "MODIFY",
+  "enabled": true
+}

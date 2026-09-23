@@ -105,7 +105,10 @@ class SkillRegistry:
                     raise SkillError(f"Duplicate skill id: {manifest.id}")
                 self._manifests[manifest.id] = manifest
                 if executable:
-                    if manifest.id == "effects.builder":
+                    if manifest.id == "show.program":
+                        from .show_program import ShowProgramSkill
+                        self._implementations[manifest.id] = ShowProgramSkill(manifest, self)
+                    elif manifest.id == "effects.builder":
                         from .effect_builder import EffectBuilderSkill
                         self._implementations[manifest.id] = EffectBuilderSkill(manifest)
                     elif manifest.id == "effects.cue_application_poc":

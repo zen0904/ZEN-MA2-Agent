@@ -56,6 +56,9 @@ class WorkflowPlan:
     verification_strategy: str
     rollback_strategy: str | None = None
     executable: bool = True
+    current_phase: str | None = None
+    root_state: str | None = None
+    continuation_context: dict[str, Any] | None = None
 
     @classmethod
     def from_command(cls, skill_id: str, intent: Intent, command: CommandPlan) -> "WorkflowPlan":
@@ -88,4 +91,4 @@ class WorkflowPlan:
         child_steps = tuple(ActionStep(prefix + step.id, step.title, step.kind, step.command, step.safety, tuple(prefix + dependency for dependency in step.depends_on), step.verification, step.rollback) for step in child.steps)
         safety = max((self.safety, child.safety), key=lambda value: {"SAFE": 0, "MODIFY": 1, "DANGEROUS": 2}[value])
         gates = tuple(dict.fromkeys(self.approval_gates + child.approval_gates))
-        return WorkflowPlan(self.task, self.subtasks + child.subtasks, self.skill_graph + child_nodes, self.steps + child_steps, safety, self.preview_note, gates, self.verification_strategy, self.rollback_strategy or child.rollback_strategy, self.executable and child.executable)
+        return WorkflowPlan(self.task, self.subtasks + child.subtasks, self.skill_graph + child_nodes, self.steps + child_steps, safety, self.preview_note, gates, self.verification_strategy, self.rollback_strategy or child.rollback_strategy, self.executable and child.executable, self.current_phase, self.root_state, self.continuation_context)

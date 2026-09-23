@@ -13,9 +13,13 @@ from .operator_api import (
     MAConnectionState,
     OpenClawOperatorAdapter,
     PipelineStatus,
+    RootWorkflowStatus,
     StatusProvider,
     UnknownOpenClawTool,
     WatchdogProvider,
+    DesignRequestHandler,
+    PreviewHandler,
+    ApproveHandler,
     build_operator_status,
 )
 from .remote_workers import WorkerRegistry
@@ -94,6 +98,7 @@ def status_provider_from_core(
             remote_ai_available=remote_ai_available,
             workers=workers,
             pipeline=PipelineStatus(),
+            root_workflow=RootWorkflowStatus(**getattr(core, "root_workflow_status", lambda: {})()),
             latest_artifact=None,
             ma_target=ma_target,
         )
@@ -105,6 +110,9 @@ def create_operator_app(
     status_provider: StatusProvider,
     watchdog_provider: Optional[WatchdogProvider] = None,
     host_status_provider: Optional[HostStatusProvider] = None,
+    design_request_handler: Optional[DesignRequestHandler] = None,
+    preview_handler: Optional[PreviewHandler] = None,
+    approve_handler: Optional[ApproveHandler] = None,
 ) -> FastAPI:
     """Build the narrow localhost-first API intended for the OpenClaw adapter."""
 
@@ -112,6 +120,9 @@ def create_operator_app(
         status_provider,
         watchdog_provider,
         host_status_provider,
+        design_request_handler,
+        preview_handler,
+        approve_handler,
     )
     app = FastAPI(
         title="ZEN Operator API",
@@ -215,6 +226,9 @@ class OperatorServer:
         allow_remote: bool = False,
         watchdog_provider: Optional[WatchdogProvider] = None,
         host_status_provider: Optional[HostStatusProvider] = None,
+        design_request_handler: Optional[DesignRequestHandler] = None,
+        preview_handler: Optional[PreviewHandler] = None,
+        approve_handler: Optional[ApproveHandler] = None,
     ):
         if not 1 <= int(port) <= 65535:
             raise ValueError("operator port must be in range 1..65535")
@@ -228,6 +242,9 @@ class OperatorServer:
             status_provider,
             watchdog_provider,
             host_status_provider,
+            design_request_handler,
+            preview_handler,
+            approve_handler,
         )
         self._server: Optional[uvicorn.Server] = None
         self._thread: Optional[threading.Thread] = None

@@ -21,6 +21,7 @@ from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvid
 from .state.store import StateStore
 from .telnet_client import ConnectionState
 from .workflow import WorkflowPlan
+from .show_program import ROOT_PHASES, ROOT_CHILD_CONTEXT_KEY, MAX_CHILD_CONTEXT_BYTES, compose_show_program_child, set_show_program_state
 from .effect_builder import EffectBuildError, EffectTargetAmbiguous, resolve_effect_spec
 from .allocation import AllocationError, first_free_from_front
 from .effect_resources import EffectCatalog, EffectRequirement, EffectRequirementError, EffectResourceResolver, apply_effect_references, show_identity
@@ -76,6 +77,7 @@ class AgentCore:
         self.progress = "Idle"
         self._last_state = ""
         self._active_action_id: str | None = None
+        self._root_workflow_status: dict[str, Any] = {"state": "IDLE", "phase": "DONE", "action_id": None}
         self._internet_status = False
         self._internet_checked_at = 0.0
         self._effect_page = 0
@@ -87,6 +89,9 @@ class AgentCore:
         self.last_chat_routing: dict[str, Any] | None = None
         self._isolated_geometry_test_loaded = False
         self.runtime.log("startup", {"build_identity": self.build_identity, "runtime_root": str(self.runtime.root)})
+
+    def root_workflow_status(self) -> dict[str, Any]:
+        return dict(self._root_workflow_status)
 
     def snapshot(self) -> dict[str, Any]:
         ma2 = self.runtime.preferences["ma2"]
@@ -497,24 +502,7 @@ class AgentCore:
             return self._answer_state(route.intent)
         try:
             assert route.intent
-            if route.intent.kind == "build_dimmer_chase":
-                workflow = self._plan_effect_builder(route.intent)
-            elif route.intent.kind == "offset_timecode":
-                workflow = self._plan_timecode_offset(route.intent)
-            elif route.intent.kind == "timecode_test_setup":
-                workflow = self._plan_timecode_test_setup(route.intent)
-            elif route.intent.kind == "geometry_test_setup_groups":
-                workflow = self._plan_geometry_test_groups(route.intent)
-            elif route.intent.kind == "geometry_test_load_show":
-                workflow = self.skills.plan_intent(route.intent, self.state, self.runtime.preferences)
-            elif route.intent.kind == "geometry_test_restore_show":
-                if not self._isolated_geometry_test_loaded:
-                    raise GeometryTestEnvironmentError("Production restore is available only after this process loaded the isolated Geometry test show.")
-                workflow = self.skills.plan_intent(route.intent, self.state, self.runtime.preferences)
-            elif route.intent.kind == "geometry_clone":
-                workflow = self._plan_geometry_clone(route.intent)
-            else:
-                workflow = self.skills.plan_intent(route.intent, self.state, self.runtime.preferences)
+            workflow = self._plan_routed_intent(route.intent)
             self.runtime.log("workflow_preview", workflow.as_dict())
         except (EffectTargetAmbiguous, GeometryCloneAmbiguous) as exc:
             return self._respond(ResponseType.NEEDS_CLARIFICATION, str(exc), intent=route.intent)
@@ -539,6 +527,112 @@ class AgentCore:
         self.progress = "Waiting for approval"
         self.events.emit("plan", self.snapshot())
         return {"type": ResponseType.ACTION_PLAN.value, "message": response, "action": {"id": action_id, "status": record.status, **record.plan}}
+
+    def _plan_routed_intent(self, intent: Intent) -> WorkflowPlan:
+        """Plan one already-routed intent through the existing safe child planners."""
+        if intent.kind == "build_dimmer_chase":
+            return self._plan_effect_builder(intent)
+        if intent.kind == "offset_timecode":
+            return self._plan_timecode_offset(intent)
+        if intent.kind == "timecode_test_setup":
+            return self._plan_timecode_test_setup(intent)
+        if intent.kind == "geometry_test_setup_groups":
+            return self._plan_geometry_test_groups(intent)
+        if intent.kind == "geometry_test_load_show":
+            return self.skills.plan_intent(intent, self.state, self.runtime.preferences)
+        if intent.kind == "geometry_test_restore_show":
+            if not self._isolated_geometry_test_loaded:
+                raise GeometryTestEnvironmentError(
+                    "Production restore is available only after this process loaded the isolated Geometry test show."
+                )
+            return self.skills.plan_intent(intent, self.state, self.runtime.preferences)
+        if intent.kind == "geometry_clone":
+            return self._plan_geometry_clone(intent)
+        return self.skills.plan_intent(intent, self.state, self.runtime.preferences)
+
+    def program_show_request(self, request: str, source: str = "operator") -> dict[str, Any]:
+        """Plan the normal root workflow without executing it."""
+        if not isinstance(request, str) or not request.strip() or len(request) > 2048:
+            raise ValueError("request must be a non-empty bounded string")
+
+        root_intent = Intent("program_show", {"request": request}, request)
+        root = self.skills.plan_intent(root_intent, self.state, self.runtime.preferences)
+        route = self.router.route(request, self.skills)
+
+        if route.response_type is ResponseType.NEEDS_CLARIFICATION:
+            workflow = set_show_program_state(
+                root,
+                "NEEDS_INTELLIGENCE",
+                "The request needs bounded design intelligence before a child workflow can be selected.",
+                phase="UNDERSTAND",
+            )
+        elif route.response_type is ResponseType.NOT_IMPLEMENTED:
+            workflow = set_show_program_state(
+                root,
+                "NEEDS_RESEARCH",
+                "The request matches a known capability that is not currently executable.",
+                phase="RESEARCH_IF_NEEDED",
+            )
+        elif route.response_type is ResponseType.ANSWER:
+            workflow = set_show_program_state(
+                root,
+                "NEEDS_INPUT",
+                "This request resolves to a read-only query; use the read-only operator tools.",
+                phase="DISCOVER",
+            )
+        else:
+            assert route.intent is not None
+            try:
+                child = self._plan_routed_intent(route.intent)
+                workflow = compose_show_program_child(root, child)
+            except (EffectTargetAmbiguous, GeometryCloneAmbiguous) as exc:
+                workflow = set_show_program_state(root, "NEEDS_INPUT", str(exc), phase="RESOLVE")
+            except (SkillError, ConnectionError, EffectBuildError, GeometryCloneError, TimecodeOffsetError, GeometryTestEnvironmentError, ValueError) as exc:
+                workflow = set_show_program_state(
+                    root,
+                    "NEEDS_INPUT",
+                    str(exc) or "Unable to prepare a safe child workflow.",
+                    phase="DISCOVER",
+                )
+
+        self._root_workflow_status = {
+            "state": workflow.root_state or ("READY" if workflow.executable else "NEEDS_INPUT"),
+            "phase": workflow.current_phase or ROOT_PHASES[0],
+            "action_id": None,
+        }
+        self.runtime.log("root_workflow", workflow.as_dict())
+
+        if not workflow.executable:
+            self.events.emit("plan", self.snapshot())
+            return {
+                "type": ResponseType.ACTION_PLAN.value,
+                "message": workflow.preview_note,
+                "action": {"id": None, "status": "ROOT_WORKFLOW", **workflow.as_dict()},
+            }
+
+        action_id = uuid.uuid4().hex[:12]
+        if self._active_action_id and self.actions.get(self._active_action_id):
+            self.actions[self._active_action_id].status = "CANCELLED"
+        record = ActionRecord(action_id, workflow)
+        self.actions[action_id] = record
+        self._active_action_id = action_id
+        self._root_workflow_status.update(
+            {"state": "PENDING_APPROVAL", "phase": "PREVIEW", "action_id": action_id}
+        )
+        self.progress = "Waiting for approval"
+        self.events.emit("plan", self.snapshot())
+        return {
+            "type": ResponseType.ACTION_PLAN.value,
+            "message": workflow.preview_note,
+            "action": {"id": action_id, "status": record.status, **record.plan},
+        }
+
+    def preview_action(self, action_id: str | None = None) -> dict[str, Any]:
+        selected = action_id or self._active_action_id
+        if not selected or selected not in self.actions:
+            return {"status": "NO_PREVIEW", "action": None}
+        record = self.actions[selected]
+        return {"status": record.status, "action": {"id": record.id, **record.plan}}
 
     def _plan_effect_builder(self, intent: Any) -> WorkflowPlan:
         """Refresh only the inventories needed to bind a safe EffectSpec."""
@@ -975,25 +1069,64 @@ class AgentCore:
         self.events.emit("plan", self.snapshot())
         return True
 
+    def _effective_execution_context(self, action: ActionRecord) -> tuple[str, Intent]:
+        """Resolve the child execution identity for a composed show.program action."""
+        workflow = action.workflow
+        if workflow.task.skill_id != "show.program":
+            return workflow.task.skill_id, workflow.task.intent
+        if not workflow.executable:
+            raise ValueError("Non-executable show.program workflow cannot be approved.")
+        context = workflow.continuation_context
+        if not isinstance(context, dict):
+            raise ValueError("Executable show.program workflow has no continuation context.")
+        child = context.get(ROOT_CHILD_CONTEXT_KEY)
+        if not isinstance(child, dict) or set(child) != {"skill_id", "intent_kind", "parameters", "source_text"}:
+            raise ValueError("Executable show.program workflow has invalid child execution context.")
+        skill_id = child.get("skill_id")
+        intent_kind = child.get("intent_kind")
+        parameters = child.get("parameters")
+        source_text = child.get("source_text")
+        if not isinstance(skill_id, str) or not skill_id or len(skill_id) > 128:
+            raise ValueError("show.program child skill id is invalid.")
+        if not isinstance(intent_kind, str) or not intent_kind or len(intent_kind) > 128:
+            raise ValueError("show.program child intent kind is invalid.")
+        if not isinstance(parameters, dict):
+            raise ValueError("show.program child intent parameters are invalid.")
+        if not isinstance(source_text, str) or len(source_text) > 2048:
+            raise ValueError("show.program child source text is invalid.")
+        try:
+            encoded = json.dumps(child, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        except (TypeError, ValueError) as exc:
+            raise ValueError("show.program child execution context is not JSON-safe.") from exc
+        if len(encoded) > MAX_CHILD_CONTEXT_BYTES:
+            raise ValueError("show.program child execution context is too large.")
+        if not any(node.skill_id == skill_id and node.skill_id != "show.program" for node in workflow.skill_graph):
+            raise ValueError("show.program child execution context does not match its Skill graph.")
+        capability = self.skills.get(skill_id)
+        if intent_kind not in capability.intents:
+            raise ValueError("show.program child execution context does not match the child Skill intent.")
+        return skill_id, Intent(intent_kind, dict(parameters), source_text)
+
     def approve_action(self, action_id: str, *, danger_confirmed: bool = False) -> dict[str, Any]:
         action = self.actions.get(action_id)
         if not action or action.status != "PENDING_APPROVAL":
             raise ValueError("Action is not awaiting approval.")
         if action_id != self._active_action_id:
             raise ValueError("This preview is no longer the active action.")
+        execution_skill_id, execution_intent = self._effective_execution_context(action)
         if not self.runtime.ready:
             raise PermissionError("MA2 must be READY before an approved action can execute.")
         if action.workflow.safety == "DANGEROUS" and not danger_confirmed:
             raise PermissionError("Dangerous actions require a second confirmation.")
-        if action.workflow.task.intent.kind == "offset_timecode":
+        if execution_intent.kind == "offset_timecode":
             self._ensure_timecode_state_unchanged(action)
-        elif action.workflow.task.intent.kind == "geometry_clone":
+        elif execution_intent.kind == "geometry_clone":
             self._ensure_geometry_clone_state_unchanged(action)
         action.status = "APPROVED"
         self.progress = "Executing"
         self.events.emit("progress", {"stage": self.progress})
         try:
-            intent_kind = action.workflow.task.intent.kind
+            intent_kind = execution_intent.kind
             if intent_kind == "verify_cue_effect_application":
                 result = self._execute_cue_effect_application_poc(action)
             else:
@@ -1014,21 +1147,27 @@ class AgentCore:
                 result += f"\nVerification: Production Show \"{PRODUCTION_SHOW}\" restore command completed. Refresh production state."
             elif intent_kind == "geometry_test_setup_groups":
                 result = self._verify_geometry_test_groups(action, result)
-            elif action.workflow.task.skill_id == "effects.builder":
+            elif execution_skill_id == "effects.builder":
                 result = self._verify_effect_builder(action, result)
-            elif action.workflow.task.intent.kind == "offset_timecode":
+            elif intent_kind == "offset_timecode":
                 result = self._verify_timecode_offset(action, result)
-            elif action.workflow.task.intent.kind == "geometry_clone":
+            elif intent_kind == "geometry_clone":
                 result = self._verify_geometry_clone(action, result)
-            elif action.workflow.task.intent.kind == "build_first_song":
+            elif intent_kind == "build_first_song":
                 result = self._verify_first_song(action, result)
             action.status, action.result = "EXECUTED", result
             self._active_action_id = None
+            if action.workflow.task.skill_id == "show.program":
+                self._root_workflow_status.update({"state": "EXECUTED", "phase": "VERIFY_ACTUAL_CONTENT", "action_id": action_id})
             self.chat.append({"role": "assistant", "kind": "result", "text": action.result, "action_id": action_id})
             self.progress = "Verifying"
         except Exception as exc:
             action.status, action.result = "FAILED", str(exc)
             self._active_action_id = None
+            if action.workflow.task.skill_id == "show.program":
+                self._root_workflow_status.update(
+                    {"state": "FAILED", "phase": "SELF_HEAL_IF_NEEDED", "action_id": action_id}
+                )
             self.progress = "Idle"
             self.events.emit("error", {"message": str(exc)})
             raise
@@ -1041,7 +1180,7 @@ class AgentCore:
         Store/label are unreachable until the Effect call returns without a
         recognised MA2 error. ClearAll is attempted on every exit path.
         """
-        raw = action.workflow.task.intent.parameters.get("cue_effect_spec")
+        raw = self._effective_execution_context(action)[1].parameters.get("cue_effect_spec")
         if not isinstance(raw, dict):
             raise CueEffectApplicationError("Cue Effect POC verification metadata is incomplete.")
         try:
@@ -1065,8 +1204,8 @@ class AgentCore:
                     raise CueEffectApplicationError(f"MA2 rejected approved Cue storage command {command!r}: {response or 'no feedback'}")
             verification = self.verify_first_song_metadata(spec.sequence, spec.sequence_label, [{"cue_number": spec.cue_number, "label": spec.cue_label, "fade": 0}])
             capability = self.cue_effect_application_capability.record(spec)
-            self.runtime.log("cue_effect_application_verification", {"status": "REAL_MACHINE_VERIFIED", "grammar": capability["grammar"], "effect": spec.effect_id, "target_group": spec.target_group, "sequence": spec.sequence, "cue": spec.cue_number, "cue_content_effect_readback": "PARTIAL", "responses": responses})
-            return "\n".join(item for item in responses if item) + "\n" + verification + "\nEffect application grammar: REAL_MACHINE_VERIFIED. Cue-content Effect read-back: PARTIAL."
+            self.runtime.log("cue_effect_application_verification", {"status": capability["status"], "grammar": capability["grammar"], "effect": spec.effect_id, "target_group": spec.target_group, "sequence": spec.sequence, "cue": spec.cue_number, "application": capability["verification"]["application"], "cue_content_effect_readback": capability["verification"]["cue_content_readback"], "responses": responses})
+            return "\n".join(item for item in responses if item) + "\n" + verification + "\nEffect application command: COMMAND_ACCEPTED_ONLY. Cue-content Effect read-back: PARTIAL."
         except Exception as exc:
             self.runtime.log("cue_effect_application_verification", {"status": "FAILED", "effect": spec.effect_id, "target_group": spec.target_group, "sequence": spec.sequence, "cue": spec.cue_number, "error": str(exc), "responses": responses})
             raise
@@ -1078,7 +1217,7 @@ class AgentCore:
                 self.runtime.log("cue_effect_application_clear", {"sequence": spec.sequence, "error": str(clear_exc)})
 
     def _verify_first_song(self, action: ActionRecord, execution_result: str) -> str:
-        data = action.workflow.task.intent.parameters
+        data = self._effective_execution_context(action)[1].parameters
         sequence, label = data.get("sequence"), data.get("sequence_label")
         expected_labels = data.get("cue_labels")
         if not isinstance(sequence, int) or not isinstance(label, str) or not isinstance(expected_labels, list):
@@ -1197,7 +1336,7 @@ class AgentCore:
         return f"Verification: PARTIAL — Sequence {sequence} {label}; {len(cues)} Cue labels and Fades verified. Cue-content Preset read-back is unavailable."
 
     def _verify_geometry_test_groups(self, action: ActionRecord, execution_result: str) -> str:
-        raw = action.workflow.task.intent.parameters.get("geometry_test_group_spec")
+        raw = self._effective_execution_context(action)[1].parameters.get("geometry_test_group_spec")
         try:
             spec = (
                 GeometryTestGroupSpec(
@@ -1256,7 +1395,7 @@ class AgentCore:
             ) from exc
 
     def _ensure_timecode_state_unchanged(self, action: ActionRecord) -> None:
-        raw = action.workflow.task.intent.parameters.get("timecode_offset_spec", {})
+        raw = self._effective_execution_context(action)[1].parameters.get("timecode_offset_spec", {})
         number, expected = raw.get("timecode_number"), raw.get("state_fingerprint")
         if not isinstance(number, int) or not isinstance(expected, str):
             raise TimecodeOffsetError("STATE_CHANGED_SINCE_PREVIEW: Timecode preview metadata is incomplete.")
@@ -1266,7 +1405,7 @@ class AgentCore:
             raise TimecodeOffsetError("STATE_CHANGED_SINCE_PREVIEW: Timecode inventory changed; create a new Preview before executing.")
 
     def _ensure_geometry_clone_state_unchanged(self, action: ActionRecord) -> None:
-        raw = action.workflow.task.intent.parameters.get("geometry_clone_spec", {})
+        raw = self._effective_execution_context(action)[1].parameters.get("geometry_clone_spec", {})
         try:
             spec = GeometryCloneSpec.from_summary(raw)
             expected = {
@@ -1285,7 +1424,7 @@ class AgentCore:
             raise GeometryCloneError(message) from exc
 
     def _verify_geometry_clone(self, action: ActionRecord, execution_result: str) -> str:
-        raw = action.workflow.task.intent.parameters.get("geometry_clone_spec", {})
+        raw = self._effective_execution_context(action)[1].parameters.get("geometry_clone_spec", {})
         try:
             spec = GeometryCloneSpec.from_summary(raw)
             if re.search(r"(?:\berror\b|illegal)", execution_result, re.I):
@@ -1315,7 +1454,7 @@ class AgentCore:
             return execution_result + f"\nVerification: PARTIAL — Clone commands were sent, but post-Clone read-back failed: {exc}"
 
     def _verify_timecode_offset(self, action: ActionRecord, execution_result: str) -> str:
-        raw = action.workflow.task.intent.parameters.get("timecode_offset_spec", {})
+        raw = self._effective_execution_context(action)[1].parameters.get("timecode_offset_spec", {})
         number = raw.get("timecode_number")
         try:
             result = self.refresh_state("timecodes")
@@ -1337,7 +1476,7 @@ class AgentCore:
 
     def _verify_effect_builder(self, action: ActionRecord, execution_result: str) -> str:
         """Perform the explicit read-only, necessarily partial v1 verification."""
-        spec = action.workflow.task.intent.parameters.get("effect_spec", {})
+        spec = self._effective_execution_context(action)[1].parameters.get("effect_spec", {})
         number = spec.get("effect_number")
         expected_name = str(spec.get("name") or "")
         if not isinstance(number, int):
@@ -1354,8 +1493,8 @@ class AgentCore:
             label_verified = actual_name == expected_name
             self.state.upsert("effects", "number", found, source="ma2_telnet_list")
             self.runtime.log("effect_builder_verification", {"effect_number": number, "status": "PARTIAL", "exists": True, "expected_name": expected_name, "actual_name": actual_name, "label_verified": label_verified})
-            requirement_raw = action.workflow.task.intent.parameters.get("effect_requirement")
-            context = action.workflow.task.intent.parameters.get("effect_catalog_context")
+            requirement_raw = self._effective_execution_context(action)[1].parameters.get("effect_requirement")
+            context = self._effective_execution_context(action)[1].parameters.get("effect_catalog_context")
             if label_verified and isinstance(requirement_raw, dict) and isinstance(context, dict) and isinstance(context.get("show_identity"), dict):
                 requirement = EffectRequirement.from_dict(requirement_raw)
                 entry = self.effect_catalog.record(

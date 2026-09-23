@@ -92,6 +92,14 @@ class FieldHost:
             self.worker_registry,
             self.bridge,
         )
+        design_handler = getattr(self.core, "program_show_request", None)
+        preview_handler = getattr(self.core, "preview_action", None)
+        approve_method = getattr(self.core, "approve_action", None)
+        approve_handler = (
+            (lambda action_id, danger_confirmed: approve_method(action_id, danger_confirmed=danger_confirmed))
+            if approve_method is not None
+            else None
+        )
         self.operator = OperatorServer(
             self._status_provider,
             host=self.config.operator_host,
@@ -99,6 +107,9 @@ class FieldHost:
             allow_remote=self.config.allow_remote_operator,
             watchdog_provider=self.watchdog.snapshot,
             host_status_provider=self.host_metrics.snapshot,
+            design_request_handler=design_handler,
+            preview_handler=preview_handler,
+            approve_handler=approve_handler,
         )
         self._stop = threading.Event()
 

@@ -80,6 +80,22 @@ class PipelineStatus:
 
 
 @dataclass(frozen=True)
+class RootWorkflowStatus:
+    schema: str = "zen.root_workflow_status.v0.1"
+    state: str = "IDLE"
+    phase: str = "DONE"
+    action_id: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "schema": self.schema,
+            "state": _bounded_text(self.state, "root_workflow.state", 64),
+            "phase": _bounded_text(self.phase, "root_workflow.phase", 64),
+            "action_id": _optional_bounded_text(self.action_id, "root_workflow.action_id", 128),
+        }
+
+
+@dataclass(frozen=True)
 class ArtifactSummary:
     artifact_id: str
     schema: str
@@ -115,6 +131,7 @@ class OperatorStatusSnapshot:
     latest_artifact: Optional[ArtifactSummary] = None
     generated_at: Optional[str] = None
     ma_target: Optional[MATarget] = None
+    root_workflow: Optional[RootWorkflowStatus] = None
 
     def to_dict(self) -> Dict[str, Any]:
         if len(self.workers) > MAX_WORKERS:
@@ -137,6 +154,7 @@ class OperatorStatusSnapshot:
             "latest_artifact": (
                 self.latest_artifact.to_dict() if self.latest_artifact is not None else None
             ),
+            "root_workflow": self.root_workflow.to_dict() if self.root_workflow is not None else None,
         }
 
 
@@ -152,6 +170,7 @@ def build_operator_status(
     latest_artifact: Optional[ArtifactSummary] = None,
     generated_at: Optional[str] = None,
     ma_target: Optional[MATarget] = None,
+    root_workflow: Optional[RootWorkflowStatus] = None,
 ) -> OperatorStatusSnapshot:
     """Build the read-only operator snapshot used by an OpenClaw adapter.
 
@@ -170,12 +189,16 @@ def build_operator_status(
         latest_artifact=latest_artifact,
         generated_at=generated_at,
         ma_target=ma_target,
+        root_workflow=root_workflow,
     )
 
 
 StatusProvider = Callable[[], OperatorStatusSnapshot]
 WatchdogProvider = Callable[[], Mapping[str, Any]]
 HostStatusProvider = Callable[[], Mapping[str, Any]]
+DesignRequestHandler = Callable[[str], Mapping[str, Any]]
+PreviewHandler = Callable[[Optional[str]], Mapping[str, Any]]
+ApproveHandler = Callable[[str, bool], Mapping[str, Any]]
 
 
 class UnknownOpenClawTool(ValueError):
@@ -209,10 +232,16 @@ class OpenClawOperatorAdapter:
         status_provider: StatusProvider,
         watchdog_provider: Optional[WatchdogProvider] = None,
         host_status_provider: Optional[HostStatusProvider] = None,
+        design_request_handler: Optional[DesignRequestHandler] = None,
+        preview_handler: Optional[PreviewHandler] = None,
+        approve_handler: Optional[ApproveHandler] = None,
     ):
         self._status_provider = status_provider
         self._watchdog_provider = watchdog_provider
         self._host_status_provider = host_status_provider
+        self._design_request_handler = design_request_handler
+        self._preview_handler = preview_handler
+        self._approve_handler = approve_handler
 
     def invoke(
         self,
@@ -237,6 +266,36 @@ class OpenClawOperatorAdapter:
                 {"code": "PAYLOAD_INVALID_OR_TOO_LARGE", "message": "Payload is not accepted."},
                 request_id,
             )
+        if tool_name == "zen.design.request":
+            if self._design_request_handler is None:
+                return self._result(tool_name, "NOT_IMPLEMENTED", None, None, request_id)
+            if not _exact_keys(safe_payload, {"request"}):
+                return self._rejected(tool_name, "UNEXPECTED_ARGUMENT", "Only request is accepted.", request_id)
+            request = safe_payload.get("request")
+            if not isinstance(request, str) or not request.strip() or len(request) > 2048:
+                return self._rejected(tool_name, "INVALID_REQUEST", "request must be a non-empty string of at most 2048 characters.", request_id)
+            return self._result(tool_name, "SUCCESS", dict(self._design_request_handler(request)), None, request_id)
+        if tool_name == "zen.preview":
+            if self._preview_handler is None:
+                return self._result(tool_name, "NOT_IMPLEMENTED", None, None, request_id)
+            if not _exact_keys(safe_payload, {"action_id"}):
+                return self._rejected(tool_name, "UNEXPECTED_ARGUMENT", "Only action_id is accepted.", request_id)
+            action_id = safe_payload.get("action_id")
+            if action_id is not None and (not isinstance(action_id, str) or not 1 <= len(action_id) <= 128):
+                return self._rejected(tool_name, "INVALID_ACTION_ID", "action_id must be a bounded string.", request_id)
+            return self._result(tool_name, "SUCCESS", dict(self._preview_handler(action_id)), None, request_id)
+        if tool_name == "zen.approve":
+            if self._approve_handler is None:
+                return self._result(tool_name, "NOT_IMPLEMENTED", None, None, request_id)
+            if set(safe_payload) != {"action_id", "danger_confirmed"}:
+                return self._rejected(tool_name, "INVALID_ARGUMENTS", "action_id and danger_confirmed are both required.", request_id)
+            action_id = safe_payload.get("action_id")
+            danger = safe_payload.get("danger_confirmed")
+            if not isinstance(action_id, str) or not 1 <= len(action_id) <= 128:
+                return self._rejected(tool_name, "INVALID_ACTION_ID", "action_id must be a bounded string.", request_id)
+            if not isinstance(danger, bool):
+                return self._rejected(tool_name, "INVALID_DANGER_CONFIRMED", "danger_confirmed must be boolean.", request_id)
+            return self._result(tool_name, "SUCCESS", dict(self._approve_handler(action_id, danger)), None, request_id)
         if safe_payload:
             return self._result(
                 tool_name,
@@ -306,6 +365,10 @@ class OpenClawOperatorAdapter:
             "request_id": request_id,
         }
 
+    @classmethod
+    def _rejected(cls, tool_name: str, code: str, message: str, request_id: Optional[str]) -> Dict[str, Any]:
+        return cls._result(tool_name, "REJECTED", None, {"code": code, "message": message}, request_id)
+
 
 def _payload_within_limit(payload: Mapping[str, Any]) -> bool:
     try:
@@ -318,6 +381,10 @@ def _payload_within_limit(payload: Mapping[str, Any]) -> bool:
     except (TypeError, ValueError):
         return False
     return len(encoded) <= MAX_TOOL_PAYLOAD_BYTES
+
+
+def _exact_keys(payload: Mapping[str, Any], allowed: set[str]) -> bool:
+    return not (set(payload) - allowed)
 
 
 def _bounded_text(value: str, field_name: str, max_length: int) -> str:

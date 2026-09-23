@@ -21,6 +21,13 @@ runtime's approved-command executor after the operator approves the plan.
 StateStore and safety constraints, then merge child subtasks/steps into the
 parent workflow before any approval is requested.
 
+`show.program` is the normal root orchestration Skill for bounded show/song
+requests. Its semantic phases are represented as root subtasks; discovery,
+research, resource resolution, design, compilation, and readback capabilities
+remain internal. When a deterministic child is supported, the root composes
+that child through the registry and `WorkflowPlan.with_child()`. The root does
+not invent MA2 commands or bypass child validation.
+
 `skills/builtin` ships the four initial command workflows plus disabled
 placeholders. `skills/installed` is portable and discoverable, but installed
 `skill.py` files are deliberately never imported or executed automatically.

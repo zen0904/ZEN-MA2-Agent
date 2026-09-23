@@ -51,11 +51,18 @@ Current read-only tools:
 - `zen.watchdog.status`
 - `zen.host.status`
 
-Reserved tools return `NOT_IMPLEMENTED`:
+The normal design entry is `show.program`, reached through the bounded
+`zen.design.request` tool. Internal Skills, read-only providers, resolution,
+design, compilation, and verification are implementation capabilities and are
+not separate operator steps.
 
-- `zen.design.request`
-- `zen.preview`
-- `zen.approve`
+- `zen.design.request` accepts `{"request":"..."}` and plans only;
+- `zen.preview` accepts no arguments or an optional bounded `action_id`;
+- `zen.approve` accepts a bounded `action_id` and boolean `danger_confirmed`.
+
+These three tools remain `NOT_IMPLEMENTED` when Field Core handlers are not
+injected. When injected, design delegates to AgentCore planning, preview is
+read-only, and approval delegates to AgentCore's existing approval boundary.
 
 Unknown tools are rejected. There is no generic shell, filesystem, HTTP proxy,
 raw Telnet, or raw MA command endpoint.
