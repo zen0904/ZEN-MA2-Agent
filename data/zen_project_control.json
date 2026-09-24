@@ -15,7 +15,7 @@
   "next_acceptance_gate": {
     "id": "FULL_ARTISTIC_PATH_001_CUE_CONTENT_READBACK",
     "classification": "RESEARCH_UNKNOWN",
-    "status": "IN_PROGRESS_REAL_MACHINE_PARTIAL",
+    "status": "IN_PROGRESS_REAL_CAPTURE_MISMATCH_CONFIRMED",
     "why_it_matters": "The Full Artistic Path now has verified post-write recovery, Sequence/Cue metadata, Executor assignment, and exact referenced Preset/Effect identity. M4 still must distinguish object/metadata readback from actual stored Cue content; a generic PASS must not imply that Dimmer/Preset/Effect actions were read back from each Cue.",
     "blocks_current_milestone": true,
     "dependencies": [
@@ -24,14 +24,21 @@
       "zen_ma2_agent/core.py::verify_first_song_metadata",
       "AgentRuntime read-only List Cue allow-list"
     ],
-    "next_review_condition": "Establish and real-machine verify the correct Effect-to-Cue storage grammar using content-level Sequence Export evidence, then integrate Cue-content verification into the root show programming workflow. Do not re-enable CALL_EFFECT from command-success metadata alone.",
+    "next_review_condition": "Correct and isolate the Effect-to-Cue storage grammar, rebuild a disposable Agent-owned test Sequence through the current guarded path, and require the generic Cue-content verifier to pass all approved actions. Historical Sequence 5 remains mismatch evidence and must not be rewritten into a successful capability proof.",
     "current_evidence": [
       "grandMA2_3_9_60_SEQUENCE_5_EXPORT_CAPTURED",
       "CUE_LABEL_PART_AND_CHANNEL_ATTRIBUTE_PATH_READABLE",
       "RAW_DIMMER_VALUES_READABLE",
       "COLOR_PRESET_REFERENCE_EVIDENCE_READABLE",
       "EXPECTED_EFFECT_CALLS_ABSENT_FROM_CAPTURED_SEQUENCE_XML",
-      "OLD_COMMAND_ACCEPTED_EFFECT_CAPABILITY_DOWNGRADED"
+      "OLD_COMMAND_ACCEPTED_EFFECT_CAPABILITY_DOWNGRADED",
+      "GENERIC_DETERMINISTIC_CUE_CONTENT_VERIFIER_IMPLEMENTED",
+      "REAL_SEQUENCE_5_CAPTURE_REPLAYED_WITH_GENERIC_VERIFIER",
+      "COLOR_PRESET_IDENTITY_23_OF_24_VERIFIED_BY_NO_COMPONENT_SUFFIX",
+      "GROUP7_COLOR_PRESET_4_112_ABSENT_IN_CAPTURE",
+      "DIMMER_ACTIONS_33_OF_38_VERIFIED",
+      "HISTORICAL_EFFECT_ACTIONS_0_OF_7_VERIFIED",
+      "UNNUMBERED_SYSTEM_CUE_IGNORED_AND_REPORTED"
     ]
   },
   "human_review_decisions": [
@@ -170,6 +177,24 @@
         "FIXTURE_9999_UNTOUCHED"
       ],
       "limitations": "This closes the backend retry/post-write false-negative path. It does not establish action-by-action Cue content readback; current verification still proves metadata plus referenced resource identity rather than the stored Dimmer/Preset/Effect content inside each Cue."
+    },
+    {
+      "id": "FULL_ARTISTIC_PATH_001_CUE_CONTENT_VERIFIER_FOUNDATION_001",
+      "source": "zen_ma2_agent/cue_content_verifier.py + saved Sequence 5 capture replay",
+      "status": "FOUNDATION_COMPLETE_REAL_CAPTURE_MISMATCH_CONFIRMED",
+      "outcomes": [
+        "GENERIC_ACTION_BY_ACTION_VERIFIER_IMPLEMENTED",
+        "DIMMER_RAW_NUMERIC_EVIDENCE_SUPPORTED",
+        "PRESET_NO_COMPONENT_SUFFIX_IDENTITY_SUPPORTED",
+        "EFFECT_NO_COMPONENT_IDENTITY_SUPPORTED_WHEN_PRESENT",
+        "SYSTEM_CUE_NODES_IGNORED_BUT_REPORTED",
+        "REAL_SEQUENCE_5_DIMMER_33_OF_38_VERIFIED",
+        "REAL_SEQUENCE_5_PRESET_23_OF_24_VERIFIED",
+        "REAL_SEQUENCE_5_EFFECT_0_OF_7_VERIFIED",
+        "REAL_SEQUENCE_5_OVERALL_MISMATCH",
+        "MA2_WRITES_ZERO_DURING_REPLAY"
+      ],
+      "limitations": "This replay used an already captured read-only Sequence 5 XML and previously captured fresh Group membership evidence. It validates the verifier and exposes historical stored-content mismatches; it does not prove corrected Effect storage grammar or close the M4 gate."
     }
   ],
   "backlog": [
@@ -326,6 +351,37 @@
       "why_it_matters": "Verification-process tooling is intentionally separate from current product work.",
       "blocks_current_milestone": false,
       "next_review_condition": "Explicit separate evaluation request."
+    },
+    {
+      "id": "SHOW_IMPORT_NORMALIZATION",
+      "classification": "HIGH_LEVERAGE_FUTURE",
+      "milestone": "M3_SHOW_RIG_ADAPTATION",
+      "status": "RECORDED_NON_BLOCKING",
+      "why_it_matters": "Normalizes PDF lighting plots, Vectorworks XML and MA show evidence into one typed Show Context so downstream workflows do not depend on one import source.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "A real case supplies one of these source formats and the current M4 programming path is stable."
+    },
+    {
+      "id": "STAGE_SEMANTIC_MODEL",
+      "classification": "HIGH_LEVERAGE_FUTURE",
+      "milestone": "M3_SHOW_RIG_ADAPTATION",
+      "status": "RECORDED_NON_BLOCKING",
+      "why_it_matters": "Lets artistic intent target verified stage zones while deterministic geometry resolves implementation instead of asking an LLM to guess Pan/Tilt.",
+      "blocks_current_milestone": false,
+      "dependencies": [
+        "verified current-Show geometry",
+        "venue/stage coordinate mapping"
+      ],
+      "next_review_condition": "Show-bound coordinate semantics are independently established for a real case."
+    },
+    {
+      "id": "SONG_STRUCTURE_TIMELINE",
+      "classification": "HIGH_LEVERAGE_FUTURE",
+      "milestone": "M1_DESIGNER_FOUNDATION",
+      "status": "RECORDED_NON_BLOCKING",
+      "why_it_matters": "Normalizes audio/song analysis into semantic sections and a Timecode skeleton; REAPER may be an adapter but is not a runtime dependency.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "A bounded song-analysis case requires automated timeline generation after the M4 path is stable."
     }
   ],
   "recent_foundation": {

@@ -299,3 +299,31 @@ Do not make MA 3D, full-stage object scanning, truss ingestion, scenic-object
 recognition, or visual scene parsing a prerequisite for the current ZEN MA2
 programming milestone. This side-track resumes only after the basic path from
 AI lighting intent to native MA2 Preset/Cue/Sequence execution is proven.
+
+## Future high-leverage workflow adapters
+
+These items are recorded from the reviewed AI + grandMA workflow reference as
+non-blocking future capabilities. They do not change the current M4 priority or
+authorize MA3/Patch work.
+
+### SHOW_IMPORT_NORMALIZATION
+
+Normalize supported upstream sources such as PDF lighting plots, Vectorworks
+XML, and native MA show-state exports into one typed Show Context. Source
+adapters may differ, but downstream Designer/Resolver code should consume the
+same normalized identities, geometry provenance, and capability evidence.
+
+### STAGE_SEMANTIC_MODEL
+
+Convert verified geometry into semantic stage zones and focus targets only when
+the Show/venue coordinate mapping is established. The artistic layer chooses a
+semantic target such as `DOWN_CENTER`; deterministic geometry code computes
+Pan/Tilt or native position implementation. The LLM must not guess fixture
+angles from prose.
+
+### SONG_STRUCTURE_TIMELINE
+
+Convert audio/song analysis into semantic musical sections and a Timecode
+skeleton before lighting design. REAPER markers are one possible adapter, not a
+hard runtime dependency. The normalized timeline should be usable by the same
+`show.program` workflow regardless of the analysis source.

@@ -165,7 +165,7 @@ class SequenceExportProvider:
             path = self.resolver.resolve(_configured_path(settings)) if local else None
         except GroupMembershipProviderUnavailable:
             path = None
-        return {"backend": "local_export_file", "local_onpc_status": "LOCAL_ONPC_SUPPORTED" if path else "LOCAL_ONPC_UNAVAILABLE", "remote_console_status": "REMOTE_CONSOLE_BLOCKED_BY_FILESYSTEM", "local_export_access": bool(path), "importexport_path": str(path) if path else None, "sequence_xml_schema": "XSL_PATHS_ONLY_UNVERIFIED_REAL_CAPTURE"}
+        return {"backend": "local_export_file", "local_onpc_status": "LOCAL_ONPC_SUPPORTED" if path else "LOCAL_ONPC_UNAVAILABLE", "remote_console_status": "REMOTE_CONSOLE_BLOCKED_BY_FILESYSTEM", "local_export_access": bool(path), "importexport_path": str(path) if path else None, "sequence_xml_schema": "REAL_MACHINE_PARTIAL_CONTENT_PATH_VERIFIED"}
 
     def export_and_discover(self, runtime: Any, sequence_no: int, settings: object, *, retain_export: bool = False) -> dict[str, Any]:
         if isinstance(sequence_no, bool) or not isinstance(sequence_no, int) or sequence_no < 1:

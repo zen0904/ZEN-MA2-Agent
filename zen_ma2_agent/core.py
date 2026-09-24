@@ -17,9 +17,9 @@ from .network import internet_online
 from .router import IntentRouter, ResponseType
 from .runtime import AgentRuntime
 from .skill_system import SkillError, SkillRegistry
-from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvider, EffectProvider, ExecutorProvider, ExportFileGroupMembershipProvider, FixtureGeometryProvider, FixtureProvider, FixtureTypeExportError, FixtureTypeExportProvider, GroupMembershipProvider, GroupMembershipProviderError, GroupMembershipProviderUnavailable, GroupProvider, LayoutExportProvider, LayoutInventoryProvider, LayoutObjectResolver, PageProvider, PresetProvider, SequenceProvider, TimecodeProvider, ZenStateAdapter, fixture_type_reference_from_list_label
+from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvider, EffectProvider, ExecutorProvider, ExportFileGroupMembershipProvider, FixtureGeometryProvider, FixtureProvider, FixtureTypeExportError, FixtureTypeExportProvider, GroupMembershipProvider, GroupMembershipProviderError, GroupMembershipProviderUnavailable, GroupProvider, LayoutExportProvider, LayoutInventoryProvider, LayoutObjectResolver, PageProvider, PresetProvider, SequenceExportParseError, SequenceExportProvider, SequenceProvider, TimecodeProvider, ZenStateAdapter, fixture_type_reference_from_list_label
 from .state.store import StateStore
-from .telnet_client import ConnectionState
+from .telnet_client import ConnectionState, MA2TelnetClient
 from .workflow import WorkflowPlan
 from .show_program import ROOT_PHASES, ROOT_CHILD_CONTEXT_KEY, MAX_CHILD_CONTEXT_BYTES, compose_show_program_child, set_show_program_state
 from .effect_builder import EffectBuildError, EffectTargetAmbiguous, resolve_effect_spec
@@ -46,6 +46,7 @@ from .artistic_resources import build_artistic_resource_map
 from .designer.report import write_real_song_design_report
 from .builder import FirstSongBuildError, ShowPlanBuilder
 from .song_analysis import SongAnalysisAdapter, validate_song_analysis
+from .cue_content_verifier import CueContentVerificationError, verify_cue_content
 
 
 @dataclass
@@ -64,8 +65,13 @@ class AgentCore:
     """Single backend control boundary used by OpenClaw and headless ZEN services."""
     CHAT_ROW_LIMIT = 30
 
-    def __init__(self, runtime: AgentRuntime | None = None, group_membership_provider: GroupMembershipProvider | None = None,
-                 design_intelligence_provider: LeanDesignIntelligence | None = None):
+    def __init__(
+        self,
+        runtime: AgentRuntime | None = None,
+        group_membership_provider: GroupMembershipProvider | None = None,
+        design_intelligence_provider: LeanDesignIntelligence | None = None,
+        sequence_export_provider: SequenceExportProvider | None = None,
+    ):
         self.runtime = runtime or AgentRuntime()
         self.build_identity = load_build_identity(self.runtime.root)
         self.events = EventBus()
@@ -74,6 +80,13 @@ class AgentCore:
         self.state = StateStore()
         self.group_membership_provider = group_membership_provider or ExportFileGroupMembershipProvider()
         self.design_intelligence_provider = design_intelligence_provider
+        self.sequence_export_provider = (
+            sequence_export_provider
+            if sequence_export_provider is not None
+            else SequenceExportProvider()
+            if self.runtime.client_factory is MA2TelnetClient
+            else None
+        )
         self.fixture_type_export_provider = FixtureTypeExportProvider()
         self.layout_export_provider = LayoutExportProvider()
         self.skills = SkillRegistry(self.runtime.root)
@@ -1341,7 +1354,93 @@ class AgentCore:
             details.append("Effect references verified: " + "; ".join(effect_lines))
         if preset_lines:
             details.append("Preset references verified by exact fresh List lookup: " + "; ".join(preset_lines))
+        content_text, _content_report = self._verify_first_song_cue_content(data)
+        details.append(content_text)
         return execution_result + "\n" + metadata + ("\n" + "\n".join(details) if details else "")
+
+    def _verify_first_song_cue_content(self, data: dict[str, Any]) -> tuple[str, dict[str, Any] | None]:
+        """Compare approved Cue actions with fresh native Sequence Export content."""
+        provider = self.sequence_export_provider
+        if provider is None:
+            return (
+                "Verification: PARTIAL — Cue-content Sequence Export is unavailable in this runtime.",
+                None,
+            )
+        sequence = data.get("sequence")
+        cues = data.get("cues")
+        if isinstance(sequence, bool) or not isinstance(sequence, int) or sequence < 1 or not isinstance(cues, list):
+            raise FirstSongBuildError("Cue-content verification metadata is incomplete.")
+
+        groups: set[int] = set()
+        for cue in cues:
+            if not isinstance(cue, dict):
+                raise FirstSongBuildError("Cue-content verification received an invalid Cue.")
+            for action in cue.get("actions", []):
+                target = action.get("target") if isinstance(action, dict) else None
+                group = target.get("ref") if isinstance(target, dict) else None
+                if isinstance(group, bool) or not isinstance(group, int) or group < 1:
+                    raise FirstSongBuildError("Cue-content verification received an invalid Group target.")
+                groups.add(group)
+
+        settings = self.runtime.preferences.get("state_adapter", {})
+        memberships: dict[int, list[int]] = {}
+        try:
+            for group in sorted(groups):
+                item = self.group_membership_provider.get_group_membership(self.runtime, group, settings)
+                members = item.get("fixtures")
+                if not isinstance(members, list):
+                    raise FirstSongBuildError(
+                        f"Cue-content verification Group {group} membership is not parseable."
+                    )
+                memberships[group] = [
+                    value for value in members
+                    if isinstance(value, int) and not isinstance(value, bool) and value > 0
+                ]
+            discovery = provider.export_and_discover(
+                self.runtime, sequence, settings, retain_export=True
+            )
+        except GroupMembershipProviderUnavailable as exc:
+            self.runtime.log(
+                "cue_content_verification",
+                {"status": "PARTIAL", "reason": str(exc), "sequence": sequence},
+            )
+            return (
+                "Verification: PARTIAL — Cue-content export/membership provider is unavailable.",
+                None,
+            )
+        except (GroupMembershipProviderError, SequenceExportParseError, OSError) as exc:
+            raise FirstSongBuildError(f"Cue-content verification readback failed: {exc}") from exc
+
+        try:
+            report = verify_cue_content({"cues": cues}, discovery, memberships)
+        except CueContentVerificationError as exc:
+            raise FirstSongBuildError(
+                f"Cue-content verification could not compare the approved plan: {exc}"
+            ) from exc
+
+        self.runtime.log("cue_content_verification", report)
+        if report.get("status") != "VERIFIED":
+            mismatches: list[str] = []
+            for cue in report.get("cues", []):
+                if not isinstance(cue, dict):
+                    continue
+                for action in cue.get("actions", []):
+                    if isinstance(action, dict) and action.get("status") != "VERIFIED":
+                        mismatches.append(
+                            f"Cue {cue.get('cue_number')} action {action.get('action_index')} "
+                            f"{action.get('operation')}: {action.get('reason')}"
+                        )
+                if cue.get("status") != "VERIFIED" and not cue.get("actions"):
+                    mismatches.append(f"Cue {cue.get('cue_number')}: {cue.get('reason')}")
+            detail = "; ".join(mismatches[:8]) or "stored Cue content differs from the approved plan"
+            raise FirstSongBuildError(f"Cue-content verification mismatch: {detail}")
+
+        return (
+            "Cue-content verification: VERIFIED — every approved Dimmer/Preset/Effect action "
+            "has matching fresh Sequence Export evidence for every current Group member. "
+            f"Source SHA-256: {report.get('source_xml_sha256') or 'UNAVAILABLE'}.",
+            report,
+        )
 
     def _fresh_verify_preset_references(self, references: set[str] | list[str]) -> list[str]:
         """Prove each referenced Preset by exact read-only List lookup.
@@ -1433,8 +1532,8 @@ class AgentCore:
         expected_fades = [float(cue.get("fade")) for cue in expected_cues]
         if any(value is None for value in fades) or fades != expected_fades:
             raise FirstSongBuildError("Verification failed: Cue Fade values do not match the approved plan.")
-        self.runtime.log("first_song_verification", {"sequence": sequence, "label": label, "cue_count": len(cues), "cue_labels": actual_labels, "fades": fades, "preset_effect_content": "PARTIAL"})
-        return f"Verification: PARTIAL — Sequence {sequence} {label}; {len(cues)} Cue labels and Fades verified. Cue-content Preset read-back is unavailable."
+        self.runtime.log("first_song_verification", {"sequence": sequence, "label": label, "cue_count": len(cues), "cue_labels": actual_labels, "fades": fades, "cue_content": "NOT_CHECKED_IN_METADATA_STAGE"})
+        return f"Metadata verification: VERIFIED — Sequence {sequence} {label}; {len(cues)} Cue labels and Fades verified."
 
     def _verify_geometry_test_groups(self, action: ActionRecord, execution_result: str) -> str:
         raw = self._effective_execution_context(action)[1].parameters.get("geometry_test_group_spec")

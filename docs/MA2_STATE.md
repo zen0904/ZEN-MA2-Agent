@@ -45,6 +45,35 @@ Agent-owned temporary XML file; it does not modify Show content. An unknown
 adapter response is not parsed optimistically; it becomes `UNSUPPORTED` or
 `ERROR` in the cache.
 
+## Deterministic Cue-content verification
+
+`zen_ma2_agent.cue_content_verifier` compares an approved typed ShowPlan with a
+fresh Sequence Export plus fresh Group membership evidence. It never sends MA2
+commands itself.
+
+- `SET_DIMMER` is VERIFIED only when every current Group member has a `DIM`
+  CueData row whose raw exported `Value` numerically equals the approved Builder
+  level. This is raw numeric equality only; ZEN makes no DMX, percentage,
+  physical-unit, or scaling claim.
+- `CALL_PRESET` uses the trailing exported `Preset/No` components as Pool
+  identity evidence. For example, `["1", "4", "109"]` can prove approved
+  Preset `4.109`; the extra leading component is not reinterpreted. Preset
+  labels/display strings are not identity evidence.
+- `CALL_EFFECT` requires matching exported `Effect/No` evidence for every
+  current Group member. An approved Effect action with no matching Effect
+  content is a MISMATCH, never a successful command-side inference.
+- Unnumbered/system Cue nodes are ignored for expected Cue matching but counted
+  in the report. Expected numbered Cues must match uniquely.
+
+A real replay of the saved grandMA2 3.9.60 Sequence 5 capture confirmed the
+verifier can distinguish true evidence from the earlier ad-hoc false negatives:
+23 of 24 Color Preset actions verify by Pool identity, while one Group 7 Color
+Preset action is genuinely absent. The same capture confirms 33 of 38 Dimmer
+actions and zero of seven historical Effect actions; all seven expected Effect
+references are absent. This historical capture therefore remains MISMATCH and
+must not be promoted into a capability proof.
+
+
 ## FixtureType channel-profile export
 
 `fixture_type_profiles` is an explicit, loopback-onPC-only read-only resource.
