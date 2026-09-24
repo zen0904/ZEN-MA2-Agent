@@ -63,13 +63,14 @@ class CueEffectApplicationTests(unittest.TestCase):
         skill.validate(workflow, None)
         self.assertEqual(workflow.safety, "MODIFY")
         self.assertEqual(workflow.approval_gates, ("PREVIEW",))
-        self.assertEqual(workflow.commands, ("ClearAll", "Group 1", "Effect 3520", 'Store Cue 1 Sequence 2 "FX_CALL_TEST" Fade 0 /nc', 'Label Sequence 2 "ZEN_AI_EFFECT_CALL_TEST_2" /nc', "ClearAll"))
-        self.assertFalse(any("At Effect" in command or "raw" in command.lower() for command in workflow.commands))
+        self.assertEqual(workflow.commands, ("ClearAll", "Group 1", "At Effect 3520", 'Store Cue 1 Sequence 2 "FX_CALL_TEST" Fade 0 /nc', 'Label Sequence 2 "ZEN_AI_EFFECT_CALL_TEST_2" /nc', "ClearAll"))
+        self.assertEqual(workflow.commands[2], "At Effect 3520")
+        self.assertFalse(any("raw" in command.lower() for command in workflow.commands))
 
     def test_error_classifier_blocks_store_boundary(self):
         self.assertTrue(ma2_response_has_error("Error: illegal command"))
         self.assertTrue(ma2_response_has_error("Login incorrect"))
-        self.assertFalse(ma2_response_has_error("Executing : Effect 3520"))
+        self.assertFalse(ma2_response_has_error("Executing : At Effect 3520"))
 
     def test_metadata_only_record_does_not_enable_effect_application(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -93,15 +94,15 @@ class CueEffectApplicationTests(unittest.TestCase):
         workflow = ShowPlanBuilder().build_first_song(plan, profile)
         self.assertFalse(workflow.executable)
         self.assertEqual(workflow.task.intent.parameters["effect_application"], "EFFECT_APPLICATION_UNVERIFIED")
-        self.assertNotIn("Effect 3520", workflow.commands)
+        self.assertNotIn("At Effect 3520", workflow.commands)
 
     def test_builder_enables_only_explicit_real_machine_capability(self):
-        plan = {"schema": "zen.show_plan.v0.1", "song": "FX", "active_sequence_range": [301, 400], "effect_application_capability": {"schema": "zen.cue_effect_application.v0.2", "status": "REAL_MACHINE_CONTENT_VERIFIED", "grammar": "EFFECT_POOL_CALL", "ma2_version_family": "grandMA2_3.9", "verification": {"application": "REAL_MACHINE_CONTENT_VERIFIED", "cue_content_readback": "VERIFIED"}}, "cues": [{"id": "c1", "cue_number": 1, "label": "FX", "fade": 0, "actions": [{"operation": "CALL_EFFECT", "target": {"type": "group", "ref": 1}, "effect_ref": {"id": 3520}}]}]}
+        plan = {"schema": "zen.show_plan.v0.1", "song": "FX", "active_sequence_range": [301, 400], "effect_application_capability": {"schema": "zen.cue_effect_application.v0.2", "status": "REAL_MACHINE_CONTENT_VERIFIED", "grammar": "AT_EFFECT_POOL_CALL", "ma2_version_family": "grandMA2_3.9", "verification": {"application": "REAL_MACHINE_CONTENT_VERIFIED", "cue_content_readback": "VERIFIED"}}, "cues": [{"id": "c1", "cue_number": 1, "label": "FX", "fade": 0, "actions": [{"operation": "CALL_EFFECT", "target": {"type": "group", "ref": 1}, "effect_ref": {"id": 3520}}]}]}
         profile = {"groups": [{"group_id": 1, "name": "HYBRID"}], "presets": [], "effects": [{"effect_id": 3520, "name": "ZEN_FX_DIM_CHASE_SLOW_GROUP1"}], "sequences": []}
         workflow = ShowPlanBuilder().build_first_song(plan, profile)
         self.assertTrue(workflow.executable)
         self.assertEqual(workflow.task.intent.parameters["effect_application"], "REAL_MACHINE_CONTENT_VERIFIED")
-        self.assertIn("Effect 3520", workflow.commands)
+        self.assertIn("At Effect 3520", workflow.commands)
 
 
 if __name__ == "__main__":

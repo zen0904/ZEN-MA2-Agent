@@ -21,7 +21,7 @@ from .workflow import ActionStep, SkillGraphNode, Subtask, Task, WorkflowPlan
 
 
 CAPABILITY_SCHEMA = "zen.cue_effect_application.v0.2"
-GRAMMAR_ID = "EFFECT_POOL_CALL"
+GRAMMAR_ID = "AT_EFFECT_POOL_CALL"
 MA2_VERSION_FAMILY = "grandMA2_3.9"
 
 
@@ -119,7 +119,7 @@ class CueEffectApplicationSkill:
         steps = (
             ActionStep("clear-before", "Clear Programmer before isolated probe", "command", "ClearAll", "MODIFY"),
             ActionStep("select-target", f"Select verified Group {spec.target_group} {spec.target_group_name}", "command", f"Group {spec.target_group}", "MODIFY", depends_on=("clear-before",)),
-            ActionStep("call-effect", f"Apply existing verified Effect {spec.effect_id}", "command", f"Effect {spec.effect_id}", "MODIFY", depends_on=("select-target",), verification="MA2 command feedback must contain no error before Cue storage."),
+            ActionStep("call-effect", f"Apply existing verified Effect {spec.effect_id} through At object call", "command", f"At Effect {spec.effect_id}", "MODIFY", depends_on=("select-target",), verification="MA2 command feedback must contain no error before Cue storage; post-write Sequence Export must contain the Effect identity."),
             ActionStep("store-cue", f"Store new Agent-owned Cue {spec.cue_number}", "command", f'Store Cue {spec.cue_number} Sequence {spec.sequence} "{spec.cue_label}" Fade 0 /nc', "MODIFY", depends_on=("call-effect",)),
             ActionStep("label-sequence", "Label new Agent-owned Sequence", "command", f'Label Sequence {spec.sequence} "{spec.sequence_label}" /nc', "MODIFY", depends_on=("store-cue",)),
             ActionStep("clear-after", "Clear Programmer after isolated probe", "command", "ClearAll", "MODIFY", depends_on=("label-sequence",)),
@@ -127,13 +127,13 @@ class CueEffectApplicationSkill:
         preview = "\n".join((
             "CUE EFFECT APPLICATION POC", "", f"Effect: {spec.effect_id} — {spec.effect_label}",
             f"Target: Group {spec.target_group} {spec.target_group_name}", f"New Sequence: {spec.sequence} — {spec.sequence_label}",
-            f"New Cue: {spec.cue_number} — {spec.cue_label}", "", "Grammar candidate: select Group, then call existing Effect pool object.",
+            f"New Cue: {spec.cue_number} — {spec.cue_label}", "", "Grammar candidate: select Group, then apply the existing Effect pool object with At Effect.",
             "Cue storage is conditional: it will run only when MA2 reports no error for the Effect call.", "Programmer is cleared before and after every outcome.", "", "Safety: MODIFY", "Approval required.",
         ))
         return WorkflowPlan(
             task, (Subtask("fresh-verify", "Verify Effect, Group, membership, and a free Sequence", "Planning"), Subtask("probe", "Apply one Effect-call grammar candidate", "Execution"), Subtask("store", "Store only after accepted application", "Execution"), Subtask("verify", "Read Sequence and Cue metadata", "Verification")),
             (SkillGraphNode("root", self.manifest.id, "Cue Effect Application POC"),), steps, "MODIFY", preview, ("PREVIEW",),
-            "Verify fresh Effect/Group evidence, exact Agent-owned Sequence label, and Cue metadata; Cue-content Effect read-back remains PARTIAL.",
+            "Verify fresh Effect/Group evidence, exact Agent-owned Sequence label, Cue metadata, and stored Effect identity through Sequence Export.",
             "Manual only: retain the exact Agent-owned Sequence as audit evidence; no Delete command is generated.", True,
         )
 
@@ -146,7 +146,7 @@ class CueEffectApplicationSkill:
         effect = raw.get("effect_id")
         group = raw.get("target_group")
         expected = (
-            "ClearAll", f"Group {group}", f"Effect {effect}",
+            "ClearAll", f"Group {group}", f"At Effect {effect}",
             f'Store Cue 1 Sequence {sequence} "FX_CALL_TEST" Fade 0 /nc',
             f'Label Sequence {sequence} "{label}" /nc', "ClearAll",
         )

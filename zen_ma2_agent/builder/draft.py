@@ -105,7 +105,7 @@ class ShowPlanBuilder:
                     referenced_groups.add(group)
                     referenced_effects.add(reference["id"])
                     if effect_application_verified:
-                        steps.extend(((f"cue-{cue_no}-select-{index}", f"Select scanned Group {group}", f"Group {group}"), (f"cue-{cue_no}-effect-{index}", f"Call verified Effect {reference['id']}", f"Effect {reference['id']}")))
+                        steps.extend(((f"cue-{cue_no}-select-{index}", f"Select scanned Group {group}", f"Group {group}"), (f"cue-{cue_no}-effect-{index}", f"Call content-verified Effect {reference['id']} via At Effect", f"At Effect {reference['id']}")))
                     else:
                         effect_application_blocked.append(reference["id"])
                 else:

@@ -22,7 +22,8 @@ from zen_ma2_agent.runtime import AgentRuntime
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Verify the isolated real-MA2 Cue Effect application grammar.")
-    parser.add_argument("--real-machine", action="store_true", help="Required: permits one Agent-owned Sequence/Cue write through Preview and Approval.")
+    parser.add_argument("--real-machine", action="store_true", help="Required: permits connection to the designated real Test Show for fresh Preview evidence.")
+    parser.add_argument("--approve", action="store_true", help="Explicitly approve and execute the previewed Agent-owned Sequence/Cue POC.")
     parser.add_argument("--effect", type=int, default=3520, help="Existing verified Agent-owned Effect number (default: 3520).")
     args = parser.parse_args()
     if not args.real_machine:
@@ -45,10 +46,15 @@ def main() -> int:
         action = preview.get("action") or {}
         if action.get("status") != "PENDING_APPROVAL":
             raise RuntimeError("Cue Effect POC did not create an approval-gated ActionPlan.")
-        result = core.approve_action(str(action["id"]))
-        report["result"] = result
-        report["capability"] = core.cue_effect_application_capability.load_verified()
-        report["status"] = "PASS"
+        if args.approve:
+            result = core.approve_action(str(action["id"]))
+            report["result"] = result
+            report["capability"] = core.cue_effect_application_capability.load_verified()
+            report["status"] = "PASS" if report["capability"] else "PARTIAL"
+        else:
+            report["result"] = None
+            report["capability"] = core.cue_effect_application_capability.load_verified()
+            report["status"] = "PREVIEW_ONLY"
     finally:
         runtime.disconnect()
     print(json.dumps(report, ensure_ascii=False, indent=2))

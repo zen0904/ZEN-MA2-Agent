@@ -307,7 +307,7 @@ class FirstSongBuilderTests(unittest.TestCase):
         result = self.core.approve_action(preview["action"]["id"])
         self.assertEqual(result["status"], "EXECUTED")
         self.assertEqual(len(self.runtime.client.cues), 10)
-        self.assertEqual(self.runtime.client.commands.count("Effect 3520"), 5)
+        self.assertEqual(self.runtime.client.commands.count("At Effect 3520"), 5)
         self.assertEqual(self.runtime.client.commands.count("ClearAll"), 2)
         report = Path(self.runtime.root) / "ZEN_REAL_SONG_DESIGN_REPORT.md"
         self.assertTrue(report.is_file())

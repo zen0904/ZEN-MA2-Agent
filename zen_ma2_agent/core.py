@@ -25,7 +25,7 @@ from .show_program import ROOT_PHASES, ROOT_CHILD_CONTEXT_KEY, MAX_CHILD_CONTEXT
 from .effect_builder import EffectBuildError, EffectTargetAmbiguous, resolve_effect_spec
 from .allocation import AllocationError, first_free_from_front
 from .effect_resources import EffectCatalog, EffectRequirement, EffectRequirementError, EffectResourceResolver, apply_effect_references, show_identity
-from .cue_effect_application import CueEffectApplicationCapability, CueEffectApplicationError, CueEffectApplicationSpec, ma2_response_has_error, resolve_spec
+from .cue_effect_application import GRAMMAR_ID, CueEffectApplicationCapability, CueEffectApplicationError, CueEffectApplicationSpec, ma2_response_has_error, resolve_spec
 from .geometry_clone import GeometryCloneAmbiguous, GeometryCloneError, GeometryCloneSpec, format_mapping, membership_fingerprint, resolve_geometry_clone_spec
 from .timecode_offset import TimecodeOffsetError, fingerprint_timecode, resolve_timecode_offset_spec
 from .geometry_test_environment import (
@@ -194,7 +194,7 @@ class AgentCore:
         spec = resolve_spec(effect=effect, catalog_entry=catalog_entry, group=group, membership=membership, sequences=list(sequences.values if sequences else []))
         intent = Intent("verify_cue_effect_application", {"cue_effect_spec": spec.summary()}, "CUE_EFFECT_APPLICATION_POC")
         workflow = self.skills.plan_intent(intent, self.state, self.runtime.preferences)
-        self.runtime.log("cue_effect_application_preview", {"effect": effect_id, "target_group": spec.target_group, "sequence": spec.sequence, "cue": spec.cue_number, "grammar": "EFFECT_POOL_CALL"})
+        self.runtime.log("cue_effect_application_preview", {"effect": effect_id, "target_group": spec.target_group, "sequence": spec.sequence, "cue": spec.cue_number, "grammar": GRAMMAR_ID})
         return self._queue_workflow(workflow)
 
     def _preview_designer_input(self, song_input: dict[str, Any], *, analysis: dict[str, Any] | None) -> dict[str, Any]:
@@ -1316,10 +1316,62 @@ class AgentCore:
                 responses.append(response)
                 if ma2_response_has_error(response):
                     raise CueEffectApplicationError(f"MA2 rejected approved Cue storage command {command!r}: {response or 'no feedback'}")
-            verification = self.verify_first_song_metadata(spec.sequence, spec.sequence_label, [{"cue_number": spec.cue_number, "label": spec.cue_label, "fade": 0}])
-            capability = self.cue_effect_application_capability.record(spec)
-            self.runtime.log("cue_effect_application_verification", {"status": capability["status"], "grammar": capability["grammar"], "effect": spec.effect_id, "target_group": spec.target_group, "sequence": spec.sequence, "cue": spec.cue_number, "application": capability["verification"]["application"], "cue_content_effect_readback": capability["verification"]["cue_content_readback"], "responses": responses})
-            return "\n".join(item for item in responses if item) + "\n" + verification + "\nEffect application command: COMMAND_ACCEPTED_ONLY. Cue-content Effect read-back: PARTIAL."
+            verification = self.verify_first_song_metadata(
+                spec.sequence,
+                spec.sequence_label,
+                [{"cue_number": spec.cue_number, "label": spec.cue_label, "fade": 0}],
+            )
+            content_text, content_report = self._verify_first_song_cue_content(
+                {
+                    "sequence": spec.sequence,
+                    "cues": [{
+                        "cue_number": spec.cue_number,
+                        "label": spec.cue_label,
+                        "fade": 0,
+                        "actions": [{
+                            "operation": "CALL_EFFECT",
+                            "target": {"type": "group", "ref": spec.target_group},
+                            "effect_ref": {"id": spec.effect_id, "label": spec.effect_label},
+                        }],
+                    }],
+                }
+            )
+            if content_report is None:
+                capability = self.cue_effect_application_capability.record(spec)
+            else:
+                capability = self.cue_effect_application_capability.record_content_verified(
+                    spec,
+                    sequence_export_sha256=str(content_report.get("source_xml_sha256") or ""),
+                )
+            self.runtime.log(
+                "cue_effect_application_verification",
+                {
+                    "status": capability["status"],
+                    "grammar": capability["grammar"],
+                    "effect": spec.effect_id,
+                    "target_group": spec.target_group,
+                    "sequence": spec.sequence,
+                    "cue": spec.cue_number,
+                    "application": capability["verification"]["application"],
+                    "cue_content_effect_readback": capability["verification"]["cue_content_readback"],
+                    "sequence_export_sha256": (
+                        content_report.get("source_xml_sha256")
+                        if isinstance(content_report, dict)
+                        else None
+                    ),
+                    "responses": responses,
+                },
+            )
+            return (
+                "\n".join(item for item in responses if item)
+                + "\n"
+                + verification
+                + "\n"
+                + content_text
+                + "\nEffect application capability: "
+                + capability["status"]
+                + "."
+            )
         except Exception as exc:
             self.runtime.log("cue_effect_application_verification", {"status": "FAILED", "effect": spec.effect_id, "target_group": spec.target_group, "sequence": spec.sequence, "cue": spec.cue_number, "error": str(exc), "responses": responses})
             raise

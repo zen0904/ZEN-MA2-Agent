@@ -85,7 +85,7 @@ class ArtisticResourceMapTests(unittest.TestCase):
         self.effect_application = {
             "schema": "zen.cue_effect_application.v0.2",
             "status": "REAL_MACHINE_CONTENT_VERIFIED",
-            "grammar": "EFFECT_POOL_CALL",
+            "grammar": "AT_EFFECT_POOL_CALL",
             "ma2_version_family": "grandMA2_3.9",
             "verification": {
                 "application": "REAL_MACHINE_CONTENT_VERIFIED",

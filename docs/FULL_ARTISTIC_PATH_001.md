@@ -140,8 +140,9 @@ Effect Resource Resolver: exact current Effect labels
 `FX_DIM_CHASE_SLOW`, `FX_DIM_CHASE_MED`, and `FX_DIM_CHASE_FAST` may be
 offered without a portable Agent catalog only when fresh MA2 inventory also
 classifies that pool object as a native `TEMPLATE` Effect, the target Group has
-Show-bound verified Dimmer capability, and the Cue Effect application grammar
-is `REAL_MACHINE_VERIFIED`. A SELECTIVE Effect with the same label is not
+Show-bound verified Dimmer capability, and the Cue Effect application
+capability is `REAL_MACHINE_CONTENT_VERIFIED` for the exact
+`AT_EFFECT_POOL_CALL` grammar. A SELECTIVE Effect with the same label is not
 reusable across Groups. Near-matching or arbitrary Effect names remain
 unavailable.
 
@@ -179,6 +180,29 @@ change without invalidating capability evidence; the current order is preserved
 as runtime context because it affects chase appearance, not Dimmer existence.
 This evidence unlocks reusable native TEMPLATE Dimmer Chase resources without
 pretending it is a universal FixtureType capability.
+
+### Verified Cue Effect storage grammar
+
+The historical direct `Effect <id>` call is not an accepted production
+grammar. Its command-success evidence was downgraded after Sequence 5 content
+readback contained no expected Effect references.
+
+A bounded real-machine POC later created a new Agent-owned Effect 2 and proved:
+
+```text
+Group 1
+At Effect 2
+Store Cue 1 Sequence 6 ...
+```
+
+Fresh Sequence Export readback contained the expected Effect identity for every
+current Group 1 member. The resulting `CueEffectApplicationCapability` is
+`REAL_MACHINE_CONTENT_VERIFIED`, grammar `AT_EFFECT_POOL_CALL`, bound to
+Sequence Export SHA-256
+`2801690a2c512bd0fc5ba1930aef4cc2538090357e6b086519619beecaab4cbd`.
+
+The production Builder now emits the same `At Effect <id>` grammar and remains
+fail-closed if that capability is absent or downgraded.
 
 ### Repeated-song Sequence ownership labels
 

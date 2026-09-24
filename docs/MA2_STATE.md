@@ -12,7 +12,7 @@ refresh replaces them.
 | `layouts` | `List Layout` + adapter for an individual layout | Pool metadata; item type/reference/XY and optional width/height/rotation |
 | `layout_items` | Partial LayoutState: native Export XML CObjects + Fixture geometry capability | Exported CObject references/geometry; Fixture/Subfixture XY currently `UNSUPPORTED` pending a separate safe provider |
 | `group_membership` | Local native Export XML provider | Group number/name, ordered `Subfixture@fix_id` members, when the Agent can read onPC `importexport` |
-| `sequence_export_discovery` | Local native `Export Sequence <n>` XML provider | **REAL-MACHINE PARTIAL** on grandMA2 3.9.60: Cue/CuePart/CueData identity, Fixture/Attribute identity, raw values/timing, and Color Preset references were captured from Sequence 5. The same capture contained no Effect element for the expected Effect calls, so Effect Cue-content remains unverified and must not be inferred from command success. |
+| `sequence_export_discovery` | Local native `Export Sequence <n>` XML provider | **REAL-MACHINE CONTENT PATH VERIFIED** on grandMA2 3.9.60: Cue/CuePart/CueData identity, Fixture/Attribute identity, raw values/timing, Preset identity, and Effect identity are readable when actually stored. Historical Sequence 5 correctly exposed missing Effect content; disposable Sequence 6 later verified stored Effect 2 after the corrected `At Effect` grammar. |
 | `sequences` | `List Sequence` | Number and name |
 | `cues` | `List Cue <sequence>` | Number, name, and parsed trigger/fade/delay when present |
 | `presets` | `List Preset <type>` | Type, number and label only; no content/value inspection |
@@ -33,9 +33,10 @@ The runtime accepts only these state commands:
   Group membership state only
 - `Export Sequence <n> "ZEN_AGENT_SEQUENCE_<n>_<request-id>.xml" /nc` for the
   read-only Sequence export provider. A real grandMA2 3.9.60 Sequence 5 capture
-  verified the structural/raw-value path and Color Preset evidence; Effect
-  Cue-content remains explicitly PARTIAL because the capture contained no
-  Effect element for the expected Effect calls
+  verified the structural/raw-value and Preset paths while correctly exposing
+  absent historical Effect content. A later disposable Sequence 6 capture
+  verified stored Effect identity after the bounded `At Effect <id>` grammar
+  POC; the provider still reports only what the XML actually contains
 - `SetUserVar $ZEN_AGENT_REQUEST="<request_id> <allow-listed request> <argument>"`
   followed by `Plugin <configured numeric Plugin Pool slot>`
 
@@ -73,6 +74,20 @@ actions and zero of seven historical Effect actions; all seven expected Effect
 references are absent. This historical capture therefore remains MISMATCH and
 must not be promoted into a capability proof.
 
+
+### Cue Effect application grammar
+
+A bounded real-machine POC established `AT_EFFECT_POOL_CALL` on grandMA2
+3.9.60. After selecting the verified target Group, ZEN applies the Effect pool
+object with `At Effect <id>`, stores the Cue, then requires a fresh Sequence
+Export to contain the expected Effect identity for every current Group member.
+Only that content proof may promote `CueEffectApplicationCapability` to
+`REAL_MACHINE_CONTENT_VERIFIED`.
+
+The verified proof used Agent-owned Effect 2 and disposable Sequence 6. Its
+Sequence Export SHA-256 is
+`2801690a2c512bd0fc5ba1930aef4cc2538090357e6b086519619beecaab4cbd`.
+Historical `Effect <id>` command acceptance remains invalid evidence.
 
 ## FixtureType channel-profile export
 

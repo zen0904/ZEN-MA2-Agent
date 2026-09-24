@@ -8,14 +8,14 @@
     "active_objective": "Complete FULL_ARTISTIC_PATH_001 with a convenient autonomous runtime: one Lighting Designer produces artistic intent; ZEN resolves implementation details, allocates new MA2 objects from the first safe free slot, self-heals ordinary collisions and resumes compiled canonical plans after backend failures. Hard stops are reserved for destructive/unsafe boundaries such as Patch/Address/Fixture identity, Fixture 9999, foreign-object overwrite, arbitrary raw MA/Lua/Telnet or paid-provider use."
   },
   "last_closed_task": {
-    "id": "FULL_ARTISTIC_PATH_001_POSTWRITE_RECOVERY_REAL_MACHINE_001",
+    "id": "CUE_EFFECT_AT_EFFECT_REAL_MACHINE_001",
     "status": "CLOSED_SUCCESS",
-    "result": "On implementation HEAD 6c6222b779e8e1144bea91a5319a335b857598b9, the saved SHEESH ARTISTIC_CUES_V0_2 post-write failure was recovered on the real disposable Test Show without new allocation, Builder replay, artistic compile replay or provider calls. Existing Sequence 5 / Executor 2.004 / six Cues were verified; Effects 2500-2502 and referenced Color Presets 4.101, 4.102, 4.108, 4.109, 4.110, 4.112 and 4.113 passed fresh exact identity/existence readback. MA2_WRITES=0, Fixture 9999 untouched."
+    "result": "On the fingerprinted grandMA2 3.9.60 Test Show, owner-approved Agent-owned Effect 2 was created for Group 1 and an isolated disposable Sequence 6 / Cue 1 POC proved the AT_EFFECT_POOL_CALL grammar. Fresh Sequence Export content readback verified Effect 2 for every current Group 1 member. Capability is REAL_MACHINE_CONTENT_VERIFIED with SHA-256 2801690a2c512bd0fc5ba1930aef4cc2538090357e6b086519619beecaab4cbd. Fixture 9999, Patch/Address/Fixture identity and foreign objects were untouched."
   },
   "next_acceptance_gate": {
     "id": "FULL_ARTISTIC_PATH_001_CUE_CONTENT_READBACK",
     "classification": "RESEARCH_UNKNOWN",
-    "status": "IN_PROGRESS_REAL_CAPTURE_MISMATCH_CONFIRMED",
+    "status": "IN_PROGRESS_EFFECT_GRAMMAR_PROVEN_FULL_BUILD_PENDING",
     "why_it_matters": "The Full Artistic Path now has verified post-write recovery, Sequence/Cue metadata, Executor assignment, and exact referenced Preset/Effect identity. M4 still must distinguish object/metadata readback from actual stored Cue content; a generic PASS must not imply that Dimmer/Preset/Effect actions were read back from each Cue.",
     "blocks_current_milestone": true,
     "dependencies": [
@@ -24,7 +24,7 @@
       "zen_ma2_agent/core.py::verify_first_song_metadata",
       "AgentRuntime read-only List Cue allow-list"
     ],
-    "next_review_condition": "Correct and isolate the Effect-to-Cue storage grammar, rebuild a disposable Agent-owned test Sequence through the current guarded path, and require the generic Cue-content verifier to pass all approved actions. Historical Sequence 5 remains mismatch evidence and must not be rewritten into a successful capability proof.",
+    "next_review_condition": "Run a fresh owner-approved disposable full artistic build through the current production Builder using AT_EFFECT_POOL_CALL, then require the generic Cue-content verifier to pass every approved Dimmer/Preset/Effect action. Historical Sequence 5 remains mismatch evidence and is not rewritten.",
     "current_evidence": [
       "grandMA2_3_9_60_SEQUENCE_5_EXPORT_CAPTURED",
       "CUE_LABEL_PART_AND_CHANNEL_ATTRIBUTE_PATH_READABLE",
@@ -38,7 +38,12 @@
       "GROUP7_COLOR_PRESET_4_112_ABSENT_IN_CAPTURE",
       "DIMMER_ACTIONS_33_OF_38_VERIFIED",
       "HISTORICAL_EFFECT_ACTIONS_0_OF_7_VERIFIED",
-      "UNNUMBERED_SYSTEM_CUE_IGNORED_AND_REPORTED"
+      "UNNUMBERED_SYSTEM_CUE_IGNORED_AND_REPORTED",
+      "AGENT_OWNED_EFFECT_2_CREATED_AND_CATALOGED",
+      "AT_EFFECT_POOL_CALL_REAL_MACHINE_PROVEN",
+      "SEQUENCE_6_EFFECT_CONTENT_READBACK_VERIFIED",
+      "EFFECT_APPLICATION_CAPABILITY_REAL_MACHINE_CONTENT_VERIFIED",
+      "SEQUENCE_6_EXPORT_SHA256_2801690A2C512BD0FC5BA1930AEF4CC2538090357E6B086519619BEECAAB4CBD"
     ]
   },
   "human_review_decisions": [
@@ -195,6 +200,24 @@
         "MA2_WRITES_ZERO_DURING_REPLAY"
       ],
       "limitations": "This replay used an already captured read-only Sequence 5 XML and previously captured fresh Group membership evidence. It validates the verifier and exposes historical stored-content mismatches; it does not prove corrected Effect storage grammar or close the M4 gate."
+    },
+    {
+      "id": "CUE_EFFECT_AT_EFFECT_REAL_MACHINE_001",
+      "source": "ZEN_CUE_EFFECT_APPLICATION_AT_EFFECT_001.md",
+      "status": "CLOSED_SUCCESS",
+      "outcomes": [
+        "OWNER_APPROVED_AGENT_OWNED_EFFECT_2_CREATED",
+        "EFFECT_2_TARGET_GROUP_1_CATALOGED",
+        "AT_EFFECT_POOL_CALL_COMMAND_ACCEPTED",
+        "DISPOSABLE_SEQUENCE_6_CREATED",
+        "CUE_1_METADATA_VERIFIED",
+        "SEQUENCE_EXPORT_EFFECT_CONTENT_VERIFIED_ALL_CURRENT_GROUP_MEMBERS",
+        "CUE_EFFECT_CAPABILITY_REAL_MACHINE_CONTENT_VERIFIED",
+        "PRODUCTION_BUILDER_GRAMMAR_MATCHES_VERIFIED_POC",
+        "FIXTURE_9999_UNTOUCHED",
+        "PATCH_ADDRESS_FIXTURE_IDENTITY_UNTOUCHED"
+      ],
+      "limitations": "This proves one typed Effect-pool application grammar and content readback on the fingerprinted Test Show. It does not close the full-artistic M4 gate; a fresh full Builder sequence still must pass action-by-action content verification."
     }
   ],
   "backlog": [
