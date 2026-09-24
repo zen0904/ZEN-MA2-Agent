@@ -23,8 +23,18 @@ class GroupExportParserTests(unittest.TestCase):
             "group_no": 1,
             "name": "HYBRID",
             "fixtures": [101, 1007, 2],
+            "fixture_refs": ["101", "1007", "2"],
             "source": "ma2_group_export_xml",
         })
+
+
+    def test_subfixture_index_is_preserved_as_exact_reference(self):
+        xml = GROUP_EXPORT.replace('fix_id="1007"', 'fix_id="1007" sub_index="2"')
+        result = group_membership_from_export(xml, 1)
+        self.assertEqual(result["fixtures"], [101, 1007, 2])
+        self.assertEqual(result["fixture_refs"], ["101", "1007.2", "2"])
+        with self.assertRaisesRegex(GroupExportParseError, "INVALID_SUB_INDEX"):
+            group_membership_from_export(xml.replace('sub_index="2"', 'sub_index="bad"'), 1)
 
     def test_default_namespace_and_zero_based_group_index_are_required(self):
         with self.assertRaisesRegex(GroupExportParseError, "GROUP_NUMBER_MISMATCH"):

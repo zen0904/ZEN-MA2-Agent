@@ -67,11 +67,6 @@ class ShowPlanBuilder:
         target_executor = self._allocate_executor(plan, profile)
         group_ids = {item.get("group_id") for item in profile.get("groups", [])}
         preset_refs = {item.get("reference") for item in profile.get("presets", []) if item.get("reference")}
-        preset_types = {
-            item.get("reference"): str(item.get("preset_type") or "").upper()
-            for item in profile.get("presets", [])
-            if item.get("reference")
-        }
         effect_ids = {item.get("effect_id") for item in profile.get("effects", []) if item.get("effect_id")}
         steps = []
         # A first-song build necessarily uses the Programmer. The explicit
@@ -86,26 +81,12 @@ class ShowPlanBuilder:
         for cue in plan["cues"]:
             cue_no, cue_label, fade = cue["cue_number"], cue["label"], float(cue["fade"])
             validate_ma_text(str(cue_label), field=f"cue[{cue_no}].label")
-            indexed_actions = list(enumerate(cue["actions"], start=1))
-            # Real-MA2 Sequence 901 content evidence shows that the Atomic 3000
-            # multi-instance Group 7 stores Color Preset 4.112 reliably when
-            # Color preset values enter the Programmer before direct Dimmer
-            # values.  Sequence 5 and 7 both lost that same Preset when the
-            # canonical action order was Dimmer then Color.  ShowPlan actions
-            # are declarative typed state, so only verified COLOR Preset calls
-            # are normalized ahead of the remaining actions; original action
-            # indexes and the canonical plan are preserved for verification.
-            color_preset_actions = [
-                item for item in indexed_actions
-                if item[1].get("operation") == "CALL_PRESET"
-                and str(
-                    item[1].get("preset_type")
-                    or preset_types.get(item[1].get("preset_ref"))
-                    or ""
-                ).upper() == "COLOR"
-            ]
-            remaining_actions = [item for item in indexed_actions if item not in color_preset_actions]
-            for index, action in [*color_preset_actions, *remaining_actions]:
+            # Preserve canonical typed action order. Real-machine Sequence 8
+            # disproved the earlier global Color-before-Dimmer normalization:
+            # Group 7 / Preset 4.112 still failed content readback with that
+            # ordering, while historical Sequence 901 succeeds with the same
+            # apparent action order. Do not encode an unproven transport rule.
+            for index, action in enumerate(cue["actions"], start=1):
                 target = action["target"]
                 group = target.get("ref")
                 if target.get("type") != "group" or group not in group_ids:

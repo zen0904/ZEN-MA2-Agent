@@ -19,6 +19,11 @@ class GroupOrderBuilderTests(unittest.TestCase):
         with self.assertRaisesRegex(GroupOrderBuildError, "mismatch"):
             spec.verify(["701.1", "701.2"])
 
+
+    def test_same_parent_different_subfixture_is_not_membership_preserving(self):
+        with self.assertRaisesRegex(GroupOrderBuildError, "membership"):
+            GroupOrderSpec.create(7, "STROBE", ["701.2", "702.2"], ["701.1", "702.1"])
+
     def test_membership_change_and_protected_fixture_are_rejected(self):
         with self.assertRaisesRegex(GroupOrderBuildError, "membership"):
             GroupOrderSpec.create(1, "HYBRID", [101, 102], [101])

@@ -60,11 +60,10 @@ class GroupOrderSpec:
     def membership_changed(self) -> bool:
         return set(self.members_before) != set(self.desired_order)
 
-    def commands(self, *, selection_refs: dict[str, str] | None = None) -> tuple[str, ...]:
-        """Native commands; all command text is generated from validated refs."""
+    def commands(self) -> tuple[str, ...]:
+        """Native commands using only the exact verified member references."""
         commands = ["ClearAll"]
-        selection_refs = selection_refs or {}
-        commands.extend(f"Fixture {selection_refs.get(item, item)}" for item in self.desired_order)
+        commands.extend(f"Fixture {item}" for item in self.desired_order)
         commands.append(f"Store Group {self.group_id} /overwrite /nc")
         commands.append("ClearAll")
         return tuple(commands)

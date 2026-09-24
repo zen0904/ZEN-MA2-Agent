@@ -46,23 +46,40 @@ def group_membership_from_export(source: str | bytes | Path, group_no: int) -> d
                 "group_no": group_no,
                 "name": group.get("name", ""),
                 "fixtures": [],
+                "fixture_refs": [],
                 "source": "ma2_group_export_xml",
             }
         raise GroupExportParseError("EXPORT_XML_NO_MEMBERSHIP")
 
     fixtures: list[int] = []
+    fixture_refs: list[str] = []
     for item in subfixtures:
         if _local_name(item.tag) != "Subfixture":
             continue
         value = item.get("fix_id")
         if value is None or not value.isdecimal() or int(value) < 1:
             raise GroupExportParseError("EXPORT_XML_INVALID_FIX_ID")
-        fixtures.append(int(value))
+        fixture_id = int(value)
+        sub_index = item.get("sub_index")
+        if sub_index is not None and (
+            not sub_index.isdecimal() or int(sub_index) < 1
+        ):
+            raise GroupExportParseError("EXPORT_XML_INVALID_SUB_INDEX")
+        fixtures.append(fixture_id)
+        fixture_refs.append(
+            f"{fixture_id}.{int(sub_index)}"
+            if sub_index is not None
+            else str(fixture_id)
+        )
 
     return {
         "group_no": group_no,
         "name": group.get("name", ""),
+        # Root Fixture IDs remain available for state/capability consumers.
         "fixtures": fixtures,
+        # Exact serialized selection identity is separate.  Never collapse a
+        # multi-instance Group write/verification to root Fixture IDs.
+        "fixture_refs": fixture_refs,
         "source": "ma2_group_export_xml",
     }
 

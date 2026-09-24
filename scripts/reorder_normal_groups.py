@@ -85,62 +85,79 @@ def run(real_machine: bool) -> dict:
                 raise RuntimeError(f"Normal Group identity mismatch for {group_no}: expected {expected_name!r}.")
             membership = _refresh_group(core, group_no)
             members = [int(item) for item in membership.get("fixtures", [])]
+            exact_members = [str(item) for item in membership.get("fixture_refs", [])]
+            if len(exact_members) != len(members):
+                raise RuntimeError(
+                    f"Group {group_no} exact subfixture membership is unavailable; "
+                    "refusing an order write that could change multi-instance identity."
+                )
             if 9999 in members:
                 result["fixture_9999_touched"] = True
                 raise RuntimeError(f"Protected Fixture 9999 appears in normal Group {group_no}.")
-            # The normal groups expose physical fixture IDs; their Atomic
-            # subfixtures intentionally share the same geometry and are not
-            # collapsed or invented here.
-            desired = sorted(members, key=lambda fix: (float(geometry[fix]["position"]["y"]), float(geometry[fix]["position"]["x"]), fix))
-            spec = GroupOrderSpec.create(group_no, expected_name, members, desired)
+
+            def root_fixture(reference: str) -> int:
+                root = reference.split(".", 1)[0]
+                if not root.isdigit() or int(root) not in geometry:
+                    raise RuntimeError(
+                        f"Group {group_no} exact member {reference!r} has no verified root geometry."
+                    )
+                return int(root)
+
+            # Sort by root-fixture geometry while preserving the exact serialized
+            # Group member identity (e.g. 701.1 vs 701.2).  Never synthesize a
+            # subfixture from the geometry inventory.
+            desired_exact = sorted(
+                exact_members,
+                key=lambda ref: (
+                    float(geometry[root_fixture(ref)]["position"]["y"]),
+                    float(geometry[root_fixture(ref)]["position"]["x"]),
+                    root_fixture(ref),
+                    ref,
+                ),
+            )
+            spec = GroupOrderSpec.create(group_no, expected_name, exact_members, desired_exact)
             specs.append(spec)
             result["group_rows"].append({
                 "group_id": group_no,
                 "group_name": expected_name,
-                "member_count_before": len(members),
-                "member_count_after": len(desired),
+                "member_count_before": len(exact_members),
+                "member_count_after": len(desired_exact),
                 "members_before": members,
-                "expected_selection_order": desired,
+                "exact_members_before": exact_members,
+                "expected_selection_order": [root_fixture(ref) for ref in desired_exact],
+                "expected_exact_selection_order": desired_exact,
                 "membership_changed": False,
-                "order_changed": members != desired,
+                "order_changed": tuple(exact_members) != tuple(desired_exact),
                 "status": "PENDING",
             })
 
         for spec, row in zip(specs, result["group_rows"]):
             if spec.members_before == spec.desired_order:
                 row["status"] = "ALREADY_CANONICAL"
-                row["readback_selection_order"] = list(spec.members_before)
+                row["readback_selection_order"] = [int(ref.split(".", 1)[0]) for ref in spec.members_before]
+                row["readback_exact_selection_order"] = list(spec.members_before)
                 row["readback_match"] = True
                 continue
             original = spec.members_before
             try:
-                selection_refs = {
-                    str(fixture): f"{fixture}.{min(geometry_instances[int(fixture)])}"
-                    for fixture in spec.desired_order
-                    if fixture.isdigit() and len(geometry_instances.get(int(fixture), [])) > 1
-                }
-                responses = core.runtime.execute_approved_commands(spec.commands(selection_refs=selection_refs))
+                responses = core.runtime.execute_approved_commands(spec.commands())
                 if any("error" in response.lower() or "illegal" in response.lower() for response in responses):
                     raise GroupOrderBuildError(f"MA2 rejected Group {spec.group_id} overwrite: {responses}")
                 readback = _refresh_group(core, spec.group_id)
-                actual = tuple(int(item) for item in readback.get("fixtures", []))
-                spec.verify(actual)
+                actual_exact = tuple(str(item) for item in readback.get("fixture_refs", []))
+                spec.verify(actual_exact)
                 row["status"] = "REORDERED"
-                row["readback_selection_order"] = list(actual)
+                row["readback_selection_order"] = [int(ref.split(".", 1)[0]) for ref in actual_exact]
+                row["readback_exact_selection_order"] = list(actual_exact)
                 row["readback_match"] = True
                 result["ma2_group_writes"] += 1
             except Exception as exc:
                 # Restore the exact prior ordered membership before surfacing
-                # the failure.  A failed rollback is explicit and fatal.
+                # the failure. A failed rollback is explicit and fatal.
                 rollback_spec = GroupOrderSpec.create(spec.group_id, spec.group_name, original, original)
-                rollback_selection_refs = {
-                    str(fixture): f"{fixture}.{min(geometry_instances[int(fixture)])}"
-                    for fixture in rollback_spec.desired_order
-                    if fixture.isdigit() and len(geometry_instances.get(int(fixture), [])) > 1
-                }
-                rollback_responses = core.runtime.execute_approved_commands(rollback_spec.commands(selection_refs=rollback_selection_refs))
+                rollback_responses = core.runtime.execute_approved_commands(rollback_spec.commands())
                 rollback = _refresh_group(core, spec.group_id)
-                rollback_actual = tuple(int(item) for item in rollback.get("fixtures", []))
+                rollback_actual = tuple(str(item) for item in rollback.get("fixture_refs", []))
                 rollback_ok = rollback_actual == original
                 row["status"] = "FAILED_ROLLED_BACK" if rollback_ok else "FAILED_ROLLBACK_MISMATCH"
                 row["error"] = f"{type(exc).__name__}: {exc}"

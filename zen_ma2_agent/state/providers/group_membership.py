@@ -178,12 +178,24 @@ class ExportFileGroupMembershipProvider(GroupMembershipProvider):
 
         self._cleanup(path, export_dir)
         fixtures = list(parsed["fixtures"])
+        fixture_refs = list(parsed.get("fixture_refs") or [str(item) for item in fixtures])
+        if len(fixture_refs) != len(fixtures):
+            raise GroupMembershipProviderError("EXPORT_XML_EXACT_MEMBERSHIP_LENGTH_MISMATCH")
         return {
             "group_no": group_no,
             "name": parsed["name"],
             "group_name": parsed["name"],
             "fixtures": fixtures,
+            # Backward-compatible root-ID view for read-only capability/content
+            # consumers.
             "members": [{"fix_id": fix_id, "export_order": index} for index, fix_id in enumerate(fixtures)],
+            # Exact MA2 Group selection serialization for any workflow that may
+            # later rewrite/verify Group membership or order.
+            "fixture_refs": fixture_refs,
+            "members_exact": [
+                {"fixture_ref": fixture_ref, "fix_id": fix_id, "export_order": index}
+                for index, (fix_id, fixture_ref) in enumerate(zip(fixtures, fixture_refs))
+            ],
             "source": self.source,
         }
 

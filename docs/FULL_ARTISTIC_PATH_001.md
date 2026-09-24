@@ -405,3 +405,42 @@ owned Preview now re-verifies the existing Sequence before any allocation. A rea
 read-only retry of the Sequence 7 failure reproduced the same mismatch with
 `write_execution_attempted=false` and zero new writes, proving no duplicate Sequence
 is created by recovery.
+
+### Sequence 8 failure and exact Group subfixture root cause
+
+The owner-approved repaired Full Build was revalidated byte-for-byte against the
+approved Preview before execution. Sequence 8 / Executor 2.006 used the same
+149 commands and the command-list SHA-256
+`334e8f13932e08da781cfeb1fc81eb56fb81c966758b2e0a9954ddde0a1ac47f`.
+The build again failed strict Cue-content verification at exactly Cue 5,
+Group 7, `CALL_PRESET 4.112`.
+
+This real-machine result disproves the prior Color-before-Dimmer hypothesis:
+Sequence 8 emitted all Cue 5 Color Preset calls before direct Dimmer values, yet
+Group 7 still exported only eight DIM rows and no COLORRGB rows.
+
+Read-only Sequence Export comparison identified the actual identity difference:
+
+- successful historical Sequence 901 Cue 6 / Cue 14 stores Group 7 DIM and
+  COLORRGB1/2/3 on `subfixture_id=2` for Fixtures 701-708;
+- failed Sequence 8 Cue 5 stores Group 7 DIM on the parent
+  (`subfixture_id=null`) and contains no Group 7 COLORRGB rows;
+- a fresh read-only raw Export Group 7 shows the current Group members are
+  `701.1, 702.1, 703.1, 704.1, 705.1, 708.1, 706.1, 707.1`.
+
+The prior normal-Group reorder evidence records Group 7 as the only Group
+rewritten in the first Phase A pass. The old Group export parser retained only
+`fix_id`, discarding `sub_index`, and the reorder path synthesized the
+minimum discovered instance for multi-instance fixtures. That made a change
+from one subfixture instance to another invisible to membership verification.
+
+The Group state model now preserves both backward-compatible root Fixture IDs
+and exact serialized member references such as `701.2`. Group-order writes
+must preserve those exact references and may no longer infer a subfixture from
+geometry inventory. The production Builder also returned to canonical typed
+action order because the global Color-before-Dimmer rewrite is not supported by
+real-machine evidence.
+
+No Group repair has been executed. Changing Group 7 from the current exact
+`.1` membership to a different subfixture identity is a separate consequential
+write and requires a new explicit owner approval.

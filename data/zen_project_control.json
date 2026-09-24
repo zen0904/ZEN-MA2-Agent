@@ -15,7 +15,7 @@
   "next_acceptance_gate": {
     "id": "FULL_ARTISTIC_PATH_001_CUE_CONTENT_READBACK",
     "classification": "RESEARCH_UNKNOWN",
-    "status": "REPAIRED_PREVIEW_READY_NEW_OWNER_APPROVAL_REQUIRED",
+    "status": "ROOT_CAUSE_IDENTIFIED_GROUP7_EXACT_MEMBERSHIP_REPAIR_APPROVAL_REQUIRED",
     "why_it_matters": "The Full Artistic Path now has verified post-write recovery, Sequence/Cue metadata, Executor assignment, and exact referenced Preset/Effect identity. M4 still must distinguish object/metadata readback from actual stored Cue content; a generic PASS must not imply that Dimmer/Preset/Effect actions were read back from each Cue.",
     "blocks_current_milestone": true,
     "dependencies": [
@@ -24,7 +24,7 @@
       "zen_ma2_agent/core.py::verify_first_song_metadata",
       "AgentRuntime read-only List Cue allow-list"
     ],
-    "next_review_condition": "Obtain new explicit owner approval for the repaired Sequence 8 / Executor 2.006 production Preview. Revalidate that exact Preview immediately before execution. Accept M4 only if fresh Sequence 8 export verifies every approved Dimmer/Preset/Effect action; do not reuse approval from the failed Sequence 7 build.",
+    "next_review_condition": "Do not execute another Full Build yet. Obtain new explicit owner approval for a bounded Group 7 exact-membership repair only after presenting the current read-only evidence: current Group 7 serializes as 701.1-708.1 (current order), while successful historical Sequence 901 stores the Group 7 RGB/DIM state on subfixture 2. Re-export Group 7 immediately before any approved repair, preserve exact order, never touch Fixture 9999/Patch/Address/Fixture identity, verify exact raw Group export after the write, then generate a fresh Full Build Preview under a separate approval gate.",
     "current_evidence": [
       "grandMA2_3_9_60_SEQUENCE_5_EXPORT_CAPTURED",
       "CUE_LABEL_PART_AND_CHANNEL_ATTRIBUTE_PATH_READABLE",
@@ -66,7 +66,18 @@
       "SEQUENCE_8_EXECUTOR_2_006_REPAIRED_PREVIEW_READY",
       "SEQUENCE_8_PREVIEW_CANONICAL_ARTISTIC_LOGIC_UNCHANGED",
       "SEQUENCE_8_PREVIEW_PROVIDER_CALLS_ZERO_MA2_WRITES_ZERO",
-      "REGRESSION_765_TESTS_PASS"
+      "REGRESSION_765_TESTS_PASS",
+      "SEQUENCE_8_OWNER_APPROVED_REVISED_FULL_BUILD_EXECUTED",
+      "SEQUENCE_8_CUE5_GROUP7_PRESET_4_112_STILL_MISMATCH",
+      "COLOR_BEFORE_DIMMER_HYPOTHESIS_REJECTED_BY_REAL_MACHINE",
+      "SEQUENCE_8_GROUP7_DIM_ROWS_PARENT_SUBFIXTURE_NULL",
+      "SEQUENCE_901_GROUP7_DIM_COLOR_ROWS_SUBFIXTURE_2",
+      "CURRENT_GROUP7_RAW_EXPORT_EXACT_MEMBERS_701_1_THRU_708_1_ORDERED",
+      "GROUP_ORDER_PHASE_A_ONLY_GROUP7_REORDERED",
+      "OLD_GROUP_MEMBERSHIP_VERIFIER_DROPPED_SUB_INDEX",
+      "GROUP_EXPORT_EXACT_SUBFIXTURE_IDENTITY_IMPLEMENTED",
+      "GROUP_REORDER_EXACT_MEMBER_PRESERVATION_IMPLEMENTED",
+      "REGRESSION_768_TESTS_PASS"
     ]
   },
   "human_review_decisions": [
@@ -293,6 +304,26 @@
         "REGRESSION_765_TESTS_PASS"
       ],
       "limitations": "The Color-before-Dimmer correction is code- and evidence-grounded but not yet proven by a new real write. Sequence 7 remains retained as mismatch evidence. Sequence 8 has not been written and requires a new explicit approval."
+    },
+    {
+      "id": "FULL_ARTISTIC_SEQUENCE_8_GROUP7_SUBFIXTURE_ROOT_CAUSE_001",
+      "source": "Sequence 8/901 read-only exports + current raw Group 7 export + Phase A group-order evidence",
+      "status": "ROOT_CAUSE_IDENTIFIED_REPAIR_NOT_AUTHORIZED",
+      "outcomes": [
+        "SEQUENCE_8_EXACT_APPROVED_PREVIEW_REVALIDATED_BEFORE_WRITE",
+        "SEQUENCE_8_FULL_BUILD_WRITTEN_TO_EXECUTOR_2_006",
+        "STRICT_VERIFIER_REJECTED_CUE5_GROUP7_PRESET_4_112",
+        "COLOR_BEFORE_DIMMER_REPAIR_DISPROVEN",
+        "SEQUENCE_901_SUCCESSFUL_GROUP7_ROWS_USE_SUBFIXTURE_2",
+        "SEQUENCE_8_FAILED_GROUP7_DIM_ROWS_USE_PARENT_IDENTITY",
+        "CURRENT_GROUP7_EXPORT_SERIALIZES_SUB_INDEX_1",
+        "PHASE_A_GROUP_REORDER_REWROTE_GROUP7_AND_OLD_VERIFIER_COULD_NOT_SEE_SUB_INDEX",
+        "GROUP_EXPORT_PARSER_NOW_PRESERVES_EXACT_SUBFIXTURE_REFERENCE",
+        "GROUP_ORDER_WRITES_NOW_PRESERVE_EXACT_REFERENCE",
+        "NO_GROUP_REPAIR_WRITE_PERFORMED",
+        "REGRESSION_768_TESTS_PASS"
+      ],
+      "limitations": "The current Group 7 exact membership is proven as sub_index 1 and the successful Sequence 901 Cue content is proven on subfixture_id 2. A historical raw Group 7 export from immediately before the Phase A reorder was not retained, so the causal reconstruction is evidence-backed but the repair remains separately approval-gated."
     }
   ],
   "backlog": [

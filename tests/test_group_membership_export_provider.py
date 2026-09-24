@@ -59,9 +59,28 @@ class GroupMembershipExportProviderTests(unittest.TestCase):
             {"fix_id": 1007, "export_order": 1},
             {"fix_id": 2, "export_order": 2},
         ])
+        self.assertEqual(result["fixture_refs"], ["101", "1007", "2"])
+        self.assertEqual(result["members_exact"], [
+            {"fixture_ref": "101", "fix_id": 101, "export_order": 0},
+            {"fixture_ref": "1007", "fix_id": 1007, "export_order": 1},
+            {"fixture_ref": "2", "fix_id": 2, "export_order": 2},
+        ])
         self.assertEqual(result["source"], "ma2_export_xml")
         self.assertEqual(runtime.commands, [(1, "ZEN_AGENT_G1_request0001.xml")])
         self.assertFalse((self.directory / "ZEN_AGENT_G1_request0001.xml").exists())
+
+
+    def test_multi_instance_membership_preserves_exact_subfixture_identity(self):
+        def exact_group_xml(*_args, **_kwargs):
+            return '<MA><Group index="6" name="STROBE"><Subfixtures>'                 '<Subfixture fix_id="701" sub_index="2" />'                 '<Subfixture fix_id="702" sub_index="2" />'                 '</Subfixtures></Group></MA>'
+        runtime = ExportRuntime(self.directory, xml_factory=exact_group_xml)
+        result = self.provider().get_group_membership(runtime, 7, self.settings)
+        self.assertEqual(result["fixtures"], [701, 702])
+        self.assertEqual(result["fixture_refs"], ["701.2", "702.2"])
+        self.assertEqual(result["members_exact"], [
+            {"fixture_ref": "701.2", "fix_id": 701, "export_order": 0},
+            {"fixture_ref": "702.2", "fix_id": 702, "export_order": 1},
+        ])
 
     def test_32_member_export_sample_is_preserved(self):
         fixture_ids = [*range(101, 117), *range(129, 116, -1), 132, 130, 131]
