@@ -36,6 +36,17 @@ class GroupExportParserTests(unittest.TestCase):
         with self.assertRaisesRegex(GroupExportParseError, "INVALID_SUB_INDEX"):
             group_membership_from_export(xml.replace('sub_index="2"', 'sub_index="bad"'), 1)
 
+    def test_both_instances_of_same_root_are_not_collapsed(self):
+        xml = """<MA><Group index="6" name="STROBE"><Subfixtures>
+        <Subfixture fix_id="701" sub_index="1" />
+        <Subfixture fix_id="701" sub_index="2" />
+        <Subfixture fix_id="702" sub_index="1" />
+        <Subfixture fix_id="702" sub_index="2" />
+        </Subfixtures></Group></MA>"""
+        result = group_membership_from_export(xml, 7)
+        self.assertEqual(result["fixtures"], [701, 701, 702, 702])
+        self.assertEqual(result["fixture_refs"], ["701.1", "701.2", "702.1", "702.2"])
+
     def test_default_namespace_and_zero_based_group_index_are_required(self):
         with self.assertRaisesRegex(GroupExportParseError, "GROUP_NUMBER_MISMATCH"):
             group_membership_from_export(GROUP_EXPORT, 2)

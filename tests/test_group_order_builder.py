@@ -20,6 +20,21 @@ class GroupOrderBuilderTests(unittest.TestCase):
             spec.verify(["701.1", "701.2"])
 
 
+    def test_two_instances_per_root_remain_distinct_members(self):
+        before = ["701.1", "701.2", "702.1", "702.2"]
+        desired = ["702.1", "702.2", "701.1", "701.2"]
+        spec = GroupOrderSpec.create(7, "STROBE", before, desired)
+        self.assertEqual(spec.commands(), (
+            "ClearAll",
+            "Fixture 702.1",
+            "Fixture 702.2",
+            "Fixture 701.1",
+            "Fixture 701.2",
+            "Store Group 7 /overwrite /nc",
+            "ClearAll",
+        ))
+        spec.verify(desired)
+
     def test_same_parent_different_subfixture_is_not_membership_preserving(self):
         with self.assertRaisesRegex(GroupOrderBuildError, "membership"):
             GroupOrderSpec.create(7, "STROBE", ["701.2", "702.2"], ["701.1", "702.1"])

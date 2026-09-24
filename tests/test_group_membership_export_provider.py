@@ -82,6 +82,20 @@ class GroupMembershipExportProviderTests(unittest.TestCase):
             {"fixture_ref": "702.2", "fix_id": 702, "export_order": 1},
         ])
 
+    def test_multi_instance_membership_keeps_both_instances_of_same_root(self):
+        def exact_group_xml(*_args, **_kwargs):
+            return '<MA><Group index="6" name="STROBE"><Subfixtures>' \
+                   '<Subfixture fix_id="701" sub_index="1" />' \
+                   '<Subfixture fix_id="701" sub_index="2" />' \
+                   '<Subfixture fix_id="702" sub_index="1" />' \
+                   '<Subfixture fix_id="702" sub_index="2" />' \
+                   '</Subfixtures></Group></MA>'
+        runtime = ExportRuntime(self.directory, xml_factory=exact_group_xml)
+        result = self.provider().get_group_membership(runtime, 7, self.settings)
+        self.assertEqual(result["fixtures"], [701, 701, 702, 702])
+        self.assertEqual(result["fixture_refs"], ["701.1", "701.2", "702.1", "702.2"])
+        self.assertEqual([item["fixture_ref"] for item in result["members_exact"]], result["fixture_refs"])
+
     def test_32_member_export_sample_is_preserved(self):
         fixture_ids = [*range(101, 117), *range(129, 116, -1), 132, 130, 131]
         self.assertEqual(len(fixture_ids), 32)

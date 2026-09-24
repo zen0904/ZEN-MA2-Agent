@@ -15,7 +15,7 @@
   "next_acceptance_gate": {
     "id": "FULL_ARTISTIC_PATH_001_CUE_CONTENT_READBACK",
     "classification": "RESEARCH_UNKNOWN",
-    "status": "ROOT_CAUSE_IDENTIFIED_GROUP7_EXACT_MEMBERSHIP_REPAIR_APPROVAL_REQUIRED",
+    "status": "ROOT_CAUSE_IDENTIFIED_GROUP7_PREWRITE_IDENTITY_REQUIRED_BEFORE_REPAIR_PREVIEW",
     "why_it_matters": "The Full Artistic Path now has verified post-write recovery, Sequence/Cue metadata, Executor assignment, and exact referenced Preset/Effect identity. M4 still must distinguish object/metadata readback from actual stored Cue content; a generic PASS must not imply that Dimmer/Preset/Effect actions were read back from each Cue.",
     "blocks_current_milestone": true,
     "dependencies": [
@@ -24,7 +24,7 @@
       "zen_ma2_agent/core.py::verify_first_song_metadata",
       "AgentRuntime read-only List Cue allow-list"
     ],
-    "next_review_condition": "Do not execute another Full Build yet. Obtain new explicit owner approval for a bounded Group 7 exact-membership repair only after presenting the current read-only evidence: current Group 7 serializes as 701.1-708.1 (current order), while successful historical Sequence 901 stores the Group 7 RGB/DIM state on subfixture 2. Re-export Group 7 immediately before any approved repair, preserve exact order, never touch Fixture 9999/Patch/Address/Fixture identity, verify exact raw Group export after the write, then generate a fresh Full Build Preview under a separate approval gate.",
+    "next_review_condition": "Do not execute another Full Build yet. Group 7 exact-instance corruption by the old reorder path is proven, but the original pre-2026-09-22 07:47:07 exact membership is still unresolved. A retained 07:48:20 raw export proves the post-parent-overwrite state contained both .1 and .2 for Fixtures 701-708, and the 07:53:28 Phase A audit proves a later overwrite selected only .1 members. Do not infer a repair target from those facts alone. Recover or independently prove the pre-first-write exact identity before generating any new repair Preview. Any repair remains a separate consequential write requiring a fresh read-only export, exact command Preview, explicit owner approval, post-write exact raw Group verification, and a separate fresh Full Build approval gate. Never touch Fixture 9999/Patch/Address/Fixture identity.",
     "current_evidence": [
       "grandMA2_3_9_60_SEQUENCE_5_EXPORT_CAPTURED",
       "CUE_LABEL_PART_AND_CHANNEL_ATTRIBUTE_PATH_READABLE",
@@ -77,7 +77,11 @@
       "OLD_GROUP_MEMBERSHIP_VERIFIER_DROPPED_SUB_INDEX",
       "GROUP_EXPORT_EXACT_SUBFIXTURE_IDENTITY_IMPLEMENTED",
       "GROUP_REORDER_EXACT_MEMBER_PRESERVATION_IMPLEMENTED",
-      "REGRESSION_768_TESTS_PASS"
+      "REGRESSION_768_TESTS_PASS",
+      "POST_PARENT_OVERWRITE_GROUP7_RAW_EXPORT_20260922_074820_PROVES_16_EXACT_MEMBERS_DOT1_AND_DOT2",
+      "PHASE_A_WRITE_AUDIT_20260922_075328_PROVES_GROUP7_OVERWRITE_WITH_SUB_INDEX_1_ONLY",
+      "PRE_20260922_074707_GROUP7_EXACT_MEMBERSHIP_UNRESOLVED",
+      "GROUP7_DOT2_ONLY_REPAIR_PREVIEW_011_NOT_AUTHORIZED_PENDING_PREWRITE_IDENTITY"
     ]
   },
   "human_review_decisions": [
@@ -307,8 +311,8 @@
     },
     {
       "id": "FULL_ARTISTIC_SEQUENCE_8_GROUP7_SUBFIXTURE_ROOT_CAUSE_001",
-      "source": "Sequence 8/901 read-only exports + current raw Group 7 export + Phase A group-order evidence",
-      "status": "ROOT_CAUSE_IDENTIFIED_REPAIR_NOT_AUTHORIZED",
+      "source": "Sequence 8/901 read-only exports + current raw Group 7 export + retained post-parent-overwrite 2026-09-22 07:48:20 raw Group 7 export + old-checkout workflow audit including the 07:47 parent overwrite and 07:53 exact .1 overwrite",
+      "status": "ROOT_CAUSE_IDENTIFIED_REPAIR_TARGET_UNRESOLVED",
       "outcomes": [
         "SEQUENCE_8_EXACT_APPROVED_PREVIEW_REVALIDATED_BEFORE_WRITE",
         "SEQUENCE_8_FULL_BUILD_WRITTEN_TO_EXECUTOR_2_006",
@@ -317,13 +321,16 @@
         "SEQUENCE_901_SUCCESSFUL_GROUP7_ROWS_USE_SUBFIXTURE_2",
         "SEQUENCE_8_FAILED_GROUP7_DIM_ROWS_USE_PARENT_IDENTITY",
         "CURRENT_GROUP7_EXPORT_SERIALIZES_SUB_INDEX_1",
-        "PHASE_A_GROUP_REORDER_REWROTE_GROUP7_AND_OLD_VERIFIER_COULD_NOT_SEE_SUB_INDEX",
+        "POST_PARENT_OVERWRITE_GROUP7_RAW_EXPORT_PROVES_BOTH_SUB_INDEX_1_AND_2_FOR_701_THRU_708",
+        "PHASE_A_AUDIT_PROVES_LATER_GROUP7_OVERWRITE_SELECTED_ONLY_DOT1_MEMBERS",
+        "PRE_074707_EXACT_MEMBERSHIP_REMAINS_UNRESOLVED",
+        "DOT2_ONLY_REPAIR_PREVIEW_011_NOT_AUTHORIZED_AND_MUST_NOT_EXECUTE",
         "GROUP_EXPORT_PARSER_NOW_PRESERVES_EXACT_SUBFIXTURE_REFERENCE",
         "GROUP_ORDER_WRITES_NOW_PRESERVE_EXACT_REFERENCE",
         "NO_GROUP_REPAIR_WRITE_PERFORMED",
-        "REGRESSION_768_TESTS_PASS"
+        "REGRESSION_771_TESTS_PASS"
       ],
-      "limitations": "The current Group 7 exact membership is proven as sub_index 1 and the successful Sequence 901 Cue content is proven on subfixture_id 2. A historical raw Group 7 export from immediately before the Phase A reorder was not retained, so the causal reconstruction is evidence-backed but the repair remains separately approval-gated."
+      "limitations": "The retained 07:48:20 raw export was captured after an earlier 07:47:07 parent-reference overwrite and 07:47:11 parent-reference rollback, so its 16-member .1+.2 state cannot establish the original pre-write exact membership. The 07:53:28 .1-only overwrite is directly evidenced and proves the old reorder path could destroy exact instance identity, but the correct repair target remains unresolved until pre-07:47:07 identity is recovered or independently proven. No Group repair write has been performed."
     }
   ],
   "backlog": [

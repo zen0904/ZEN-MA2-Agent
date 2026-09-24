@@ -428,19 +428,41 @@ Read-only Sequence Export comparison identified the actual identity difference:
 - a fresh read-only raw Export Group 7 shows the current Group members are
   `701.1, 702.1, 703.1, 704.1, 705.1, 708.1, 706.1, 707.1`.
 
-The prior normal-Group reorder evidence records Group 7 as the only Group
-rewritten in the first Phase A pass. The old Group export parser retained only
-`fix_id`, discarding `sub_index`, and the reorder path synthesized the
-minimum discovered instance for multi-instance fixtures. That made a change
-from one subfixture instance to another invisible to membership verification.
+The old checkout audit recovered a more precise write timeline, but not the
+original exact Group 7 membership. At 2026-09-22 07:46:35 local time the old
+provider requested a pre-write export named
+`ZEN_AGENT_G7_b757c7ec615d336c.xml`; that exact XML has not been recovered. The
+old provider deletes successfully parsed exports, so cleanup is a plausible
+explanation for its absence, not direct evidence. The first consequential
+write then occurred at
+07:47:07 using parent references only (`Fixture 701` through `Fixture 707/708`)
+followed by `Store Group 7 /overwrite /nc`. A parent-reference rollback at
+07:47:11 also used root Fixtures only.
+
+The retained native `ZEN_AGENT_G7_DEBUG.xml` export from 07:48:20 therefore
+proves only the state after those parent-reference writes: sixteen exact
+members, `.1` and `.2` for every Fixture 701-708. Later, at 07:53:28, the Phase
+A audit directly records an exact overwrite selecting only
+`701.1, 702.1, 703.1, 704.1, 705.1, 708.1, 706.1, 707.1`
+before `Store Group 7 /overwrite /nc`.
+
+These facts prove the old reorder path was unsafe for multi-instance Groups and
+that exact instance identity was mutated during the historical workflow. They
+do not prove whether the original pre-07:47:07 Group 7 was `.2` only, `.1+.2`,
+parent-selected, or some other exact membership. The earlier `.2`-only repair
+Preview 011 is therefore not authorized and must not be executed from the
+current evidence.
 
 The Group state model now preserves both backward-compatible root Fixture IDs
-and exact serialized member references such as `701.2`. Group-order writes
-must preserve those exact references and may no longer infer a subfixture from
-geometry inventory. The production Builder also returned to canonical typed
+and exact serialized member references such as `701.1` and `701.2`.
+Group-order writes must preserve all exact references, including multiple
+instances sharing one root Fixture, and may no longer infer a subfixture from
+geometry inventory. Regression coverage explicitly keeps both instances of the
+same root distinct. The production Builder also returned to canonical typed
 action order because the global Color-before-Dimmer rewrite is not supported by
 real-machine evidence.
 
-No Group repair has been executed. Changing Group 7 from the current exact
-`.1` membership to a different subfixture identity is a separate consequential
-write and requires a new explicit owner approval.
+No Group repair has been executed. No repair target should be chosen until the
+pre-07:47:07 exact identity is recovered or equivalent independent evidence
+proves it. Any later repair must be freshly previewed and revalidated immediately
+before execution and requires new explicit owner approval.
