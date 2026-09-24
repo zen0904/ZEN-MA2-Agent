@@ -539,3 +539,40 @@ forbidden. Group 8 is a new Agent-owned functional test resource for the proven
 Atomic DIM/COLOR `.2` instances. Fixture 9999, Patch, Address, Fixture identity
 and Fixture Type were untouched. Any subsequent Full Artistic Sequence/Cue
 write requires a fresh separate Preview and separate owner approval.
+
+
+### Final Group 8 Full Artistic real-machine acceptance
+
+Owner-approved Preview 014 was revalidated against current MA2 state immediately
+before execution. Group 8 still matched the exact ordered membership
+`701.2, 702.2, 703.2, 704.2, 705.2, 706.2, 707.2, 708.2`; Sequence 9 and
+Executor 2.007 were still the first safe free allocations; all referenced
+Presets and Effects were freshly read back before the write.
+
+ZEN then executed exactly the approved 149-command list with command-list SHA-256
+`fa8524743c0d70839900afbbe950ebceaea7ebf965dd3fd7aa7dd4534bdad94b`.
+Sequence 9 `ZEN_AI_TEST_SHEESH_SEQ9` and Executor 2.007 were created and
+assigned successfully.
+
+Post-write acceptance passed all required boundaries:
+
+- all six Cue labels and Fade values matched the approved plan;
+- Executor 2.007 pointed to the owned Sequence 9 with the exact label;
+- referenced Effects 2500/2501/2502 retained their approved labels;
+- referenced Color Presets 4.101, 4.102, 4.108, 4.109, 4.110, 4.112 and 4.113
+  passed exact fresh List readback;
+- every approved Dimmer, Preset and Effect action matched fresh native Sequence
+  Export evidence for every current Group member.
+
+The final Sequence Export verification status is `VERIFIED`, with SHA-256
+`f39e4fcf58a0a4587ba497bb18cd18a45926e167d652a489fd29b9c26b4eb2e7`.
+Execution evidence is retained in
+`projects/runs/SHEESH_NEW_UNDESIGNED_SHOW_001/programming/full_artistic_group8_final_execution_015.json`.
+
+`FULL_ARTISTIC_PATH_001` is therefore accepted and closed for this
+fingerprinted grandMA2 3.9.60 Test Show. No further repetition of this acceptance
+path is required unless the relevant Builder, Cue-content verifier,
+exact-membership model, or MA2 version changes. Historical Group 7 remains
+unresolved and is not repaired or redefined by this result; Preview 011 remains
+forbidden. Fixture 9999, Patch, Address, Fixture identity and Fixture Type were
+untouched.

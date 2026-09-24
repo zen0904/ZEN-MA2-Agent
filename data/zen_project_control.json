@@ -15,7 +15,7 @@
   "next_acceptance_gate": {
     "id": "FULL_ARTISTIC_PATH_001_CUE_CONTENT_READBACK",
     "classification": "RESEARCH_UNKNOWN",
-    "status": "GROUP8_FULL_ARTISTIC_PREVIEW_READY_OWNER_APPROVAL_REQUIRED",
+    "status": "CLOSED_SUCCESS_FULL_ARTISTIC_PATH_VERIFIED",
     "why_it_matters": "The Full Artistic Path now has verified post-write recovery, Sequence/Cue metadata, Executor assignment, and exact referenced Preset/Effect identity. M4 still must distinguish object/metadata readback from actual stored Cue content; a generic PASS must not imply that Dimmer/Preset/Effect actions were read back from each Cue.",
     "blocks_current_milestone": true,
     "dependencies": [
@@ -24,7 +24,7 @@
       "zen_ma2_agent/core.py::verify_first_song_metadata",
       "AgentRuntime read-only List Cue allow-list"
     ],
-    "next_review_condition": "Fresh Full Artistic Preview 014 is ready against verified Group 8. It deterministically remaps only four former Group 7 DIM/COLOR actions to Group 8, allocates Sequence 9 / Executor 2.007, contains 149 commands and seven At Effect calls, has no remaining Group 7 target commands, and performed zero MA2 writes/provider calls. Command-list SHA256 is FA8524743C0D70839900AFBBE950EBCEAEA7EBF965DD3FD7AA7DD4534BDAD94B. Require separate explicit owner approval before executing this exact Preview; after execution require strict metadata, Executor and Cue-content raw Sequence Export verification. Historical Group 7 repair remains blocked and Preview 011 remains forbidden.",
+    "next_review_condition": "FULL_ARTISTIC_PATH_001 is accepted and closed on real MA2. Owner-approved Preview 014 executed exactly 149 commands into Sequence 9 / Executor 2.007. Metadata, Executor assignment, referenced Preset/Effect identities, and every approved Dimmer/Preset/Effect Cue action passed fresh native Sequence Export verification. Source Sequence Export SHA256 is F39E4FCF58A0A4587BA497BB18CD18A45926E167D652A489FD29B9C26B4EB2E7. Historical Group 7 repair remains blocked and Preview 011 remains forbidden; Group 8 is the verified functional .2 test resource. No further Full Artistic Path testing is required unless the relevant Builder, verifier, exact-membership model, or MA2 version changes.",
     "current_evidence": [
       "grandMA2_3_9_60_SEQUENCE_5_EXPORT_CAPTURED",
       "CUE_LABEL_PART_AND_CHANNEL_ATTRIBUTE_PATH_READABLE",
@@ -101,6 +101,11 @@
       "FULL_ARTISTIC_GROUP8_PREVIEW_014_GROUP7_TARGET_COMMANDS_ZERO",
       "FULL_ARTISTIC_GROUP8_PREVIEW_014_PROVIDER_CALLS_ZERO_MA2_WRITES_ZERO",
       "FULL_ARTISTIC_GROUP8_PREVIEW_014_COMMAND_SHA256_FA8524743C0D70839900AFBBE950EBCEAEA7EBF965DD3FD7AA7DD4534BDAD94B",
+      "FULL_ARTISTIC_GROUP8_FINAL_EXECUTION_015_SUCCESS",
+      "SEQUENCE_9_EXECUTOR_2_007_METADATA_VERIFIED",
+      "SEQUENCE_9_CUE_CONTENT_DIMMER_PRESET_EFFECT_ALL_VERIFIED",
+      "SEQUENCE_9_EXPORT_SHA256_F39E4FCF58A0A4587BA497BB18CD18A45926E167D652A489FD29B9C26B4EB2E7",
+      "FULL_ARTISTIC_PATH_001_ACCEPTANCE_CLOSED_SUCCESS",
       "HISTORICAL_GROUP7_UNCHANGED_AND_UNRESOLVED",
       "REGRESSION_785_TESTS_PASS"
     ]
