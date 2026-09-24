@@ -12,11 +12,19 @@ from zen_ma2_agent.test_show_evidence import (
 
 
 class TestShowEvidenceTests(unittest.TestCase):
+    @staticmethod
+    def group(group_id, members, *, exact=None):
+        refs = exact if exact is not None else [str(value) for value in members]
+        return {"group_id": group_id, "name": f"G{group_id}",
+                "fixture_ids_in_selection_order": list(members),
+                "fixture_refs_in_selection_order": list(refs),
+                "membership": {"status": "SUPPORTED", "source": "ma2_export_xml"}}
+
     def setUp(self):
         self.profile = {
             "groups": [
-                {"group_id": 1, "name": "G1"},
-                {"group_id": 2, "name": "G2"},
+                self.group(1, SHEESH_TEST_GROUP_FIXTURES[1]),
+                self.group(2, SHEESH_TEST_GROUP_FIXTURES[2]),
             ],
             "fixtures": [
                 {"fixture_id": 101, "fixture_type": "2 TYPE"},
@@ -105,11 +113,7 @@ class TestShowEvidenceTests(unittest.TestCase):
         profile = {
             **self.profile,
             "groups": [
-                {
-                    "group_id": group_id,
-                    "name": f"G{group_id}",
-                    "fixture_ids_in_selection_order": list(members),
-                }
+                self.group(group_id, members, exact=([f"{value}.2" for value in members] if group_id == 7 else None))
                 for group_id, members in SHEESH_TEST_GROUP_FIXTURES.items()
             ],
         }
@@ -142,11 +146,7 @@ class TestShowEvidenceTests(unittest.TestCase):
         profile = {
             **self.profile,
             "groups": [
-                {
-                    "group_id": group_id,
-                    "name": f"G{group_id}",
-                    "fixture_ids_in_selection_order": list(reversed(members)),
-                }
+                self.group(group_id, list(reversed(members)), exact=([f"{value}.2" for value in reversed(members)] if group_id == 7 else None))
                 for group_id, members in SHEESH_TEST_GROUP_FIXTURES.items()
             ],
         }
@@ -177,15 +177,8 @@ class TestShowEvidenceTests(unittest.TestCase):
         profile = {
             **self.profile,
             "groups": [
-                {
-                    "group_id": group_id,
-                    "name": f"G{group_id}",
-                    "fixture_ids_in_selection_order": (
-                        list(members[:-1]) + [9998]
-                        if group_id == 3
-                        else list(members)
-                    ),
-                }
+                self.group(group_id, (list(members[:-1]) + [9998] if group_id == 3 else list(members)),
+                           exact=([f"{value}.2" for value in members] if group_id == 7 else None))
                 for group_id, members in SHEESH_TEST_GROUP_FIXTURES.items()
             ],
         }
@@ -209,6 +202,71 @@ class TestShowEvidenceTests(unittest.TestCase):
         self.assertEqual(result["status"], "PARTIAL")
         self.assertIn(3, result["mismatched_groups"])
         self.assertNotIn(3, {row["group_id"] for row in result["bindings"]})
+
+    def test_group7_dot1_cannot_recover_historical_color_or_dimmer_binding(self):
+        profile = {
+            **self.profile,
+            "groups": [
+                self.group(1, SHEESH_TEST_GROUP_FIXTURES[1]),
+                self.group(7, SHEESH_TEST_GROUP_FIXTURES[7],
+                           exact=[f"{value}.1" for value in SHEESH_TEST_GROUP_FIXTURES[7]]),
+            ],
+        }
+        plan = {**self.plan, "cues": [{"cue_number": 6, "actions": [
+            {"operation": "CALL_PRESET", "target": {"type": "group", "ref": 1}, "preset_ref": "4.101"},
+            {"operation": "CALL_PRESET", "target": {"type": "group", "ref": 7}, "preset_ref": "4.112"},
+            {"operation": "SET_DIMMER", "target": {"type": "group", "ref": 1}, "level": 30},
+            {"operation": "SET_DIMMER", "target": {"type": "group", "ref": 7}, "level": 30},
+        ]}]}
+        color = derive_sheesh_test_preset_bindings(profile, plan)
+        self.assertEqual(color["status"], "PARTIAL")
+        self.assertEqual({row["group_id"] for row in color["bindings"]}, {1})
+        self.assertEqual(color["mismatched_groups"], [7])
+        dimmer = derive_sheesh_test_dimmer_bindings(profile, plan)
+        self.assertNotIn(7, {row["group_id"] for row in dimmer["bindings"]})
+        self.assertIn(7, dimmer["mismatched_groups"])
+
+    def test_group7_exact_dot2_reordered_matches_functional_evidence(self):
+        members = list(reversed(SHEESH_TEST_GROUP_FIXTURES[7]))
+        profile = {**self.profile, "groups": [self.group(7, members, exact=[f"{value}.2" for value in members])]}
+        plan = {**self.plan, "cues": [{"cue_number": 6, "actions": [
+            {"operation": "SET_DIMMER", "target": {"type": "group", "ref": 7}, "level": 30},
+            {"operation": "CALL_PRESET", "target": {"type": "group", "ref": 7}, "preset_ref": "4.112"},
+        ]}]}
+        dimmer = derive_sheesh_test_dimmer_bindings(profile, plan)
+        self.assertIn(7, {row["group_id"] for row in dimmer["bindings"]})
+        color = derive_sheesh_test_preset_bindings(profile, plan)
+        self.assertEqual(len(color["bindings"]), 1)
+        self.assertEqual(color["bindings"][0]["evidence"]["group_7_evidence_scope"],
+                         "FUNCTIONAL_TEST_EVIDENCE_NOT_HISTORICAL_ORIGINAL_MEMBERSHIP")
+
+    def test_single_instance_dot1_group_keeps_parent_compatible_recovery(self):
+        members = SHEESH_TEST_GROUP_FIXTURES[1]
+        profile = {
+            **self.profile,
+            "groups": [self.group(1, members, exact=[f"{value}.1" for value in members])],
+            "fixtures": [
+                {"fixture_id": value, "stage_geometry": {"subfixtures": [{"subfixture_id": 1}]}}
+                for value in members
+            ],
+        }
+        plan = {**self.plan, "cues": [{"cue_number": 1, "actions": [
+            {"operation": "SET_DIMMER", "target": {"type": "group", "ref": 1}, "level": 30},
+        ]}]}
+        result = derive_sheesh_test_dimmer_bindings(profile, plan)
+        self.assertIn(1, {row["group_id"] for row in result["bindings"]})
+        profile["fixtures"][0]["stage_geometry"]["subfixtures"].append({"subfixture_id": 2})
+        result = derive_sheesh_test_dimmer_bindings(profile, plan)
+        self.assertNotIn(1, {row["group_id"] for row in result["bindings"]})
+
+    def test_root_id_only_group7_profile_is_not_exact_evidence(self):
+        profile = {**self.profile, "groups": [{"group_id": 7, "fixture_ids_in_selection_order": list(SHEESH_TEST_GROUP_FIXTURES[7])}]}
+        plan = {**self.plan, "cues": [{"cue_number": 6, "actions": [
+            {"operation": "SET_DIMMER", "target": {"type": "group", "ref": 7}, "level": 30},
+        ]}]}
+        result = derive_sheesh_test_dimmer_bindings(profile, plan)
+        self.assertEqual(result["bindings"], [])
+        self.assertIn(7, result["mismatched_groups"])
 
     def test_sequence_identity_mismatch_blocks_recovery(self):
         profile = dict(self.profile)

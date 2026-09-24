@@ -142,6 +142,30 @@ class ArtisticResourceMapTests(unittest.TestCase):
         self.assertEqual(result["groups"][0]["preset_resources"], [])
         self.assertEqual(result["groups"][0]["effect_resources"], [])
 
+    def test_cached_sheesh_binding_cannot_survive_exact_subfixture_drift(self):
+        profile = {
+            **self.profile,
+            "groups": [{
+                "group_id": 1, "name": "ATOMIC", "fixture_ids_in_selection_order": [701],
+                "fixture_refs_in_selection_order": ["701.1"],
+                "membership": {"status": "SUPPORTED", "source": "ma2_export_xml"},
+            }],
+        }
+        evidence = {"current_fixture_refs_in_selection_order": ["701.2"]}
+        preset = {**self.preset_bindings[0], "source": "SHEESH_REAL_MA2_TEST_SHOW_BUILD_001", "evidence": evidence}
+        dimmer = {"status": "SHOW_BOUND_VERIFIED", "show_identity": self.identity,
+                  "group_id": 1, "capability": "DIMMER", "source": "SHEESH_REAL_MA2_TEST_SHOW_BUILD_001",
+                  "evidence": evidence}
+        result = build_artistic_resource_map(profile, preset_bindings=[preset], dimmer_bindings=[dimmer])
+        group = result["groups"][0]
+        self.assertEqual(group["preset_resources"], [])
+        self.assertEqual(group["dimensions"]["DIMMER"]["execution_status"], "DIRECT_GROUP_LEVEL_UNVERIFIED_CAPABILITY")
+        profile["groups"][0]["fixture_refs_in_selection_order"] = ["701.2"]
+        result = build_artistic_resource_map(profile, preset_bindings=[preset], dimmer_bindings=[dimmer])
+        group = result["groups"][0]
+        self.assertEqual([row["reference"] for row in group["preset_resources"]], ["4.101"])
+        self.assertEqual(group["dimensions"]["DIMMER"]["execution_status"], "SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL")
+
     def test_group_name_never_creates_capability(self):
         profile = {**self.profile, "fixture_type_profiles": []}
         result = build_artistic_resource_map(profile)

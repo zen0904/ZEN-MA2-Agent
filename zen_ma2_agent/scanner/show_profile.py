@@ -109,6 +109,9 @@ class ShowScanner:
                 "name": group.get("name"),
                 # Native Group Export preserves this order.  Never sort it.
                 "fixture_ids_in_selection_order": list(membership.get("fixtures") or []) if membership else [],
+                # Keep the exact exported subfixture identity separately; the
+                # legacy root-ID view above deliberately retains duplicates.
+                "fixture_refs_in_selection_order": list(membership.get("fixture_refs") or []) if membership else [],
                 "membership": {"status": "SUPPORTED" if membership else metadata["group_membership"]["status"], "source": membership.get("source") if membership else metadata["group_membership"]["source"]},
             })
         presets = [

@@ -481,3 +481,23 @@ that uses independently proven exact subfixture references without claiming to
 restore historical Group 7; that would be a separate Preview/Approval path.
 Any actual write still requires fresh state revalidation and explicit owner
 approval.
+
+### Exact-subfixture resource recovery foundation
+
+Group Export now carries exact ordered references through the read-only State
+snapshot into `ShowScanner`'s `fixture_refs_in_selection_order`. The existing
+`fixture_ids_in_selection_order` remains the backward-compatible root-ID view
+and retains duplicates. Historical SHEESH Color and Dimmer binding recovery
+requires a supported exact Group Export membership and a matching member set;
+root-ID equality alone cannot verify an ambiguous subfixture. Group 7's
+independently observed Sequence 901 DIM/COLOR `.2` channels are classified as
+`FUNCTIONAL_TEST_EVIDENCE_NOT_HISTORICAL_ORIGINAL_MEMBERSHIP`. The current
+`.1`-only Group 7 does not recover those bindings. None of this resolves its
+pre-07:47:07 original membership or authorizes Preview 011.
+
+A pure, non-executable Preview helper can allocate the first free Group from
+a fresh read-only inventory and describe a *new* Agent-owned exact-subfixture
+test Group. It has no transport/approval/execute path. A later separately
+authorized write gate must fresh-scan again and compare the native raw Group
+Export's exact member set and order after any write; no Group was created by
+this foundation.

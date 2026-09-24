@@ -156,6 +156,31 @@ def _effect_inventory(profile: Mapping[str, Any]) -> dict[int, Mapping[str, Any]
     return result
 
 
+def _historical_group_refs_still_match(profile: Mapping[str, Any], binding: Mapping[str, Any]) -> bool:
+    """Do not reuse a cached SHEESH binding after exact Group membership drifts."""
+    if binding.get("source") != "SHEESH_REAL_MA2_TEST_SHOW_BUILD_001":
+        return True
+    evidence = binding.get("evidence")
+    expected = evidence.get("current_fixture_refs_in_selection_order") if isinstance(evidence, Mapping) else None
+    if (not isinstance(expected, list) or not expected
+            or not all(isinstance(ref, str) for ref in expected)
+            or len(expected) != len(set(expected))):
+        return False
+    for group in profile.get("groups", []) if isinstance(profile.get("groups"), list) else []:
+        if not isinstance(group, Mapping) or group.get("group_id") != binding.get("group_id"):
+            continue
+        membership = group.get("membership")
+        current = group.get("fixture_refs_in_selection_order")
+        return bool(
+            isinstance(membership, Mapping) and membership.get("status") == "SUPPORTED"
+            and membership.get("source") in {"ma2_export_xml", "ma2_group_export_xml"}
+            and isinstance(current, list) and all(isinstance(ref, str) for ref in current)
+            and len(current) == len(expected)
+            and set(current) == set(expected)
+        )
+    return False
+
+
 def _verified_preset_bindings(
     *,
     profile: Mapping[str, Any],
@@ -168,6 +193,8 @@ def _verified_preset_bindings(
         if not isinstance(binding, Mapping) or binding.get("status") not in {"VERIFIED", "SHOW_BOUND_VERIFIED"}:
             continue
         if not _same_identity(binding.get("show_identity"), current_identity):
+            continue
+        if not _historical_group_refs_still_match(profile, binding):
             continue
         group_id = binding.get("group_id")
         reference = str(binding.get("reference") or "").strip()
@@ -206,6 +233,8 @@ def _verified_dimmer_bindings(
         if not isinstance(binding, Mapping) or binding.get("status") not in {"VERIFIED", "SHOW_BOUND_VERIFIED"}:
             continue
         if not _same_identity(binding.get("show_identity"), current_identity):
+            continue
+        if not _historical_group_refs_still_match(profile, binding):
             continue
         if str(binding.get("capability") or "").upper() != "DIMMER":
             continue

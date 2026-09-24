@@ -9,6 +9,7 @@ the exact Sequence and Preset identities from that successful build.
 from __future__ import annotations
 
 from copy import deepcopy
+import re
 from typing import Any, Mapping
 
 from .effect_resources import show_identity
@@ -17,6 +18,12 @@ from .effect_resources import show_identity
 SHEESH_TEST_SEQUENCE = 901
 SHEESH_TEST_SEQUENCE_LABEL = "ZEN_SHEESH_TEST"
 SOURCE = "SHEESH_REAL_MA2_TEST_SHOW_BUILD_001"
+
+# Sequence 901 content readback proves the DIM/COLOR channels used .2. This
+# is functional application evidence, NOT the unresolved original Group 7
+# membership before the 07:47 overwrite.
+GROUP7_DIM_COLOR_FUNCTIONAL_REFS = tuple(f"{fixture_id}.2" for fixture_id in range(701, 709))
+_EXACT_REF = re.compile(r"([1-9]\d*)(?:\.([1-9]\d*))?\Z")
 
 
 class TestShowEvidenceError(ValueError):
@@ -44,6 +51,59 @@ def _palette_from_plan(plan: Mapping[str, Any]) -> dict[str, str]:
     return result
 
 
+def _matching_group_refs(
+    profile: Mapping[str, Any], group_id: int, group: Mapping[str, Any], expected_roots: tuple[int, ...]
+) -> tuple[str, ...] | None:
+    """Require exact current Group refs; never promote a root-only comparison.
+
+    Build 001 has exact functional DIM/COLOR evidence for Group 7's .2
+    channels, but not a proven historical original Group membership. Ordinary
+    parent refs remain usable. A .1 ref for another Group is usable only when
+    the current fixture profile independently proves it has one subfixture.
+    """
+    membership = group.get("membership")
+    if (not isinstance(membership, Mapping) or membership.get("status") != "SUPPORTED"
+            or membership.get("source") not in {"ma2_export_xml", "ma2_group_export_xml"}):
+        return None
+    raw = group.get("fixture_refs_in_selection_order")
+    if not isinstance(raw, list) or len(raw) != len(expected_roots):
+        return None
+    refs: list[str] = []
+    roots: list[int] = []
+    for value in raw:
+        if not isinstance(value, str) or (match := _EXACT_REF.fullmatch(value)) is None:
+            return None
+        root = int(match.group(1))
+        if root == 9999:
+            return None
+        refs.append(value)
+        roots.append(root)
+    if len(set(refs)) != len(refs) or set(roots) != set(expected_roots):
+        return None
+    legacy = group.get("fixture_ids_in_selection_order")
+    if not isinstance(legacy, list) or legacy != roots:
+        return None
+    if group_id == 7:
+        return tuple(refs) if set(refs) == set(GROUP7_DIM_COLOR_FUNCTIONAL_REFS) else None
+
+    fixtures = {
+        item.get("fixture_id"): item
+        for item in profile.get("fixtures", [])
+        if isinstance(item, Mapping) and isinstance(item.get("fixture_id"), int)
+    }
+    for ref, root in zip(refs, roots):
+        if ref == str(root):
+            continue
+        # A serialized .1 is not automatically equivalent to a parent.
+        geometry = (fixtures.get(root) or {}).get("stage_geometry")
+        subfixtures = geometry.get("subfixtures") if isinstance(geometry, Mapping) else None
+        if ref != f"{root}.1" or not isinstance(subfixtures, list) or len(subfixtures) != 1:
+            return None
+        if subfixtures[0].get("subfixture_id") != 1:
+            return None
+    return tuple(refs)
+
+
 def derive_sheesh_test_preset_bindings(
     profile: Mapping[str, Any],
     plan: Mapping[str, Any],
@@ -67,6 +127,7 @@ def derive_sheesh_test_preset_bindings(
         },
         "status": "UNAVAILABLE",
         "bindings": [],
+        "mismatched_groups": [],
         "reason": None,
     }
 
@@ -137,7 +198,12 @@ def derive_sheesh_test_preset_bindings(
         return result
 
     bindings = []
+    mismatched: set[int] = set()
     for (group_id, reference), cue_numbers in sorted(observed.items()):
+        expected_members = SHEESH_TEST_GROUP_FIXTURES.get(group_id)
+        if expected_members is None or _matching_group_refs(profile, group_id, groups[group_id], expected_members) is None:
+            mismatched.add(group_id)
+            continue
         bindings.append({
             "status": "SHOW_BOUND_VERIFIED",
             "show_identity": deepcopy(identity),
@@ -151,13 +217,16 @@ def derive_sheesh_test_preset_bindings(
                 "sequence_label": SHEESH_TEST_SEQUENCE_LABEL,
                 "cue_numbers": sorted(cue_numbers),
                 "current_preset_label": palette[reference],
+                "current_fixture_refs_in_selection_order": list(groups[group_id]["fixture_refs_in_selection_order"]),
+                "group_7_evidence_scope": "FUNCTIONAL_TEST_EVIDENCE_NOT_HISTORICAL_ORIGINAL_MEMBERSHIP" if group_id == 7 else None,
                 "reuse_scope": "CURRENT_MATCHING_TEST_SHOW_ONLY",
             },
         })
 
-    result["status"] = "SHOW_BOUND_VERIFIED"
+    result["status"] = "PARTIAL" if mismatched and bindings else "SHOW_BOUND_VERIFIED" if bindings else "UNAVAILABLE"
     result["bindings"] = bindings
-    result["reason"] = None
+    result["mismatched_groups"] = sorted(mismatched)
+    result["reason"] = "SOME_CURRENT_GROUP_MEMBERSHIP_MISMATCH" if mismatched else None
     return result
 
 
@@ -248,7 +317,8 @@ def derive_sheesh_test_dimmer_bindings(
             for value in (group.get("fixture_ids_in_selection_order") or [])
             if isinstance(value, int) and not isinstance(value, bool)
         ) if isinstance(group, Mapping) else ()
-        if len(current_members) != len(expected_members) or set(current_members) != set(expected_members):
+        exact_members = _matching_group_refs(profile, group_id, group, expected_members) if isinstance(group, Mapping) else None
+        if exact_members is None:
             mismatched.append(group_id)
             continue
         cue_numbers = observed_cues.get(group_id, set())
@@ -268,6 +338,8 @@ def derive_sheesh_test_dimmer_bindings(
                 "cue_numbers": sorted(cue_numbers),
                 "expected_fixture_member_set": sorted(expected_members),
                 "current_fixture_ids_in_selection_order": list(current_members),
+                "current_fixture_refs_in_selection_order": list(exact_members),
+                "group_7_evidence_scope": "FUNCTIONAL_TEST_EVIDENCE_NOT_HISTORICAL_ORIGINAL_MEMBERSHIP" if group_id == 7 else None,
                 "reuse_scope": "CURRENT_MATCHING_TEST_SHOW_GROUP_MEMBER_SET_ONLY",
             },
         })

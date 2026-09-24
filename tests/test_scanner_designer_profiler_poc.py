@@ -25,10 +25,17 @@ class ScannerDesignerProfilerPocTests(unittest.TestCase):
         profile = ShowScanner().scan(self.state)
         self.assertTrue(profile["read_only"])
         self.assertEqual(profile["groups"][0]["fixture_ids_in_selection_order"], [108, 101, 104])
+        self.assertEqual(profile["groups"][0]["fixture_refs_in_selection_order"], [])
         self.assertEqual(profile["fixtures"][0]["stage_position"]["status"], "UNAVAILABLE")
         self.assertEqual(profile["semantic_presets"][0]["semantic_role"], "HOME")
         self.assertEqual(profile["presets"][0]["stored_values"]["status"], "UNAVAILABLE")
         self.assertEqual(profile["effects"][0]["effect_lines"]["status"], "UNAVAILABLE")
+
+    def test_scanner_preserves_exact_subfixture_refs_without_deduplication(self):
+        self.state.put("group_membership", [{"group_no": 1, "fixtures": [701, 701, 702, 702], "fixture_refs": ["701.1", "701.2", "702.1", "702.2"], "source": "ma2_export_group_xml"}], source="ma2_export_group_xml")
+        group = ShowScanner().scan(self.state)["groups"][0]
+        self.assertEqual(group["fixture_ids_in_selection_order"], [701, 701, 702, 702])
+        self.assertEqual(group["fixture_refs_in_selection_order"], ["701.1", "701.2", "702.1", "702.2"])
 
     def test_designer_rejects_embedded_transport_text_and_builder_is_non_executable(self):
         plan = {"schema": SHOW_PLAN_SCHEMA, "cues": [{"id": "cue-4", "intent": {"group_id": 1, "effect_id": 18, "semantic_position": "CENTER"}}]}
