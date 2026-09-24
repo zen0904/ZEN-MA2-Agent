@@ -15,7 +15,7 @@
   "next_acceptance_gate": {
     "id": "FULL_ARTISTIC_PATH_001_CUE_CONTENT_READBACK",
     "classification": "RESEARCH_UNKNOWN",
-    "status": "AGENT_OWNED_EXACT_GROUP8_VERIFIED_FULL_BUILD_PREVIEW_NEXT",
+    "status": "GROUP8_FULL_ARTISTIC_PREVIEW_READY_OWNER_APPROVAL_REQUIRED",
     "why_it_matters": "The Full Artistic Path now has verified post-write recovery, Sequence/Cue metadata, Executor assignment, and exact referenced Preset/Effect identity. M4 still must distinguish object/metadata readback from actual stored Cue content; a generic PASS must not imply that Dimmer/Preset/Effect actions were read back from each Cue.",
     "blocks_current_milestone": true,
     "dependencies": [
@@ -24,7 +24,7 @@
       "zen_ma2_agent/core.py::verify_first_song_metadata",
       "AgentRuntime read-only List Cue allow-list"
     ],
-    "next_review_condition": "Historical Group 7 repair remains blocked and Preview 011 remains forbidden. The separate Agent-owned path has now created and raw-export-verified Group 8 ZEN_TEST_ATOMIC_DIM_COLOR_EXACT with exact ordered members 701.2-708.2 after fresh occupancy/fixture/geometry revalidation and explicit owner approval. Next generate a fresh Full Artistic Build Preview that uses the new verified test resource instead of historical Group 7 applicability, present its exact commands, and require a separate explicit owner approval before any Sequence/Executor/Cue write. Fixture 9999, Patch, Address, Fixture identity/type and foreign objects remain protected.",
+    "next_review_condition": "Fresh Full Artistic Preview 014 is ready against verified Group 8. It deterministically remaps only four former Group 7 DIM/COLOR actions to Group 8, allocates Sequence 9 / Executor 2.007, contains 149 commands and seven At Effect calls, has no remaining Group 7 target commands, and performed zero MA2 writes/provider calls. Command-list SHA256 is FA8524743C0D70839900AFBBE950EBCEAEA7EBF965DD3FD7AA7DD4534BDAD94B. Require separate explicit owner approval before executing this exact Preview; after execution require strict metadata, Executor and Cue-content raw Sequence Export verification. Historical Group 7 repair remains blocked and Preview 011 remains forbidden.",
     "current_evidence": [
       "grandMA2_3_9_60_SEQUENCE_5_EXPORT_CAPTURED",
       "CUE_LABEL_PART_AND_CHANNEL_ATTRIBUTE_PATH_READABLE",
@@ -96,6 +96,11 @@
       "GROUP8_RAW_EXPORT_EXACT_ORDERED_MEMBERS_701_2_THRU_708_2_VERIFIED",
       "GROUP8_RAW_EXPORT_SHA256_6936FA5147E09565BF486C66FC48F7DCEC0E327F11A68FCADD12369BF155754F",
       "GROUP8_EXECUTION_ARTIFACT_013_VERIFIED",
+      "FULL_ARTISTIC_GROUP8_PREVIEW_014_SEQUENCE_9_EXECUTOR_2_007",
+      "FULL_ARTISTIC_GROUP8_PREVIEW_014_149_COMMANDS_7_AT_EFFECT",
+      "FULL_ARTISTIC_GROUP8_PREVIEW_014_GROUP7_TARGET_COMMANDS_ZERO",
+      "FULL_ARTISTIC_GROUP8_PREVIEW_014_PROVIDER_CALLS_ZERO_MA2_WRITES_ZERO",
+      "FULL_ARTISTIC_GROUP8_PREVIEW_014_COMMAND_SHA256_FA8524743C0D70839900AFBBE950EBCEAEA7EBF965DD3FD7AA7DD4534BDAD94B",
       "HISTORICAL_GROUP7_UNCHANGED_AND_UNRESOLVED",
       "REGRESSION_785_TESTS_PASS"
     ]
