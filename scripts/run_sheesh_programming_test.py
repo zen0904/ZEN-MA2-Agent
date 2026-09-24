@@ -606,11 +606,21 @@ def _recover_prior_postwrite_build(core: AgentCore, saved: dict) -> dict | None:
     the exact prior action metadata and repeat only read-back verification.
     """
     error = str(saved.get("error") or "")
-    if not error.startswith("FirstSongBuildError: Verification failed:"):
-        return None
-
     preview = saved.get("preview")
     action = preview.get("action") if isinstance(preview, dict) else None
+    # Any FirstSongBuildError reached after a concrete Preview is treated as
+    # potentially post-write. Recovery proves the exact owned Sequence before
+    # any new allocation, so a Cue-content mismatch can never create a duplicate
+    # Sequence on retry. Older result artifacts lack the explicit marker below,
+    # hence the bounded error-prefix compatibility path.
+    explicit_postwrite = saved.get("write_execution_attempted") is True
+    compatible_postwrite = isinstance(action, dict) and error.startswith((
+        "FirstSongBuildError:",
+        "EffectRequirementError:",
+    ))
+    if not (explicit_postwrite or compatible_postwrite):
+        return None
+
     task = action.get("task") if isinstance(action, dict) else None
     intent = task.get("intent") if isinstance(task, dict) else None
     parameters = intent.get("parameters") if isinstance(intent, dict) else None
@@ -697,6 +707,9 @@ def run(
         "codex_artistic_intervention": "NONE",
         "fixture_9999_touched": False,
         "ma2_writes": 0,
+        "write_execution_attempted": False,
+        "planned_ma2_commands": 0,
+        "ma2_write_status": "NOT_ATTEMPTED",
     }
     provider_content: str | None = None
     provider = None
@@ -960,10 +973,15 @@ def run(
             return result
 
         build_execution_attempted = True
+        result["write_execution_attempted"] = True
+        result["planned_ma2_commands"] = len(workflow.commands)
+        result["ma2_write_status"] = "APPROVAL_INVOKED"
+        result["ma2_writes"] = None
         execution = core.approve_action(action_id)
         result["execution"] = execution
         result["sequence"] = execution.get("result", "")
         result["ma2_writes"] = len(workflow.commands)
+        result["ma2_write_status"] = "COMMAND_BATCH_SENT"
         readback = _full_build_readback_summary(
             execution.get("result", ""),
             target_executor,
@@ -971,10 +989,12 @@ def run(
         result["readback_detail"] = readback
         if readback["status"] != "VERIFIED":
             result["status"] = "FAILED_POSTWRITE_VERIFICATION"
+            result["ma2_write_status"] = "COMMAND_BATCH_SENT_POSTWRITE_VERIFY_FAILED"
             result["readback_verification"] = "CUE_CONTENT_NOT_VERIFIED"
             result["error"] = "FirstSongBuildError: Verification failed: full artistic Cue-content readback is not VERIFIED."
         else:
             result["status"] = "SUCCESS"
+            result["ma2_write_status"] = "COMMAND_BATCH_SENT_AND_VERIFIED"
             result["readback_verification"] = "CUE_CONTENT_VERIFIED"
         result["executor_before"] = executor_before
         result["executor_after"] = core.runtime.read_state("List Executor")
@@ -988,6 +1008,13 @@ def run(
             else "FAILED"
         )
         result["error"] = f"{type(exc).__name__}: {exc}"
+        if build_execution_attempted:
+            result["write_execution_attempted"] = True
+            result["ma2_write_status"] = "ATTEMPTED_POSTWRITE_OR_EXECUTION_FAILURE"
+            # Do not claim zero writes after approve_action was invoked. The
+            # exact sent count is unknown when execution/verification raises.
+            if result.get("ma2_writes") == 0:
+                result["ma2_writes"] = None
         if provider is not None and provider_content is not None and "provider_response" not in result:
             result["provider_response"] = _safe_provider_response(provider, provider_content)
         raise ProgrammingRunError(str(exc), result=result) from exc
@@ -1062,7 +1089,9 @@ def main() -> int:
                 {
                     "status": exc.result.get("status", "FAILED"),
                     "error": exc.result.get("error"),
-                    "ma2_writes": 0,
+                    "ma2_writes": exc.result.get("ma2_writes"),
+                    "write_execution_attempted": exc.result.get("write_execution_attempted", False),
+                    "ma2_write_status": exc.result.get("ma2_write_status"),
                     "fixture_9999_touched": False,
                 },
                 ensure_ascii=True,

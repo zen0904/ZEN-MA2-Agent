@@ -376,3 +376,32 @@ without replaying Builder writes or calling a provider.
 
 The read-only production Preview remains Sequence 7 / Executor 2.005, six Cues,
 149 commands, seven `At Effect` calls, zero provider calls, and zero MA2 writes.
+
+### Sequence 7 full-build mismatch and Programmer ordering correction
+
+Owner-approved production Builder execution created Sequence 7 / Executor 2.005
+and exact metadata readback verified all six Cue labels and fades. Fresh Sequence
+Export then found exactly one content mismatch: Cue 5 `SHEESH_IMPACT`, Group 7,
+`CALL_PRESET 4.112`. All eight Group 7 fixtures (701-708, Atomic 3000 LED Extended)
+stored `DIM=100` but no Preset identity for 4.112. Every other approved action in
+Sequence 7 verified.
+
+This is not a Preset applicability failure. Read-only replay of the committed
+Sequence 901 Test Show plan against fresh Sequence 901 export verified every action,
+including Group 7 / Preset 4.112 in Cues 6 and 14. Those successful rows contain
+`COLORRGB1/2/3=100` linked to Preset No components `1.4.112` for all fixtures 701-708.
+
+The production Builder has therefore been narrowed to a Programmer-order correction:
+verified COLOR Preset calls are emitted before remaining Cue actions while the
+canonical typed ShowPlan and original action indexes remain unchanged. This mirrors
+the content-verified Sequence 901 ordering and does not change artistic intent.
+
+A new read-only production Preview allocated Sequence 8 / Executor 2.006, six Cues,
+149 commands, and the same seven `At Effect` calls. Cue 5 now emits all 4.112 Color
+Preset calls before its Dimmer commands. Provider calls and MA2 writes were both zero.
+
+Post-write recovery was also hardened: a saved Cue-content mismatch with an exact
+owned Preview now re-verifies the existing Sequence before any allocation. A real
+read-only retry of the Sequence 7 failure reproduced the same mismatch with
+`write_execution_attempted=false` and zero new writes, proving no duplicate Sequence
+is created by recovery.

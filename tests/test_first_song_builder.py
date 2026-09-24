@@ -201,6 +201,32 @@ class FirstSongBuilderTests(unittest.TestCase):
         workflow = ShowPlanBuilder().build_first_song(plan, profile)
         self.assertEqual(workflow.task.intent.parameters["sequence_label"], "ZEN_AI_TEST_SHEESH_SEQ3_2")
 
+    def test_color_preset_programmer_order_precedes_dimmer_without_mutating_plan(self):
+        actions = [
+            {"operation": "SET_DIMMER", "target": {"type": "group", "ref": 7}, "level": 100},
+            {"operation": "CALL_PRESET", "target": {"type": "group", "ref": 7}, "preset_ref": "4.112", "preset_type": "COLOR"},
+        ]
+        original = json.loads(json.dumps(actions))
+        plan = {
+            "schema": "zen.show_plan.v0.1",
+            "song": "SHEESH",
+            "active_sequence_range": [1, 1],
+            "cues": [{
+                "id": "impact", "cue_number": 1, "label": "IMPACT", "fade": 0,
+                "actions": actions,
+            }],
+        }
+        profile = {
+            "groups": [{"group_id": 7, "name": "STROBE"}],
+            "presets": [{"reference": "4.112", "preset_type": "COLOR", "name": "ZEN_COLOR_12_WHITE"}],
+            "effects": [], "sequences": [], "executors": [],
+        }
+        workflow = ShowPlanBuilder().build_first_song(plan, profile)
+        commands = list(workflow.commands)
+        self.assertLess(commands.index("At Preset 4.112"), commands.index("At 100"))
+        self.assertEqual(plan["cues"][0]["actions"], original)
+        self.assertEqual(workflow.task.intent.parameters["cues"][0]["actions"], original)
+
     def test_optional_page_two_executor_assignment_is_allowlisted(self):
         profile = {
             "groups": [{"group_id": 1, "name": "HYBRID"}],

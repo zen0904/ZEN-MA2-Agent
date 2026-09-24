@@ -324,6 +324,62 @@ class SheeshSavedRetryTests(unittest.TestCase):
         self.assertEqual(recovered["cue_content_report"]["status"], "VERIFIED")
         self.assertEqual(recovered["cue_content_report"]["source_xml_sha256"], "c" * 64)
 
+    def test_cue_content_mismatch_is_treated_as_postwrite_recovery_candidate(self):
+        class Runtime:
+            def read_state(self, command):
+                if command == "List Executor":
+                    return 'Executor 2.5 Sequence=Seq 7 "ZEN_AI_TEST_SHEESH_SEQ7"'
+                raise AssertionError(command)
+
+        class Core:
+            runtime = Runtime()
+
+            def verify_first_song_metadata(self, sequence, label, cues, cue_labels):
+                return "Metadata verification: VERIFIED"
+
+            def _fresh_verify_effect_references(self, show_plan):
+                return []
+
+            def _fresh_verify_preset_references(self, references):
+                return []
+
+            def _verify_first_song_cue_content(self, data):
+                return "Cue-content verification: VERIFIED", {
+                    "status": "VERIFIED",
+                    "source_xml_sha256": "d" * 64,
+                }
+
+        saved = {
+            "error": "FirstSongBuildError: Cue-content verification mismatch: Cue 5 action 2 CALL_PRESET",
+            "preview": {
+                "action": {
+                    "task": {
+                        "intent": {
+                            "parameters": {
+                                "sequence": 7,
+                                "sequence_label": "ZEN_AI_TEST_SHEESH_SEQ7",
+                                "target_executor": "2.005",
+                                "cue_labels": ["IMPACT"],
+                                "cues": [{"cue_number": 5, "label": "IMPACT", "fade": 0, "actions": []}],
+                                "referenced_presets": [],
+                            }
+                        }
+                    }
+                }
+            },
+        }
+        recovered = _recover_prior_postwrite_build(Core(), saved)
+        self.assertEqual(recovered["sequence"], 7)
+        self.assertEqual(recovered["cue_content_report"]["status"], "VERIFIED")
+
+    def test_runner_never_claims_zero_writes_after_approval_was_invoked(self):
+        from pathlib import Path
+        source = (Path(__file__).resolve().parents[1] / "scripts" / "run_sheesh_programming_test.py").read_text(encoding="utf-8")
+        self.assertIn('result["write_execution_attempted"] = True', source)
+        self.assertIn('result["ma2_writes"] = None', source)
+        self.assertIn('ATTEMPTED_POSTWRITE_OR_EXECUTION_FAILURE', source)
+        self.assertIn('exc.result.get("ma2_writes")', source)
+
     def test_runner_checks_postwrite_recovery_before_new_allocation_or_broad_refresh(self):
         from pathlib import Path
         source = (Path(__file__).resolve().parents[1] / "scripts" / "run_sheesh_programming_test.py").read_text(encoding="utf-8")
