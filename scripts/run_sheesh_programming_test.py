@@ -640,7 +640,13 @@ def _recover_prior_postwrite_build(core: AgentCore, saved: dict) -> dict | None:
     }
 
 
-def run(real_machine: bool, *, saved_result_path: Path | None = None, target_executor: str = TARGET_EXECUTOR_DISPLAY) -> dict:
+def run(
+    real_machine: bool,
+    *,
+    saved_result_path: Path | None = None,
+    target_executor: str = TARGET_EXECUTOR_DISPLAY,
+    preview_only: bool = False,
+) -> dict:
     if not real_machine:
         raise RuntimeError("Refusing Test Show programming writes without --real-machine.")
 
@@ -886,6 +892,33 @@ def run(real_machine: bool, *, saved_result_path: Path | None = None, target_exe
             raise RuntimeError("FIRST_SONG_WORKFLOW_NOT_EXECUTABLE")
 
         result["preview"] = queued
+        action = queued.get("action") if isinstance(queued, dict) else None
+        if preview_only:
+            if not isinstance(action, dict):
+                raise RuntimeError("PREVIEW_ACTION_MISSING")
+            result["status"] = "PREVIEW_ONLY"
+            result["ma2_writes"] = 0
+            result["provider_called_during_preview"] = False
+            result["preview_only"] = {
+                "action_id": action_id,
+                "skill_id": ((action.get("task") or {}).get("skill_id")),
+                "sequence": ((action.get("task") or {}).get("intent") or {}).get("parameters", {}).get("sequence"),
+                "sequence_label": ((action.get("task") or {}).get("intent") or {}).get("parameters", {}).get("sequence_label"),
+                "target_executor": ((action.get("task") or {}).get("intent") or {}).get("parameters", {}).get("target_executor"),
+                "cue_count": ((action.get("task") or {}).get("intent") or {}).get("parameters", {}).get("cue_count"),
+                "referenced_groups": ((action.get("task") or {}).get("intent") or {}).get("parameters", {}).get("referenced_groups"),
+                "referenced_presets": ((action.get("task") or {}).get("intent") or {}).get("parameters", {}).get("referenced_presets"),
+                "referenced_effects": ((action.get("task") or {}).get("intent") or {}).get("parameters", {}).get("referenced_effects"),
+                "commands": list(workflow.commands),
+                "verification_strategy": workflow.verification_strategy,
+                "safety": workflow.safety,
+                "approval_gates": list(workflow.approval_gates),
+            }
+            result["executor_before"] = executor_before
+            result["executor_after"] = executor_before
+            result["sequence_after"] = core.runtime.read_state("List Sequence")
+            return result
+
         build_execution_attempted = True
         execution = core.approve_action(action_id)
         result["execution"] = execution
@@ -927,10 +960,16 @@ def main() -> int:
     parser.add_argument("--result", type=Path, default=None)
     parser.add_argument("--saved-result", type=Path, default=None)
     parser.add_argument("--target-executor", default=TARGET_EXECUTOR_DISPLAY)
+    parser.add_argument("--preview-only", action="store_true", help="Plan through the production Builder and stop before approval/writes.")
     args = parser.parse_args()
 
     try:
-        output = run(args.real_machine, saved_result_path=args.saved_result, target_executor=args.target_executor)
+        output = run(
+            args.real_machine,
+            saved_result_path=args.saved_result,
+            target_executor=args.target_executor,
+            preview_only=args.preview_only,
+        )
         if args.result:
             args.result.parent.mkdir(parents=True, exist_ok=True)
             args.result.write_text(

@@ -246,7 +246,7 @@ class SheeshSavedRetryTests(unittest.TestCase):
     def test_runner_checks_postwrite_recovery_before_new_allocation_or_broad_refresh(self):
         from pathlib import Path
         source = (Path(__file__).resolve().parents[1] / "scripts" / "run_sheesh_programming_test.py").read_text(encoding="utf-8")
-        run_source = source[source.index("def run(real_machine"):]
+        run_source = source[source.index("def run("):]
         recovery = run_source.index("recovered = _recover_prior_postwrite_build(core, saved)")
         broad_refresh = run_source.index('for resource, kwargs in (')
         sequence_allocation = run_source.index("selected_sequence = _lowest_safe_sequence_id(context)")
@@ -282,6 +282,33 @@ class SheeshSavedRetryTests(unittest.TestCase):
         source = (Path(__file__).resolve().parents[1] / "scripts" / "run_sheesh_programming_test.py").read_text(encoding="utf-8")
         self.assertIn("build_execution_attempted = False", source)
         self.assertIn("if core.runtime.ready and build_execution_attempted:", source)
+
+    def test_preview_only_stops_before_approval_and_write_cleanup(self):
+        from pathlib import Path
+        source = (
+            Path(__file__).resolve().parents[1]
+            / "scripts"
+            / "run_sheesh_programming_test.py"
+        ).read_text(encoding="utf-8")
+        run_source = source[source.index("def run("):source.index("def main()")]
+        preview_branch = run_source.index("if preview_only:")
+        approve = run_source.index("execution = core.approve_action(action_id)")
+        write_guard = run_source.index("build_execution_attempted = True")
+        self.assertLess(preview_branch, write_guard)
+        self.assertLess(preview_branch, approve)
+        self.assertIn('result["status"] = "PREVIEW_ONLY"', run_source)
+        self.assertIn('result["ma2_writes"] = 0', run_source)
+        self.assertIn('"commands": list(workflow.commands)', run_source)
+
+    def test_preview_only_cli_flag_is_explicit(self):
+        from pathlib import Path
+        source = (
+            Path(__file__).resolve().parents[1]
+            / "scripts"
+            / "run_sheesh_programming_test.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn('parser.add_argument("--preview-only", action="store_true"', source)
+        self.assertIn("preview_only=args.preview_only", source)
 
     def test_canonical_without_compile_evidence_uses_legacy_saved_result_path(self):
         self.assertIsNone(

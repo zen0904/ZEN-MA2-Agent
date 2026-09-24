@@ -15,7 +15,7 @@
   "next_acceptance_gate": {
     "id": "FULL_ARTISTIC_PATH_001_CUE_CONTENT_READBACK",
     "classification": "RESEARCH_UNKNOWN",
-    "status": "IN_PROGRESS_EFFECT_GRAMMAR_PROVEN_FULL_BUILD_PENDING",
+    "status": "READY_FOR_OWNER_APPROVED_FULL_BUILD",
     "why_it_matters": "The Full Artistic Path now has verified post-write recovery, Sequence/Cue metadata, Executor assignment, and exact referenced Preset/Effect identity. M4 still must distinguish object/metadata readback from actual stored Cue content; a generic PASS must not imply that Dimmer/Preset/Effect actions were read back from each Cue.",
     "blocks_current_milestone": true,
     "dependencies": [
@@ -24,7 +24,7 @@
       "zen_ma2_agent/core.py::verify_first_song_metadata",
       "AgentRuntime read-only List Cue allow-list"
     ],
-    "next_review_condition": "Run a fresh owner-approved disposable full artistic build through the current production Builder using AT_EFFECT_POOL_CALL, then require the generic Cue-content verifier to pass every approved Dimmer/Preset/Effect action. Historical Sequence 5 remains mismatch evidence and is not rewritten.",
+    "next_review_condition": "After explicit owner approval, revalidate fresh Sequence 7 / Executor 2.005 availability and referenced resources, execute the exact production Builder preview if unchanged, then require post-write Sequence Export action-by-action verification for all Dimmer/Preset/Effect actions. Abort before write if the fresh plan differs.",
     "current_evidence": [
       "grandMA2_3_9_60_SEQUENCE_5_EXPORT_CAPTURED",
       "CUE_LABEL_PART_AND_CHANNEL_ATTRIBUTE_PATH_READABLE",
@@ -43,7 +43,13 @@
       "AT_EFFECT_POOL_CALL_REAL_MACHINE_PROVEN",
       "SEQUENCE_6_EFFECT_CONTENT_READBACK_VERIFIED",
       "EFFECT_APPLICATION_CAPABILITY_REAL_MACHINE_CONTENT_VERIFIED",
-      "SEQUENCE_6_EXPORT_SHA256_2801690A2C512BD0FC5BA1930AEF4CC2538090357E6B086519619BEECAAB4CBD"
+      "SEQUENCE_6_EXPORT_SHA256_2801690A2C512BD0FC5BA1930AEF4CC2538090357E6B086519619BEECAAB4CBD",
+      "PRODUCTION_BUILDER_PREVIEW_ONLY_PATH_IMPLEMENTED",
+      "FULL_ARTISTIC_PREVIEW_SEQUENCE_7_EXECUTOR_2_005",
+      "FULL_ARTISTIC_PREVIEW_6_CUES_149_COMMANDS",
+      "FULL_ARTISTIC_PREVIEW_AT_EFFECT_CALLS_7",
+      "FULL_ARTISTIC_PREVIEW_PROVIDER_CALLS_ZERO",
+      "FULL_ARTISTIC_PREVIEW_MA2_WRITES_ZERO"
     ]
   },
   "human_review_decisions": [
@@ -218,6 +224,23 @@
         "PATCH_ADDRESS_FIXTURE_IDENTITY_UNTOUCHED"
       ],
       "limitations": "This proves one typed Effect-pool application grammar and content readback on the fingerprinted Test Show. It does not close the full-artistic M4 gate; a fresh full Builder sequence still must pass action-by-action content verification."
+    },
+    {
+      "id": "FULL_ARTISTIC_PRODUCTION_PREVIEW_001",
+      "source": "projects/runs/SHEESH_NEW_UNDESIGNED_SHOW_001/programming/full_artistic_at_effect_preview_002.json",
+      "status": "PREVIEW_ONLY_READY_FOR_OWNER_APPROVAL",
+      "outcomes": [
+        "CANONICAL_ARTIFACT_RESUMED_WITHOUT_PROVIDER_CALL",
+        "PRODUCTION_SHOW_BUILDER_USED",
+        "SEQUENCE_7_ALLOCATED_READ_ONLY",
+        "EXECUTOR_2_005_ALLOCATED_READ_ONLY",
+        "SIX_CUES_PREVIEWED",
+        "ONE_HUNDRED_FORTY_NINE_COMMANDS_PREVIEWED",
+        "SEVEN_AT_EFFECT_CALLS_PREVIEWED",
+        "APPROVAL_GATE_NOT_CROSSED",
+        "MA2_WRITES_ZERO"
+      ],
+      "limitations": "This proves exact production planning against current read-only state only. Sequence 7 and Executor 2.005 have not been written. Fresh state must be revalidated immediately before an owner-approved execution."
     }
   ],
   "backlog": [

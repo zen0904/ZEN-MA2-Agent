@@ -338,3 +338,23 @@ PARTIAL / VERIFIED / UNSUPPORTED
 
 A generic `READBACK_VERIFICATION=PASS` is insufficient when Cue attribute
 content is not actually readable.
+
+### Production Builder preview-only gate
+
+The current production Builder can be exercised against fresh real-machine
+read-only state without crossing the approval boundary. The smoke runner now
+supports --preview-only, which:
+
+- resumes a previously compiled canonical ShowPlan without a provider call,
+- refreshes referenced current-Show resources,
+- allocates the next safe disposable Sequence and Executor,
+- generates the exact show.builder command plan,
+- queues the ActionPlan,
+- returns before approve_action,
+- performs zero MA2 writes and does not run cleanup writes.
+
+The current Test Show preview allocated Sequence 7 / Executor 2.005 with label
+ZEN_AI_TEST_SHEESH_SEQ7, six Cues, seven Groups, seven Color Presets, and
+seven Effect calls. All Effect commands use the content-verified
+At Effect <id> grammar. The preview contains 149 commands total and remains
+behind the normal owner approval gate.
