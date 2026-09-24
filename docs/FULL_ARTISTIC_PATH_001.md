@@ -358,3 +358,21 @@ ZEN_AI_TEST_SHEESH_SEQ7, six Cues, seven Groups, seven Color Presets, and
 seven Effect calls. All Effect commands use the content-verified
 At Effect <id> grammar. The preview contains 149 commands total and remains
 behind the normal owner approval gate.
+
+### Strict full-build post-write acceptance
+
+The bounded full-artistic acceptance harness now treats Cue-content readback as
+mandatory. A real build is `SUCCESS` only when AgentCore returns all three:
+
+- exact Sequence/Cue metadata verification,
+- exact Executor assignment verification when an Executor is requested,
+- `Cue-content verification: VERIFIED` backed by a fresh Sequence Export SHA-256.
+
+`PARTIAL` readback is not promoted to success by the harness. It is recorded as
+`FAILED_POSTWRITE_VERIFICATION`. The saved result preserves the exact approved
+Preview metadata, so a later retry enters post-write recovery and re-runs
+metadata/resource/Cue-content readback against the already-written Sequence
+without replaying Builder writes or calling a provider.
+
+The read-only production Preview remains Sequence 7 / Executor 2.005, six Cues,
+149 commands, seven `At Effect` calls, zero provider calls, and zero MA2 writes.

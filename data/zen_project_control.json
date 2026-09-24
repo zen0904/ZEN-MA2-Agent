@@ -24,7 +24,7 @@
       "zen_ma2_agent/core.py::verify_first_song_metadata",
       "AgentRuntime read-only List Cue allow-list"
     ],
-    "next_review_condition": "After explicit owner approval, revalidate fresh Sequence 7 / Executor 2.005 availability and referenced resources, execute the exact production Builder preview if unchanged, then require post-write Sequence Export action-by-action verification for all Dimmer/Preset/Effect actions. Abort before write if the fresh plan differs.",
+    "next_review_condition": "After explicit owner approval, revalidate fresh Sequence 7 / Executor 2.005 availability and referenced resources, execute the exact production Builder preview if unchanged, then accept M4 only if metadata, Executor assignment, and every Dimmer/Preset/Effect Cue-content action are VERIFIED from fresh Sequence Export evidence with SHA-256. PARTIAL is failure and must recover by readback only, never duplicate writes.",
     "current_evidence": [
       "grandMA2_3_9_60_SEQUENCE_5_EXPORT_CAPTURED",
       "CUE_LABEL_PART_AND_CHANNEL_ATTRIBUTE_PATH_READABLE",
@@ -49,7 +49,12 @@
       "FULL_ARTISTIC_PREVIEW_6_CUES_149_COMMANDS",
       "FULL_ARTISTIC_PREVIEW_AT_EFFECT_CALLS_7",
       "FULL_ARTISTIC_PREVIEW_PROVIDER_CALLS_ZERO",
-      "FULL_ARTISTIC_PREVIEW_MA2_WRITES_ZERO"
+      "FULL_ARTISTIC_PREVIEW_MA2_WRITES_ZERO",
+      "FULL_BUILD_SUCCESS_REQUIRES_CUE_CONTENT_VERIFIED_SHA256",
+      "PARTIAL_POSTWRITE_READBACK_FAILS_ACCEPTANCE",
+      "POSTWRITE_RECOVERY_RECHECKS_CUE_CONTENT_WITHOUT_REPLAY_WRITES",
+      "STRICT_READBACK_PREVIEW_SEQUENCE_7_EXECUTOR_2_005_CONFIRMED",
+      "STRICT_READBACK_REGRESSION_762_TESTS_PASS"
     ]
   },
   "human_review_decisions": [
@@ -241,6 +246,22 @@
         "MA2_WRITES_ZERO"
       ],
       "limitations": "This proves exact production planning against current read-only state only. Sequence 7 and Executor 2.005 have not been written. Fresh state must be revalidated immediately before an owner-approved execution."
+    },
+    {
+      "id": "FULL_ARTISTIC_STRICT_POSTWRITE_ACCEPTANCE_001",
+      "source": "scripts/run_sheesh_programming_test.py + tests/test_sheesh_retry.py",
+      "status": "CLOSED_CODE_READY_REAL_WRITE_PENDING_APPROVAL",
+      "outcomes": [
+        "FULL_BUILD_SUCCESS_REQUIRES_METADATA_AND_EXECUTOR_AND_CUE_CONTENT_VERIFIED",
+        "SEQUENCE_EXPORT_SHA256_REQUIRED_FOR_ACCEPTANCE",
+        "PARTIAL_READBACK_IS_NOT_SUCCESS",
+        "FAILED_POSTWRITE_VERIFICATION_IS_RESUMABLE",
+        "RECOVERY_RECHECKS_CUE_CONTENT_WITHOUT_REPLAY_WRITES",
+        "PROVIDER_RECALL_ZERO_ON_CANONICAL_RECOVERY",
+        "STRICT_PREVIEW_SEQUENCE_7_EXECUTOR_2_005_ZERO_WRITES",
+        "REGRESSION_762_TESTS_PASS"
+      ],
+      "limitations": "No new MA2 write was performed. The final M4 gate still requires one explicit owner-approved disposable production Builder execution followed by fresh content-level Sequence Export verification."
     }
   ],
   "backlog": [

@@ -3,6 +3,7 @@ import unittest
 from scripts.run_sheesh_programming_test import (
     _attach_effect_identity_labels,
     _augment_canonical_referenced_resources,
+    _full_build_readback_summary,
     _recover_prior_postwrite_build,
     _resume_saved_canonical_artifact,
 )
@@ -204,6 +205,12 @@ class SheeshSavedRetryTests(unittest.TestCase):
             def _fresh_verify_preset_references(self, references):
                 return [f"{reference} — COLOR" for reference in sorted(references)]
 
+            def _verify_first_song_cue_content(self, data):
+                return (
+                    "Cue-content verification: VERIFIED — Source SHA-256: " + "a" * 64 + ".",
+                    {"status": "VERIFIED", "source_xml_sha256": "a" * 64},
+                )
+
         saved = {
             "status": "FAILED",
             "error": "FirstSongBuildError: Verification failed: referenced Preset is no longer present: 4.101",
@@ -242,6 +249,80 @@ class SheeshSavedRetryTests(unittest.TestCase):
         self.assertEqual(recovered["cue_count"], 1)
         self.assertTrue(recovered["executor_verified"])
         self.assertEqual(recovered["preset_lines"], ["4.101 — COLOR"])
+
+    def test_full_build_readback_requires_metadata_executor_and_content_sha(self):
+        sha = "b" * 64
+        result = _full_build_readback_summary(
+            "Metadata verification: VERIFIED — Sequence 7.\n"
+            "Executor 2.005 assignment verified.\n"
+            "Cue-content verification: VERIFIED — every approved action matched. "
+            f"Source SHA-256: {sha}.",
+            "2.005",
+        )
+        self.assertEqual(result["status"], "VERIFIED")
+        self.assertEqual(result["cue_attribute_content"], "VERIFIED")
+        self.assertEqual(result["sequence_export_sha256"], sha)
+        self.assertFalse(result["partial_reported"])
+
+    def test_full_build_readback_rejects_partial_content(self):
+        result = _full_build_readback_summary(
+            "Metadata verification: VERIFIED — Sequence 7.\n"
+            "Executor 2.005 assignment verified.\n"
+            "Verification: PARTIAL — Cue-content Sequence Export is unavailable in this runtime.",
+            "2.005",
+        )
+        self.assertEqual(result["status"], "NOT_VERIFIED")
+        self.assertEqual(result["cue_attribute_content"], "NOT_VERIFIED")
+        self.assertIsNone(result["sequence_export_sha256"])
+        self.assertTrue(result["partial_reported"])
+
+    def test_postwrite_recovery_now_rechecks_cue_content_without_writes(self):
+        class Runtime:
+            def read_state(self, command):
+                if command == "List Executor":
+                    return 'Executor 2.3 Sequence=Seq 3 "ZEN_AI_TEST_SHEESH_SEQ3"'
+                raise AssertionError(command)
+
+        class Core:
+            runtime = Runtime()
+
+            def verify_first_song_metadata(self, sequence, label, cues, cue_labels):
+                return "Metadata verification: VERIFIED"
+
+            def _fresh_verify_effect_references(self, show_plan):
+                return []
+
+            def _fresh_verify_preset_references(self, references):
+                return []
+
+            def _verify_first_song_cue_content(self, data):
+                return "Cue-content verification: VERIFIED", {
+                    "status": "VERIFIED",
+                    "source_xml_sha256": "c" * 64,
+                }
+
+        saved = {
+            "error": "FirstSongBuildError: Verification failed: full artistic Cue-content readback is not VERIFIED.",
+            "preview": {
+                "action": {
+                    "task": {
+                        "intent": {
+                            "parameters": {
+                                "sequence": 3,
+                                "sequence_label": "ZEN_AI_TEST_SHEESH_SEQ3",
+                                "target_executor": "2.003",
+                                "cue_labels": ["INTRO"],
+                                "cues": [{"cue_number": 1, "label": "INTRO", "fade": 1, "actions": []}],
+                                "referenced_presets": [],
+                            }
+                        }
+                    }
+                }
+            },
+        }
+        recovered = _recover_prior_postwrite_build(Core(), saved)
+        self.assertEqual(recovered["cue_content_report"]["status"], "VERIFIED")
+        self.assertEqual(recovered["cue_content_report"]["source_xml_sha256"], "c" * 64)
 
     def test_runner_checks_postwrite_recovery_before_new_allocation_or_broad_refresh(self):
         from pathlib import Path

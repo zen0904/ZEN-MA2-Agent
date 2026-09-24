@@ -67,6 +67,32 @@ class ProgrammingRunError(RuntimeError):
         self.result = result
 
 
+def _full_build_readback_summary(execution_result: str, target_executor: str | None) -> dict[str, object]:
+    """Classify the structured proof already emitted by AgentCore.
+
+    This runner is the M4 acceptance harness, so PARTIAL is not success even
+    though AgentCore deliberately permits partial verification in runtimes
+    where native Sequence Export is unavailable.
+    """
+    text = execution_result if isinstance(execution_result, str) else ""
+    metadata_verified = "Metadata verification: VERIFIED" in text
+    executor_verified = not target_executor or f"Executor {target_executor} assignment verified." in text
+    match = re.search(
+        r"Cue-content verification: VERIFIED.*?Source SHA-256: ([0-9a-f]{64})\.",
+        text,
+        re.S,
+    )
+    content_verified = match is not None
+    return {
+        "status": "VERIFIED" if metadata_verified and executor_verified and content_verified else "NOT_VERIFIED",
+        "sequence_executor_metadata": "VERIFIED" if metadata_verified and executor_verified else "NOT_VERIFIED",
+        "cue_labels_and_fades": "VERIFIED" if metadata_verified else "NOT_VERIFIED",
+        "cue_attribute_content": "VERIFIED" if content_verified else "NOT_VERIFIED",
+        "sequence_export_sha256": match.group(1) if match else None,
+        "partial_reported": "Verification: PARTIAL" in text,
+    }
+
+
 def _await_ready(core: AgentCore) -> None:
     deadline = time.monotonic() + 10
     while core.runtime.state is ConnectionState.AUTHENTICATING and time.monotonic() < deadline:
@@ -628,6 +654,7 @@ def _recover_prior_postwrite_build(core: AgentCore, saved: dict) -> dict | None:
     preset_lines = core._fresh_verify_preset_references(
         set(parameters.get("referenced_presets") or [])
     )
+    content_text, content_report = core._verify_first_song_cue_content(parameters)
     return {
         "sequence": sequence,
         "sequence_label": label,
@@ -637,6 +664,8 @@ def _recover_prior_postwrite_build(core: AgentCore, saved: dict) -> dict | None:
         "executor_verified": executor_verified,
         "effect_lines": effect_lines,
         "preset_lines": preset_lines,
+        "cue_content_text": content_text,
+        "cue_content_report": content_report,
     }
 
 
@@ -702,7 +731,9 @@ def run(
             result["provider_attempts"] = saved.get("provider_attempts", [])
             recovered = _recover_prior_postwrite_build(core, saved)
             if recovered is not None:
-                result["status"] = "SUCCESS"
+                content_report = recovered.get("cue_content_report")
+                content_verified = isinstance(content_report, dict) and content_report.get("status") == "VERIFIED"
+                result["status"] = "SUCCESS" if content_verified else "FAILED_POSTWRITE_VERIFICATION"
                 result["saved_retry"] = {
                     "mode": "RECOVER_POSTWRITE_VERIFICATION",
                     "provider_called": False,
@@ -713,6 +744,7 @@ def run(
                         "EXISTING_EXECUTOR_ASSIGNMENT",
                         "CURRENT_EFFECT_IDENTITY",
                         "CURRENT_PRESET_EXISTENCE",
+                        "CUE_CONTENT_SEQUENCE_EXPORT",
                     ],
                 }
                 result["canonical_artifact"] = saved.get("canonical_artifact")
@@ -722,14 +754,22 @@ def run(
                 result["target_executor"] = recovered["target_executor"]
                 result["cue_count"] = recovered["cue_count"]
                 result["ma2_writes"] = 0
-                result["readback_verification"] = "RECOVERED_POSTWRITE_PASS"
+                result["readback_verification"] = (
+                    "RECOVERED_POSTWRITE_CUE_CONTENT_VERIFIED"
+                    if content_verified
+                    else "RECOVERED_POSTWRITE_CUE_CONTENT_NOT_VERIFIED"
+                )
                 result["readback_detail"] = {
-                    "sequence_executor_metadata": "PASS",
-                    "cue_labels_and_fades": "PASS",
+                    "sequence_executor_metadata": "VERIFIED",
+                    "cue_labels_and_fades": "VERIFIED",
                     "effects": recovered["effect_lines"],
                     "presets": recovered["preset_lines"],
+                    "cue_attribute_content": "VERIFIED" if content_verified else "NOT_VERIFIED",
+                    "sequence_export_sha256": (content_report or {}).get("source_xml_sha256") if isinstance(content_report, dict) else None,
                     "writes_replayed": False,
                 }
+                if not content_verified:
+                    result["error"] = "FirstSongBuildError: Verification failed: full artistic Cue-content readback is not VERIFIED."
                 result["executor_before"] = executor_before
                 result["executor_after"] = core.runtime.read_state("List Executor")
                 result["sequence_after"] = core.runtime.read_state("List Sequence")
@@ -923,14 +963,19 @@ def run(
         execution = core.approve_action(action_id)
         result["execution"] = execution
         result["sequence"] = execution.get("result", "")
-        result["status"] = "SUCCESS"
         result["ma2_writes"] = len(workflow.commands)
-        result["readback_verification"] = "METADATA_PASS_CUE_CONTENT_PARTIAL"
-        result["readback_detail"] = {
-            "sequence_executor_metadata": "PASS",
-            "cue_labels_and_fades": "PASS",
-            "cue_attribute_content": "PARTIAL_UNVERIFIED",
-        }
+        readback = _full_build_readback_summary(
+            execution.get("result", ""),
+            target_executor,
+        )
+        result["readback_detail"] = readback
+        if readback["status"] != "VERIFIED":
+            result["status"] = "FAILED_POSTWRITE_VERIFICATION"
+            result["readback_verification"] = "CUE_CONTENT_NOT_VERIFIED"
+            result["error"] = "FirstSongBuildError: Verification failed: full artistic Cue-content readback is not VERIFIED."
+        else:
+            result["status"] = "SUCCESS"
+            result["readback_verification"] = "CUE_CONTENT_VERIFIED"
         result["executor_before"] = executor_before
         result["executor_after"] = core.runtime.read_state("List Executor")
         result["sequence_after"] = core.runtime.read_state("List Sequence")
@@ -1004,7 +1049,7 @@ def main() -> int:
                 ensure_ascii=True,
             )
         )
-        return 0
+        return 0 if output.get("status") in {"SUCCESS", "PREVIEW_ONLY"} else 1
     except ProgrammingRunError as exc:
         if args.result:
             args.result.parent.mkdir(parents=True, exist_ok=True)
