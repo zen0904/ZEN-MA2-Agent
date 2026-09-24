@@ -156,6 +156,70 @@ def _effect_inventory(profile: Mapping[str, Any]) -> dict[int, Mapping[str, Any]
     return result
 
 
+def _root_capability_applies_to_exact_selection(
+    profile: Mapping[str, Any], group: Mapping[str, Any]
+) -> bool:
+    """Return whether root FixtureType capability safely describes this Group selection.
+
+    Whole-fixture refs are safe. A dotted ref is safe only when that root has
+    exactly one verified subfixture, making the instance equivalent to the
+    whole fixture for capability purposes. Multi-instance refs require direct
+    Group-level application evidence instead of aggregate FixtureType capability.
+    """
+    membership = group.get("membership")
+    if not isinstance(membership, Mapping):
+        # Preserve legacy/synthetic profiles that predate exact membership.
+        return True
+    if (
+        membership.get("status") != "SUPPORTED"
+        or membership.get("source") not in {"ma2_export_xml", "ma2_group_export_xml"}
+    ):
+        return False
+
+    roots = group.get("fixture_ids_in_selection_order")
+    refs = group.get("fixture_refs_in_selection_order")
+    if (
+        not isinstance(roots, list)
+        or not isinstance(refs, list)
+        or not refs
+        or len(roots) != len(refs)
+    ):
+        return False
+    fixtures = {
+        item.get("fixture_id"): item
+        for item in profile.get("fixtures", [])
+        if isinstance(item, Mapping)
+        and isinstance(item.get("fixture_id"), int)
+        and not isinstance(item.get("fixture_id"), bool)
+    }
+    for root, ref in zip(roots, refs):
+        if not isinstance(root, int) or isinstance(root, bool) or not isinstance(ref, str):
+            return False
+        if ref == str(root):
+            continue
+        parts = ref.split(".", 1)
+        if len(parts) != 2 or not all(part.isdecimal() and int(part) > 0 for part in parts):
+            return False
+        ref_root, sub_id = map(int, parts)
+        if ref_root != root:
+            return False
+        geometry = (fixtures.get(root) or {}).get("stage_geometry")
+        subfixtures = geometry.get("subfixtures") if isinstance(geometry, Mapping) else None
+        if not isinstance(subfixtures, list):
+            return False
+        verified_ids = [
+            item.get("subfixture_id")
+            for item in subfixtures
+            if isinstance(item, Mapping)
+            and isinstance(item.get("subfixture_id"), int)
+            and not isinstance(item.get("subfixture_id"), bool)
+            and item.get("subfixture_id") > 0
+        ]
+        if verified_ids != [sub_id]:
+            return False
+    return True
+
+
 def _historical_group_refs_still_match(profile: Mapping[str, Any], binding: Mapping[str, Any]) -> bool:
     """Do not reuse a cached SHEESH binding after exact Group membership drifts."""
     if binding.get("source") != "SHEESH_REAL_MA2_TEST_SHOW_BUILD_001":
@@ -394,10 +458,22 @@ def build_artistic_resource_map(
         for preset in presets:
             dimensions[preset["dimension"]]["execution_status"] = "VERIFIED_PRESET_RESOURCE"
         effects = list(bound_effects.get(group_id, []))
+        exact_selection_accepts_root_capability = _root_capability_applies_to_exact_selection(profile, group)
         dimmer_verified = (
-            dimensions["DIMMER"]["technical_capability"].get("status") == "SHOW_BOUND_VERIFIED"
-            or dimensions["DIMMER"]["execution_status"] == "SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL"
+            dimensions["DIMMER"]["execution_status"] == "SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL"
+            or (
+                dimensions["DIMMER"]["technical_capability"].get("status") == "SHOW_BOUND_VERIFIED"
+                and exact_selection_accepts_root_capability
+            )
         )
+        if not dimmer_verified:
+            # Current Agent-owned Effect requirements are DIMMER_CHASE only.
+            # A globally verified Effect-call grammar does not prove that an
+            # ambiguous exact subfixture selection exposes Dimmer.
+            effects = [
+                item for item in effects
+                if str(item.get("kind") or "").upper() != "DIMMER_CHASE"
+            ]
         if application_verified and dimmer_verified:
             existing_ids = {item.get("effect_id") for item in effects}
             for template in strict_template_effects:

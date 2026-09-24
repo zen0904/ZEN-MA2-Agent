@@ -501,3 +501,16 @@ test Group. It has no transport/approval/execute path. A later separately
 authorized write gate must fresh-scan again and compare the native raw Group
 Export's exact member set and order after any write; no Group was created by
 this foundation.
+
+
+The resource boundary is also exact-membership-aware outside the bounded
+SHEESH recovery adapter. `show_identity()` now fingerprints each Group's
+canonical member set, preferring exact serialized refs when available, so an
+exact-subfixture drift such as `.2 -> .1` invalidates Show-bound Preset/Effect
+catalog evidence while a pure selection-order reorder does not. For current
+profiles with supported Group Export membership, aggregate FixtureType DIMMER
+capability may unlock reusable Dimmer Chase Effects only when the exact Group
+selection is unambiguous at root capability level; a selected instance of a
+multi-instance fixture instead requires direct verified Group-level Dimmer
+application evidence. This closes the path where a `.1` Atomic Group could
+inherit DIMMER from the whole FixtureType and receive a Dimmer Chase resource.

@@ -166,6 +166,59 @@ class ArtisticResourceMapTests(unittest.TestCase):
         self.assertEqual([row["reference"] for row in group["preset_resources"]], ["4.101"])
         self.assertEqual(group["dimensions"]["DIMMER"]["execution_status"], "SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL")
 
+    def test_multi_instance_exact_selection_cannot_unlock_dimmer_effect_from_root_capability(self):
+        identity = self.identity
+        profile = {
+            "show_identity": identity,
+            "fixtures": [{
+                "fixture_id": 701,
+                "fixture_type": "7 Atomic 3000 LED Extended",
+                "stage_geometry": {
+                    "subfixtures": [{"subfixture_id": 1}, {"subfixture_id": 2}],
+                },
+            }],
+            "groups": [{
+                "group_id": 7,
+                "name": "STROBE",
+                "fixture_ids_in_selection_order": [701],
+                "fixture_refs_in_selection_order": ["701.1"],
+                "membership": {"status": "SUPPORTED", "source": "ma2_export_xml"},
+            }],
+            "presets": [],
+            "effects": [
+                {"effect_id": 88, "name": "FX_DIM_CHASE_FAST", "kind": "TEMPLATE"},
+                {"effect_id": 3520, "name": "ZEN_FX_DIM_CHASE_SLOW_GROUP7"},
+            ],
+            "fixture_type_profiles": [{
+                "status": "SHOW_BOUND_VERIFIED",
+                "fixture_type": {"list_label": "7 Atomic 3000 LED Extended"},
+                "capabilities": {"DIMMER": {"status": "SHOW_BOUND_VERIFIED"}},
+            }],
+        }
+        catalog = [{
+            "effect_id": 3520,
+            "label": "ZEN_FX_DIM_CHASE_SLOW_GROUP7",
+            "ownership": "ZEN_AGENT",
+            "show_identity": identity,
+            "source": "EFFECT_BUILDER_V1",
+            "requirement": {
+                "kind": "DIMMER_CHASE",
+                "target_type": "group",
+                "target_ref": 7,
+            },
+            "verification": {"object": "VERIFIED", "label": "VERIFIED", "parameters": "PARTIAL"},
+        }]
+        result = build_artistic_resource_map(
+            profile,
+            effect_catalog_entries=catalog,
+            effect_application_capability=self.effect_application,
+        )
+        group = result["groups"][0]
+        self.assertEqual(group["dimensions"]["DIMMER"]["technical_capability"]["status"], "SHOW_BOUND_VERIFIED")
+        self.assertEqual(group["dimensions"]["DIMMER"]["execution_status"], "DIRECT_GROUP_LEVEL_UNVERIFIED_CAPABILITY")
+        self.assertEqual(group["effect_resources"], [])
+        self.assertEqual(effect_applicability_from_map(result)[7], set())
+
     def test_group_name_never_creates_capability(self):
         profile = {**self.profile, "fixture_type_profiles": []}
         result = build_artistic_resource_map(profile)
@@ -195,6 +248,29 @@ class ArtisticResourceMapTests(unittest.TestCase):
         self.assertNotIn(89, ids)
         self.assertIn(88, effect_applicability_from_map(result)[1])
         self.assertEqual(result["effect_inventory_summary"]["unverified_effects_exposed_to_designer"], 0)
+
+    def test_single_instance_exact_selection_can_use_root_dimmer_capability_for_effect(self):
+        profile = {
+            **self.profile,
+            "fixtures": [{
+                "fixture_id": 701,
+                "fixture_type": "2 HYBRID",
+                "stage_geometry": {"subfixtures": [{"subfixture_id": 1}]},
+            }],
+            "groups": [{
+                "group_id": 7,
+                "name": "SINGLE_INSTANCE",
+                "fixture_ids_in_selection_order": [701],
+                "fixture_refs_in_selection_order": ["701.1"],
+                "membership": {"status": "SUPPORTED", "source": "ma2_group_export_xml"},
+            }],
+            "effects": [{"effect_id": 88, "name": "FX_DIM_CHASE_FAST", "kind": "TEMPLATE"}],
+        }
+        result = build_artistic_resource_map(
+            profile,
+            effect_application_capability=self.effect_application,
+        )
+        self.assertEqual(effect_applicability_from_map(result)[7], {88})
 
     def test_strict_template_effect_needs_dimmer_capability_and_verified_application(self):
         no_capability = {

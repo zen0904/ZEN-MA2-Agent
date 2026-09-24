@@ -116,15 +116,32 @@ def show_identity(profile: dict[str, Any]) -> dict[str, str]:
 
     The fingerprint intentionally excludes mutable Effect/Sequence inventories:
     an approved resource creation must not invalidate its own catalog entry.
-    It includes static-ish scanned pool identities, so an ambiguous mismatch
-    prevents reuse rather than treating an arbitrary Effect number as stable.
+    Group membership is part of identity because Group-bound Preset/Effect
+    evidence must not survive an exact-subfixture membership drift.
     """
     token = lambda value: json.dumps(value, sort_keys=True, ensure_ascii=True, default=str)
+
+    def membership_identity(item: dict[str, Any]) -> tuple[str, tuple[str, ...]]:
+        exact = item.get("fixture_refs_in_selection_order")
+        if isinstance(exact, list) and exact and all(isinstance(ref, str) and ref.strip() for ref in exact):
+            # Applicability is a member-set fact; selection order may change
+            # chase appearance without changing which exact instances exist.
+            return "EXACT", tuple(sorted(ref.strip() for ref in exact))
+        roots = item.get("fixture_ids_in_selection_order")
+        if isinstance(roots, list):
+            # Preserve duplicate roots. Multi-instance legacy profiles may
+            # legitimately contain the same root more than once.
+            return "ROOT", tuple(sorted((token(value) for value in roots)))
+        return "UNKNOWN", ()
+
     stable = {
         # A provider refresh can legitimately repeat a pool row before its
-        # compaction pass.  Identity must represent the observed Show, not the
-        # number of refreshes performed in this session.
-        "groups": sorted({(token(item.get("group_id")), token(item.get("name"))) for item in profile.get("groups", []) if isinstance(item, dict)}),
+        # compaction pass. Identity represents the observed Show, not refresh
+        # count. Exact membership changes, however, invalidate bound evidence.
+        "groups": sorted({
+            (token(item.get("group_id")), token(item.get("name")), token(membership_identity(item)))
+            for item in profile.get("groups", []) if isinstance(item, dict)
+        }),
         "fixtures": sorted({(token(item.get("fixture_id")), token(item.get("fixture_type"))) for item in profile.get("fixtures", []) if isinstance(item, dict)}),
         "presets": sorted({(token(item.get("reference")), token(item.get("name"))) for item in profile.get("presets", []) if isinstance(item, dict)}),
     }

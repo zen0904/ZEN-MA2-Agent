@@ -98,6 +98,35 @@ class EffectResourceResolverTests(unittest.TestCase):
         stale = self.resolver.resolve(item, profile=changed)
         self.assertEqual(stale.status, "CREATE_REQUIRED")
 
+    def test_show_identity_changes_on_exact_subfixture_drift_but_not_reorder(self):
+        base = profile()
+        base["groups"] = [{
+            "group_id": 7, "name": "STROBE",
+            "fixture_ids_in_selection_order": [701, 702],
+            "fixture_refs_in_selection_order": ["701.2", "702.2"],
+        }]
+        drift = profile()
+        drift["groups"] = [{
+            "group_id": 7, "name": "STROBE",
+            "fixture_ids_in_selection_order": [701, 702],
+            "fixture_refs_in_selection_order": ["701.1", "702.1"],
+        }]
+        reordered = profile()
+        reordered["groups"] = [{
+            "group_id": 7, "name": "STROBE",
+            "fixture_ids_in_selection_order": [702, 701],
+            "fixture_refs_in_selection_order": ["702.2", "701.2"],
+        }]
+        self.assertNotEqual(show_identity(base), show_identity(drift))
+        self.assertEqual(show_identity(base), show_identity(reordered))
+
+    def test_show_identity_legacy_root_membership_drift_is_not_same_show(self):
+        before = profile()
+        before["groups"][0]["fixture_ids_in_selection_order"] = [101, 102]
+        after = profile()
+        after["groups"][0]["fixture_ids_in_selection_order"] = [101, 103]
+        self.assertNotEqual(show_identity(before), show_identity(after))
+
     def test_duplicate_verified_resources_self_heal_to_lowest_id(self):
         current = profile(effects=[
             {"effect_id": 9, "name": "ZEN_FX_DIM_CHASE_FAST_GROUP1"},
