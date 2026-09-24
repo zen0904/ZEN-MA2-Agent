@@ -462,7 +462,22 @@ same root distinct. The production Builder also returned to canonical typed
 action order because the global Color-before-Dimmer rewrite is not supported by
 real-machine evidence.
 
-No Group repair has been executed. No repair target should be chosen until the
-pre-07:47:07 exact identity is recovered or equivalent independent evidence
-proves it. Any later repair must be freshly previewed and revalidated immediately
-before execution and requires new explicit owner approval.
+No Group repair has been executed. The independent read-only forensic pass on
+2026-09-24 closed with
+`GROUP7_PRE_074707_EXACT_IDENTITY=UNRESOLVED`. Its key timeline matches the
+old-checkout audit: the pre-first-write export command at 07:46:35 exists, but
+`ZEN_AGENT_G7_b757c7ec615d336c.xml` has not been recovered; the 07:47 parent
+selection overwrites are recorded; the retained 07:48 DEBUG export is only
+post-write evidence; and the 07:53 exact `.1` overwrite is recorded. The
+retained DEBUG XML SHA-256 independently rechecked as
+`a8ddf782ba37570b06971322eca5ed3afb657abf80cb2408dadb8bb302038539`.
+
+Therefore the historical Group 7 repair path is blocked, not merely awaiting
+approval. No repair target should be chosen until the pre-07:47:07 exact
+identity is recovered or equivalent independent evidence proves it. Preview
+011 is retained only as superseded forensic evidence and must not execute. A
+future continuation may instead evaluate an isolated Agent-owned test resource
+that uses independently proven exact subfixture references without claiming to
+restore historical Group 7; that would be a separate Preview/Approval path.
+Any actual write still requires fresh state revalidation and explicit owner
+approval.
