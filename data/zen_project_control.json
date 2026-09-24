@@ -15,7 +15,7 @@
   "next_acceptance_gate": {
     "id": "FULL_ARTISTIC_PATH_001_CUE_CONTENT_READBACK",
     "classification": "RESEARCH_UNKNOWN",
-    "status": "EXACT_TEST_GROUP_PREVIEW_READY_NO_WRITE_AUTHORIZED",
+    "status": "AGENT_OWNED_EXACT_GROUP8_VERIFIED_FULL_BUILD_PREVIEW_NEXT",
     "why_it_matters": "The Full Artistic Path now has verified post-write recovery, Sequence/Cue metadata, Executor assignment, and exact referenced Preset/Effect identity. M4 still must distinguish object/metadata readback from actual stored Cue content; a generic PASS must not imply that Dimmer/Preset/Effect actions were read back from each Cue.",
     "blocks_current_milestone": true,
     "dependencies": [
@@ -24,7 +24,7 @@
       "zen_ma2_agent/core.py::verify_first_song_metadata",
       "AgentRuntime read-only List Cue allow-list"
     ],
-    "next_review_condition": "Historical Group 7 repair remains blocked because pre-2026-09-22 07:47:07 exact membership is unresolved; do not execute Preview 011 or infer a repair target. Continue M4 through the separate Agent-owned test-resource path: perform a fresh read-only Group/Fixture/geometry scan, generate a new exact .2 test-Group Preview using independently proven Atomic DIM/COLOR functional refs 701.2-708.2, then present exact commands for owner approval. Any later write must revalidate occupancy immediately before execution and verify a native raw Export Group exact member/order match afterward. Fixture 9999, Patch, Address, Fixture identity/type and foreign objects remain protected.",
+    "next_review_condition": "Historical Group 7 repair remains blocked and Preview 011 remains forbidden. The separate Agent-owned path has now created and raw-export-verified Group 8 ZEN_TEST_ATOMIC_DIM_COLOR_EXACT with exact ordered members 701.2-708.2 after fresh occupancy/fixture/geometry revalidation and explicit owner approval. Next generate a fresh Full Artistic Build Preview that uses the new verified test resource instead of historical Group 7 applicability, present its exact commands, and require a separate explicit owner approval before any Sequence/Executor/Cue write. Fixture 9999, Patch, Address, Fixture identity/type and foreign objects remain protected.",
     "current_evidence": [
       "grandMA2_3_9_60_SEQUENCE_5_EXPORT_CAPTURED",
       "CUE_LABEL_PART_AND_CHANNEL_ATTRIBUTE_PATH_READABLE",
@@ -91,6 +91,12 @@
       "MULTI_INSTANCE_EXACT_SELECTION_CANNOT_USE_AGGREGATE_FIXTURETYPE_DIMMER_TO_UNLOCK_EFFECTS",
       "DIMMER_CHASE_EFFECTS_REQUIRE_DIRECT_GROUP_EVIDENCE_OR_UNAMBIGUOUS_ROOT_CAPABILITY",
       "NEW_AGENT_OWNED_EXACT_GROUP_PREVIEW_FOUNDATION_READY",
+      "AGENT_OWNED_GROUP8_OWNER_APPROVED_AND_CREATED",
+      "GROUP8_LABEL_ZEN_TEST_ATOMIC_DIM_COLOR_EXACT_VERIFIED",
+      "GROUP8_RAW_EXPORT_EXACT_ORDERED_MEMBERS_701_2_THRU_708_2_VERIFIED",
+      "GROUP8_RAW_EXPORT_SHA256_6936FA5147E09565BF486C66FC48F7DCEC0E327F11A68FCADD12369BF155754F",
+      "GROUP8_EXECUTION_ARTIFACT_013_VERIFIED",
+      "HISTORICAL_GROUP7_UNCHANGED_AND_UNRESOLVED",
       "REGRESSION_785_TESTS_PASS"
     ]
   },

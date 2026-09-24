@@ -514,3 +514,28 @@ selection is unambiguous at root capability level; a selected instance of a
 multi-instance fixture instead requires direct verified Group-level Dimmer
 application evidence. This closes the path where a `.1` Atomic Group could
 inherit DIMMER from the whole FixtureType and receive a Dimmer Chase resource.
+
+
+### Agent-owned exact Atomic DIM/COLOR Group 8 real-machine proof
+
+After explicit owner approval, ZEN revalidated current Group occupancy, Fixture
+inventory, and Fixture geometry immediately before execution. The approved
+Preview remained identical in Group ID, label, exact member order, and command
+list, so ZEN executed only the approved twelve commands to create new
+Agent-owned Group 8 with label `ZEN_TEST_ATOMIC_DIM_COLOR_EXACT` and exact
+ordered members `701.2, 702.2, 703.2, 704.2, 705.2, 706.2, 707.2, 708.2`.
+
+Post-write verification used a native raw `Export Group 8` and parsed the exact
+serialized member identity/order. Label and all eight exact refs matched the
+approved Preview. The retained raw XML SHA-256 is
+`6936fa5147e09565bf486c66fc48f7dcec0e327f11a68fcadd12369bf155754f`.
+Execution evidence is retained in
+`projects/runs/SHEESH_NEW_UNDESIGNED_SHOW_001/programming/group8_approved_execution_013.json`
+and the raw export in `group8_postwrite_raw_export_013.xml`.
+
+This does not repair or redefine historical Group 7. Group 7 remains
+`UNRESOLVED` for its pre-07:47:07 exact identity, and Preview 011 remains
+forbidden. Group 8 is a new Agent-owned functional test resource for the proven
+Atomic DIM/COLOR `.2` instances. Fixture 9999, Patch, Address, Fixture identity
+and Fixture Type were untouched. Any subsequent Full Artistic Sequence/Cue
+write requires a fresh separate Preview and separate owner approval.
