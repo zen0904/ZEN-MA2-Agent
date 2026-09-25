@@ -193,3 +193,17 @@ non-ASCII at MA boundary   -> FAIL CLOSED / NON_ASCII_MA_TEXT
 ```
 
 Invalid text is rejected; it is never silently stripped or transliterated.
+
+## Position application evidence (2026-09-26)
+
+The current grandMA2 3.9.60 Test Show's `List Preset Position` command returns
+`Error #14: OBJECT DOES NOT EXIST`, while `List Preset All` contains 19 Position
+pool objects and bounded `List Preset 2.1` confirms exact identity `2.1 HOME`.
+The exported FixtureType channels establish technical POSITION capability for
+the fixtures in Groups 1–5, but do not establish Preset applicability. The
+existing Sequence Export parser can expose exact CueData fixture/subfixture,
+attribute and Preset address components. A future approved Position test must
+prove the exact target Preset on PAN/TILT rows for each exact selected Group
+member before any Show-bound binding is recorded. Multi-instance selection
+without exact subfixture proof remains blocked. No MA2 write or raw command
+grammar was added in the Preview-only gate.

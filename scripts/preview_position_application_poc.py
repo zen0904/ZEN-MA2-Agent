@@ -47,6 +47,9 @@ def main() -> int:
         # reference independently; type/label must agree at preview time.
         direct = PresetProvider().parse(runtime.read_state(f"List Preset {args.preset_ref}"), "POSITION")
         profile = core.scan_show_profile()
+        # Use the same bounded read-only profile enrichment as the normal
+        # OpenClaw path, so later exact Show identity comparison is meaningful.
+        core._recover_bounded_test_show_evidence(profile)
         candidate = [row for row in profile["presets"] if row.get("reference") == args.preset_ref]
         if (len(candidate) != 1 or len(direct) != 1
                 or direct[0].get("reference") != args.preset_ref

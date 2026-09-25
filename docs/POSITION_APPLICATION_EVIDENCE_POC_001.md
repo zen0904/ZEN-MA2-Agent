@@ -31,6 +31,15 @@ returned the following scoped facts:
   candidate content-readback grammar. Command acceptance or Cue metadata alone
   cannot establish Position application.
 
+The current machine-local Preview is
+`data/position_application_poc_preview_001.json`, Preview ID
+`41ac18753c44d07e`, scanned profile fingerprint
+`f88c5d6fe638b8cc967432239d9f5a43dd98f354f98dbe77bdf40e0eb3383b7d`
+(`confidence=PARTIAL`). It proposes only Group 1 `HYBRID`, exact refs
+`101,102,103,104,105,106,108,107`, Preset `2.1 HOME`, first-free Sequence 10
+with label `ZEN_POSITION_APPLICATION_POC_SEQ10`, Cue 1, and no Executor. These
+are time-specific read-only observations; the next session must re-read them.
+
 ## Engineering boundary
 
 `zen.position_application_poc_preview.v0.1` is a deterministic, explicitly
@@ -58,6 +67,11 @@ the exact proof schema and current Show/Group/Preset identity all match. Other
 dimensions keep their existing rules. The model-facing contract and generic
 artistic compiler continue to reject any unrelated Position Preset or Group.
 Show, membership, label, ref, type, or capability drift fails closed.
+`PositionApplicationBindingStore` persists only a binding derived from exact
+content readback. The normal lean Core loads only current-matching entries and
+performs a fresh bounded direct `List Preset <ref>` identity check before
+offering a Position resource to the model. Today the store is empty; no
+Position Preset is exposed by this gate.
 
 ## Next interactive step
 

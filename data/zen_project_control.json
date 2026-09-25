@@ -5,7 +5,7 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "Keep the normal OpenClaw -> ZEN lean design path convenient and fully bounded. Current Show discovery now reuses exact Test Show Color/Dimmer evidence and fresh native TEMPLATE Effect proof inside the ordinary resource-map path, while unsupported dimensions remain fail-closed. The next capability gate is Position application evidence: prove exact Group/Position-Preset applicability on the disposable grandMA2 3.9.60 Test Show before exposing Position or movement to the ordinary Designer contract."
+    "active_objective": "Keep the normal OpenClaw -> ZEN lean design path convenient and fully bounded. The Position application evidence gate now has fresh read-only discovery, a non-executable typed POC Preview, and an exact post-write Cue-content binding model. Position remains unavailable to the ordinary Designer until a separate owner-approved real probe proves the exact Group/Preset pair."
   },
   "last_closed_task": {
     "id": "OPENCLAW_BOUNDED_ARTISTIC_RESOURCE_RECOVERY_002",
@@ -15,7 +15,7 @@
   "next_acceptance_gate": {
     "id": "POSITION_APPLICATION_EVIDENCE_POC_001",
     "classification": "RESEARCH_UNKNOWN",
-    "status": "OPEN",
+    "status": "PREVIEW_READY_APPLICATION_UNVERIFIED",
     "why_it_matters": "FixtureType POSITION capability alone does not prove that a current Position Preset is safely applicable to an exact Group selection. The ordinary Designer must not receive Position/movement resources until a bounded current-Show application proof exists.",
     "blocks_current_milestone": false,
     "dependencies": [
@@ -26,7 +26,7 @@
       "explicit Preview and owner approval before any MA2 write",
       "post-write readback that proves the Position Preset identity on the stored Cue"
     ],
-    "next_review_condition": "Create a disposable Agent-owned Position application POC only after fresh read-only discovery identifies one exact Group and one current Position Preset that can be tested without touching Patch/Address/Fixture identity, foreign objects, Fixture 9999, or historical Group 7 repair state.",
+    "next_review_condition": "Owner reviews the non-executable Position POC Preview. A future interactive implementation and separate explicit owner approval must revalidate Show/Group/Preset/Sequence identities before any write, then prove exact PAN/TILT Cue content through native Sequence Export before recording application evidence.",
     "current_evidence": [
       "BUILD_001_ACTIONS_CALL_PRESET_COLOR_ONLY_63",
       "BUILD_001_ACTIONS_SET_DIMMER_ONLY_105",
@@ -35,7 +35,14 @@
       "POSITION_REMAINS_FAIL_CLOSED_IN_NORMAL_RESOURCE_MAP",
       "COLOR_AND_TEMPLATE_EFFECT_NORMAL_PATH_RECOVERY_VERIFIED",
       "REGRESSION_808_TESTS_PASS",
-      "MA2_WRITES_ZERO"
+      "MA2_WRITES_ZERO",
+      "CURRENT_POSITION_POOL_19_OBJECTS_FROM_LIST_PRESET_ALL",
+      "DIRECT_LIST_PRESET_2_1_HOME_IDENTITY_VERIFIED",
+      "POSITION_FIXTURETYPE_CAPABILITY_GROUPS_1_TO_5_SHOW_BOUND_VERIFIED",
+      "EXACT_GROUP1_PARENT_MEMBERSHIP_VERIFIED",
+      "GROUP7_HISTORICAL_MEMBERSHIP_UNRESOLVED_UNCHANGED",
+      "POSITION_POC_PREVIEW_NONEXECUTABLE_SEQUENCE_10_EXECUTOR_NONE",
+      "POSITION_APPLICATION_BINDINGS_CURRENTLY_ZERO"
     ]
   },
   "human_review_decisions": [

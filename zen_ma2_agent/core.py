@@ -43,6 +43,7 @@ from .designer.lean_design_mode import assemble_compact_design_context
 from .designer.lean_provider import LeanDesignIntelligence, LeanDesignProviderError, build_provider_resource_contract, compile_lean_artistic_intent, invoke_primary_design
 from .designer.artistic_plan import ArtisticPlanCompileError
 from .artistic_resources import build_artistic_resource_map
+from .position_application_evidence import PositionApplicationBindingStore
 from .designer.report import write_real_song_design_report
 from .builder import FirstSongBuildError, ShowPlanBuilder
 from .song_analysis import SongAnalysisAdapter, validate_song_analysis
@@ -111,6 +112,7 @@ class AgentCore:
         self.effect_catalog = EffectCatalog(self.runtime.root)
         self.effect_resources = EffectResourceResolver(self.effect_catalog)
         self.cue_effect_application_capability = CueEffectApplicationCapability(self.runtime.root)
+        self.position_application_bindings = PositionApplicationBindingStore(self.runtime.root)
         self.last_diagnostics: DiagnosticReport | None = None
         self.last_chat_routing: dict[str, Any] | None = None
         self._isolated_geometry_test_loaded = False
@@ -590,6 +592,10 @@ class AgentCore:
                 ("executors", {}),
             ):
                 self.refresh_state(resource, **kwargs)
+            if self.position_application_bindings.has_candidates():
+                # Exact parent/subfixture applicability needs geometry identity.
+                # Ordinary shows without Position evidence avoid this extra scan.
+                self.refresh_state("fixture_geometry")
             groups = self.state.get("groups")
             for item in (groups.values if groups else []):
                 number = item.get("number")
@@ -734,6 +740,19 @@ class AgentCore:
         profile = self._collect_lean_design_profile()
         effect_application = self.cue_effect_application_capability.load_verified()
         preset_bindings, dimmer_bindings = self._recover_bounded_test_show_evidence(profile)
+        # A cached Position proof is useful only with fresh exact current-Show
+        # identity and direct current Preset ref/type/label readback. This
+        # never creates an application binding or touches MA2 Show state.
+        for binding in self.position_application_bindings.load_verified(profile):
+            reference = binding["reference"]
+            try:
+                current = PresetProvider().parse(self.runtime.read_state(f"List Preset {reference}"), "POSITION")
+            except (ConnectionError, PermissionError, ValueError):
+                continue
+            if (len(current) == 1 and current[0].get("reference") == reference
+                    and current[0].get("preset_type") == "POSITION"
+                    and current[0].get("name") == binding["preset_label"]):
+                preset_bindings.append(binding)
         self._recover_bounded_template_effect_inventory(profile)
         resource_map = build_artistic_resource_map(
             profile,

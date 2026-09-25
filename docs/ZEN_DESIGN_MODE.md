@@ -212,3 +212,12 @@ The ordinary path remains one logical Lighting Designer request. Ordered
 transport fallback may occur only across eligible FREE/LOCAL slots; parallel
 Designer candidate generation remains explicit deep/research mode. Deterministic
 requests continue to bypass the provider entirely.
+
+### Position Preset application is separately verified
+
+The `position_preset` artistic action remains in the generic cue contract, but
+the ordinary Designer sees a Group/Position Preset pair only after exact native
+Cue-content evidence is recorded in
+`zen.position_preset_application_binding.v0.1`. FixtureType POSITION capability
+and Position-pool inventory alone do not establish applicability. The current
+PoC is Preview-only; see `docs/POSITION_APPLICATION_EVIDENCE_POC_001.md`.

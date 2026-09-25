@@ -580,3 +580,16 @@ exact-membership model, or MA2 version changes. Historical Group 7 remains
 unresolved and is not repaired or redefined by this result; Preview 011 remains
 forbidden. Fixture 9999, Patch, Address, Fixture identity and Fixture Type were
 untouched.
+
+### Position application evidence boundary (2026-09-26)
+
+The next read-only engineering gate is documented in
+`docs/POSITION_APPLICATION_EVIDENCE_POC_001.md`. The current Show exposes
+show-bound POSITION FixtureType capability for Groups 1–5 and 19 Position-pool
+objects, but no exact Group/Position Preset application binding is yet
+verified. A non-executable typed POC Preview can be generated from fresh
+Group, FixtureType, Preset and Sequence evidence. Position becomes a normal
+Designer resource only after a separately approved test Cue's native Sequence
+Export proves the exact Group/Preset pair on exact PAN/TILT subfixture rows.
+This does not reopen Full Artistic acceptance or change any historical Group 7
+finding.

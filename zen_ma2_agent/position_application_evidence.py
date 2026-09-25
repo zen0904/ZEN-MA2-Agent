@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from pathlib import Path
 from typing import Any, Mapping
 
 from .allocation import first_free_from_front
@@ -93,6 +94,17 @@ def _identity(profile: Mapping[str, Any]) -> dict[str, Any]:
     return dict(identity)
 
 
+def _fresh_resources(profile: Mapping[str, Any], *, include_sequences: bool) -> bool:
+    resources = profile.get("resources")
+    required = ["groups", "group_membership", "fixtures", "fixture_geometry", "fixture_type_profiles", "presets"]
+    if include_sequences:
+        required.append("sequences")
+    return bool(isinstance(resources, Mapping) and all(
+        isinstance(resources.get(key), Mapping) and resources[key].get("status") == "SUPPORTED"
+        for key in required
+    ))
+
+
 def build_position_poc_preview(profile: Mapping[str, Any], *, group_id: int, preset_ref: str) -> dict[str, Any]:
     """Build a deterministic, non-executable Preview from fresh read-only state."""
     identity = _identity(profile)
@@ -100,9 +112,7 @@ def build_position_poc_preview(profile: Mapping[str, Any], *, group_id: int, pre
     refs = _exact_refs(group)
     _position_capability(profile, refs)
     preset = _preset(profile, preset_ref)
-    resources = profile.get("resources")
-    required = ("groups", "group_membership", "fixtures", "fixture_geometry", "fixture_type_profiles", "presets", "sequences")
-    if not isinstance(resources, Mapping) or any((resources.get(key) or {}).get("status") != "SUPPORTED" for key in required):
+    if not _fresh_resources(profile, include_sequences=True):
         raise PositionEvidenceError("FRESH_READ_ONLY_STATE_REQUIRED")
     sequences = profile.get("sequences")
     if not isinstance(sequences, list):
@@ -171,6 +181,8 @@ def derive_position_application_binding(
     profile: Mapping[str, Any], preview: Mapping[str, Any], discovery: Mapping[str, Any],
 ) -> dict[str, Any]:
     """Future post-approval proof: exact Cue content, not command acceptance."""
+    if not _fresh_resources(profile, include_sequences=True):
+        raise PositionEvidenceError("FRESH_READ_ONLY_STATE_REQUIRED")
     if preview.get("schema") != PREVIEW_SCHEMA or preview.get("show_identity") != _identity(profile):
         raise PositionEvidenceError("PREVIEW_SHOW_IDENTITY_DRIFT")
     group_id = (preview.get("group") or {}).get("id")
@@ -228,6 +240,8 @@ def derive_position_application_binding(
 def position_binding_matches_profile(profile: Mapping[str, Any], binding: Mapping[str, Any]) -> bool:
     """Fail closed on every resource-identity or provenance drift."""
     try:
+        if not _fresh_resources(profile, include_sequences=False):
+            return False
         if (binding.get("schema") != SCHEMA or binding.get("status") != "REAL_MACHINE_CONTENT_VERIFIED"
                 or binding.get("source") != "MA2_POSITION_APPLICATION_POC_SEQUENCE_EXPORT"
                 or binding.get("show_identity") != _identity(profile)
@@ -256,3 +270,45 @@ def position_binding_matches_profile(profile: Mapping[str, Any], binding: Mappin
         )
     except (PositionEvidenceError, KeyError, TypeError, ValueError):
         return False
+
+
+class PositionApplicationBindingStore:
+    """Local evidence cache; current Show facts remain authoritative."""
+
+    def __init__(self, root: Path):
+        self.path = root / "data" / "ZEN_POSITION_APPLICATION_BINDINGS.json"
+
+    def has_candidates(self) -> bool:
+        try:
+            data = json.loads(self.path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return False
+        return bool(isinstance(data, dict)
+                    and data.get("schema") == "zen.position_application_binding_catalog.v0.1"
+                    and isinstance(data.get("bindings"), list) and data["bindings"])
+
+    def load_verified(self, profile: Mapping[str, Any]) -> list[dict[str, Any]]:
+        try:
+            data = json.loads(self.path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return []
+        if not isinstance(data, dict) or data.get("schema") != "zen.position_application_binding_catalog.v0.1":
+            return []
+        rows = data.get("bindings")
+        if not isinstance(rows, list):
+            return []
+        return [row for row in rows if isinstance(row, dict) and position_binding_matches_profile(profile, row)]
+
+    def record_after_readback(
+        self, profile: Mapping[str, Any], preview: Mapping[str, Any], discovery: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """Persist only an independently verified native Cue content match."""
+        binding = derive_position_application_binding(profile, preview, discovery)
+        rows = self.load_verified(profile)
+        rows = [row for row in rows if (row.get("group_id"), row.get("reference")) !=
+                (binding["group_id"], binding["reference"])]
+        rows.append(binding)
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.write_text(json.dumps({"schema": "zen.position_application_binding_catalog.v0.1",
+                                         "bindings": rows}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        return binding

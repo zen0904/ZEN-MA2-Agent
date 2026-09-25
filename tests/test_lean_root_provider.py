@@ -111,6 +111,23 @@ class LeanRootProviderTests(unittest.TestCase):
         self.assertEqual(build_map.call_args.kwargs["preset_bindings"], preset_bindings)
         self.assertEqual(build_map.call_args.kwargs["dimmer_bindings"], dimmer_bindings)
 
+    def test_root_lean_path_threads_only_direct_readback_matching_position_binding(self):
+        provider = FakeDesignProvider()
+        core = AgentCore(AgentRuntime(Path(".")), design_intelligence_provider=provider)
+        seed_native_state(core)
+        verified = {"reference": "2.1", "preset_label": "HOME", "preset_type": "POSITION"}
+        stale = {"reference": "2.2", "preset_label": "OLD", "preset_type": "POSITION"}
+        with patch.object(core, "_recover_bounded_test_show_evidence", return_value=([], [])), \
+             patch.object(core, "_recover_bounded_template_effect_inventory", return_value=[]), \
+             patch.object(core.position_application_bindings, "load_verified", return_value=[verified, stale]), \
+             patch.object(core.runtime, "read_state", side_effect=lambda command:
+                          "Position 2.1 2.1 HOME Normal" if command.endswith("2.1")
+                          else "Position 2.2 2.2 CHANGED Normal"), \
+             patch("zen_ma2_agent.core.build_artistic_resource_map", return_value=resource_map()) as build_map:
+            action = core.program_show_request("design/program this song")["action"]
+        self.assertEqual(action["status"], "PENDING_APPROVAL")
+        self.assertEqual(build_map.call_args.kwargs["preset_bindings"], [verified])
+
     def test_bounded_show_recovery_fails_closed_without_matching_current_show(self):
         core = AgentCore(AgentRuntime(Path(".")))
         seed_native_state(core)

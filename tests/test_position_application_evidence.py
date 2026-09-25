@@ -1,12 +1,14 @@
 import copy
+import tempfile
 import unittest
+from pathlib import Path
 
 from zen_ma2_agent.artistic_resources import (
     build_artistic_resource_map, model_resource_contract, preset_applicability_from_map,
 )
 from zen_ma2_agent.designer.artistic_plan import ArtisticPlanCompileError, compile_artistic_cue_plan
 from zen_ma2_agent.position_application_evidence import (
-    PositionEvidenceError, build_position_poc_preview,
+    PositionApplicationBindingStore, PositionEvidenceError, build_position_poc_preview,
     derive_position_application_binding, position_binding_matches_profile,
 )
 
@@ -145,6 +147,22 @@ class PositionApplicationEvidenceTests(unittest.TestCase):
         profile["resources"]["presets"]["status"] = "STALE"
         with self.assertRaisesRegex(PositionEvidenceError, "FRESH_READ_ONLY_STATE_REQUIRED"):
             build_position_poc_preview(profile, group_id=1, preset_ref="2.1")
+
+    def test_binding_store_records_only_after_exact_readback_and_rejects_drift(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = PositionApplicationBindingStore(Path(directory))
+            self.assertEqual(store.load_verified(self.profile), [])
+            invalid = self.discovery()
+            invalid["cues"][0]["parts"][0]["cue_data"].pop()
+            with self.assertRaises(PositionEvidenceError):
+                store.record_after_readback(self.profile, self.preview, invalid)
+            self.assertFalse(store.path.exists())
+            stored = store.record_after_readback(self.profile, self.preview, self.discovery())
+            self.assertTrue(store.has_candidates())
+            self.assertEqual(store.load_verified(self.profile), [stored])
+            changed = copy.deepcopy(self.profile)
+            changed["presets"][0]["name"] = "RENAMED"
+            self.assertEqual(store.load_verified(changed), [])
 
 
 if __name__ == "__main__":
