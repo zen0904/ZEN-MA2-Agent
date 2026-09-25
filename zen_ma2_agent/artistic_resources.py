@@ -14,6 +14,7 @@ from copy import deepcopy
 from typing import Any, Iterable, Mapping, Sequence
 
 from .cue_effect_application import cue_effect_capability_is_content_verified
+from .position_application_evidence import position_binding_matches_profile
 
 ARTISTIC_RESOURCE_MAP_SCHEMA = "zen.artistic_resource_map.v0.1"
 SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL = "SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL"
@@ -256,7 +257,12 @@ def _verified_preset_bindings(
     inventory = _preset_inventory(profile)
     result: dict[int, list[dict[str, Any]]] = {}
     for binding in bindings:
-        if not isinstance(binding, Mapping) or binding.get("status") not in {"VERIFIED", "SHOW_BOUND_VERIFIED"}:
+        if not isinstance(binding, Mapping):
+            continue
+        if binding.get("status") not in {"VERIFIED", "SHOW_BOUND_VERIFIED"} and not (
+            binding.get("status") == "REAL_MACHINE_CONTENT_VERIFIED"
+            and binding.get("schema") == "zen.position_preset_application_binding.v0.1"
+        ):
             continue
         if not _same_identity(binding.get("show_identity"), current_identity):
             continue
@@ -274,6 +280,11 @@ def _verified_preset_bindings(
         if requested_type and current_type != requested_type:
             continue
         if current_type not in _PRESET_DIMENSIONS:
+            continue
+        # Technical PAN/TILT support and a Position-pool object are not proof
+        # that this exact Group can apply this exact Preset. Only a completed
+        # content-level Position POC may unlock the pair.
+        if current_type == "POSITION" and not position_binding_matches_profile(profile, binding):
             continue
         result.setdefault(group_id, []).append({
             "dimension": current_type,
