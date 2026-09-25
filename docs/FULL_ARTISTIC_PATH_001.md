@@ -120,6 +120,10 @@ The bounded SHEESH smoke runner now refreshes Group membership and FixtureType
 capability evidence before building the resource map, then feeds only
 Group-bound executable resources to the provider contract.
 
+The ordinary OpenClaw / show.program lean path now uses the same bounded evidence gates before constructing its provider resource contract. It may recover only the Build 001 Color/Dimmer bindings that still match the exact current Test Show identity and Group membership. It also performs fresh Effect-line QTY readback only for the three reserved FX_DIM_CHASE_* labels and promotes them only when native TEMPLATE kind is explicitly verified. This removes the earlier split where the smoke runner saw verified Color/Effect resources that the normal operator path could not see.
+
+This does not extend to Position. The committed Build 001 plan contains only Color Preset calls and direct Dimmer actions; it contains no observed Position Preset application. FixtureType POSITION capability therefore remains technical capability evidence only, not Group/Preset applicability evidence. Position and movement stay unavailable to the ordinary Designer until a separate bounded application proof is completed.
+
 
 ### Current Test Show evidence recovery
 

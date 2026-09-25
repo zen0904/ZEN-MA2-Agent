@@ -47,6 +47,13 @@ from .designer.report import write_real_song_design_report
 from .builder import FirstSongBuildError, ShowPlanBuilder
 from .song_analysis import SongAnalysisAdapter, validate_song_analysis
 from .cue_content_verifier import CueContentVerificationError, verify_cue_content
+from .test_show_evidence import (
+    bounded_test_show_color_rows,
+    derive_sheesh_test_dimmer_bindings,
+    derive_sheesh_test_preset_bindings,
+    test_show_palette_manifest,
+)
+from .test_show_resources import template_effect_labels
 
 
 @dataclass
@@ -602,6 +609,123 @@ class AgentCore:
             )
         return profile
 
+    def _recover_bounded_test_show_evidence(
+        self,
+        profile: dict[str, Any],
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        """Recover only the already-proven SHEESH Test Show resource evidence.
+
+        This path is deliberately narrow. It performs fresh exact Preset reads
+        only for the committed Build 001 Color manifest, then delegates all
+        Sequence identity and exact Group-membership checks to the existing
+        fail-closed evidence adapters.
+        """
+        plan_path = self.runtime.root / "data" / "zen_real_ma2_test_show_sheesh_001_plan.json"
+        if not plan_path.is_file():
+            return [], []
+        try:
+            plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return [], []
+        if not isinstance(plan, dict):
+            return [], []
+
+        readbacks: dict[str, str] = {}
+        if self.runtime.ready:
+            for reference in test_show_palette_manifest(plan):
+                try:
+                    readbacks[reference] = self.runtime.read_state(f"List Preset {reference}")
+                except (ConnectionError, PermissionError, ValueError):
+                    continue
+
+        rows = bounded_test_show_color_rows(plan, readbacks)
+        if rows:
+            merged = {
+                str(item.get("reference") or ""): item
+                for item in profile.get("presets", [])
+                if isinstance(item, dict) and item.get("reference")
+            }
+            for row in rows:
+                merged[row["reference"]] = row
+            profile["presets"] = list(merged.values())
+            profile["show_identity"] = show_identity(profile)
+
+        preset_recovery = derive_sheesh_test_preset_bindings(profile, plan)
+        dimmer_recovery = derive_sheesh_test_dimmer_bindings(profile, plan)
+        preset_bindings = [
+            item
+            for item in preset_recovery.get("bindings", [])
+            if isinstance(item, dict)
+        ]
+        dimmer_bindings = [
+            item
+            for item in dimmer_recovery.get("bindings", [])
+            if isinstance(item, dict)
+        ]
+        self.runtime.log(
+            "bounded_test_show_evidence_recovery",
+            {
+                "preset_status": preset_recovery.get("status"),
+                "preset_binding_count": len(preset_bindings),
+                "dimmer_status": dimmer_recovery.get("status"),
+                "dimmer_binding_count": len(dimmer_bindings),
+                "bounded_color_readback_count": len(rows),
+                "show_identity": profile.get("show_identity"),
+            },
+        )
+        return preset_bindings, dimmer_bindings
+
+    def _recover_bounded_template_effect_inventory(
+        self,
+        profile: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        """Promote only reserved Test Show template Effects from fresh QTY proof."""
+        if not self.runtime.ready:
+            return []
+        reserved = {label.upper() for label in template_effect_labels()}
+        provider = EffectProvider()
+        evidence: list[dict[str, Any]] = []
+        for row in profile.get("effects", []) if isinstance(profile.get("effects"), list) else []:
+            if not isinstance(row, dict):
+                continue
+            label = str(row.get("name") or "").strip().upper()
+            effect_id = row.get("effect_id")
+            if (
+                label not in reserved
+                or isinstance(effect_id, bool)
+                or not isinstance(effect_id, int)
+                or effect_id < 1
+            ):
+                continue
+            try:
+                raw = self.runtime.read_state(f"List Effect 1.{effect_id}.*")
+            except (ConnectionError, PermissionError, ValueError):
+                continue
+            detail = provider.parse_template_detail(raw)
+            evidence.append({
+                "effect_id": effect_id,
+                "name": row.get("name"),
+                "detail": detail,
+            })
+            if detail.get("status") == "VERIFIED" and detail.get("kind") == "TEMPLATE":
+                row["kind"] = "TEMPLATE"
+                row["template_detail"] = detail
+        self.runtime.log(
+            "bounded_template_effect_recovery",
+            {
+                "candidate_count": len(evidence),
+                "verified_template_count": sum(
+                    1
+                    for item in evidence
+                    if isinstance(item.get("detail"), dict)
+                    and item["detail"].get("status") == "VERIFIED"
+                    and item["detail"].get("kind") == "TEMPLATE"
+                ),
+                "show_identity": profile.get("show_identity"),
+            },
+        )
+        return evidence
+
     def _plan_lean_design_child(self, root: WorkflowPlan, request: str) -> WorkflowPlan:
         """Run one injected artistic call, compile it, then reuse show.builder."""
         if self.design_intelligence_provider is None:
@@ -609,8 +733,12 @@ class AgentCore:
 
         profile = self._collect_lean_design_profile()
         effect_application = self.cue_effect_application_capability.load_verified()
+        preset_bindings, dimmer_bindings = self._recover_bounded_test_show_evidence(profile)
+        self._recover_bounded_template_effect_inventory(profile)
         resource_map = build_artistic_resource_map(
             profile,
+            preset_bindings=preset_bindings,
+            dimmer_bindings=dimmer_bindings,
             effect_catalog_entries=self.effect_catalog.load().get("entries", []),
             effect_application_capability=effect_application,
         )

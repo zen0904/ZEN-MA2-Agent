@@ -15,6 +15,11 @@
 >   owns strict internal `zen.show_plan.v0.1` metadata/shape;
 > - the generic Artistic Plan Compiler is song-agnostic; SHEESH-specific
 >   six-cue labels/count live at the bounded SHEESH runner boundary;
+> - the ordinary OpenClaw lean-design path now shares the bounded Test Show
+>   evidence recovery used by the runner: exact Build 001 Color/Dimmer bindings
+>   require current Sequence/Group identity, reserved Dimmer-Chase Effects require
+>   fresh native TEMPLATE QTY proof, and Position remains fail-closed until a
+>   separate Group/Preset application proof exists;
 > - real MA2 programming has been proven on the Test Show, including a new
 >   Sequence 2 assigned to Executor 2.002 with readback PASS while preserving
 >   the earlier Sequence 301 / Executor 2.001 baseline;

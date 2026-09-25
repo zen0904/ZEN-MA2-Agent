@@ -86,6 +86,57 @@ class LeanRootProviderTests(unittest.TestCase):
         self.assertIsNotNone(action["id"])
         self.assertEqual(core.runtime.client, None)
 
+    def test_root_lean_path_threads_bounded_show_bindings_into_resource_map(self):
+        provider = FakeDesignProvider()
+        core = AgentCore(AgentRuntime(Path(".")), design_intelligence_provider=provider)
+        seed_native_state(core)
+        preset_bindings = [{"status": "SHOW_BOUND_VERIFIED", "group_id": 1, "reference": "4.101"}]
+        dimmer_bindings = [{"status": "SHOW_BOUND_VERIFIED", "group_id": 1, "capability": "DIMMER"}]
+
+        with patch.object(
+            core,
+            "_recover_bounded_test_show_evidence",
+            return_value=(preset_bindings, dimmer_bindings),
+        ), patch.object(
+            core,
+            "_recover_bounded_template_effect_inventory",
+            return_value=[],
+        ), patch(
+            "zen_ma2_agent.core.build_artistic_resource_map",
+            return_value=resource_map(),
+        ) as build_map:
+            action = core.program_show_request("design/program this song")["action"]
+
+        self.assertEqual(action["status"], "PENDING_APPROVAL")
+        self.assertEqual(build_map.call_args.kwargs["preset_bindings"], preset_bindings)
+        self.assertEqual(build_map.call_args.kwargs["dimmer_bindings"], dimmer_bindings)
+
+    def test_bounded_show_recovery_fails_closed_without_matching_current_show(self):
+        core = AgentCore(AgentRuntime(Path(".")))
+        seed_native_state(core)
+        profile = core.scan_show_profile()
+        preset_bindings, dimmer_bindings = core._recover_bounded_test_show_evidence(profile)
+        self.assertEqual(preset_bindings, [])
+        self.assertEqual(dimmer_bindings, [])
+
+    def test_bounded_template_effect_recovery_promotes_only_verified_template(self):
+        core = AgentCore(AgentRuntime(Path(".")))
+        core.runtime.client = type("Client", (), {
+            "state": __import__("zen_ma2_agent.telnet_client", fromlist=["ConnectionState"]).ConnectionState.READY,
+            "execute": lambda self, command: "Effect 1.2500.1\nQTY=None\n",
+        })()
+        profile = {
+            "show_identity": {"kind": "SCANNED_SHOW_PROFILE_FINGERPRINT", "value": "x", "confidence": "PARTIAL"},
+            "effects": [
+                {"effect_id": 2500, "name": "FX_DIM_CHASE_SLOW"},
+                {"effect_id": 9999, "name": "SOME_OTHER_EFFECT"},
+            ],
+        }
+        evidence = core._recover_bounded_template_effect_inventory(profile)
+        self.assertEqual(len(evidence), 1)
+        self.assertEqual(profile["effects"][0]["kind"], "TEMPLATE")
+        self.assertNotIn("kind", profile["effects"][1])
+
     def test_provider_failure_becomes_resumable_root_state_without_retry(self):
         class FailingProvider:
             def __init__(self):

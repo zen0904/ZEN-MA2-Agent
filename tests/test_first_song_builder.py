@@ -43,6 +43,7 @@ class FirstSongClient:
         if command == "List Preset 4.101": return "Color 4.101 4.101  ZEN_COLOR_01_RED     Normal\n"
         if command == "List Effect": return 'Effect 1000 DIM Low 1\nEffect 3520 "ZEN_FX_DIM_CHASE_SLOW_GROUP1"\n'
         if command == "List Effect 3520": return 'Effect 3520 "ZEN_FX_DIM_CHASE_SLOW_GROUP1"\n'
+        if command == "List Effect 1.2500.*": return "Effect 1.2500.1\nQTY=None\n"
         if command == "List Sequence": return f'Sequence {self.sequence_number} "{self.sequence_label}"\n' if self.sequence_label else "WARNING, NO OBJECTS FOUND FOR LIST\n"
         if command.startswith("List Cue ") and self.sequence_number is not None and f" Part 0 Sequence {self.sequence_number}" in command:
             number = int(command.split()[2])
@@ -107,6 +108,14 @@ class FirstSongBuilderTests(unittest.TestCase):
         )
         with self.assertRaises(PermissionError):
             self.runtime.read_state('List Preset 4.101 /nc')
+
+    def test_runtime_allows_bounded_effect_detail_lookup_and_rejects_suffixes(self):
+        self.assertIn(
+            "QTY=None",
+            self.runtime.read_state("List Effect 1.2500.*"),
+        )
+        with self.assertRaises(PermissionError):
+            self.runtime.read_state("List Effect 1.2500.* /nc")
 
     def test_post_build_verification_uses_exact_preset_lookup_when_all_inventory_omits_it(self):
         lines = self.core._fresh_verify_preset_references({"4.101"})
