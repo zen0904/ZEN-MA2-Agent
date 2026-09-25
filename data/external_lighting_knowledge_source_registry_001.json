@@ -871,6 +871,21 @@
       "copyright_policy": "METADATA_AND_DERIVED_EXTRACTS_ONLY",
       "source_bias": "Artist-specific production with heavy video and timecode; detailed rhythmic accenting is contextual and not a rule to hit every beat.",
       "notes": "Useful for song-persona identity, selective micro-detail accenting, and continuing refinement through deeper listening."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_source.v0.1",
+      "source_id": "ZEN_USER_LIGHTING_REFERENCE_CLIP_001",
+      "source_type": "USER_WORKFLOW_EVIDENCE",
+      "publisher": "ZEN MA2 Agent project owner",
+      "title": "User-selected lighting reference clip 001",
+      "url": "https://github.com/zen0904/ZEN-MA2-Agent/blob/main/docs/reference_cases/LIGHTING_REFERENCE_CASE_001.md",
+      "publication_date": null,
+      "version": "SHA256 13168a78946e43e3261239e136e671f34e45ff6eb354e63b52a75c233ab97f66; 134.1 s",
+      "retrieved_at": "2026-09-25",
+      "authority": "USER_SELECTED_CASE_REFERENCE",
+      "copyright_policy": "METADATA_AND_DERIVED_EXTRACTS_ONLY",
+      "source_bias": "Single user-selected visual reference; edit, camera, venue, fixture identity and original programmer intent are not independently established.",
+      "notes": "Original media is not stored in the repository. Metadata and concise derived observations are anchored in LIGHTING_REFERENCE_CASE_001.md."
     }
   ]
 }
