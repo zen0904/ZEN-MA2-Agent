@@ -6729,6 +6729,164 @@
       "related_console_capabilities": [],
       "source_provenance": "LIVE_DESIGN_BILLIE_EILISH_2019_DREAMS_NIGHTMARES: programmer describes ongoing listening and adding newly perceived details during the tour.",
       "summary": "Supports iterative refinement driven by better musical understanding, with Critic restraint still required."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk010_user_clip_contrast_release",
+      "source_id": "ZEN_USER_LIGHTING_REFERENCE_CLIP_001",
+      "topic": "CONTRAST",
+      "normalized_claim": "In the selected clip, major visual impact is created by holding restrained low-output states before brighter white or denser releases, so contrast depends on preserved headroom rather than continuous escalation.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "USER_SELECTED_PERFORMANCE_CLIP_001",
+      "exclusions": [
+        "Does not require a low-output intro or pre-drop blackout in another song.",
+        "Does not establish an intensity curve without the target song and Show context."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Some material can validly sustain high visual energy or begin at full impact."
+      ],
+      "related_design_concepts": [
+        "contrast",
+        "restraint",
+        "headroom",
+        "release"
+      ],
+      "related_console_capabilities": [
+        "dimmer"
+      ],
+      "source_provenance": "ZEN_USER_LIGHTING_REFERENCE_CLIP_001: visual observation of restrained states preceding larger white/dense releases.",
+      "summary": "Use as a review lens for whether a design preserves enough visual headroom for later impacts; never as a fixed build/drop recipe."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk010_user_clip_palette_continuity",
+      "source_id": "ZEN_USER_LIGHTING_REFERENCE_CLIP_001",
+      "topic": "COLOR_RELATIONSHIPS",
+      "normalized_claim": "The selected clip often develops a section inside one dominant palette family while intensity, direction, density and selective white accents provide variation, rather than relying on constant hue changes.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "USER_SELECTED_PERFORMANCE_CLIP_001",
+      "exclusions": [
+        "Does not prescribe purple, magenta, red, blue or any fixed palette.",
+        "Does not imply frequent color change is artistically weak in other contexts."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Narrative or highly sectional material may justify rapid palette changes."
+      ],
+      "related_design_concepts": [
+        "palette_continuity",
+        "section_identity",
+        "variation",
+        "restraint"
+      ],
+      "related_console_capabilities": [
+        "color",
+        "dimmer",
+        "position",
+        "beam"
+      ],
+      "source_provenance": "ZEN_USER_LIGHTING_REFERENCE_CLIP_001: visual observation of sustained palette families with non-color development.",
+      "summary": "Supports reviewing whether section identity can be maintained while other lighting dimensions carry development."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk010_user_clip_choreo_composition",
+      "source_id": "ZEN_USER_LIGHTING_REFERENCE_CLIP_001",
+      "topic": "FOCUS_VISUAL_ATTENTION",
+      "normalized_claim": "Visible floor-level choreography in the selected clip coincides with a different balance of low, rear and top lighting layers, showing that body level and choreography can be relevant inputs to spatial composition.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "USER_SELECTED_PERFORMANCE_CLIP_001",
+      "exclusions": [
+        "Does not prove the original programmer's intent or exact cue trigger.",
+        "Does not authorize Position or Focus targets without verified Show geometry and performer semantics."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Some choreography may be intentionally ignored by lighting to preserve a broader scenic composition."
+      ],
+      "related_design_concepts": [
+        "choreography",
+        "body_level",
+        "spatial_composition",
+        "focus"
+      ],
+      "related_console_capabilities": [
+        "position",
+        "focus",
+        "dimmer"
+      ],
+      "source_provenance": "ZEN_USER_LIGHTING_REFERENCE_CLIP_001: visual observation of a changed lighting-layer balance during floor choreography.",
+      "summary": "Supports choreography-aware review while preserving the existing requirement for Show-bound spatial evidence."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk010_user_clip_selective_punctuation",
+      "source_id": "ZEN_USER_LIGHTING_REFERENCE_CLIP_001",
+      "topic": "RHYTHMIC_PUNCTUATION",
+      "normalized_claim": "The selected clip emphasizes large transitions, hits and visible poses without making every beat an equally strong lighting event, illustrating selective punctuation instead of uniform beat chasing.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "USER_SELECTED_PERFORMANCE_CLIP_001",
+      "exclusions": [
+        "Does not prohibit dense beat-level programming.",
+        "Does not establish exact musical trigger points for another track."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Highly detailed electronic or choreographed passages may justify dense beat-specific events."
+      ],
+      "related_design_concepts": [
+        "punctuation",
+        "phrase",
+        "pose",
+        "cue_density"
+      ],
+      "related_console_capabilities": [
+        "timecode",
+        "effect"
+      ],
+      "source_provenance": "ZEN_USER_LIGHTING_REFERENCE_CLIP_001: visual observation of selective high-contrast accents around larger structural and performance events.",
+      "summary": "Use to question whether cue density reflects meaningful musical/performance events instead of treating every pulse as equally important."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk010_user_clip_finale_energy_arc",
+      "source_id": "ZEN_USER_LIGHTING_REFERENCE_CLIP_001",
+      "topic": "ENERGY_PROGRESSION",
+      "normalized_claim": "The selected clip's ending reduces or withholds visual output before a strong white impact and sustained backlit tableau, showing that finale energy can be shaped through contraction and release rather than monotonic brightening.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "USER_SELECTED_PERFORMANCE_CLIP_001",
+      "exclusions": [
+        "Does not require a white finale.",
+        "Does not require a dark pre-finale state or a final held tableau."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Some finales are stronger as sustained maximal scenes or gradual fades."
+      ],
+      "related_design_concepts": [
+        "energy_arc",
+        "contraction",
+        "release",
+        "finale",
+        "headroom"
+      ],
+      "related_console_capabilities": [
+        "dimmer",
+        "color"
+      ],
+      "source_provenance": "ZEN_USER_LIGHTING_REFERENCE_CLIP_001: visual observation of late-section restraint followed by a strong final release.",
+      "summary": "Adds a bounded finale strategy example where contraction preserves impact; it is not a required ending pattern."
     }
   ]
 }
