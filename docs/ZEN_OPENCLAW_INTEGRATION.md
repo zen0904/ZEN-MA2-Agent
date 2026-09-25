@@ -221,6 +221,12 @@ Development integration is now verified locally on the operator Windows machine:
   isolated OpenClaw SDK completion as the one-shot Designer fallback. That
   completion receives no tools and still returns through ZEN validation,
   compiler, Preview and Approval boundaries;
+- the live SHEESH design request has now passed end-to-end through current-Show
+  discovery, compound FixtureType evidence, Designer, typed compiler, safe
+  allocation and Builder validation into a real `PENDING_APPROVAL` Preview:
+  20 Cues, unused Sequence 302, allocated Executor 2.8, and zero MA writes;
+- Preview success does not authorize execution. `zen.approve` remains a separate
+  explicit human authority transition and was not invoked in this verification;
 - the local Windows Gateway is a development bridge, not a reversal of the
   production deployment decision. The final production Gateway/Field Host may
   still move to the intended headless host later without changing ZEN Core or

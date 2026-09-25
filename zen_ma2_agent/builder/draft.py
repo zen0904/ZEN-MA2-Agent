@@ -144,7 +144,7 @@ class ShowPlanBuilder:
             "Existing production objects modified: NONE", f"Will create: Sequence {sequence}; Cues {len(plan['cues'])}", "", "Safety: MODIFY", "Approval required.", "", "Generated MA2 commands:", *[f"- {command}" for _, _, command in steps],
         ])
         effect_application = "EFFECT_APPLICATION_UNVERIFIED" if effect_application_blocked else "REAL_MACHINE_CONTENT_VERIFIED" if referenced_effects else "NOT_REQUESTED"
-        intent = Intent("build_first_song", {"song": plan["song"], "sequence": sequence, "sequence_label": label, "target_executor": plan.get("target_executor"), "cue_count": len(plan["cues"]), "cue_labels": [cue["label"] for cue in plan["cues"]], "cues": plan["cues"], "referenced_groups": sorted(referenced_groups), "referenced_presets": sorted(referenced_presets), "referenced_effects": sorted(referenced_effects), "effect_application": effect_application, "warnings": plan.get("warnings", [])}, "ZEN_SHOW_PLAN")
+        intent = Intent("build_first_song", {"song": plan["song"], "sequence": sequence, "sequence_label": label, "target_executor": target_executor, "requested_target_executor": plan.get("target_executor"), "cue_count": len(plan["cues"]), "cue_labels": [cue["label"] for cue in plan["cues"]], "cues": plan["cues"], "referenced_groups": sorted(referenced_groups), "referenced_presets": sorted(referenced_presets), "referenced_effects": sorted(referenced_effects), "effect_application": effect_application, "warnings": plan.get("warnings", [])}, "ZEN_SHOW_PLAN")
         executable = not effect_application_blocked
         verification = "Verify Sequence/Cue metadata and exported Cue content. Raw Dimmer/Color Preset content is readable; Effect application is executable only from REAL_MACHINE_CONTENT_VERIFIED capability evidence."
         if effect_application_blocked:
@@ -203,7 +203,11 @@ class ShowPlanBuilder:
 
     @staticmethod
     def _sequence_label(song: str) -> str:
-        safe = "".join(character if character.isalnum() or character in "_-" else "_" for character in song.upper()).strip("_")
+        # This is an Agent-owned operational identifier, not a rewritten copy
+        # of user text. Keep only explicit ASCII label characters; human-facing
+        # Unicode remains in the plan/preview, while grandMA2-bound labels stay
+        # inside the fail-closed ASCII boundary.
+        safe = re.sub(r"[^A-Z0-9_-]+", "_", song.upper()).strip("_")
         return f"ZEN_AI_TEST_{safe[:40] or 'SONG'}"
 
     @classmethod

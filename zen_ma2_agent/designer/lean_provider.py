@@ -7,6 +7,8 @@ from typing import Any, Mapping, Protocol
 
 from .artistic_plan import ArtisticPlanCompileError, compile_artistic_cue_plan
 from ..artistic_resources import (
+    SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL,
+    SHOW_BOUND_VERIFIED_FIXTURE_TYPE_CAPABILITY,
     effect_applicability_from_map,
     model_resource_contract,
     preset_applicability_from_map,
@@ -178,7 +180,10 @@ def compile_lean_artistic_intent(
         and not isinstance(group.get("group_id"), bool)
         and isinstance((group.get("dimensions") or {}).get("DIMMER"), Mapping)
         and group["dimensions"]["DIMMER"].get("execution_status")
-        == "SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL"
+        in {
+            SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL,
+            SHOW_BOUND_VERIFIED_FIXTURE_TYPE_CAPABILITY,
+        }
     }
     effect_applicability = effect_applicability_from_map(resource_map)
     plan, audit = compile_artistic_cue_plan(

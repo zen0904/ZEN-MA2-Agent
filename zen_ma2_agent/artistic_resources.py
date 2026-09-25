@@ -16,6 +16,8 @@ from typing import Any, Iterable, Mapping, Sequence
 from .cue_effect_application import cue_effect_capability_is_content_verified
 
 ARTISTIC_RESOURCE_MAP_SCHEMA = "zen.artistic_resource_map.v0.1"
+SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL = "SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL"
+SHOW_BOUND_VERIFIED_FIXTURE_TYPE_CAPABILITY = "SHOW_BOUND_VERIFIED_FIXTURE_TYPE_CAPABILITY"
 
 ARTISTIC_DIMENSIONS = (
     "DIMMER",
@@ -439,7 +441,7 @@ def build_artistic_resource_map(
                 direct_evidence = bound_dimmers.get(group_id)
                 dimensions[dimension] = {
                     "execution_status": (
-                        "SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL"
+                        SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL
                         if direct_evidence
                         else ("DIRECT_GROUP_LEVEL_UNVERIFIED_CAPABILITY" if member_ids else "UNAVAILABLE_EMPTY_GROUP")
                     ),
@@ -459,13 +461,23 @@ def build_artistic_resource_map(
             dimensions[preset["dimension"]]["execution_status"] = "VERIFIED_PRESET_RESOURCE"
         effects = list(bound_effects.get(group_id, []))
         exact_selection_accepts_root_capability = _root_capability_applies_to_exact_selection(profile, group)
-        dimmer_verified = (
-            dimensions["DIMMER"]["execution_status"] == "SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL"
-            or (
-                dimensions["DIMMER"]["technical_capability"].get("status") == "SHOW_BOUND_VERIFIED"
-                and exact_selection_accepts_root_capability
-            )
-        )
+        if (
+            dimensions["DIMMER"]["execution_status"] == "DIRECT_GROUP_LEVEL_UNVERIFIED_CAPABILITY"
+            and dimensions["DIMMER"]["technical_capability"].get("status") == "SHOW_BOUND_VERIFIED"
+            and exact_selection_accepts_root_capability
+        ):
+            dimensions["DIMMER"]["execution_status"] = SHOW_BOUND_VERIFIED_FIXTURE_TYPE_CAPABILITY
+            dimensions["DIMMER"]["application_evidence"] = {
+                "status": "SHOW_BOUND_VERIFIED",
+                "source": "FIXTURE_TYPE_CAPABILITY_PLUS_EXACT_SELECTION",
+                "group_id": group_id,
+                "capability": "DIMMER",
+            }
+
+        dimmer_verified = dimensions["DIMMER"]["execution_status"] in {
+            SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL,
+            SHOW_BOUND_VERIFIED_FIXTURE_TYPE_CAPABILITY,
+        }
         if not dimmer_verified:
             # Current Agent-owned Effect requirements are DIMMER_CHASE only.
             # A globally verified Effect-call grammar does not prove that an

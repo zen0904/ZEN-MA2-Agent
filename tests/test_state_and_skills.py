@@ -104,6 +104,132 @@ class StateAndSkillsTests(unittest.TestCase):
         self.assertEqual(self.core.state.get("fixture_type_profiles").capability["binding_status"], "PARTIAL")
         self.assertEqual(self.core.scan_show_profile()["known_limits"]["fixture_type_structure"], "PARTIAL")
 
+    def test_fixture_type_refresh_promotes_verified_zero_based_compound_batch(self):
+        class ZeroBasedProvider:
+            source = "ma2_export_fixture_type_xml"
+
+            @staticmethod
+            def _failure_record(label):
+                fixture_type_id = int(label.split(" ", 1)[0])
+                filename = f"ZEN_AGENT_FT_{fixture_type_id}_request0001.xml"
+                command = f'Export FixtureType {fixture_type_id} "{filename}" /nc'
+                diagnostic = {
+                    "parse_status": "PARSED",
+                    "fixture_type_node_count": 1,
+                    "requested_fixture_type": {
+                        "fixture_type_id": fixture_type_id,
+                        "list_label": label,
+                    },
+                    "observed": {
+                        "fixture_type_index": fixture_type_id - 1,
+                        "name": label.split(" ", 1)[1],
+                        "mode": None,
+                        "channels": [{"attribute": "DIM", "feature": "DIMMER", "preset": "DIMMER"}],
+                        "technical_definition_sha256": "a" * 64,
+                    },
+                    "validation_comparisons": {
+                        "label_using_requested_id_matches_list_label": True,
+                    },
+                    "xml_root": {"schema_version": {"major": "3", "minor": "9", "stream": "60"}},
+                    "xml_sha256": "b" * 64,
+                    "byte_length": 123,
+                }
+                export = {
+                    "filename": filename,
+                    "command": command,
+                    "ma2_feedback": f"Executing : {command}",
+                }
+                return diagnostic, export
+
+            def export_and_bind(self, _runtime, label, _settings):
+                diagnostic, export = self._failure_record(label)
+                raise FixtureTypeExportError(
+                    "EXPORT_FIXTURE_TYPE_ID_MISMATCH",
+                    diagnostic=diagnostic,
+                    export=export,
+                )
+
+            def capabilities(self, _runtime, _settings):
+                return {"backend": "native_export_fixture_type_file"}
+
+        self.core.fixture_type_export_provider = ZeroBasedProvider()
+        self.core.state.put("fixtures", [
+            {"number": 101, "fixture_type": "2 Type A"},
+            {"number": 102, "fixture_type": "3 Type B"},
+        ], source="ma2_telnet_list")
+
+        result = self.core.refresh_state("fixture_type_profiles")
+
+        self.assertEqual(
+            [item["status"] for item in result["values"]],
+            ["SHOW_BOUND_VERIFIED", "SHOW_BOUND_VERIFIED"],
+        )
+        self.assertEqual(
+            [item["fixture_type"]["xml_index"] for item in result["values"]],
+            [1, 2],
+        )
+        capability = self.core.state.get("fixture_type_profiles").capability
+        self.assertEqual(capability["binding_status"], "SHOW_BOUND_VERIFIED")
+        self.assertEqual(capability["compound_identity_status"], "SHOW_BOUND_VERIFIED")
+        self.assertIsNone(capability["compound_identity_failure_reason"])
+
+    def test_fixture_type_refresh_keeps_partial_when_compound_identity_fails(self):
+        class BrokenZeroBasedProvider:
+            source = "ma2_export_fixture_type_xml"
+
+            def export_and_bind(self, _runtime, label, _settings):
+                fixture_type_id = int(label.split(" ", 1)[0])
+                filename = f"ZEN_AGENT_FT_{fixture_type_id}_request0001.xml"
+                command = f'Export FixtureType {fixture_type_id} "{filename}" /nc'
+                diagnostic = {
+                    "parse_status": "PARSED",
+                    "fixture_type_node_count": 1,
+                    "requested_fixture_type": {
+                        "fixture_type_id": fixture_type_id,
+                        "list_label": label,
+                    },
+                    "observed": {
+                        # Deliberately wrong for the second type.
+                        "fixture_type_index": 1,
+                        "name": label.split(" ", 1)[1],
+                        "mode": None,
+                        "channels": [{"attribute": "DIM"}],
+                    },
+                    "validation_comparisons": {
+                        "label_using_requested_id_matches_list_label": True,
+                    },
+                }
+                export = {
+                    "filename": filename,
+                    "command": command,
+                    "ma2_feedback": f"Executing : {command}",
+                }
+                raise FixtureTypeExportError(
+                    "EXPORT_FIXTURE_TYPE_ID_MISMATCH",
+                    diagnostic=diagnostic,
+                    export=export,
+                )
+
+            def capabilities(self, _runtime, _settings):
+                return {"backend": "native_export_fixture_type_file"}
+
+        self.core.fixture_type_export_provider = BrokenZeroBasedProvider()
+        self.core.state.put("fixtures", [
+            {"number": 101, "fixture_type": "2 Type A"},
+            {"number": 102, "fixture_type": "3 Type B"},
+        ], source="ma2_telnet_list")
+
+        result = self.core.refresh_state("fixture_type_profiles")
+
+        self.assertEqual([item["status"] for item in result["values"]], ["PARTIAL", "PARTIAL"])
+        capability = self.core.state.get("fixture_type_profiles").capability
+        self.assertEqual(capability["binding_status"], "UNSUPPORTED")
+        self.assertEqual(capability["compound_identity_status"], "PARTIAL")
+        self.assertIn(
+            "COMPOUND_IDENTITY_MISMATCH",
+            capability["compound_identity_failure_reason"],
+        )
+
     def test_skill_discovery_invalid_duplicate_and_enable_disable(self):
         registry = SkillRegistry(self.root)
         registry.discover()

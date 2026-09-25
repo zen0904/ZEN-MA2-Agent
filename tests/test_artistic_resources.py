@@ -270,6 +270,15 @@ class ArtisticResourceMapTests(unittest.TestCase):
             profile,
             effect_application_capability=self.effect_application,
         )
+        group = result["groups"][0]
+        self.assertEqual(
+            group["dimensions"]["DIMMER"]["execution_status"],
+            "SHOW_BOUND_VERIFIED_FIXTURE_TYPE_CAPABILITY",
+        )
+        self.assertEqual(
+            group["dimensions"]["DIMMER"]["application_evidence"]["source"],
+            "FIXTURE_TYPE_CAPABILITY_PLUS_EXACT_SELECTION",
+        )
         self.assertEqual(effect_applicability_from_map(result)[7], {88})
 
     def test_strict_template_effect_needs_dimmer_capability_and_verified_application(self):

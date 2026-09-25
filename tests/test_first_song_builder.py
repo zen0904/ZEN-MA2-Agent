@@ -141,6 +141,14 @@ class FirstSongBuilderTests(unittest.TestCase):
         self.assertEqual(workflow.task.intent.parameters["sequence"], 2)
         self.assertNotIn("Store Cue 1 Sequence 1", workflow.preview_note)
 
+    def test_sequence_label_derivation_keeps_unicode_out_of_ma_boundary(self):
+        mixed = ShowPlanBuilder._sequence_label("幫我寫 BABYMONSTER 的 SHEESH 這首歌")
+        pure = ShowPlanBuilder._sequence_label("副歌燈光設計")
+        self.assertEqual(mixed, "ZEN_AI_TEST_BABYMONSTER_SHEESH")
+        self.assertEqual(pure, "ZEN_AI_TEST_SONG")
+        self.assertTrue(mixed.isascii())
+        self.assertTrue(pure.isascii())
+
     def test_repeated_song_label_uses_sequence_scoped_operational_label(self):
         profile = {
             "groups": [{"group_id": 1, "name": "HYBRID"}],
@@ -248,7 +256,8 @@ class FirstSongBuilderTests(unittest.TestCase):
         commands = workflow.commands
         self.assertIn("Assign Sequence 301 At Executor 2.1 /nc", commands)
         self.assertIn('Label Executor 2.1 "ZEN_AI_TEST_SHEESH" /nc', commands)
-        self.assertEqual(workflow.task.intent.parameters["target_executor"], "2.001")
+        self.assertEqual(workflow.task.intent.parameters["target_executor"], "2.1")
+        self.assertEqual(workflow.task.intent.parameters["requested_target_executor"], "2.001")
 
     def test_executor_allocator_skips_occupied_slots_from_the_front(self):
         profile = {
@@ -266,6 +275,8 @@ class FirstSongBuilderTests(unittest.TestCase):
         }
         workflow = ShowPlanBuilder().build_first_song(plan, profile)
         self.assertIn("Assign Sequence 1 At Executor 2.3 /nc", workflow.commands)
+        self.assertEqual(workflow.task.intent.parameters["target_executor"], "2.3")
+        self.assertEqual(workflow.task.intent.parameters["requested_target_executor"], "2.999")
 
     def test_narrow_rollback_needs_exact_agent_ownership_proof(self):
         command = ShowPlanBuilder.narrow_rollback_command(201, "ZEN_AI_TEST_ZEN_FIRST_SONG_TEST", {"number": 201, "name": "ZEN_AI_TEST_ZEN_FIRST_SONG_TEST"})

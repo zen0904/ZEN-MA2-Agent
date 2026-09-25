@@ -17,7 +17,7 @@ from .network import internet_online
 from .router import IntentRouter, ResponseType
 from .runtime import AgentRuntime
 from .skill_system import SkillError, SkillRegistry
-from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvider, EffectProvider, ExecutorProvider, ExportFileGroupMembershipProvider, FixtureGeometryProvider, FixtureProvider, FixtureTypeExportError, FixtureTypeExportProvider, GroupMembershipProvider, GroupMembershipProviderError, GroupMembershipProviderUnavailable, GroupProvider, LayoutExportProvider, LayoutInventoryProvider, LayoutObjectResolver, PageProvider, PresetProvider, SequenceExportParseError, SequenceExportProvider, SequenceProvider, TimecodeProvider, ZenStateAdapter, fixture_type_reference_from_list_label
+from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvider, EffectProvider, ExecutorProvider, ExportFileGroupMembershipProvider, FixtureGeometryProvider, FixtureProvider, FixtureTypeExportError, FixtureTypeExportProvider, GroupMembershipProvider, GroupMembershipProviderError, GroupMembershipProviderUnavailable, GroupProvider, LayoutExportProvider, LayoutInventoryProvider, LayoutObjectResolver, PageProvider, PresetProvider, SequenceExportParseError, SequenceExportProvider, SequenceProvider, TimecodeProvider, ZenStateAdapter, fixture_type_export_batch_binding, fixture_type_reference_from_list_label
 from .state.store import StateStore
 from .telnet_client import ConnectionState, MA2TelnetClient
 from .workflow import WorkflowPlan
@@ -314,6 +314,11 @@ class AgentCore:
                 labels = sorted({str(item.get("fixture_type") or "").strip() for item in (fixtures.values if fixtures else []) if str(item.get("fixture_type") or "").strip()})
                 if not labels:
                     raise FixtureTypeExportError("FIXTURE_TYPE_LIST_ID_UNAVAILABLE")
+
+                # The current Show fingerprint deliberately excludes FixtureType
+                # profiles, so it is safe to compare before/after this read-only
+                # export batch without the batch changing its own identity.
+                identity_before = self.scan_show_profile().get("show_identity")
                 values = []
                 for label in labels:
                     try:
@@ -337,11 +342,30 @@ class AgentCore:
                             "export_diagnostic": getattr(exc, "diagnostic", None),
                             "export": getattr(exc, "export", None),
                         })
+
+                identity_after = self.scan_show_profile().get("show_identity")
+                compound_status = "NOT_ATTEMPTED"
+                compound_failure_reason = None
+                if identity_before == identity_after:
+                    try:
+                        values = fixture_type_export_batch_binding(values, show_identity_match="MATCH")
+                        compound_status = "SHOW_BOUND_VERIFIED"
+                    except FixtureTypeExportError as exc:
+                        # Preserve the strict per-type results. Compound identity
+                        # is an additional proof path, never a fallback guess.
+                        compound_status = "PARTIAL"
+                        compound_failure_reason = str(exc)
+                else:
+                    compound_status = "PARTIAL"
+                    compound_failure_reason = "CURRENT_SHOW_IDENTITY_MISMATCH"
+
                 verified_count = sum(item.get("status") == "SHOW_BOUND_VERIFIED" for item in values)
                 capability = self.fixture_type_export_provider.capabilities(self.runtime, self.runtime.preferences.get("state_adapter")) | {
                     "binding_status": "SHOW_BOUND_VERIFIED" if verified_count == len(values) else "PARTIAL" if verified_count else "UNSUPPORTED",
                     "verified_fixture_type_count": verified_count,
                     "unresolved_fixture_type_count": len(values) - verified_count,
+                    "compound_identity_status": compound_status,
+                    "compound_identity_failure_reason": compound_failure_reason,
                 }
                 snapshot = self.state.put(resource, values, source=self.fixture_type_export_provider.source, capability=capability)
             elif resource == "sequences":

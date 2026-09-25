@@ -1,6 +1,6 @@
 # ZEN Local Operator API
 
-Status: **IMPLEMENTED FOUNDATION / OPENCLAW PLUGIN PENDING**
+Status: **IMPLEMENTED / OPENCLAW PLUGIN + LOCAL E2E VERIFIED**
 
 This is the narrow local API boundary intended for the OpenClaw adapter. It is
 separate from the existing LAN/mobile API in `zen_ma2_agent.web_server`.
@@ -15,7 +15,9 @@ ZEN Operator contract
 ZEN Field Core
 ```
 
-The API has no MA write authority and no LLM dependency.
+The API exposes no raw/direct MA write authority. Read-only tools remain read-only;
+planning is bounded, and approval delegates only to ZEN Core's existing explicit
+approval/Builder boundary. The HTTP transport itself has no LLM dependency.
 
 ## Current endpoints
 

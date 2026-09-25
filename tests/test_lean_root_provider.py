@@ -153,6 +153,15 @@ class LeanRootProviderTests(unittest.TestCase):
                 resource_map=resource_map(),
             )
 
+    def test_fixture_type_capability_dimmer_status_compiles(self):
+        mapped = resource_map("SHOW_BOUND_VERIFIED_FIXTURE_TYPE_CAPABILITY")
+        plan, _ = compile_lean_artistic_intent(
+            {"cues": [{"fade": 0, "actions": [{"group": 1, "dimmer": 50}]}]},
+            request="x",
+            resource_map=mapped,
+        )
+        self.assertEqual(plan["cues"][0]["actions"][0]["level"], 50)
+
     def test_unknown_dimmer_fails_closed(self):
         with self.assertRaisesRegex(ArtisticPlanCompileError, "Dimmer application"):
             compile_lean_artistic_intent(

@@ -8,9 +8,9 @@
     "active_objective": "Complete FULL_ARTISTIC_PATH_001 with a convenient autonomous runtime: one Lighting Designer produces artistic intent; ZEN resolves implementation details, allocates new MA2 objects from the first safe free slot, self-heals ordinary collisions and resumes compiled canonical plans after backend failures. Hard stops are reserved for destructive/unsafe boundaries such as Patch/Address/Fixture identity, Fixture 9999, foreign-object overwrite, arbitrary raw MA/Lua/Telnet or paid-provider use."
   },
   "last_closed_task": {
-    "id": "OPENCLAW_MA2_VISUAL_OBSERVATION_001",
-    "status": "CLOSED_SUCCESS_READ_ONLY_E2E",
-    "result": "OpenClaw 2026.9.4 now exposes zen_ma_visual as a ninth bounded ZEN tool. A real OpenClaw Agent E2E call captured the current grandMA2 onPC window through Windows PrintWindow, sent the image through GPT-5.6 Sol vision, and returned bounded pixel-grounded observations with stage_view_visible=false when Stage/3D was not actually visible. The vision model had no tools or MA authority, ZEN retained verified_physical_fact=false for visual notes, MA2_WRITES=0, Field Core remained ONLINE, and MA connection remained READY. Full regression: 800 tests PASS; plugin tests 2/2 PASS."
+    "id": "OPENCLAW_SHEESH_DESIGN_PREVIEW_001",
+    "status": "CLOSED_SUCCESS_PREVIEW_ONLY_E2E",
+    "result": "The live OpenClaw/ZEN design path now reaches a real pending Preview on the current grandMA2 3.9.60 Show without MA writes. The SHEESH request produced a 20-Cue typed plan, allocated unused Sequence 302 and Executor 2.8, passed Builder allow-list validation, and stopped at explicit approval with root_state READY / phase PREVIEW. Root fixes were: compound zero-based FixtureType export binding, FixtureType-capability Dimmer execution evidence promotion only when exact selection safely accepts root capability, ASCII-only ZEN operational Sequence label derivation, and storing the actually allocated Executor in Builder metadata while retaining the requested page hint separately. Full regression: 804 tests PASS. Approval was not invoked and MA2 writes remain zero."
   },
   "next_acceptance_gate": {
     "id": "FULL_ARTISTIC_PATH_001_CUE_CONTENT_READBACK",
@@ -381,6 +381,28 @@
         "OPENCLAW_PLUGIN_TESTS_2_OF_2_PASS"
       ],
       "limitations": "The current live capture showed normal MA2 UI/System Monitor rather than an actual Stage/3D view, so this proves background MA-window capture and honest visual classification, not Stage View scene understanding. The observer does not click or switch MA screens, does not bind pixel observations to current-Show physical facts, and cannot authorize or perform MA writes."
+    },
+    {
+      "id": "OPENCLAW_SHEESH_DESIGN_PREVIEW_001",
+      "source": "zen_ma2_agent/core.py + zen_ma2_agent/artistic_resources.py + zen_ma2_agent/builder/draft.py + live Operator API Preview",
+      "status": "CLOSED_SUCCESS_PREVIEW_ONLY_E2E",
+      "outcomes": [
+        "FIXTURE_TYPE_ZERO_BASED_COMPOUND_BINDING_RUNTIME_WIRED",
+        "CURRENT_SHOW_FIXTURE_TYPES_2_TO_7_SHOW_BOUND_VERIFIED",
+        "DIMMER_EXECUTION_EVIDENCE_PROMOTED_ONLY_WHEN_EXACT_SELECTION_ACCEPTS_ROOT_CAPABILITY",
+        "MULTI_INSTANCE_EXACT_SELECTION_REMAINS_FAIL_CLOSED",
+        "ZEN_OPERATIONAL_SEQUENCE_LABELS_ASCII_ONLY",
+        "ALLOCATED_EXECUTOR_METADATA_MATCHES_ACTUAL_COMMAND",
+        "REQUESTED_EXECUTOR_HINT_RETAINED_SEPARATELY_FOR_AUDIT",
+        "LIVE_SHEESH_DESIGN_REQUEST_20_CUES",
+        "PREVIEW_SEQUENCE_302",
+        "PREVIEW_EXECUTOR_2_8",
+        "ROOT_STATE_READY_PHASE_PREVIEW",
+        "PENDING_APPROVAL",
+        "MA2_WRITES_ZERO",
+        "REGRESSION_804_TESTS_PASS"
+      ],
+      "limitations": "This closes only the live design-to-Preview path. The generated Preview currently uses verified Dimmer actions on Groups 1-6 and does not by itself prove that color, position, movement or Effect resources should be selected artistically for this request. No approval or MA mutation occurred."
     }
   ],
   "backlog": [
