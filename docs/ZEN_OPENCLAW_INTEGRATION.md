@@ -1,6 +1,6 @@
 # ZEN OpenClaw Integration
 
-Status: **LOCAL OPERATOR API IMPLEMENTED / OPENCLAW HOST PLUGIN PENDING**
+Status: **LOCAL OPERATOR API + OPENCLAW TOOL PLUGIN IMPLEMENTED / LOCAL E2E VERIFIED**
 
 ## Decision
 
@@ -28,8 +28,10 @@ The repository now contains:
 - `zen_ma2_agent/operator_server.py`
 - focused operator API/server tests
 
-No executable OpenClaw Feature Plugin is claimed yet because the exact installed
-OpenClaw version must be verified and pinned first.
+The executable OpenClaw tool plugin now lives at
+`integrations/openclaw/zen-ma2-plugin/`. It is pinned and validated against
+OpenClaw 2026.9.4. The plugin is deliberately UI-agnostic: it exposes typed ZEN
+capabilities while OpenClaw owns the native presentation surface.
 
 ## Current ZEN API layer
 
@@ -116,7 +118,7 @@ zen.watchdog.status
 zen.host.status
 ```
 
-Reserved but intentionally not implemented:
+Implemented typed planning/approval tools:
 
 ```text
 zen.design.request
@@ -124,8 +126,9 @@ zen.preview
 zen.approve
 ```
 
-Reserved actions return structured `NOT_IMPLEMENTED` rather than synthetic
-success.
+These remain bounded by the ZEN Core path. OpenClaw may request planning, render
+a Preview and relay explicit human approval, but it cannot bypass ZEN safety or
+submit arbitrary MA commands.
 
 There is no OpenClaw-facing generic shell, arbitrary filesystem operation, raw
 MA command endpoint, raw Telnet endpoint, or unrestricted proxy.
@@ -186,18 +189,23 @@ authority.
 
 ## Current OpenClaw host status
 
-- OpenClaw Windows Hub is installed and verified on the operator-visible
-  Windows machine, version 2026.9.4;
-- no standalone OpenClaw CLI/Gateway is installed on the operator Windows machine;
-- select the actual headless Gateway / Field Host;
-- install and verify the Gateway on that selected host;
-- record the exact tested Gateway/OpenClaw version from the host that actually runs it;
-- pin that tested version in `compatibility.json`;
-- scaffold the Feature Plugin against that installed SDK/API;
-- connect the plugin to the ZEN Operator API;
-- verify the Hub can operate against the real Gateway/plugin path;
-- do not require a standalone CLI installation on the operator Windows machine
-  unless a later concrete need justifies it.
+Development integration is now verified locally on the operator Windows machine:
+
+- OpenClaw Hub and Gateway runtime are version 2026.9.4;
+- the development Gateway listens on loopback `127.0.0.1:18789`;
+- ZEN Operator API listens on loopback `127.0.0.1:8876`;
+- `zen-ma2` v0.1.0 loads as a native OpenClaw tool plugin;
+- the Gateway tool catalog contains all eight bounded `zen_*` tools;
+- an OpenClaw agent successfully invoked `zen_status` end-to-end;
+- after FieldHost headless MA polling was enabled, the same OpenClaw path
+  reported `MA connection: READY` and `ZEN field: ONLINE`;
+- the local Windows Gateway is a development bridge, not a reversal of the
+  production deployment decision. The final production Gateway/Field Host may
+  still move to the intended headless host later without changing ZEN Core or
+  the operator tool contracts.
+
+No custom ZEN desktop/mobile/dashboard shell should be added merely to duplicate
+an OpenClaw-native surface.
 
 ## Later runtime work
 

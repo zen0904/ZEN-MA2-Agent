@@ -1,6 +1,6 @@
 # ZEN OpenClaw-First UI Architecture
 
-Status: **ARCHITECTURE_DECISION / IMPLEMENTATION_PENDING**
+Status: **IMPLEMENTED / LOCAL END-TO-END VERIFIED ON OPENCLAW 2026.9.4**
 
 This document records the current UI decision for ZEN MA2 Agent.
 
@@ -185,6 +185,28 @@ FINALIZER          IDLE / RUNNING / DONE / FAILED / UNKNOWN
 
 Do not convert unknown state into an invented positive state for UI convenience.
 
+## Native-surface adaptation rule
+
+ZEN does not choose a presentation surface. It exposes typed semantic capabilities
+and structured state; OpenClaw chooses the native surface appropriate to the
+current client and interaction.
+
+Examples include chat/tool calls, native status/dashboard views, progress UI,
+approval interaction, mobile/desktop clients, and later OpenClaw surfaces that
+can consume the same tool contracts.
+
+This means:
+
+- ZEN status is semantic state, not a ZEN-owned status widget.
+- ZEN Preview is semantic plan/safety/command data, not a custom preview window.
+- ZEN Approval is an explicit authority transition, not a custom button stack.
+- ZEN progress/errors/verification remain structured data so OpenClaw can render
+  them differently on different clients.
+- no OpenClaw surface receives raw Telnet, arbitrary MA command, shell, Patch,
+  Address or Fixture-identity authority.
+
+A new OpenClaw client/surface should normally require zero ZEN Core changes.
+
 ## No duplicate full frontend
 
 Unless a concrete OpenClaw limitation is verified, do not start a separate project for:
@@ -236,13 +258,17 @@ Upgrades should be compatibility-tested before deployment to the Field Node.
 As of this decision:
 
 ```text
-OPENCLAW_FIRST_UI=DECIDED
+OPENCLAW_FIRST_UI=IMPLEMENTED
 OPENCLAW_WINDOWS_HUB=VERIFIED_2026.9.4
-OPENCLAW_GATEWAY_HOST=UNSELECTED
-ZEN_OPENCLAW_PLUGIN=NOT_IMPLEMENTED
-ZEN_UI_ADAPTER=NOT_IMPLEMENTED
+OPENCLAW_DEV_GATEWAY=WINDOWS_LOOPBACK_127.0.0.1_18789
+OPENCLAW_PRODUCTION_GATEWAY_HOST=STILL_SEPARATE_DEPLOYMENT_DECISION
+ZEN_OPENCLAW_PLUGIN=IMPLEMENTED_V0.1.0
+ZEN_OPERATOR_API=127.0.0.1_8876
+ZEN_NATIVE_SURFACE_ADAPTATION=ENABLED_BY_TYPED_TOOL_CONTRACTS
+OPENCLAW_TO_ZEN_STATUS_E2E=PASS
+MA2_HEADLESS_AUTO_CONNECT=READY_VERIFIED
 FULL_CUSTOM_ZEN_FRONTEND=NOT_PLANNED
-MA2_WRITES=0
+RAW_OPENCLAW_TO_MA_COMMAND_AUTHORITY=NO
 ```
 
 The current computer being off does not block architecture/documentation work in Git, but it does block actual OpenClaw installation, local plugin loading, browser/UI verification, and local test execution.

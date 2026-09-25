@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import threading
+import time
 from dataclasses import dataclass
 from typing import Any, Iterable
 
@@ -36,6 +37,9 @@ class FieldHostConfig:
     watchdog_interval_seconds: float = 1.0
     worker_health_interval_seconds: float = 5.0
     worker_health_timeout_seconds: float = 2.0
+    auto_connect_ma2: bool = True
+    ma_poll_interval_seconds: float = 0.05
+    ma_reconnect_interval_seconds: float = 2.0
 
 
 class FieldHost:
@@ -133,6 +137,90 @@ class FieldHost:
             approve_handler=approve_handler,
         )
         self._stop = threading.Event()
+        self._ma_thread: threading.Thread | None = None
+        self._ma_next_retry_at = 0.0
+        self.ma_runtime_status: dict[str, Any] = {
+            "state": "IDLE",
+            "last_error": None,
+        }
+
+    def _ma_settings(self) -> dict[str, Any]:
+        runtime = getattr(self.core, "runtime", None)
+        preferences = getattr(runtime, "preferences", {}) if runtime is not None else {}
+        ma2 = preferences.get("ma2", {}) if isinstance(preferences, dict) else {}
+        return dict(ma2) if isinstance(ma2, dict) else {}
+
+    def _poll_ma_runtime_once(self) -> None:
+        """Advance the existing MA client state machine and retry safe local connects.
+
+        Connection establishment is transport setup only. It never authorizes or
+        executes MA writes; Preview/Approval/Builder remain the mutation boundary.
+        """
+        runtime = getattr(self.core, "runtime", None)
+        if runtime is None:
+            self.ma_runtime_status = {"state": "NO_RUNTIME", "last_error": None}
+            return
+
+        raw_state = str(
+            getattr(getattr(runtime, "state", None), "value", getattr(runtime, "state", ""))
+            or ""
+        ).upper()
+        now = time.monotonic()
+
+        if (
+            self.config.auto_connect_ma2
+            and raw_state == "DISCONNECTED"
+            and now >= self._ma_next_retry_at
+        ):
+            ma2 = self._ma_settings()
+            username = ma2.get("username")
+            host = ma2.get("host")
+            port = ma2.get("port")
+            connect = getattr(self.core, "connect", None)
+            if callable(connect) and isinstance(username, str) and username.strip():
+                try:
+                    connect(str(host or "127.0.0.1"), port or 30000, username, "")
+                except Exception as exc:
+                    self._ma_next_retry_at = now + max(
+                        0.1, float(self.config.ma_reconnect_interval_seconds)
+                    )
+                    self.ma_runtime_status = {
+                        "state": "RETRY_WAIT",
+                        "last_error": type(exc).__name__,
+                    }
+                else:
+                    self._ma_next_retry_at = 0.0
+                    self.ma_runtime_status = {
+                        "state": "CONNECTING",
+                        "last_error": None,
+                    }
+
+        tick = getattr(self.core, "tick", None)
+        if callable(tick):
+            try:
+                tick()
+            except Exception as exc:
+                self.ma_runtime_status = {
+                    "state": "POLL_ERROR",
+                    "last_error": type(exc).__name__,
+                }
+                return
+
+        current = str(
+            getattr(getattr(runtime, "state", None), "value", getattr(runtime, "state", ""))
+            or ""
+        ).upper()
+        if current:
+            self.ma_runtime_status = {
+                "state": current,
+                "last_error": self.ma_runtime_status.get("last_error"),
+            }
+
+    def _ma_runtime_loop(self) -> None:
+        interval = max(0.01, float(self.config.ma_poll_interval_seconds))
+        while not self._stop.is_set():
+            self._poll_ma_runtime_once()
+            self._stop.wait(interval)
 
     def _bridge_status_payload(self) -> str:
         remote = "YES" if self.worker_registry.remote_ai_available else "NO"
@@ -197,13 +285,23 @@ class FieldHost:
         return self._status_provider().to_dict()
 
     def start(self) -> None:
+        self._stop.clear()
         self.bridge.start()
         if self.worker_health is not None:
             self.worker_health.start()
+        self._ma_thread = threading.Thread(
+            target=self._ma_runtime_loop,
+            name="zen-ma-runtime",
+            daemon=True,
+        )
+        self._ma_thread.start()
         self.watchdog.start()
         try:
             self.operator.start()
         except Exception:
+            self._stop.set()
+            if self._ma_thread is not None:
+                self._ma_thread.join(timeout=1.0)
             self.watchdog.stop()
             if self.worker_health is not None:
                 self.worker_health.stop()
@@ -211,12 +309,21 @@ class FieldHost:
             raise
 
     def stop(self) -> None:
+        self._stop.set()
+        if self._ma_thread is not None:
+            self._ma_thread.join(timeout=1.0)
+            self._ma_thread = None
         self.operator.stop()
         self.watchdog.stop()
         if self.worker_health is not None:
             self.worker_health.stop()
         self.bridge.stop()
-        self._stop.set()
+        disconnect = getattr(self.core, "disconnect", None)
+        if callable(disconnect):
+            try:
+                disconnect()
+            except Exception:
+                pass
 
     def run_forever(self) -> None:
         self.start()

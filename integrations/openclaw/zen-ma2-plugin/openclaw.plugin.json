@@ -1,0 +1,31 @@
+{
+  "id": "zen-ma2",
+  "name": "ZEN MA2",
+  "description": "Typed OpenClaw tools for the ZEN grandMA2 assistant. ZEN remains the safety, preview, approval, builder and MA authority.",
+  "version": "0.1.0",
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "operatorBaseUrl": {
+        "type": "string",
+        "description": "ZEN Operator API base URL. Development default is loopback-only."
+      }
+    },
+    "additionalProperties": false
+  },
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": [
+      "zen_status",
+      "zen_ma_status",
+      "zen_design_request",
+      "zen_preview",
+      "zen_approve",
+      "zen_worker_status",
+      "zen_watchdog_status",
+      "zen_host_status"
+    ]
+  }
+}
