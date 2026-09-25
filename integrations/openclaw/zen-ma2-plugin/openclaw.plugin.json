@@ -20,6 +20,7 @@
     "tools": [
       "zen_status",
       "zen_ma_status",
+      "zen_ma_visual",
       "zen_design_request",
       "zen_preview",
       "zen_approve",

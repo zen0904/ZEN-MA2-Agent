@@ -155,6 +155,7 @@ zen.status
 zen.worker.status
 zen.ma.status
 zen.artifact.latest
+zen.ma.visual
 zen.design.request
 zen.preview
 zen.approve
@@ -266,12 +267,17 @@ ZEN_OPENCLAW_PLUGIN=IMPLEMENTED_V0.1.0
 ZEN_OPERATOR_API=127.0.0.1_8876
 ZEN_NATIVE_SURFACE_ADAPTATION=ENABLED_BY_TYPED_TOOL_CONTRACTS
 OPENCLAW_TO_ZEN_STATUS_E2E=PASS
+OPENCLAW_TO_ZEN_MA_VISUAL_E2E=PASS
+MA2_BACKGROUND_WINDOW_CAPTURE=PRINTWINDOW_VERIFIED
+VISION_OBSERVATION_AUTHORITY=READ_ONLY_NO_TOOLS_NO_MA_WRITES
 MA2_HEADLESS_AUTO_CONNECT=READY_VERIFIED
 FULL_CUSTOM_ZEN_FRONTEND=NOT_PLANNED
 RAW_OPENCLAW_TO_MA_COMMAND_AUTHORITY=NO
 ```
 
-The current computer being off does not block architecture/documentation work in Git, but it does block actual OpenClaw installation, local plugin loading, browser/UI verification, and local test execution.
+The current Windows development host has now passed local plugin loading,
+Field Core/MA status, and read-only MA-window visual E2E verification. Production
+Gateway placement remains a separate deployment decision.
 
 ## Non-goals of this decision
 

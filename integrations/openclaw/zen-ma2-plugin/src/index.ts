@@ -84,6 +84,15 @@ export default defineToolPlugin({
         invokeZen("zen.ma.status", {}, config, context.signal),
     }),
     tool({
+      name: "zen_ma_visual",
+      label: "ZEN MA Visual",
+      description:
+        "Capture the current grandMA2 onPC window and return bounded pixel-grounded visual observations. Read-only; the vision model has no MA write authority.",
+      parameters: Type.Object({}, { additionalProperties: false }),
+      execute: async (_params, config, context) =>
+        invokeZen("zen.ma.visual", {}, config, context.signal),
+    }),
+    tool({
       name: "zen_design_request",
       label: "ZEN Design Request",
       description:

@@ -8,9 +8,9 @@
     "active_objective": "Complete FULL_ARTISTIC_PATH_001 with a convenient autonomous runtime: one Lighting Designer produces artistic intent; ZEN resolves implementation details, allocates new MA2 objects from the first safe free slot, self-heals ordinary collisions and resumes compiled canonical plans after backend failures. Hard stops are reserved for destructive/unsafe boundaries such as Patch/Address/Fixture identity, Fixture 9999, foreign-object overwrite, arbitrary raw MA/Lua/Telnet or paid-provider use."
   },
   "last_closed_task": {
-    "id": "CUE_EFFECT_AT_EFFECT_REAL_MACHINE_001",
-    "status": "CLOSED_SUCCESS",
-    "result": "On the fingerprinted grandMA2 3.9.60 Test Show, owner-approved Agent-owned Effect 2 was created for Group 1 and an isolated disposable Sequence 6 / Cue 1 POC proved the AT_EFFECT_POOL_CALL grammar. Fresh Sequence Export content readback verified Effect 2 for every current Group 1 member. Capability is REAL_MACHINE_CONTENT_VERIFIED with SHA-256 2801690a2c512bd0fc5ba1930aef4cc2538090357e6b086519619beecaab4cbd. Fixture 9999, Patch/Address/Fixture identity and foreign objects were untouched."
+    "id": "OPENCLAW_MA2_VISUAL_OBSERVATION_001",
+    "status": "CLOSED_SUCCESS_READ_ONLY_E2E",
+    "result": "OpenClaw 2026.9.4 now exposes zen_ma_visual as a ninth bounded ZEN tool. A real OpenClaw Agent E2E call captured the current grandMA2 onPC window through Windows PrintWindow, sent the image through GPT-5.6 Sol vision, and returned bounded pixel-grounded observations with stage_view_visible=false when Stage/3D was not actually visible. The vision model had no tools or MA authority, ZEN retained verified_physical_fact=false for visual notes, MA2_WRITES=0, Field Core remained ONLINE, and MA connection remained READY. Full regression: 800 tests PASS; plugin tests 2/2 PASS."
   },
   "next_acceptance_gate": {
     "id": "FULL_ARTISTIC_PATH_001_CUE_CONTENT_READBACK",
@@ -360,6 +360,27 @@
         "REGRESSION_771_TESTS_PASS"
       ],
       "limitations": "The retained 07:48:20 raw export was captured after an earlier 07:47:07 parent-reference overwrite and 07:47:11 parent-reference rollback, so its 16-member .1+.2 state cannot establish the original pre-write exact membership. The 07:53:28 .1-only overwrite is directly evidenced and proves the old reorder path could destroy exact instance identity, but the correct repair target remains unresolved until pre-07:47:07 identity is recovered or independently proven. No Group repair write has been performed."
+    },
+    {
+      "id": "OPENCLAW_MA2_VISUAL_OBSERVATION_001",
+      "source": "docs/ZEN_OPENCLAW_INTEGRATION.md + zen_ma2_agent/ma2_visual_observation.py",
+      "status": "CLOSED_SUCCESS_READ_ONLY_E2E",
+      "outcomes": [
+        "OPENCLAW_2026_9_4_PLUGIN_NINE_TYPED_ZEN_TOOLS",
+        "ZEN_MA_VISUAL_REGISTERED_AND_VISIBLE_TO_AGENT",
+        "WINDOWS_PRINTWINDOW_BACKGROUND_MA2_CAPTURE_READABLE",
+        "GPT_5_6_SOL_VISUAL_OBSERVATION_E2E_PASS",
+        "STAGE_VIEW_FALSE_WHEN_STAGE_3D_NOT_VISIBLE",
+        "VISUAL_OBSERVATIONS_REMAIN_NON_AUTHORITATIVE",
+        "VISION_MODEL_TOOLS_AVAILABLE_FALSE",
+        "VISION_MODEL_MA_WRITE_AUTHORITY_NONE",
+        "FIELD_CORE_ONLINE_AFTER_RESTART",
+        "MA_CONNECTION_READY_AFTER_RESTART",
+        "MA2_WRITES_ZERO",
+        "REGRESSION_800_TESTS_PASS",
+        "OPENCLAW_PLUGIN_TESTS_2_OF_2_PASS"
+      ],
+      "limitations": "The current live capture showed normal MA2 UI/System Monitor rather than an actual Stage/3D view, so this proves background MA-window capture and honest visual classification, not Stage View scene understanding. The observer does not click or switch MA screens, does not bind pixel observations to current-Show physical facts, and cannot authorize or perform MA writes."
     }
   ],
   "backlog": [

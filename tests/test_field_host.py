@@ -169,26 +169,59 @@ class FieldHostTests(unittest.TestCase):
         with patch(
             "zen_ma2_agent.field_host.load_portable_lean_design_intelligence",
             return_value=provider,
-        ) as load, patch("zen_ma2_agent.field_host.AgentCore", return_value=fake_core) as core_cls:
+        ) as load, patch(
+            "zen_ma2_agent.field_host.load_openclaw_infer_design_intelligence"
+        ) as openclaw_load, patch(
+            "zen_ma2_agent.field_host.AgentCore", return_value=fake_core
+        ) as core_cls:
             host = FieldHost(
                 FieldHostConfig(operator_port=8876, bridge_port=8877),
                 worker_registry=WorkerRegistry(),
             )
         load.assert_called_once_with()
+        openclaw_load.assert_not_called()
         core_cls.assert_called_once_with(design_intelligence_provider=provider)
         self.assertIs(host.core, fake_core)
         self.assertTrue(host.design_intelligence_status["configured"])
         self.assertEqual(host.design_intelligence_status["source"], "portable_provider_router")
 
+    def test_default_field_host_falls_back_to_openclaw_local_infer(self):
+        provider = object()
+        fake_core = _FakeCore()
+        with patch(
+            "zen_ma2_agent.field_host.load_portable_lean_design_intelligence",
+            return_value=None,
+        ) as portable_load, patch(
+            "zen_ma2_agent.field_host.load_openclaw_infer_design_intelligence",
+            return_value=provider,
+        ) as openclaw_load, patch(
+            "zen_ma2_agent.field_host.AgentCore", return_value=fake_core
+        ) as core_cls:
+            host = FieldHost(
+                FieldHostConfig(operator_port=8876, bridge_port=8877),
+                worker_registry=WorkerRegistry(),
+            )
+        portable_load.assert_called_once_with()
+        openclaw_load.assert_called_once_with()
+        core_cls.assert_called_once_with(design_intelligence_provider=provider)
+        self.assertTrue(host.design_intelligence_status["configured"])
+        self.assertEqual(host.design_intelligence_status["source"], "openclaw_sdk_isolated_completion")
+        self.assertIsNone(host.design_intelligence_status["error_class"])
+
     def test_injected_core_never_loads_portable_provider_config(self):
         fake_core = _FakeCore()
-        with patch("zen_ma2_agent.field_host.load_portable_lean_design_intelligence") as load:
+        with patch(
+            "zen_ma2_agent.field_host.load_portable_lean_design_intelligence"
+        ) as load, patch(
+            "zen_ma2_agent.field_host.load_openclaw_infer_design_intelligence"
+        ) as openclaw_load:
             host = FieldHost(
                 FieldHostConfig(operator_port=8876, bridge_port=8877),
                 core=fake_core,
                 worker_registry=WorkerRegistry(),
             )
         load.assert_not_called()
+        openclaw_load.assert_not_called()
         self.assertIs(host.core, fake_core)
         self.assertEqual(host.design_intelligence_status["source"], "injected_core")
 
@@ -197,6 +230,9 @@ class FieldHostTests(unittest.TestCase):
         with patch(
             "zen_ma2_agent.field_host.load_portable_lean_design_intelligence",
             side_effect=ValueError("bad provider config"),
+        ), patch(
+            "zen_ma2_agent.field_host.load_openclaw_infer_design_intelligence",
+            return_value=None,
         ), patch("zen_ma2_agent.field_host.AgentCore", return_value=fake_core) as core_cls:
             host = FieldHost(
                 FieldHostConfig(operator_port=8876, bridge_port=8877),

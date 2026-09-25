@@ -1,4 +1,6 @@
+import json
 import unittest
+from pathlib import Path
 
 from zen_ma2_agent.operator_api import (
     ArtifactSummary,
@@ -137,6 +139,26 @@ class OperatorApiTests(unittest.TestCase):
         self.assertEqual(result["status"], "NOT_IMPLEMENTED")
         self.assertIsNone(result["result"])
 
+    def test_ma_visual_tool_is_read_only_projection(self):
+        adapter = OpenClawOperatorAdapter(
+            self._snapshot,
+            visual_observation_provider=lambda: {
+                "schema": "zen.ma2_visual_observation.v0.1",
+                "capture_readable": True,
+                "stage_view_visible": False,
+                "ma2_writes": 0,
+            },
+        )
+        result = adapter.invoke("zen.ma.visual")
+        self.assertEqual(result["status"], "SUCCESS")
+        self.assertEqual(result["result"]["schema"], "zen.ma2_visual_observation.v0.1")
+        self.assertEqual(result["result"]["ma2_writes"], 0)
+
+    def test_ma_visual_tool_is_not_implemented_without_provider(self):
+        result = OpenClawOperatorAdapter(self._snapshot).invoke("zen.ma.visual")
+        self.assertEqual(result["status"], "NOT_IMPLEMENTED")
+        self.assertIsNone(result["result"])
+
     def test_mutating_tools_are_reserved_but_not_implemented(self):
         adapter = OpenClawOperatorAdapter(self._snapshot)
         for name in ("zen.design.request", "zen.preview", "zen.approve"):
@@ -145,6 +167,18 @@ class OperatorApiTests(unittest.TestCase):
                 self.assertEqual(result["status"], "NOT_IMPLEMENTED")
                 self.assertIsNone(result["result"])
                 self.assertIsNone(result["error"])
+
+    def test_tool_result_contract_enum_matches_operator_allowed_tools(self):
+        contract = (
+            Path(__file__).resolve().parents[1]
+            / "integrations"
+            / "openclaw"
+            / "contracts"
+            / "zen_tool_result_v0_1.schema.json"
+        )
+        payload = json.loads(contract.read_text(encoding="utf-8"))
+        declared = set(payload["properties"]["tool"]["enum"])
+        self.assertEqual(declared, set(OpenClawOperatorAdapter.ALLOWED_TOOLS))
 
     def test_unknown_tool_is_rejected_before_result_envelope(self):
         adapter = OpenClawOperatorAdapter(self._snapshot)

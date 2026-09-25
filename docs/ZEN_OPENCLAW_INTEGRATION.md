@@ -41,8 +41,9 @@ operator-facing boundary is now the narrow, versioned OpenClaw Operator API:
 ```text
 OpenClaw Operator API
 = localhost-first
-= read-only today
-= no direct MA write authority
+= bounded typed tools
+= read-only observation plus ZEN-gated planning/approval
+= no raw/direct MA command authority
 ```
 
 ZEN core services remain independent of OpenClaw, but there is no second
@@ -116,6 +117,7 @@ zen.ma.status
 zen.artifact.latest
 zen.watchdog.status
 zen.host.status
+zen.ma.visual
 ```
 
 Implemented typed planning/approval tools:
@@ -133,6 +135,15 @@ submit arbitrary MA commands.
 There is no OpenClaw-facing generic shell, arbitrary filesystem operation, raw
 MA command endpoint, raw Telnet endpoint, or unrestricted proxy.
 
+`zen.ma.visual` is a read-only Visual Evidence path. On Windows it locates the
+visible `grandMA2 onPC` top-level window and captures it with background
+`PrintWindow` rendering, then asks the current OpenClaw model to describe only
+visible pixels. ZEN wraps those notes as `VISUAL_OBSERVATION` with
+`verified_physical_fact=false`. The vision call has no tools and no MA authority;
+it cannot switch screens, click MA2, send Telnet, approve a Preview, or mutate
+the Show. If Stage/3D is not visibly present, `stage_view_visible` must remain
+false.
+
 ## Security boundary
 
 OpenClaw integration must never introduce:
@@ -144,7 +155,9 @@ OpenClaw integration must never introduce:
 - public unauthenticated operator API exposure;
 - bypass of ZEN Safety / Preview / Approval / Resolver / Builder.
 
-`MA2_WRITES=0` remains the integration-phase requirement.
+Status/visual integration verification remains write-free (`MA2_WRITES=0`).
+Any later real mutation still requires the separate ZEN Preview -> explicit
+human approval -> Builder/verification path.
 
 ## Deployment relationship
 
@@ -195,10 +208,19 @@ Development integration is now verified locally on the operator Windows machine:
 - the development Gateway listens on loopback `127.0.0.1:18789`;
 - ZEN Operator API listens on loopback `127.0.0.1:8876`;
 - `zen-ma2` v0.1.0 loads as a native OpenClaw tool plugin;
-- the Gateway tool catalog contains all eight bounded `zen_*` tools;
+- the Gateway tool catalog contains all nine bounded `zen_*` tools;
 - an OpenClaw agent successfully invoked `zen_status` end-to-end;
+- `zen_ma_visual` is registered as the ninth bounded tool and has passed a real
+  OpenClaw-agent end-to-end call through ZEN Field Core;
 - after FieldHost headless MA polling was enabled, the same OpenClaw path
   reported `MA connection: READY` and `ZEN field: ONLINE`;
+- the real visual E2E captured the current `grandMA2 onPC` window in the
+  background and GPT-5.6 Sol correctly returned `capture_readable=true`,
+  `stage_view_visible=false`, bounded UI observations, and `ma2_writes=0`;
+- when no configured portable Lean provider exists, FieldHost can use an
+  isolated OpenClaw SDK completion as the one-shot Designer fallback. That
+  completion receives no tools and still returns through ZEN validation,
+  compiler, Preview and Approval boundaries;
 - the local Windows Gateway is a development bridge, not a reversal of the
   production deployment decision. The final production Gateway/Field Host may
   still move to the intended headless host later without changing ZEN Core or

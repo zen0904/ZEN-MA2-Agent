@@ -196,6 +196,7 @@ def build_operator_status(
 StatusProvider = Callable[[], OperatorStatusSnapshot]
 WatchdogProvider = Callable[[], Mapping[str, Any]]
 HostStatusProvider = Callable[[], Mapping[str, Any]]
+VisualObservationProvider = Callable[[], Mapping[str, Any]]
 DesignRequestHandler = Callable[[str], Mapping[str, Any]]
 PreviewHandler = Callable[[Optional[str]], Mapping[str, Any]]
 ApproveHandler = Callable[[str, bool], Mapping[str, Any]]
@@ -216,6 +217,7 @@ class OpenClawOperatorAdapter:
             "zen.artifact.latest",
             "zen.watchdog.status",
             "zen.host.status",
+            "zen.ma.visual",
         }
     )
     RESERVED_TOOLS = frozenset(
@@ -232,6 +234,7 @@ class OpenClawOperatorAdapter:
         status_provider: StatusProvider,
         watchdog_provider: Optional[WatchdogProvider] = None,
         host_status_provider: Optional[HostStatusProvider] = None,
+        visual_observation_provider: Optional[VisualObservationProvider] = None,
         design_request_handler: Optional[DesignRequestHandler] = None,
         preview_handler: Optional[PreviewHandler] = None,
         approve_handler: Optional[ApproveHandler] = None,
@@ -239,6 +242,7 @@ class OpenClawOperatorAdapter:
         self._status_provider = status_provider
         self._watchdog_provider = watchdog_provider
         self._host_status_provider = host_status_provider
+        self._visual_observation_provider = visual_observation_provider
         self._design_request_handler = design_request_handler
         self._preview_handler = preview_handler
         self._approve_handler = approve_handler
@@ -326,6 +330,17 @@ class OpenClawOperatorAdapter:
                 tool_name,
                 "SUCCESS",
                 dict(self._host_status_provider()),
+                None,
+                request_id,
+            )
+
+        if tool_name == "zen.ma.visual":
+            if self._visual_observation_provider is None:
+                return self._result(tool_name, "NOT_IMPLEMENTED", None, None, request_id)
+            return self._result(
+                tool_name,
+                "SUCCESS",
+                dict(self._visual_observation_provider()),
                 None,
                 request_id,
             )

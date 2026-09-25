@@ -7,6 +7,7 @@ describe("zen-ma2", () => {
     expect(getToolPluginMetadata(entry)?.tools.map((tool) => tool.name)).toEqual([
       "zen_status",
       "zen_ma_status",
+      "zen_ma_visual",
       "zen_design_request",
       "zen_preview",
       "zen_approve",

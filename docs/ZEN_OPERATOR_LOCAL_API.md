@@ -50,6 +50,7 @@ Current read-only tools:
 - `zen.artifact.latest`
 - `zen.watchdog.status`
 - `zen.host.status`
+- `zen.ma.visual`
 
 The normal design entry is `show.program`, reached through the bounded
 `zen.design.request` tool. Internal Skills, read-only providers, resolution,
@@ -63,6 +64,12 @@ not separate operator steps.
 These three tools remain `NOT_IMPLEMENTED` when Field Core handlers are not
 injected. When injected, design delegates to AgentCore planning, preview is
 read-only, and approval delegates to AgentCore's existing approval boundary.
+
+`zen.ma.visual` is independently read-only. When its provider is available it
+captures the current visible `grandMA2 onPC` top-level window, runs a zero-tool
+vision observation, and returns bounded pixel-grounded evidence. Those visual
+notes are not promoted into verified fixture/patch/capability/physical facts
+and the path has no MA write authority.
 
 Unknown tools are rejected. There is no generic shell, filesystem, HTTP proxy,
 raw Telnet, or raw MA command endpoint.
@@ -104,13 +111,13 @@ Node, so loopback is the normal path.
 
 ## What remains pending
 
-- exact OpenClaw version installation and pinning;
-- real OpenClaw Feature Plugin scaffold for that pinned version;
-- browser/Control UI verification;
+- broader browser/Control UI verification beyond the verified native chat/tool path;
 - authenticated private-network policy if a future remote bind is needed;
 - operator-tuned alert thresholds for CPU/RAM/disk/thermal metrics;
 - authenticated/private Worker transport beyond the existing health probe;
 - pipeline progress source wiring;
 - artifact-store source wiring.
 
-`MA2_WRITES=0` remains the requirement for this integration phase.
+Status and visual-observation verification remain write-free (`MA2_WRITES=0`).
+Any real mutation remains behind ZEN Preview -> explicit human approval ->
+Builder/readback; the Operator API still exposes no raw MA/Telnet/shell path.

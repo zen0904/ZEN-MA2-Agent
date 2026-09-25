@@ -16,12 +16,17 @@ The plugin exposes typed ZEN capabilities and returns structured semantic data. 
 
 - `zen_status`
 - `zen_ma_status`
+- `zen_ma_visual`
 - `zen_design_request`
 - `zen_preview`
 - `zen_approve`
 - `zen_worker_status`
 - `zen_watchdog_status`
 - `zen_host_status`
+
+`zen_ma_visual` is read-only. It asks ZEN to capture the current grandMA2 onPC
+window and return bounded pixel-grounded observations; the vision model receives
+no MA tools or write authority.
 
 Default development endpoint: `http://127.0.0.1:8876`.
 

@@ -64,7 +64,7 @@ docs/ZEN_OPENCLAW_INTEGRATION.md
 docs/ZEN_OPENCLAW_FIRST_UI_ARCHITECTURE.md
 ```
 
-The repository already exposes a narrow, versioned Operator API for the future
+The repository exposes a narrow, versioned Operator API used by the pinned
 OpenClaw plugin:
 
 ```text
@@ -82,10 +82,13 @@ zen.ma.status
 zen.artifact.latest
 zen.watchdog.status
 zen.host.status
+zen.ma.visual
 ```
 
-Mutation-facing OpenClaw tools remain reserved until they have a real typed
-backend path.
+Typed planning/approval tools (`zen.design.request`, `zen.preview`,
+`zen.approve`) are implemented through the existing ZEN safety boundary.
+`zen.ma.visual` is a separate read-only background window-capture/vision path;
+it cannot issue MA commands or approve/write a Show.
 
 ## MA-Initiated Bridge
 

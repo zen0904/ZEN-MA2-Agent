@@ -8,6 +8,8 @@ from typing import Any, Iterable
 from .core import AgentCore
 from .host_metrics import HostMetricsProvider
 from .llm.lean_design_adapter import load_portable_lean_design_intelligence
+from .llm.openclaw_infer_adapter import load_openclaw_infer_design_intelligence
+from .ma2_visual_observation import load_ma2_visual_observation_service
 from .ma_bridge.server import (
     DEFAULT_BRIDGE_HOST,
     DEFAULT_BRIDGE_PORT,
@@ -69,6 +71,18 @@ class FieldHost:
             except (OSError, ValueError):
                 design_intelligence = None
                 self.design_intelligence_status["error_class"] = "CONFIGURATION_ERROR"
+
+            if design_intelligence is None:
+                try:
+                    design_intelligence = load_openclaw_infer_design_intelligence()
+                except (OSError, ValueError):
+                    if self.design_intelligence_status["error_class"] is None:
+                        self.design_intelligence_status["error_class"] = "CONFIGURATION_ERROR"
+                else:
+                    if design_intelligence is not None:
+                        self.design_intelligence_status["source"] = "openclaw_sdk_isolated_completion"
+                        self.design_intelligence_status["error_class"] = None
+
             self.design_intelligence_status["configured"] = design_intelligence is not None
             self.core = AgentCore(design_intelligence_provider=design_intelligence)
         else:
@@ -101,6 +115,10 @@ class FieldHost:
         )
 
         self.host_metrics = HostMetricsProvider()
+        try:
+            self.visual_observation_service = load_ma2_visual_observation_service()
+        except (OSError, ValueError):
+            self.visual_observation_service = None
         self.bridge = BridgeServer(
             BridgeDispatcher(status_payload_provider=self._bridge_status_payload),
             host=self.config.bridge_host,
@@ -132,6 +150,11 @@ class FieldHost:
             allow_remote=self.config.allow_remote_operator,
             watchdog_provider=self.watchdog.snapshot,
             host_status_provider=self.host_metrics.snapshot,
+            visual_observation_provider=(
+                self.visual_observation_service.observe
+                if self.visual_observation_service is not None
+                else None
+            ),
             design_request_handler=design_handler,
             preview_handler=preview_handler,
             approve_handler=approve_handler,
