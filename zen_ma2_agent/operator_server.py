@@ -21,6 +21,7 @@ from .operator_api import (
     DesignRequestHandler,
     PreviewHandler,
     ApproveHandler,
+    PositionPreviewHandler,
     build_operator_status,
 )
 from .remote_workers import WorkerRegistry
@@ -115,6 +116,7 @@ def create_operator_app(
     design_request_handler: Optional[DesignRequestHandler] = None,
     preview_handler: Optional[PreviewHandler] = None,
     approve_handler: Optional[ApproveHandler] = None,
+    position_preview_handler: Optional[PositionPreviewHandler] = None,
 ) -> FastAPI:
     """Build the narrow localhost-first API intended for the OpenClaw adapter."""
 
@@ -126,6 +128,7 @@ def create_operator_app(
         design_request_handler,
         preview_handler,
         approve_handler,
+        position_preview_handler,
     )
     app = FastAPI(
         title="ZEN Operator API",
@@ -233,6 +236,7 @@ class OperatorServer:
         design_request_handler: Optional[DesignRequestHandler] = None,
         preview_handler: Optional[PreviewHandler] = None,
         approve_handler: Optional[ApproveHandler] = None,
+        position_preview_handler: Optional[PositionPreviewHandler] = None,
     ):
         if not 1 <= int(port) <= 65535:
             raise ValueError("operator port must be in range 1..65535")
@@ -250,6 +254,7 @@ class OperatorServer:
             design_request_handler,
             preview_handler,
             approve_handler,
+            position_preview_handler,
         )
         self._server: Optional[uvicorn.Server] = None
         self._thread: Optional[threading.Thread] = None

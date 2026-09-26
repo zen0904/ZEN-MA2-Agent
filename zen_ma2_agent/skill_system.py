@@ -114,6 +114,9 @@ class SkillRegistry:
                     elif manifest.id == "effects.cue_application_poc":
                         from .cue_effect_application import CueEffectApplicationSkill
                         self._implementations[manifest.id] = CueEffectApplicationSkill(manifest)
+                    elif manifest.id == "position.application_poc":
+                        from .position_application_evidence import PositionApplicationPocSkill
+                        self._implementations[manifest.id] = PositionApplicationPocSkill(manifest)
                     elif manifest.id == "timecode.offset":
                         from .timecode_offset import TimecodeOffsetSkill
                         self._implementations[manifest.id] = TimecodeOffsetSkill(manifest)

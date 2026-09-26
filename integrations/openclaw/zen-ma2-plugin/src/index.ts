@@ -127,6 +127,29 @@ export default defineToolPlugin({
         invokeZen("zen.preview", { action_id: actionId ?? null }, config, context.signal),
     }),
     tool({
+      name: "zen_position_preview",
+      label: "ZEN Position Application Preview",
+      description:
+        "Freshly revalidate one exact Position applicability probe and register an approval-gated ZEN Preview. Never approves or writes MA2.",
+      parameters: Type.Object({
+        expectedShowFingerprint: Type.String({ minLength: 64, maxLength: 64 }),
+        groupId: Type.Integer({ minimum: 1 }),
+        expectedGroupName: Type.String({ minLength: 1, maxLength: 256 }),
+        expectedExactRefs: Type.Array(Type.String({ minLength: 1, maxLength: 32 }), { minItems: 1, maxItems: 128 }),
+        presetRef: Type.String({ minLength: 3, maxLength: 32 }),
+        expectedPresetLabel: Type.String({ minLength: 1, maxLength: 256 }),
+      }, { additionalProperties: false }),
+      execute: async ({ expectedShowFingerprint, groupId, expectedGroupName, expectedExactRefs, presetRef, expectedPresetLabel }, config, context) =>
+        invokeZen("zen.position.preview", {
+          expected_show_fingerprint: expectedShowFingerprint,
+          group_id: groupId,
+          expected_group_name: expectedGroupName,
+          expected_exact_refs: expectedExactRefs,
+          preset_ref: presetRef,
+          expected_preset_label: expectedPresetLabel,
+        }, config, context.signal),
+    }),
+    tool({
       name: "zen_approve",
       label: "ZEN Approve",
       description:

@@ -43,7 +43,9 @@ from .designer.lean_design_mode import assemble_compact_design_context
 from .designer.lean_provider import LeanDesignIntelligence, LeanDesignProviderError, build_provider_resource_contract, compile_lean_artistic_intent, invoke_primary_design
 from .designer.artistic_plan import ArtisticPlanCompileError
 from .artistic_resources import build_artistic_resource_map
-from .position_application_evidence import PositionApplicationBindingStore
+from .position_application_evidence import (
+    PositionApplicationBindingStore, PositionEvidenceError, build_position_poc_preview,
+)
 from .designer.report import write_real_song_design_report
 from .builder import FirstSongBuildError, ShowPlanBuilder
 from .song_analysis import SongAnalysisAdapter, validate_song_analysis
@@ -205,6 +207,93 @@ class AgentCore:
         workflow = self.skills.plan_intent(intent, self.state, self.runtime.preferences)
         self.runtime.log("cue_effect_application_preview", {"effect": effect_id, "target_group": spec.target_group, "sequence": spec.sequence, "cue": spec.cue_number, "grammar": GRAMMAR_ID})
         return self._queue_workflow(workflow)
+
+    def _fresh_position_poc_profile(self, *, group_id: int, preset_ref: str) -> dict[str, Any]:
+        """Read the exact POC resources from MA2, never from a cached preview."""
+        if (isinstance(group_id, bool) or not isinstance(group_id, int) or group_id < 1
+                or not isinstance(preset_ref, str) or not re.fullmatch(r"2\.[1-9]\d*", preset_ref)):
+            raise PositionEvidenceError("POSITION_POC_TARGET_INVALID")
+        if not self.runtime.ready:
+            raise PositionEvidenceError("MA2_CONNECTION_NOT_READY")
+        for resource in ("groups", "fixtures", "fixture_geometry", "sequences", "presets"):
+            result = self.refresh_state(resource)
+            if result["status"] != "available":
+                raise PositionEvidenceError(f"FRESH_{resource.upper()}_READ_FAILED: {result.get('error')}")
+        groups = self.state.get("groups")
+        for row in groups.values if groups else []:
+            result = self.refresh_state("group_membership", group_no=row["number"])
+            if result["status"] != "available":
+                raise PositionEvidenceError(f"EXACT_GROUP_{row['number']}_READ_FAILED: {result.get('error')}")
+        result = self.refresh_state("fixture_type_profiles")
+        if result["status"] != "available":
+            raise PositionEvidenceError(f"FIXTURE_TYPE_PROFILES_READ_FAILED: {result.get('error')}")
+        # The pool inventory is not the final identity authority for the
+        # selected Position object. The exact direct read must agree.
+        direct = PresetProvider().parse(self.runtime.read_state(f"List Preset {preset_ref}"), "POSITION")
+        profile = self.scan_show_profile()
+        self._recover_bounded_test_show_evidence(profile)
+        candidates = [row for row in profile["presets"] if row.get("reference") == preset_ref]
+        if (len(candidates) != 1 or len(direct) != 1
+                or direct[0].get("reference") != preset_ref
+                or direct[0].get("preset_type") != "POSITION"
+                or direct[0].get("name") != candidates[0].get("name")):
+            raise PositionEvidenceError("POSITION_PRESET_DIRECT_IDENTITY_MISMATCH")
+        return profile
+
+    def _fresh_position_poc_preview(self, *, group_id: int, preset_ref: str) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Rebuild the exact POC from current read-only MA2 state, never cache."""
+        profile = self._fresh_position_poc_profile(group_id=group_id, preset_ref=preset_ref)
+        return profile, build_position_poc_preview(profile, group_id=group_id, preset_ref=preset_ref)
+
+    def preview_position_application_poc(
+        self, *, expected_show_fingerprint: str, group_id: int,
+        expected_group_name: str, expected_exact_refs: list[str],
+        preset_ref: str, expected_preset_label: str,
+    ) -> dict[str, Any]:
+        """Register one exact owner-reviewable Position Action; never execute."""
+        if (not isinstance(expected_show_fingerprint, str)
+                or not re.fullmatch(r"[0-9a-f]{64}", expected_show_fingerprint)
+                or isinstance(group_id, bool) or not isinstance(group_id, int) or group_id < 1
+                or not isinstance(expected_group_name, str) or not expected_group_name
+                or not isinstance(expected_exact_refs, list) or not expected_exact_refs
+                or not isinstance(expected_preset_label, str) or not expected_preset_label):
+            raise PositionEvidenceError("POSITION_POC_EXPECTED_IDENTITY_INVALID")
+        _profile, preview = self._fresh_position_poc_preview(group_id=group_id, preset_ref=preset_ref)
+        if preview["show_identity"]["value"] != expected_show_fingerprint:
+            raise PositionEvidenceError("POSITION_POC_SHOW_FINGERPRINT_DRIFT")
+        if (preview["group"]["name"] != expected_group_name
+                or preview["group"]["exact_refs"] != expected_exact_refs):
+            raise PositionEvidenceError("POSITION_POC_GROUP_IDENTITY_DRIFT")
+        if preview["preset"]["label"] != expected_preset_label:
+            raise PositionEvidenceError("POSITION_POC_PRESET_IDENTITY_DRIFT")
+        workflow = self.skills.plan_intent(
+            Intent("verify_position_application", {"position_preview": preview}, "POSITION_APPLICATION_POC"),
+            self.state, self.runtime.preferences,
+        )
+        result = self._queue_workflow(workflow)
+        action_id = result["action"]["id"]
+        self._root_workflow_status = {"state": "READY", "phase": "PREVIEW", "action_id": action_id}
+        result["action"].update({"root_state": "READY", "current_phase": "PREVIEW",
+                                 "phase": "PREVIEW", "action_id": action_id,
+                                 "preview_id": preview["preview_id"]})
+        self.runtime.log("position_application_poc_preview", {
+            "action_id": action_id, "preview_id": preview["preview_id"],
+            "show_identity": preview["show_identity"], "group": group_id,
+            "preset": preset_ref, "sequence": preview["sequence"]["id"], "ma2_writes": 0,
+        })
+        return result
+
+    def _ensure_position_poc_state_unchanged(self, action: ActionRecord) -> dict[str, Any]:
+        """Approval-time revalidation; a new free slot never rewrites approval."""
+        approved = action.workflow.task.intent.parameters.get("position_preview")
+        if not isinstance(approved, dict):
+            raise PositionEvidenceError("POSITION_POC_APPROVED_PREVIEW_MISSING")
+        profile, current = self._fresh_position_poc_preview(
+            group_id=approved["group"]["id"], preset_ref=approved["preset"]["reference"])
+        if current != approved:
+            raise PositionEvidenceError("POSITION_POC_STALE_APPROVED_PREVIEW")
+        self.skills.get("position.application_poc")
+        return profile
 
     def _preview_designer_input(self, song_input: dict[str, Any], *, analysis: dict[str, Any] | None) -> dict[str, Any]:
         # A First Song/Effect-resource resolution needs pool identities, not a
@@ -917,7 +1006,12 @@ class AgentCore:
         if not selected or selected not in self.actions:
             return {"status": "NO_PREVIEW", "action": None}
         record = self.actions[selected]
-        return {"status": record.status, "action": {"id": record.id, **record.plan}}
+        action = {"id": record.id, **record.plan}
+        if record.workflow.task.intent.kind == "verify_position_application":
+            preview = record.workflow.task.intent.parameters["position_preview"]
+            action.update({"action_id": record.id, "preview_id": preview["preview_id"],
+                           "phase": "PREVIEW" if record.status == "PENDING_APPROVAL" else record.status})
+        return {"status": record.status, "action": action}
 
     def _plan_effect_builder(self, intent: Any) -> WorkflowPlan:
         """Refresh only the inventories needed to bind a safe EffectSpec."""
@@ -1350,6 +1444,8 @@ class AgentCore:
         action.status = "CANCELLED"
         if self._active_action_id == action_id:
             self._active_action_id = None
+        if action.workflow.task.intent.kind == "verify_position_application":
+            self._root_workflow_status.update({"state": "CANCELLED", "phase": "DONE", "action_id": action_id})
         self.progress = "Idle"
         self.events.emit("plan", self.snapshot())
         return True
@@ -1407,6 +1503,8 @@ class AgentCore:
             self._ensure_timecode_state_unchanged(action)
         elif execution_intent.kind == "geometry_clone":
             self._ensure_geometry_clone_state_unchanged(action)
+        elif execution_intent.kind == "verify_position_application":
+            self._ensure_position_poc_state_unchanged(action)
         action.status = "APPROVED"
         self.progress = "Executing"
         self.events.emit("progress", {"stage": self.progress})
@@ -1414,6 +1512,8 @@ class AgentCore:
             intent_kind = execution_intent.kind
             if intent_kind == "verify_cue_effect_application":
                 result = self._execute_cue_effect_application_poc(action)
+            elif intent_kind == "verify_position_application":
+                result = self._execute_position_application_poc(action)
             else:
                 commands = self.skills.approved_commands(action.workflow.task.skill_id, action.workflow)
                 results = self.runtime.execute_approved_commands(commands)
@@ -1444,6 +1544,8 @@ class AgentCore:
             self._active_action_id = None
             if action.workflow.task.skill_id == "show.program":
                 self._root_workflow_status.update({"state": "EXECUTED", "phase": "VERIFY_ACTUAL_CONTENT", "action_id": action_id})
+            elif intent_kind == "verify_position_application":
+                self._root_workflow_status.update({"state": "EXECUTED", "phase": "DONE", "action_id": action_id})
             self.chat.append({"role": "assistant", "kind": "result", "text": action.result, "action_id": action_id})
             self.progress = "Verifying"
         except Exception as exc:
@@ -1453,11 +1555,66 @@ class AgentCore:
                 self._root_workflow_status.update(
                     {"state": "FAILED", "phase": "SELF_HEAL_IF_NEEDED", "action_id": action_id}
                 )
+            elif execution_intent.kind == "verify_position_application":
+                self._root_workflow_status.update({"state": "FAILED", "phase": "DONE", "action_id": action_id})
             self.progress = "Idle"
             self.events.emit("error", {"message": str(exc)})
             raise
         self.events.emit("execution", self.snapshot())
         return {"id": action.id, "status": action.status, "result": action.result}
+
+    def _execute_position_application_poc(self, action: ActionRecord) -> str:
+        """Future explicit-approval path; never called by Preview registration.
+
+        The native Cue export is the sole binding authority. A partial new
+        Sequence is retained for manual, identity-checked recovery; no Delete
+        or automatic rollback command is generated.
+        """
+        preview = action.workflow.task.intent.parameters["position_preview"]
+        commands = self.skills.approved_commands(action.workflow.task.skill_id, action.workflow)
+        if len(commands) != 6:
+            raise PositionEvidenceError("POSITION_POC_APPROVED_COMMAND_PLAN_INVALID")
+        responses: list[str] = []
+        try:
+            for command in commands[:5]:
+                response = self.runtime.execute_approved_commands((command,))[0]
+                responses.append(response)
+                if ma2_response_has_error(response):
+                    raise PositionEvidenceError(f"POSITION_POC_MA_COMMAND_REJECTED: {command}: {response}")
+            sequence = preview["sequence"]["id"]
+            label = preview["sequence"]["label"]
+            self.verify_first_song_metadata(
+                sequence, label, [{"cue_number": 1, "label": "POSITION_APPLICATION_POC", "fade": 0}],
+            )
+            if self.sequence_export_provider is None:
+                raise PositionEvidenceError("POSITION_POC_SEQUENCE_EXPORT_UNAVAILABLE")
+            discovery = self.sequence_export_provider.export_and_discover(
+                self.runtime, sequence, self.runtime.preferences.get("state_adapter"), retain_export=True,
+            )
+            # The stable scanned identity excludes the newly created Sequence,
+            # but all Group/Preset/fixture evidence is checked again here.
+            profile = self._fresh_position_poc_profile(
+                group_id=preview["group"]["id"], preset_ref=preview["preset"]["reference"])
+            if profile["show_identity"] != preview["show_identity"]:
+                raise PositionEvidenceError("POSITION_POC_POSTWRITE_SHOW_IDENTITY_DRIFT")
+            binding = self.position_application_bindings.record_after_readback(profile, preview, discovery)
+            self.runtime.log("position_application_poc_verified", {
+                "action_id": action.id, "sequence": sequence, "group": preview["group"]["id"],
+                "preset": preview["preset"]["reference"],
+                "sequence_export_sha256": binding["evidence"]["sequence_export_sha256"],
+            })
+            return f"Position application content VERIFIED for Sequence {sequence}; binding recorded."
+        except Exception as exc:
+            self.runtime.log("position_application_poc_failed", {
+                "action_id": action.id, "sequence": preview["sequence"]["id"],
+                "error": str(exc), "automatic_delete": False,
+            })
+            raise
+        finally:
+            try:
+                self.runtime.execute_approved_commands((commands[-1],))
+            except Exception as clear_exc:
+                self.runtime.log("position_application_poc_clear_failed", {"error": str(clear_exc)})
 
     def _execute_cue_effect_application_poc(self, action: ActionRecord) -> str:
         """Execute the POC in a guarded two-phase sequence.

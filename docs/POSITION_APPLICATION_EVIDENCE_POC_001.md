@@ -1,8 +1,43 @@
 # Bounded Position Application Evidence PoC
 
-Status: **read-only discovery and non-executable Preview foundation**. No
-Position Group/Preset binding is verified by this implementation alone. No
-MA2 Show write, provider call, or owner approval occurred in this gate.
+Status: **approval-aware Action Preview implemented; application unverified**.
+The prior standalone non-executable Preview remains historical discovery
+evidence, not an execution authority. No Position Group/Preset binding is
+verified by this implementation alone. No MA2 Show write, provider call, or
+owner approval occurred in this gate.
+
+`zen.position.preview` now requires explicit expected Show fingerprint, Group
+ID/name/exact ordered refs, and Position Preset ref/label. Before registering
+an Action it freshly reads the Show's Groups, exact Group exports, Fixtures,
+geometry, FixtureType profiles, Sequence inventory, Preset inventory, and the
+exact Position Preset. Any drift fails closed. Sequence allocation may advance
+to a newly free safe slot, but that new slot is displayed in the Action.
+Registration returns a nonempty `action_id`, `PENDING_APPROVAL`,
+`root_state=READY`, and `phase=PREVIEW`; it never calls approval or MA transport
+execution. The Action contains only the deterministic six-command candidate,
+one new Agent-owned Sequence/Cue, and `Executor=None`.
+
+The shared `zen.approve` boundary is not invoked by Preview. If a human later
+explicitly approves, the Core must re-read the same Show/Group/Preset/Sequence
+facts and reject any change to the approved Preview, including new Sequence
+occupancy. Only after that check may the bounded deterministic plan execute.
+Command acceptance and Cue metadata are insufficient: the existing native
+Sequence Export verifier and `derive_position_application_binding()` must
+prove exact PAN/TILT Preset evidence for every member before
+`PositionApplicationBindingStore.record_after_readback()` records a binding.
+A failed post-write verification retains the new Sequence as audit evidence;
+no automatic Delete is generated. This future approval path was not executed
+in this task. Position resources remain absent from the normal Designer while
+the verified binding store is empty.
+
+Offline regression for this approval-boundary implementation: 828/828
+`unittest` PASS, `main.py --self-check` PASS, `git diff --check` PASS.
+On this isolated development checkout, TCP port 30000 was listening but the
+currently deployed Field Core (8876) and MA Bridge (8877) were not online.
+Therefore no durable live Action was registered, no new `action_id` was
+claimed, and no MA2 write occurred. This local availability observation does
+not change the product-level Preview capability or promote application
+evidence.
 
 ## Current Show discovery (grandMA2 onPC 3.9.60)
 
@@ -42,13 +77,14 @@ are time-specific read-only observations; the next session must re-read them.
 
 ## Engineering boundary
 
-`zen.position_application_poc_preview.v0.1` is a deterministic, explicitly
-**non-executable** Preview. It binds a fresh exact Group Export membership, a
+`zen.position_application_poc_preview.v0.1` remains a deterministic,
+**non-executable standalone** Preview. It binds a fresh exact Group Export membership, a
 show-bound POSITION technical profile, exact current Preset type/ref/label,
 and a first-free non-protected Sequence candidate. It describes one typed
 `CALL_PRESET` action and the existing deterministic MA2 command grammar. It
-does not register an approval action, send a command, allocate an Executor, or
-authorize a write. The Group 1 / Preset 2.1 candidate is an engineering probe,
+does not itself register an approval action; the new Core/Skill wrapper does.
+Neither path sends a command or allocates an Executor at Preview time. The
+Group 1 / Preset 2.1 candidate is an engineering probe,
 not an aesthetic recommendation or a Designer resource.
 
 `zen.position_preset_application_binding.v0.1` can be derived only **after a
@@ -75,12 +111,12 @@ Position Preset is exposed by this gate.
 
 ## Next interactive step
 
-Owner may review the machine-local read-only Preview and, in a separate
-interactive session, explicitly authorize a bounded POC execution path. That
-future implementation must re-read the target Group, Preset, Sequence vacancy,
-and Show identity immediately before any write, use the existing Preview /
-Human Approval / Builder boundary, read back the exact Cue content, and scope
-rollback only to the newly created Agent-owned Sequence after identity proof.
+Owner may review a newly registered approval-aware Position Action Preview
+from the running Field Core. The old machine-local Preview ID is never an
+approval target. Any future explicit approval must use the new `action_id`,
+re-read the target identities before any write, read back exact Cue content,
+and scope rollback only to the newly created Agent-owned Sequence after
+identity proof.
 No existing Sequence, Executor, Group, Preset, geometry, Patch, Address,
 Fixture identity/type, or Fixture 9999 may be changed. Until then, POSITION
 application remains unavailable to the normal OpenClaw Designer.

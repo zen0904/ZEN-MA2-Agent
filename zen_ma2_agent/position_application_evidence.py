@@ -14,6 +14,8 @@ from typing import Any, Mapping
 
 from .allocation import first_free_from_front
 from .protected_objects import PROTECTED_SEQUENCES
+from .models import Intent
+from .workflow import ActionStep, SkillGraphNode, Subtask, Task, WorkflowPlan
 
 
 SCHEMA = "zen.position_preset_application_binding.v0.1"
@@ -26,6 +28,81 @@ _POSITION_ATTRIBUTES = frozenset({"PAN", "TILT"})
 
 class PositionEvidenceError(ValueError):
     pass
+
+
+class PositionApplicationPocSkill:
+    """Approval-aware wrapper for the existing exact, deterministic POC plan.
+
+    No transport is available from this skill. AgentCore alone owns execution
+    after a second, fresh read-only identity check at approval time.
+    """
+
+    def __init__(self, manifest: Any):
+        self.manifest = manifest
+
+    def can_handle(self, intent: Intent, state: Any) -> bool:
+        return (self.manifest.enabled and intent.kind == "verify_position_application"
+                and state.has(self.manifest.required_state))
+
+    def create_task(self, intent: Intent) -> Task:
+        return Task("position-application-poc", "Position Application POC", intent,
+                    self.manifest.id, self.manifest.required_state)
+
+    def plan(self, task: Task, state: Any, preferences: dict[str, Any]) -> WorkflowPlan:
+        preview = task.intent.parameters.get("position_preview")
+        if not isinstance(preview, dict) or preview.get("schema") != PREVIEW_SCHEMA:
+            raise PositionEvidenceError("POSITION_POC_PREVIEW_INVALID")
+        commands = preview.get("candidate_commands")
+        if not isinstance(commands, list) or len(commands) != 6:
+            raise PositionEvidenceError("POSITION_POC_COMMAND_PLAN_INVALID")
+        steps = tuple(ActionStep(f"step-{index}", title, "command", command, "MODIFY",
+                                 depends_on=(f"step-{index-1}",) if index > 1 else ())
+                      for index, (title, command) in enumerate(zip((
+                          "Clear programmer", "Select exact verified Group", "Apply exact Position Preset",
+                          "Store one new Cue", "Label new Agent-owned Sequence", "Clear programmer",
+                      ), commands), start=1))
+        summary = json.dumps({key: preview[key] for key in (
+            "preview_id", "show_identity", "group", "preset", "sequence",
+            "typed_action", "candidate_commands", "expected_readback", "rollback_scope",
+        )}, sort_keys=True, ensure_ascii=True, indent=2)
+        return WorkflowPlan(task, (
+            Subtask("fresh-verify", "Fresh read-only Show, Group, Preset and Sequence check", "Planning"),
+            Subtask("preview", "Human review of exact bounded plan", "Planning"),
+            Subtask("execute", "Approved one-Cue probe only", "Execution"),
+            Subtask("readback", "Native Sequence Export exact PAN/TILT evidence", "Verification"),
+        ), (SkillGraphNode("root", self.manifest.id, "Position Application POC"),),
+            steps, "MODIFY", "POSITION APPLICATION POC — PREVIEW ONLY\n" + summary,
+            ("PREVIEW",), f"Exact Cue 1 PAN/TILT Preset {preview['preset']['reference']} content for every exact member; no foreign member",
+            preview["rollback_scope"], True, "PREVIEW", "READY")
+
+    def validate(self, plan: WorkflowPlan, state: Any) -> None:
+        preview = plan.task.intent.parameters.get("position_preview")
+        if (plan.task.skill_id != self.manifest.id or plan.safety != "MODIFY"
+                or not isinstance(preview, dict) or preview.get("schema") != PREVIEW_SCHEMA
+                or plan.commands != tuple(preview.get("candidate_commands") or ())
+                or preview.get("sequence", {}).get("executor", "INVALID") is not None):
+            raise PositionEvidenceError("POSITION_POC_WORKFLOW_INVALID")
+        sequence = preview["sequence"]["id"]
+        group = preview["group"]["id"]
+        reference = preview["preset"]["reference"]
+        label = preview["sequence"]["label"]
+        if (not isinstance(sequence, int) or isinstance(sequence, bool) or sequence < 1
+                or sequence in PROTECTED_SEQUENCES or not isinstance(group, int) or group < 1
+                or not isinstance(reference, str) or not _PRESET.fullmatch(reference)
+                or not isinstance(label, str) or not re.fullmatch(r"ZEN_POSITION_APPLICATION_POC_SEQ[1-9]\d*", label)
+                or preview.get("sequence", {}).get("cue") != 1
+                or plan.commands != (
+                    "ClearAll", f"Group {group}", f"At Preset {reference}",
+                    f'Store Cue 1 Sequence {sequence} "POSITION_APPLICATION_POC" Fade 0 /nc',
+                    f'Label Sequence {sequence} "{label}" /nc', "ClearAll",
+                ) or any(not command.isascii() for command in plan.commands)):
+            raise PositionEvidenceError("POSITION_POC_COMMAND_PLAN_INVALID")
+
+    def execute(self, approved_plan: WorkflowPlan) -> tuple[str, ...]:
+        if approved_plan.task.skill_id != self.manifest.id:
+            raise PositionEvidenceError("POSITION_POC_SKILL_MISMATCH")
+        self.validate(approved_plan, None)
+        return approved_plan.commands
 
 
 def _group(profile: Mapping[str, Any], group_id: int) -> Mapping[str, Any]:

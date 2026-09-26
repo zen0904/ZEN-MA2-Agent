@@ -5,7 +5,7 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "Keep the normal OpenClaw -> ZEN lean design path convenient and fully bounded. The Position application evidence gate now has fresh read-only discovery, a non-executable typed POC Preview, and an exact post-write Cue-content binding model. Position remains unavailable to the ordinary Designer until a separate owner-approved real probe proves the exact Group/Preset pair."
+    "active_objective": "Keep the normal OpenClaw -> ZEN lean design path convenient and fully bounded. The Position application evidence gate now has a fresh-read, approval-aware Action Preview and an exact post-write Cue-content binding model. No Position application is verified; Position remains unavailable to the ordinary Designer until an explicit owner-approved real probe proves the exact Group/Preset pair."
   },
   "last_closed_task": {
     "id": "OPENCLAW_BOUNDED_ARTISTIC_RESOURCE_RECOVERY_002",
@@ -15,7 +15,7 @@
   "next_acceptance_gate": {
     "id": "POSITION_APPLICATION_EVIDENCE_POC_001",
     "classification": "RESEARCH_UNKNOWN",
-    "status": "PREVIEW_READY_APPLICATION_UNVERIFIED",
+    "status": "APPROVAL_AWARE_PREVIEW_READY_APPLICATION_UNVERIFIED",
     "why_it_matters": "FixtureType POSITION capability alone does not prove that a current Position Preset is safely applicable to an exact Group selection. The ordinary Designer must not receive Position/movement resources until a bounded current-Show application proof exists.",
     "blocks_current_milestone": false,
     "dependencies": [
@@ -26,7 +26,7 @@
       "explicit Preview and owner approval before any MA2 write",
       "post-write readback that proves the Position Preset identity on the stored Cue"
     ],
-    "next_review_condition": "Owner reviews the non-executable Position POC Preview. A future interactive implementation and separate explicit owner approval must revalidate Show/Group/Preset/Sequence identities before any write, then prove exact PAN/TILT Cue content through native Sequence Export before recording application evidence.",
+    "next_review_condition": "Owner reviews a newly registered Position POC Action Preview. A later separate explicit approval must freshly revalidate Show/Group/Preset/Sequence identities before any write, then prove exact PAN/TILT Cue content through native Sequence Export before recording application evidence.",
     "current_evidence": [
       "BUILD_001_ACTIONS_CALL_PRESET_COLOR_ONLY_63",
       "BUILD_001_ACTIONS_SET_DIMMER_ONLY_105",
@@ -41,7 +41,14 @@
       "POSITION_FIXTURETYPE_CAPABILITY_GROUPS_1_TO_5_SHOW_BOUND_VERIFIED",
       "EXACT_GROUP1_PARENT_MEMBERSHIP_VERIFIED",
       "GROUP7_HISTORICAL_MEMBERSHIP_UNRESOLVED_UNCHANGED",
-      "POSITION_POC_PREVIEW_NONEXECUTABLE_SEQUENCE_10_EXECUTOR_NONE",
+      "POSITION_POC_PREVIEW_NONEXECUTABLE_SEQUENCE_10_EXECUTOR_NONE_HISTORICAL",
+      "POSITION_POC_APPROVAL_BOUNDARY_IMPLEMENTED_PREVIEW_ONLY",
+      "POSITION_POC_APPROVAL_BOUNDARY_REGRESSION_828_TESTS_PASS",
+      "POSITION_POC_LIVE_E2E_NOT_RUN_FIELD_CORE_8876_OFFLINE",
+      "POSITION_APPLICATION_EVIDENCE_UNVERIFIED",
+      "REAL_MA_WRITE_PERFORMED_NO",
+      "MA2_WRITES_ZERO",
+      "NORMAL_DESIGNER_POSITION_RESOURCE_COUNT_ZERO",
       "POSITION_APPLICATION_BINDINGS_CURRENTLY_ZERO"
     ]
   },

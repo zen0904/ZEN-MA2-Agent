@@ -200,6 +200,7 @@ VisualObservationProvider = Callable[[], Mapping[str, Any]]
 DesignRequestHandler = Callable[[str], Mapping[str, Any]]
 PreviewHandler = Callable[[Optional[str]], Mapping[str, Any]]
 ApproveHandler = Callable[[str, bool], Mapping[str, Any]]
+PositionPreviewHandler = Callable[..., Mapping[str, Any]]
 
 
 class UnknownOpenClawTool(ValueError):
@@ -223,6 +224,7 @@ class OpenClawOperatorAdapter:
     RESERVED_TOOLS = frozenset(
         {
             "zen.design.request",
+            "zen.position.preview",
             "zen.preview",
             "zen.approve",
         }
@@ -238,6 +240,7 @@ class OpenClawOperatorAdapter:
         design_request_handler: Optional[DesignRequestHandler] = None,
         preview_handler: Optional[PreviewHandler] = None,
         approve_handler: Optional[ApproveHandler] = None,
+        position_preview_handler: Optional[PositionPreviewHandler] = None,
     ):
         self._status_provider = status_provider
         self._watchdog_provider = watchdog_provider
@@ -246,6 +249,7 @@ class OpenClawOperatorAdapter:
         self._design_request_handler = design_request_handler
         self._preview_handler = preview_handler
         self._approve_handler = approve_handler
+        self._position_preview_handler = position_preview_handler
 
     def invoke(
         self,
@@ -279,6 +283,22 @@ class OpenClawOperatorAdapter:
             if not isinstance(request, str) or not request.strip() or len(request) > 2048:
                 return self._rejected(tool_name, "INVALID_REQUEST", "request must be a non-empty string of at most 2048 characters.", request_id)
             return self._result(tool_name, "SUCCESS", dict(self._design_request_handler(request)), None, request_id)
+        if tool_name == "zen.position.preview":
+            if self._position_preview_handler is None:
+                return self._result(tool_name, "NOT_IMPLEMENTED", None, None, request_id)
+            required = {"expected_show_fingerprint", "group_id", "expected_group_name",
+                        "expected_exact_refs", "preset_ref", "expected_preset_label"}
+            if set(safe_payload) != required:
+                return self._rejected(tool_name, "INVALID_ARGUMENTS", "Exact Position POC expected identities are required.", request_id)
+            if (not isinstance(safe_payload["expected_show_fingerprint"], str)
+                    or not isinstance(safe_payload["group_id"], int) or isinstance(safe_payload["group_id"], bool)
+                    or not isinstance(safe_payload["expected_group_name"], str)
+                    or not isinstance(safe_payload["expected_exact_refs"], list)
+                    or any(not isinstance(ref, str) for ref in safe_payload["expected_exact_refs"])
+                    or not isinstance(safe_payload["preset_ref"], str)
+                    or not isinstance(safe_payload["expected_preset_label"], str)):
+                return self._rejected(tool_name, "INVALID_ARGUMENTS", "Position POC identities have invalid types.", request_id)
+            return self._result(tool_name, "SUCCESS", dict(self._position_preview_handler(**safe_payload)), None, request_id)
         if tool_name == "zen.preview":
             if self._preview_handler is None:
                 return self._result(tool_name, "NOT_IMPLEMENTED", None, None, request_id)
