@@ -10,6 +10,11 @@ create previews, allocate resources, or alter the Builder/verifier path.
 Real-machine acceptance on controlled Sequence 12 and normal-design Sequence
 901 is recorded in `docs/MA2_REVERSE_ARTISTIC_ACCEPTANCE_001.md`.
 
+The next offline-only layer, `docs/MA2_EVIDENCE_FUSION_001.md`, consumes this
+existing translation JSON together with traceable song, timing, audio, and
+Stage View observations. It keeps FACT / INFERENCE / HYPOTHESIS separate and
+does not alter the translator's XML-only boundaries.
+
 ## Existing evidence inventory
 
 | Existing component | Status and role in this MVP |
