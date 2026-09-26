@@ -92,9 +92,7 @@ def _address_reference(value: object) -> str | None:
 
 def _has_raw_value(row: Mapping[str, Any]) -> bool:
     values = row.get("raw_values")
-    return isinstance(values, Mapping) and any(
-        values.get(key) is not None for key in ("Value", "Fade", "Delay")
-    )
+    return isinstance(values, Mapping) and values.get("Value") is not None
 
 
 def _layer_kinds(row: Mapping[str, Any]) -> tuple[str, ...]:
@@ -144,6 +142,39 @@ def _semantic_signature(rows: list[Mapping[str, Any]]) -> dict[str, list[str]]:
     layers = sorted({kind for row in rows for kind in _layer_kinds(row)})
     dimensions = sorted({_dimension(attribute) for attribute in attributes})
     return {"attributes": attributes, "dimensions": dimensions, "layers": layers}
+
+
+def _content_signature(cue: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Canonical observed CueData, including targets, values and resource IDs.
+
+    Repetition of attribute names alone is too weak to identify a recurring
+    design. Only identical stored content qualifies for a content motif.
+    """
+    signature: list[dict[str, Any]] = []
+    for part in cue.get("parts", []):
+        if not isinstance(part, Mapping):
+            continue
+        for row in part.get("cue_data", []):
+            if not isinstance(row, Mapping):
+                continue
+            channel = row.get("channel")
+            raw_values = row.get("raw_values")
+            signature.append({
+                "part_index": part.get("index"),
+                "channel": {
+                    key: str(channel[key]) for key in
+                    ("fixture_id", "subfixture_id", "channel_id", "attribute_name")
+                    if isinstance(channel, Mapping) and key in channel
+                },
+                "raw_values": {
+                    key: str(value) for key, value in raw_values.items() if value is not None
+                } if isinstance(raw_values, Mapping) else {},
+                "preset": _address_reference(row.get("preset")),
+                "effect": _address_reference(row.get("effect")),
+                "effect_low_preset": _address_reference(row.get("effect_low_preset")),
+                "effect_high_preset": _address_reference(row.get("effect_high_preset")),
+            })
+    return sorted(signature, key=lambda item: json.dumps(item, sort_keys=True))
 
 
 def _fingerprint(signature: Mapping[str, object]) -> str:
@@ -196,6 +227,7 @@ def translate_sequence_evidence(discovery: Mapping[str, Any]) -> dict[str, Any]:
         numbered_cues += 1
         rows, parts = _cue_rows(raw_cue)
         signature = _semantic_signature(rows)
+        content_signature = _content_signature(raw_cue)
         cue_attributes = signature["attributes"]
         cue_dimensions = signature["dimensions"]
         attributes.update(cue_attributes)
@@ -228,20 +260,22 @@ def translate_sequence_evidence(discovery: Mapping[str, Any]) -> dict[str, Any]:
                 "delay": sorted(set(_decimal_values(rows, "Delay"))),
             },
             "structural_fingerprint": _fingerprint(signature),
+            "content_fingerprint": _fingerprint({"cue_data": content_signature}),
+            "observed_cue_data": content_signature,
             "intent_status": "NOT_INFERRED_FROM_SEQUENCE_XML",
         })
 
     recurring: list[dict[str, Any]] = []
     by_fingerprint: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for cue in cue_semantics:
-        if cue["evidence_status"] == "OBSERVED":
-            by_fingerprint[str(cue["structural_fingerprint"])].append(cue)
+        if discovery["status"] == "VERIFIED" and cue["evidence_status"] == "OBSERVED":
+            by_fingerprint[str(cue["content_fingerprint"])].append(cue)
     for fingerprint, cues in sorted(by_fingerprint.items()):
         if len(cues) < 2:
             continue
         recurring.append({
-            "motif_id": f"STRUCTURAL_{fingerprint[:12].upper()}",
-            "classification": "RECURRING_CUE_STRUCTURE",
+            "motif_id": f"CONTENT_{fingerprint[:12].upper()}",
+            "classification": "RECURRING_STORED_CUE_CONTENT",
             "confidence": "OBSERVED_IN_NATIVE_SEQUENCE_EVIDENCE",
             "cue_numbers": [cue["cue_number"] for cue in cues],
             "occurrences": len(cues),
@@ -250,7 +284,7 @@ def translate_sequence_evidence(discovery: Mapping[str, Any]) -> dict[str, Any]:
                 "dimensions": cues[0]["observable_dimensions"],
                 "layers": sorted(cues[0]["observable_layers"]),
             },
-            "interpretation_limit": "Recurrence proves a repeated stored structure, not song section, visual result, or programmer intent.",
+            "interpretation_limit": "Identical stored CueData does not prove song section, visual result, or programmer intent.",
         })
 
     source_status = str(discovery["status"])
@@ -279,6 +313,21 @@ def translate_sequence_evidence(discovery: Mapping[str, Any]) -> dict[str, Any]:
             "preset_references": sorted(preset_refs),
             "effect_references": sorted(effect_refs),
         },
+        "cue_patterns": [
+            {
+                "cue_number": cue["cue_number"],
+                "source_ordinal": cue["source_ordinal"],
+                "evidence_status": cue["evidence_status"],
+                "dimensions": cue["observable_dimensions"],
+                "layers": cue["observable_layers"],
+                "preset_references": cue["preset_references"],
+                "effect_references": cue["effect_references"],
+                "structural_fingerprint": cue["structural_fingerprint"],
+                "content_fingerprint": cue["content_fingerprint"],
+                "observed_cue_data": cue["observed_cue_data"],
+            }
+            for cue in cue_semantics
+        ],
         "recurring_motifs": recurring,
         "prohibited_inferences": [
             "ARTIST_OR_PROGRAMMER_INTENT",

@@ -29,7 +29,7 @@ The convenience entry point is:
 ```python
 from zen_ma2_agent.reverse_artistic_translator import translate_sequence_xml
 
-reference = translate_sequence_xml(retained_sequence_xml, sequence_no=302)
+reference = translate_sequence_xml(retained_sequence_xml, sequence_no=12)
 ```
 
 This operates on already-retained data and makes no network or MA2 call.
@@ -37,7 +37,7 @@ This operates on already-retained data and makes no network or MA2 call.
 For a local file, run from the repository root:
 
 ```text
-python3 -m scripts.translate_sequence_export /path/to/retained.xml --sequence 302 > design-reference.json
+python3 -m scripts.translate_sequence_export /path/to/retained.xml --sequence 12 > design-reference.json
 ```
 
 The script writes JSON only to standard output. Shell redirection is optional;
@@ -54,12 +54,17 @@ real-machine translation output still needs review against an actual export.
    integrity.
 2. `cue_semantics` — per-Cue observable layers (`RAW_VALUE`,
    `PRESET_REFERENCE`, `EFFECT_REFERENCE`), attributes, dimensions, timing
-   strings, resource identities, and a structural fingerprint.
-3. `recurring_artistic_motifs` — only repeated stored cue structures. This is
-   intentionally an observed structural motif, not a claim about visual or
-   musical intent.
-4. `machine_readable_design_reference` — reusable descriptive vocabulary plus
-   the source hash, evidence status, prohibited inferences, and reuse guards.
+   strings, resource identities, a broad structural fingerprint, and a strict
+   stored-content fingerprint.
+3. `recurring_artistic_motifs` — only exact repetitions of stored CueData,
+   including targets, values, timing, Preset/Effect identities, and Cue parts.
+   Shared attributes alone never establish a motif. Partial exports do not
+   yield motif claims.
+4. `machine_readable_design_reference` — per-Cue patterns and descriptive
+   vocabulary, including observed raw CueData and target IDs for traceability,
+   plus the source hash, evidence status, prohibited inferences, and reuse
+   guards. The target IDs are source evidence, not authorization to reuse them
+   in another Show.
 
 The translator never normalizes MA2 raw values into intensity, color, angle,
 tempo, or visual-output claims. It never infers an artist's intention, song

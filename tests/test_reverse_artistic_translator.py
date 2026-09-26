@@ -1,4 +1,5 @@
 import unittest
+from copy import deepcopy
 
 from zen_ma2_agent.reverse_artistic_translator import (
     ReverseArtisticTranslationError,
@@ -45,11 +46,31 @@ class ReverseArtisticTranslatorTests(unittest.TestCase):
         self.assertEqual(first["effect_references"], ["1.9"])
         self.assertEqual(first["intent_status"], "NOT_INFERRED_FROM_SEQUENCE_XML")
         motifs = result["recurring_artistic_motifs"]
-        self.assertEqual(len(motifs), 1)
-        self.assertEqual(motifs[0]["cue_numbers"], ["1", "3"])
+        self.assertEqual(motifs, [])
         reference = result["machine_readable_design_reference"]
+        self.assertEqual(len(reference["cue_patterns"]), 3)
+        self.assertEqual(reference["cue_patterns"][0]["content_fingerprint"], first["content_fingerprint"])
+        self.assertEqual(reference["cue_patterns"][0]["observed_cue_data"][0]["channel"]["fixture_id"], "101")
         self.assertIn("MA2_WRITE_COMMANDS", reference["prohibited_inferences"])
         self.assertIn("REQUIRES_CURRENT_SHOW_RESOURCE_VALIDATION_BEFORE_ANY_REUSE", reference["use_constraints"])
+
+    def test_recurrence_requires_same_targets_values_resources_and_parts(self):
+        discovery = sequence_export_discovery(SEQUENCE_XML, 42)
+        repeated = deepcopy(discovery["cues"][0])
+        repeated["number"] = {"number": "4", "sub_number": "0"}
+        repeated["parts"][0]["name"] = "RETURN"
+        discovery["cues"].append(repeated)
+        result = translate_sequence_evidence(discovery)
+        motifs = result["recurring_artistic_motifs"]
+        self.assertEqual(len(motifs), 1)
+        self.assertEqual(motifs[0]["cue_numbers"], ["1", "4"])
+        self.assertEqual(motifs[0]["classification"], "RECURRING_STORED_CUE_CONTENT")
+
+    def test_timing_only_row_is_not_raw_value_content(self):
+        discovery = sequence_export_discovery(SEQUENCE_XML, 42)
+        discovery["cues"][0]["parts"][0]["cue_data"][0]["raw_values"] = {"Fade": "1.5"}
+        result = translate_sequence_evidence(discovery)
+        self.assertEqual(result["cue_semantics"][0]["observable_layers"].get("RAW_VALUE"), None)
 
     def test_partial_discovery_stays_partial(self):
         discovery = sequence_export_discovery(SEQUENCE_XML, 42)
@@ -58,6 +79,7 @@ class ReverseArtisticTranslatorTests(unittest.TestCase):
         self.assertEqual(result["translation_status"], "PARTIAL_EVIDENCE")
         self.assertEqual(result["technical_structure"]["source_integrity"], "PARTIAL")
         self.assertEqual(result["machine_readable_design_reference"]["source_evidence"]["integrity"], "PARTIAL")
+        self.assertEqual(result["recurring_artistic_motifs"], [])
 
     def test_rejects_non_read_only_or_unverified_evidence(self):
         discovery = sequence_export_discovery(SEQUENCE_XML, 42)
