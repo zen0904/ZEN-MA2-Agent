@@ -192,7 +192,9 @@ The important part is the sequence `hold -> lift -> retract -> impact -> resolve
 
 Beat tracking of the clip estimates about 129.2 BPM, or roughly 0.464 s per beat.
 
-Several major visual state changes land close to estimated 4/4 downbeats or bar boundaries, including approximately 15.0, 24.1, 42.6, 74.2, 79.8, 94.7, 102.1, 109.4, 111.1, 122.2, 124.0, 125.9 and 129.5 s. Other important events deliberately occur inside a bar.
+Several major visual state changes land close to the estimated beat grid and/or audio structural-boundary candidates. This pass does NOT independently verify 4/4 downbeats or bar numbers, so those must not be treated as established evidence.
+
+Examples with very small distance to the estimated beat grid include approximately 24.1, 30.0, 42.6, 74.2, 79.8, 81.3, 94.7, 96.6, 109.4, 111.1, 122.2 and 129.5 s. Other important visual events occur between tracked beats or are better explained by choreography/visual structure than by a simple beat trigger.
 
 The useful principle is therefore not "cue every bar" or "cue every beat." A better hierarchy for future reasoning is:
 
@@ -205,6 +207,30 @@ section identity
 ```
 
 Micro-detail should be added only when it contributes something distinct.
+
+
+## Audio-to-light correlation pass
+
+A second pass was performed directly on the clip audio after extracting the AAC track to mono 44.1 kHz PCM for analysis.
+
+Verified analysis facts:
+
+- duration: approximately 134.07 s audio inside a 134.10 s video;
+- estimated global tempo: approximately 129.2 BPM;
+- estimated beat interval: approximately 0.464 s;
+- automated timbral/harmonic segmentation produces strong structural-boundary candidates around 10.2, 13.5, 46.7, 48.5, 55.5, 59.6, 74.2, 81.8, 96.6, 103.0, 107.6, 110.7, 130.0 and 132.2 s, depending on segmentation granularity.
+
+Notable music/light relationships visible in this case:
+
+- the hard red-world entry at about 59.5 s coincides closely with a strong audio structural boundary near 59.6 s;
+- the magenta return around 74.2 s coincides with both a tracked beat and an audio segmentation boundary;
+- the white-hit / green-accent development around 79.8-81.3 s occurs on strong onset/beat-grid activity, with an additional structural boundary near 81.8 s;
+- the cool-blue reset around 96.6 s coincides closely with a strong audio structural boundary;
+- late transitions around 109.4-111.1 s align closely with tracked beats and sit near structural changes around 107.6-110.7 s;
+- the final white release around 129.5 s lands very near the tracked beat grid and immediately before a strong end-section boundary near 130.0 s.
+
+This supports a stronger interpretation than BPM-following alone: the lighting often tracks section identity, arrangement change, transient accents and choreography together. Beat alignment is one input, not the controlling rule.
+
 
 ## Cue-density interpretation
 
