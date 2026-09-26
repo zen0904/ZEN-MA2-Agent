@@ -5,7 +5,7 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "Position application evidence is now closed on the live Test Show. Group 1 HYBRID has one REAL_MACHINE_CONTENT_VERIFIED Position Preset resource, 2.13 ZEN_POSITION_CAL_P13, backed by Sequence 12 native Cue export evidence. The next bounded objective is a normal full-artistic integration Preview that allows the ordinary Designer to consume the verified Position resource together with already verified resources, while keeping Preview zero-write and all existing stale/protected/foreign-object guards intact."
+    "active_objective": "Sequence 302 is now a retained, owner-approved live Test Show object: 29 Cues on Executor 2.8 with native Cue label/Fade/Dimmer/Preset/stored-content verification PASS. A deterministic existing-Cue Position-only merge capability is being accepted so ZEN can add bounded relative PAN/TILT to verified existing Cues without creating a new Sequence/Executor or rewriting Dimmer, Color, labels, Fade, or other CueData. Preview plus explicit approval remain mandatory; native Sequence Export is the post-write content authority."
   },
   "last_closed_task": {
     "id": "FULL_ARTISTIC_POSITION_INTEGRATION_001",
@@ -13,43 +13,29 @@
     "result": "The ordinary zen.design.request path freshly reloaded current Show resources, validated the local REAL_MACHINE_CONTENT_VERIFIED Position binding against Position Preset 2.13, and produced a normal 26-Cue full-artistic Preview on Sequence 302 / Executor 2.8. The design references Position Preset 2.13 three times and also references verified Color Presets 4.101,4.102,4.108,4.109,4.110,4.112,4.113. Root workflow is PENDING_APPROVAL / PREVIEW and MA2 writes remain zero. No calibration-specific path was used."
   },
   "next_acceptance_gate": {
-    "id": "FULL_ARTISTIC_POSITION_EXECUTION_001",
+    "id": "EXISTING_CUE_POSITION_MERGE_001",
     "classification": "OWNER_APPROVAL_REQUIRED",
-    "status": "LIVE_PREVIEW_PENDING_APPROVAL",
-    "why_it_matters": "The ordinary Designer integration Preview is complete. The remaining optional gate is to execute the exact approved 26-Cue plan and verify actual stored Cue content, including Position Preset 2.13 usage, through native readback.",
+    "status": "IMPLEMENTATION_TESTED_DEPLOY_PENDING",
+    "why_it_matters": "Closes the missing existing Sequence -> existing Cue -> Position-only merge path that previously fell back to the generic artistic provider and returned NEEDS_RESEARCH.",
     "blocks_current_milestone": false,
     "dependencies": [
-      "explicit owner approval of Action e05840bdb157",
-      "approval-time fresh Show/resource revalidation",
-      "Sequence 302 remains safe allocation",
-      "Executor 2.8 remains safe allocation",
-      "Position Preset 2.13 binding remains valid",
-      "Fixture 9999 remains protected",
-      "native post-write Sequence Export content verification"
+      "focused capability and root integration regressions pass",
+      "full suite passes in a dependency-complete environment",
+      "main commit is deployed to the Windows Field Core runtime",
+      "fresh OC Preview targets existing Sequence 302 Cues 1-29 only",
+      "Group 1 / Position Preset 2.13 binding and Show identity remain fresh",
+      "Executor 2.8 assignment remains unchanged",
+      "explicit owner approval after Preview",
+      "native post-write Sequence Export verifies exact PAN/TILT and unchanged non-PAN/TILT CueData/labels/Fade/Delay"
     ],
-    "next_review_condition": "Only if the owner explicitly approves Action e05840bdb157, execute that exact Preview. Otherwise retain it as Preview-only evidence and perform no MA2 write.",
-    "live_preview": {
-      "action_id": "e05840bdb157",
-      "status": "PENDING_APPROVAL",
-      "root_state": "PENDING_APPROVAL",
-      "phase": "PREVIEW",
+    "next_review_condition": "After deploy, request a new OC Preview for Sequence 302 Cues 1-29, Group 1, Preset 2.13, Position-only merge. Do not approve until exact fixture deltas and final PAN/TILT values are reviewed.",
+    "retained_live_object": {
       "sequence": 302,
       "executor": "2.8",
-      "cue_count": 26,
-      "position_preset": "2.13",
-      "position_call_count": 3,
-      "referenced_presets": [
-        "2.13",
-        "4.101",
-        "4.102",
-        "4.108",
-        "4.109",
-        "4.110",
-        "4.112",
-        "4.113"
-      ],
-      "referenced_effects": [],
-      "ma2_writes": 0
+      "cue_count": 29,
+      "action_id": "2549047d1bcd",
+      "verification": "PASS",
+      "cleanup": "DEFERRED_UNTIL_TEST_CYCLE_COMPLETE"
     }
   },
   "human_review_decisions": [

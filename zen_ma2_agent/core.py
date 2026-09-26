@@ -54,6 +54,11 @@ from .position_calibration import (
     calibration_application_preview,
     verify_calibration_raw_content,
 )
+from .position_existing_cue_merge import (
+    ExistingPositionMergeError,
+    build_existing_position_merge_preview,
+    verify_existing_position_merge,
+)
 from .designer.report import write_real_song_design_report
 from .builder import FirstSongBuildError, ShowPlanBuilder
 from .song_analysis import SongAnalysisAdapter, validate_song_analysis
@@ -442,6 +447,246 @@ class AgentCore:
             raise PositionEvidenceError("POSITION_CALIBRATION_STALE_APPROVED_PREVIEW")
         self.skills.get("position.calibration")
         return profile
+
+    @staticmethod
+    def _parse_existing_position_merge_request(request: str) -> dict[str, Any] | None:
+        """Recognize only an explicit existing-Sequence Position-only repair."""
+        text = request.strip()
+        lower = text.lower()
+        if "position" not in lower or "sequence" not in lower:
+            return None
+        position_only = (
+            "position only" in lower
+            or "position-only" in lower
+            or bool(re.search(r"(?:只補|只修改|只更新)\s*position", text, re.I))
+        )
+        existing = bool(re.search(r"(?:existing|既有|現有)\s+sequence\s+[1-9]\d*", text, re.I))
+        if not position_only or not existing:
+            return None
+
+        sequence_match = re.search(r"(?:existing|既有|現有)\s+sequence\s+([1-9]\d*)", text, re.I)
+        group_match = re.search(r"\bGroup\s+([1-9]\d*)\b", text, re.I)
+        preset_match = re.search(r"\bPreset\s+(2\.[1-9]\d*)\b", text, re.I)
+        cue_match = re.search(r"\bCues?\s+([1-9]\d*)\s*[-–~]\s*([1-9]\d*)\b", text, re.I)
+        executor_match = re.search(r"\bExecutor\s+([1-9]\d*\.[1-9]\d*)\b", text, re.I)
+        if not sequence_match or not group_match or not preset_match or not cue_match:
+            raise ExistingPositionMergeError(
+                "POSITION_MERGE_REQUEST_REQUIRES_EXPLICIT_EXISTING_SEQUENCE_GROUP_PRESET_AND_CUE_RANGE"
+            )
+        cue_start, cue_end = int(cue_match.group(1)), int(cue_match.group(2))
+        if cue_end < cue_start:
+            raise ExistingPositionMergeError("POSITION_MERGE_CUE_RANGE_INVALID")
+        return {
+            "sequence_no": int(sequence_match.group(1)),
+            "group_id": int(group_match.group(1)),
+            "preset_ref": preset_match.group(1),
+            "cue_start": cue_start,
+            "cue_end": cue_end,
+            "expected_executor": executor_match.group(1) if executor_match else None,
+        }
+
+    def _sequence_executor_assignments(self, sequence_no: int) -> list[dict[str, Any]]:
+        result = self.refresh_state("executors")
+        if result["status"] != "available":
+            raise ExistingPositionMergeError(
+                f"POSITION_MERGE_EXECUTOR_READ_FAILED: {result.get('error')}"
+            )
+        snapshot = self.state.get("executors")
+        rows = [
+            dict(item)
+            for item in (snapshot.values if snapshot else [])
+            if isinstance(item, dict)
+            and item.get("assignment_type") == "sequence"
+            and item.get("assignment") == sequence_no
+        ]
+        return sorted(
+            rows,
+            key=lambda item: (
+                item.get("page") if isinstance(item.get("page"), int) else 0,
+                item.get("executor") if isinstance(item.get("executor"), int) else 0,
+            ),
+        )
+
+    def _fresh_existing_cue_metadata(
+        self, *, sequence_no: int, cue_start: int, cue_end: int,
+    ) -> list[dict[str, Any]]:
+        provider = CueProvider()
+        rows: list[dict[str, Any]] = []
+        for cue_number in range(cue_start, cue_end + 1):
+            raw = self.runtime.read_state(
+                provider.detail_command(sequence_no, cue_number)
+            )
+            cue = provider.parse_detail(raw, sequence_no, cue_number)
+            if cue is None:
+                raise ExistingPositionMergeError(
+                    f"POSITION_MERGE_CUE_{cue_number}_DETAIL_UNAVAILABLE"
+                )
+            rows.append({
+                "number": cue_number,
+                "name": cue.name,
+                "fade": cue.fade,
+                "delay": cue.delay,
+            })
+        return rows
+
+    def _fresh_existing_position_merge_preview(
+        self,
+        *,
+        sequence_no: int,
+        group_id: int,
+        preset_ref: str,
+        cue_start: int,
+        cue_end: int,
+        expected_executor: str | None,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        if self.sequence_export_provider is None:
+            raise ExistingPositionMergeError("POSITION_MERGE_SEQUENCE_EXPORT_UNAVAILABLE")
+        profile = self._fresh_position_poc_profile(
+            group_id=group_id, preset_ref=preset_ref
+        )
+        bindings = [
+            row
+            for row in self.position_application_bindings.load_verified(profile)
+            if row.get("group_id") == group_id and row.get("reference") == preset_ref
+        ]
+        if len(bindings) != 1:
+            raise ExistingPositionMergeError(
+                "POSITION_MERGE_VERIFIED_BASELINE_BINDING_UNAVAILABLE"
+            )
+        binding = bindings[0]
+        evidence = binding.get("evidence")
+        calibration_sequence = (
+            evidence.get("sequence") if isinstance(evidence, dict) else None
+        )
+        if (
+            isinstance(calibration_sequence, bool)
+            or not isinstance(calibration_sequence, int)
+            or calibration_sequence < 1
+        ):
+            raise ExistingPositionMergeError(
+                "POSITION_MERGE_CALIBRATION_SEQUENCE_UNAVAILABLE"
+            )
+
+        settings = self.runtime.preferences.get("state_adapter")
+        calibration_discovery = self.sequence_export_provider.export_and_discover(
+            self.runtime, calibration_sequence, settings, retain_export=True
+        )
+        target_discovery = self.sequence_export_provider.export_and_discover(
+            self.runtime, sequence_no, settings, retain_export=True
+        )
+        cue_metadata = self._fresh_existing_cue_metadata(
+            sequence_no=sequence_no, cue_start=cue_start, cue_end=cue_end
+        )
+        assignments = self._sequence_executor_assignments(sequence_no)
+        if expected_executor and not any(
+            str(item.get("location")) == expected_executor for item in assignments
+        ):
+            raise ExistingPositionMergeError(
+                "POSITION_MERGE_EXPECTED_EXECUTOR_ASSIGNMENT_MISMATCH"
+            )
+        preview = build_existing_position_merge_preview(
+            profile,
+            target_discovery=target_discovery,
+            calibration_discovery=calibration_discovery,
+            binding=binding,
+            sequence_no=sequence_no,
+            group_id=group_id,
+            cue_start=cue_start,
+            cue_end=cue_end,
+            executor_assignments=assignments,
+            cue_metadata=cue_metadata,
+        )
+        return profile, preview
+
+    def _plan_existing_position_merge_child(
+        self, request: str, spec: dict[str, Any],
+    ) -> WorkflowPlan:
+        _profile, preview = self._fresh_existing_position_merge_preview(**spec)
+        self.runtime.log(
+            "position_existing_cue_merge_preview",
+            {
+                "preview_id": preview["preview_id"],
+                "sequence": preview["target_sequence"]["id"],
+                "cue_start": preview["target_sequence"]["cue_start"],
+                "cue_end": preview["target_sequence"]["cue_end"],
+                "group": preview["group"]["id"],
+                "preset": preview["baseline"]["preset_reference"],
+                "command_count": preview["command_count"],
+                "ma2_writes": 0,
+            },
+        )
+        return self.skills.plan_intent(
+            Intent(
+                "merge_existing_cue_position",
+                {"position_merge_preview": preview},
+                "POSITION_EXISTING_CUE_MERGE",
+            ),
+            self.state,
+            self.runtime.preferences,
+        )
+
+    @staticmethod
+    def _position_merge_semantic_signature(preview: dict[str, Any]) -> dict[str, Any]:
+        target = preview.get("target_sequence") or {}
+        baseline = preview.get("baseline") or {}
+        return {
+            "show_identity": preview.get("show_identity"),
+            "target_sequence": {
+                "id": target.get("id"),
+                "label": target.get("label"),
+                "cue_start": target.get("cue_start"),
+                "cue_end": target.get("cue_end"),
+                "pre_non_position_sha256": target.get("pre_non_position_sha256"),
+                "cue_metadata": target.get("cue_metadata"),
+                "executor_assignments": target.get("executor_assignments"),
+            },
+            "group": preview.get("group"),
+            "baseline": {
+                "preset_reference": baseline.get("preset_reference"),
+                "preset_label": baseline.get("preset_label"),
+                "calibration_sequence": baseline.get("calibration_sequence"),
+                "values_by_fixture": baseline.get("values_by_fixture"),
+            },
+            "fixture_limits": preview.get("fixture_limits"),
+            "cue_updates": preview.get("cue_updates"),
+            "write_scope": preview.get("write_scope"),
+            "command_plan_sha256": preview.get("command_plan_sha256"),
+        }
+
+    def _ensure_existing_position_merge_state_unchanged(
+        self, action: ActionRecord,
+    ) -> dict[str, Any]:
+        _skill, intent = self._effective_execution_context(action)
+        approved = intent.parameters.get("position_merge_preview")
+        if not isinstance(approved, dict):
+            raise ExistingPositionMergeError(
+                "POSITION_MERGE_APPROVED_PREVIEW_MISSING"
+            )
+        target = approved.get("target_sequence") or {}
+        group = approved.get("group") or {}
+        baseline = approved.get("baseline") or {}
+        expected_assignments = target.get("executor_assignments") or []
+        expected_executor = (
+            str(expected_assignments[0].get("location"))
+            if len(expected_assignments) == 1
+            and isinstance(expected_assignments[0], dict)
+            and expected_assignments[0].get("location")
+            else None
+        )
+        _profile, current = self._fresh_existing_position_merge_preview(
+            sequence_no=target.get("id"),
+            group_id=group.get("id"),
+            preset_ref=baseline.get("preset_reference"),
+            cue_start=target.get("cue_start"),
+            cue_end=target.get("cue_end"),
+            expected_executor=expected_executor,
+        )
+        if self._position_merge_semantic_signature(current) != self._position_merge_semantic_signature(approved):
+            raise ExistingPositionMergeError(
+                "POSITION_MERGE_STALE_APPROVED_PREVIEW"
+            )
+        self.skills.get("position.existing_cue_merge")
+        return current
 
     def _preview_designer_input(self, song_input: dict[str, Any], *, analysis: dict[str, Any] | None) -> dict[str, Any]:
         # A First Song/Effect-resource resolution needs pool identities, not a
@@ -1077,6 +1322,54 @@ class AgentCore:
 
         root_intent = Intent("program_show", {"request": request}, request)
         root = self.skills.plan_intent(root_intent, self.state, self.runtime.preferences)
+
+        explicit_position_merge = self._parse_existing_position_merge_request(request)
+        if explicit_position_merge is not None:
+            try:
+                child = self._plan_existing_position_merge_child(
+                    request, explicit_position_merge
+                )
+                workflow = compose_show_program_child(root, child)
+            except (
+                ExistingPositionMergeError, SkillError, ConnectionError, ValueError
+            ) as exc:
+                workflow = set_show_program_state(
+                    root,
+                    "NEEDS_INPUT",
+                    str(exc) or "Unable to prepare existing Cue Position merge safely.",
+                    phase="DISCOVER",
+                )
+
+            self._root_workflow_status = {
+                "state": workflow.root_state or ("READY" if workflow.executable else "NEEDS_INPUT"),
+                "phase": workflow.current_phase or ROOT_PHASES[0],
+                "action_id": None,
+            }
+            self.runtime.log("root_workflow", workflow.as_dict())
+            if not workflow.executable:
+                self.events.emit("plan", self.snapshot())
+                return {
+                    "type": ResponseType.ACTION_PLAN.value,
+                    "message": workflow.preview_note,
+                    "action": {"id": None, "status": "ROOT_WORKFLOW", **workflow.as_dict()},
+                }
+            action_id = uuid.uuid4().hex[:12]
+            if self._active_action_id and self.actions.get(self._active_action_id):
+                self.actions[self._active_action_id].status = "CANCELLED"
+            record = ActionRecord(action_id, workflow)
+            self.actions[action_id] = record
+            self._active_action_id = action_id
+            self._root_workflow_status.update(
+                {"state": "PENDING_APPROVAL", "phase": "PREVIEW", "action_id": action_id}
+            )
+            self.progress = "Waiting for approval"
+            self.events.emit("plan", self.snapshot())
+            return {
+                "type": ResponseType.ACTION_PLAN.value,
+                "message": workflow.preview_note,
+                "action": {"id": action_id, "status": record.status, **record.plan},
+            }
+
         route = self.router.route(request, self.skills)
 
         if route.response_type is ResponseType.NEEDS_CLARIFICATION:
@@ -1658,6 +1951,8 @@ class AgentCore:
             self._ensure_position_raw_state_unchanged(action)
         elif execution_intent.kind == "verify_position_calibration":
             self._ensure_position_calibration_state_unchanged(action)
+        elif execution_intent.kind == "merge_existing_cue_position":
+            self._ensure_existing_position_merge_state_unchanged(action)
         action.status = "APPROVED"
         self.progress = "Executing"
         self.events.emit("progress", {"stage": self.progress})
@@ -1671,6 +1966,8 @@ class AgentCore:
                 result = self._execute_position_raw_cue_poc(action)
             elif intent_kind == "verify_position_calibration":
                 result = self._execute_position_calibration(action)
+            elif intent_kind == "merge_existing_cue_position":
+                result = self._execute_existing_position_merge(action)
             else:
                 commands = self.skills.approved_commands(action.workflow.task.skill_id, action.workflow)
                 results = self.runtime.execute_approved_commands(commands)
@@ -1700,7 +1997,11 @@ class AgentCore:
             action.status, action.result = "EXECUTED", result
             self._active_action_id = None
             if action.workflow.task.skill_id == "show.program":
-                self._root_workflow_status.update({"state": "EXECUTED", "phase": "VERIFY_ACTUAL_CONTENT", "action_id": action_id})
+                self._root_workflow_status.update({
+                    "state": "EXECUTED",
+                    "phase": "DONE" if intent_kind == "merge_existing_cue_position" else "VERIFY_ACTUAL_CONTENT",
+                    "action_id": action_id,
+                })
             elif intent_kind in {
                 "verify_position_application", "verify_position_raw_cue",
                 "verify_position_calibration",
@@ -1725,6 +2026,131 @@ class AgentCore:
             raise
         self.events.emit("execution", self.snapshot())
         return {"id": action.id, "status": action.status, "result": action.result}
+
+    def _execute_existing_position_merge(self, action: ActionRecord) -> str:
+        """Execute one approved Position-only merge and verify native content."""
+        _skill_id, intent = self._effective_execution_context(action)
+        preview = intent.parameters.get("position_merge_preview")
+        if not isinstance(preview, dict):
+            raise ExistingPositionMergeError("POSITION_MERGE_APPROVED_PREVIEW_MISSING")
+        commands = self.skills.approved_commands(
+            action.workflow.task.skill_id, action.workflow
+        )
+        if not commands or commands[-1] != "ClearAll":
+            raise ExistingPositionMergeError("POSITION_MERGE_APPROVED_COMMAND_PLAN_INVALID")
+        sequence = preview.get("target_sequence", {}).get("id")
+        if isinstance(sequence, bool) or not isinstance(sequence, int) or sequence < 1:
+            raise ExistingPositionMergeError("POSITION_MERGE_SEQUENCE_INVALID")
+        responses: list[str] = []
+        try:
+            for command in commands[:-1]:
+                response = self.runtime.execute_approved_commands((command,))[0]
+                responses.append(response)
+                if ma2_response_has_error(response):
+                    raise ExistingPositionMergeError(
+                        f"POSITION_MERGE_MA_COMMAND_REJECTED: {command}: {response}"
+                    )
+
+            if self.sequence_export_provider is None:
+                raise ExistingPositionMergeError("POSITION_MERGE_SEQUENCE_EXPORT_UNAVAILABLE")
+            discovery = self.sequence_export_provider.export_and_discover(
+                self.runtime,
+                sequence,
+                self.runtime.preferences.get("state_adapter"),
+                retain_export=True,
+            )
+            verification = verify_existing_position_merge(preview, discovery)
+
+            target = preview.get("target_sequence", {})
+            expected_metadata = target.get("cue_metadata") or []
+            post_metadata = self._fresh_existing_cue_metadata(
+                sequence_no=sequence,
+                cue_start=target.get("cue_start"),
+                cue_end=target.get("cue_end"),
+            )
+            if post_metadata != expected_metadata:
+                raise ExistingPositionMergeError(
+                    "POSITION_MERGE_CUE_METADATA_CHANGED"
+                )
+
+            post_profile = self._fresh_position_poc_profile(
+                group_id=preview["group"]["id"],
+                preset_ref=preview["baseline"]["preset_reference"],
+            )
+            if post_profile.get("show_identity") != preview.get("show_identity"):
+                raise ExistingPositionMergeError(
+                    "POSITION_MERGE_POSTWRITE_SHOW_IDENTITY_DRIFT"
+                )
+            sequence_rows = [
+                row for row in post_profile.get("sequences", [])
+                if isinstance(row, dict) and row.get("number") == sequence
+            ]
+            if (
+                len(sequence_rows) != 1
+                or sequence_rows[0].get("name") != target.get("label")
+            ):
+                raise ExistingPositionMergeError(
+                    "POSITION_MERGE_POSTWRITE_SEQUENCE_IDENTITY_DRIFT"
+                )
+
+            expected_assignments = target.get("executor_assignments") or []
+            current_assignments = self._sequence_executor_assignments(sequence)
+            current_normalized = [
+                {
+                    "page": row.get("page"),
+                    "executor": row.get("executor"),
+                    "location": row.get("location"),
+                    "label": row.get("label"),
+                }
+                for row in current_assignments
+            ]
+            if current_normalized != expected_assignments:
+                raise ExistingPositionMergeError(
+                    "POSITION_MERGE_EXECUTOR_ASSIGNMENT_CHANGED"
+                )
+
+            self.runtime.log(
+                "position_existing_cue_merge_verified",
+                {
+                    "action_id": action.id,
+                    "sequence": sequence,
+                    "cue_count": verification["cue_count"],
+                    "position_value_matches": verification["position_value_matches"],
+                    "non_position_content": verification["non_position_content"],
+                    "cue_labels": verification["cue_labels"],
+                    "cue_fade_delay_metadata": "UNCHANGED",
+                    "show_identity": "UNCHANGED",
+                    "executor_assignment": "UNCHANGED",
+                    "post_export_sha256": verification["post_export_sha256"],
+                    "automatic_delete": False,
+                },
+            )
+            return (
+                "POSITION_MERGE VERIFIED - "
+                f"Sequence {sequence}; {verification['cue_count']} Cues; "
+                f"{verification['position_value_matches']} PAN/TILT values matched; "
+                "non-PAN/TILT CueData, Cue labels/Fade/Delay, Show identity, "
+                "and Executor assignment unchanged."
+            )
+        except Exception as exc:
+            self.runtime.log(
+                "position_existing_cue_merge_failed",
+                {
+                    "action_id": action.id,
+                    "sequence": sequence,
+                    "error": str(exc),
+                    "automatic_delete": False,
+                },
+            )
+            raise
+        finally:
+            try:
+                self.runtime.execute_approved_commands((commands[-1],))
+            except Exception as clear_exc:
+                self.runtime.log(
+                    "position_existing_cue_merge_clear_failed",
+                    {"error": str(clear_exc)},
+                )
 
     def _execute_position_application_poc(self, action: ActionRecord) -> str:
         """Future explicit-approval path; never called by Preview registration.
