@@ -15,20 +15,20 @@
   "next_acceptance_gate": {
     "id": "EXISTING_CUE_POSITION_MERGE_001",
     "classification": "OWNER_APPROVAL_REQUIRED",
-    "status": "IMPLEMENTATION_TESTED_DEPLOY_PENDING",
+    "status": "LIVE_PREVIEW_PENDING_APPROVAL",
     "why_it_matters": "Closes the missing existing Sequence -> existing Cue -> Position-only merge path that previously fell back to the generic artistic provider and returned NEEDS_RESEARCH.",
     "blocks_current_milestone": false,
     "dependencies": [
-      "focused capability and root integration regressions pass",
-      "full suite passes in a dependency-complete environment",
-      "main commit is deployed to the Windows Field Core runtime",
-      "fresh OC Preview targets existing Sequence 302 Cues 1-29 only",
-      "Group 1 / Position Preset 2.13 binding and Show identity remain fresh",
-      "Executor 2.8 assignment remains unchanged",
-      "explicit owner approval after Preview",
+      "explicit owner approval of Action 97d3a82f1220 after reviewing Preview f53aa5c423d8521c",
+      "approval-time fresh Show/resource revalidation",
+      "Sequence 302 remains the exact ZEN-owned target with Cues 1-29",
+      "Executor 2.8 remains assigned to Sequence 302",
+      "Group 1 HYBRID exact membership remains 101,102,103,104,105,106,108,107",
+      "Position Preset 2.13 ZEN_POSITION_CAL_P13 binding remains valid",
+      "Fixture 9999 remains protected",
       "native post-write Sequence Export verifies exact PAN/TILT and unchanged non-PAN/TILT CueData/labels/Fade/Delay"
     ],
-    "next_review_condition": "After deploy, request a new OC Preview for Sequence 302 Cues 1-29, Group 1, Preset 2.13, Position-only merge. Do not approve until exact fixture deltas and final PAN/TILT values are reviewed.",
+    "next_review_condition": "Only after explicit owner approval of Action 97d3a82f1220, execute that exact Position-only merge Preview. Do not regenerate or substitute another Sequence/Executor.",
     "retained_live_object": {
       "sequence": 302,
       "executor": "2.8",
@@ -36,7 +36,38 @@
       "action_id": "2549047d1bcd",
       "verification": "PASS",
       "cleanup": "DEFERRED_UNTIL_TEST_CYCLE_COMPLETE"
-    }
+    },
+    "live_preview": {
+      "action_id": "97d3a82f1220",
+      "preview_id": "f53aa5c423d8521c",
+      "status": "PENDING_APPROVAL",
+      "runtime_code_commit": "cc511d06cc51",
+      "windows_full_suite": "891 tests / OK",
+      "sequence": 302,
+      "cue_range": "1-29",
+      "executor": "2.8",
+      "group": "1 HYBRID",
+      "group_exact_refs": [
+        "101",
+        "102",
+        "103",
+        "104",
+        "105",
+        "106",
+        "108",
+        "107"
+      ],
+      "position_baseline": "2.13 ZEN_POSITION_CAL_P13",
+      "command_count": 452,
+      "pre_non_position_sha256": "a75b9e8ce383a8d58c399717f0b267b23363cd6ba8637442d2816e30ca9d45ef",
+      "ma2_show_writes": 0
+    },
+    "invalid_actions": [
+      "c9190103c3b5",
+      "a15f0b9ac6a1",
+      "6e6dee7bec24",
+      "1b9505bf89cb"
+    ]
   },
   "human_review_decisions": [
     {
