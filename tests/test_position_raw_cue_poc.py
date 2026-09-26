@@ -44,10 +44,16 @@ def profile():
     }
 
 
-def discovery(sequence=2, refs=("101.1", "102.1"), attributes=("PAN", "TILT")):
-    rows = [{"channel": {"fixture_id": ref.split(".")[0], "subfixture_id": ref.split(".")[1],
-                         "attribute_name": attr}, "raw_values": {"Value": "20" if attr == "PAN" else "30"}}
-            for ref in refs for attr in attributes]
+def discovery(sequence=2, refs=("101", "102"), attributes=("PAN", "TILT")):
+    rows = []
+    for ref in refs:
+        fixture, *sub = ref.split(".", 1)
+        for attr in attributes:
+            channel = {"fixture_id": fixture, "attribute_name": attr}
+            if sub:
+                channel["subfixture_id"] = sub[0]
+            rows.append({"channel": channel,
+                         "raw_values": {"Value": "20" if attr == "PAN" else "30"}})
     return {"schema": "zen.sequence_export_discovery.v0.1", "status": "VERIFIED",
             "sequence_no": sequence, "xml_discovery": {"sha256": "b" * 64},
             "cues": [{"number": {"number": "1", "sub_number": None},
@@ -196,7 +202,7 @@ class RawPositionCuePocTests(unittest.TestCase):
     def test_exact_pan_tilt_all_members_passes_without_binding(self):
         result = verify_raw_position_cue_content(self.profile, self.preview, discovery())
         self.assertEqual(result["status"], "RAW_POSITION_CUE_CONTENT_VERIFIED")
-        self.assertEqual(result["matched_channel_refs"], ["101.1", "102.1"])
+        self.assertEqual(result["matched_channel_refs"], ["101", "102"])
         self.assertEqual(result["value_semantics"], "NOT_VERIFIED")
         self.assertEqual(result["position_application_evidence"], "UNVERIFIED")
         self.assertFalse(result["position_application_binding_recorded"])

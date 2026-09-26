@@ -87,6 +87,9 @@ def sequence_export_discovery(xml: str | bytes, sequence_no: int) -> dict[str, A
     cues: list[dict[str, Any]] = []
     partial = False
     for cue in _children(sequ, "Cue"):
+        if any(_local_name(key) == "nil" and str(value).lower() in {"true", "1"}
+               for key, value in cue.attrib.items()):
+            continue
         number = next((child for child in cue if _local_name(child.tag) == "Number"), None)
         number_info = None
         if number is not None:

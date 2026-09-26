@@ -95,6 +95,19 @@ class SequenceExportTests(unittest.TestCase):
         unsupported = sequence_export_discovery(b"<MA><Group /></MA>", 5)
         self.assertEqual(unsupported["status"], "UNSUPPORTED")
 
+    def test_nil_placeholder_cue_is_ignored_for_real_ma2_export(self):
+        xml = b'''<MA xmlns="http://schemas.malighting.de/grandma2/xml/MA"
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <Sequ><Cue xsi:nil="true"/><Cue index="1"><Number number="1" sub_number="0"/>
+            <CueDatas><CueData value_multipart_index="0" effect_multipart_index="0">
+              <Channel fixture_id="101" attribute_name="PAN"/><Value>20</Value>
+            </CueData></CueDatas><CuePart index="0" name="Raw"/></Cue></Sequ>
+        </MA>'''
+        result = sequence_export_discovery(xml, 10)
+        self.assertEqual(result["status"], "VERIFIED")
+        self.assertEqual(len(result["cues"]), 1)
+        self.assertEqual(result["cues"][0]["number"], {"number": "1", "sub_number": "0"})
+
     def test_provider_uses_exact_owned_name_and_cleans_only_that_file(self):
         foreign = self.directory / "keep-this.xml"
         foreign.write_text("foreign", encoding="utf-8")

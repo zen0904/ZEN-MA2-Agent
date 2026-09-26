@@ -9,7 +9,7 @@ from typing import Any, Mapping
 from .allocation import first_free_from_front
 from .models import Intent
 from .position_application_evidence import (
-    PositionEvidenceError, _exact_refs, _expected_channel_refs, _group,
+    PositionEvidenceError, _exact_refs, _group,
     _identity, _position_capability, _row_ref,
 )
 from .protected_objects import PROTECTED_SEQUENCES
@@ -173,7 +173,11 @@ def verify_raw_position_cue_content(
             for row in part.get("cue_data", []) if isinstance(row, Mapping)]
     if not rows:
         raise PositionEvidenceError("RAW_POSITION_CUE_DATA_EMPTY")
-    expected = _expected_channel_refs(profile, refs)
+    # Raw Attribute writes preserve the exact Group selection identity in the
+    # native Sequence export.  Do not apply the Preset-binding subfixture
+    # normalization here: a single-instance parent selected as "101" exports
+    # PAN/TILT as fixture_id="101", not synthetic "101.1".
+    expected = set(refs)
     observed: dict[str, set[str]] = {}
     for row in rows:
         channel = row.get("channel")
