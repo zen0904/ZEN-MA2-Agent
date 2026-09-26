@@ -593,3 +593,26 @@ Designer resource only after a separately approved test Cue's native Sequence
 Export proves the exact Group/Preset pair on exact PAN/TILT subfixture rows.
 This does not reopen Full Artistic acceptance or change any historical Group 7
 finding.
+
+
+## Position resource integration Preview (2026-09-26)
+
+After the Group 1 / Position Preset 2.13 binding reached
+`REAL_MACHINE_CONTENT_VERIFIED`, the normal `zen.design.request` path was
+run again against fresh current-Show state. This was not a calibration or
+special Position path.
+
+Live Action `e05840bdb157` produced a 26-Cue full-artistic Preview on
+Sequence `302` / Executor `2.8`, with root state
+`PENDING_APPROVAL` / phase `PREVIEW` and `MA2_WRITES=0`. The ordinary
+Designer selected Position Preset `2.13 ZEN_POSITION_CAL_P13` three times and
+also referenced Color Presets `4.101, 4.102, 4.108, 4.109, 4.110, 4.112,
+4.113`. No Effect was selected by the Designer for this particular Preview;
+that is an artistic choice and does not revoke previously verified Effect
+capability.
+
+This closes Position integration at Preview level. The plan has not been
+written. Sequence 302 / Executor 2.8 remain only proposed targets until the
+owner explicitly approves Action `e05840bdb157` and ZEN passes approval-time
+fresh-state revalidation. Fixture 9999 and Patch/Address/Fixture identity/type
+remain outside the write scope.
