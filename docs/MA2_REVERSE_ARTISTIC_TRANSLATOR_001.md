@@ -60,8 +60,8 @@ Sequence cannot contribute a cross-Sequence motif.
    integrity.
 2. `cue_semantics` — per-Cue observable layers (`RAW_VALUE`,
    `PRESET_REFERENCE`, `EFFECT_REFERENCE`), attributes, dimensions, timing
-   strings, resource identities, a broad structural fingerprint, and a strict
-   stored-content fingerprint.
+   strings, resource identities, complete observed PAN/TILT behaviors, a broad
+   structural fingerprint, and a strict stored-content fingerprint.
    Native Preset addresses such as `1.2.13` retain their full path in raw
    CueData while `preset_references` uses the resource-map identity `2.13`.
    Effect references similarly use the final pool ID.

@@ -191,6 +191,56 @@ def _content_signature(cue: Mapping[str, Any]) -> list[dict[str, Any]]:
     return sorted(signature, key=lambda item: json.dumps(item, sort_keys=True))
 
 
+def _position_behaviors(content: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    """Describe only complete PAN/TILT pairs from one Cue part and target."""
+    by_target: dict[tuple[str, str], dict[str, list[Mapping[str, Any]]]] = defaultdict(lambda: defaultdict(list))
+    for row in content:
+        channel = row.get("channel")
+        if not isinstance(channel, Mapping):
+            continue
+        attribute = str(channel.get("attribute_name") or "").upper()
+        fixture = channel.get("fixture_id")
+        if attribute not in {"PAN", "TILT"} or not isinstance(fixture, str) or not fixture.isdigit():
+            continue
+        subfixture = channel.get("subfixture_id")
+        ref = fixture if subfixture in (None, "") else f"{fixture}.{subfixture}"
+        by_target[(str(row.get("part_index")), ref)][attribute].append(row)
+
+    grouped: dict[tuple[str, str, str, str], list[str]] = defaultdict(list)
+    for (part_index, ref), attributes in by_target.items():
+        if len(attributes["PAN"]) != 1 or len(attributes["TILT"]) != 1:
+            continue
+        pan, tilt = attributes["PAN"][0], attributes["TILT"][0]
+        pan_preset, tilt_preset = pan.get("preset"), tilt.get("preset")
+        if isinstance(pan_preset, str) and pan_preset == tilt_preset:
+            pieces = pan_preset.split(".")
+            if len(pieces) >= 2:
+                grouped[("POSITION_PRESET_REFERENCE", part_index, ".".join(pieces[-2:]), "")].append(ref)
+            continue
+        if pan_preset is not None or tilt_preset is not None:
+            continue
+        pan_value = pan.get("raw_values", {}).get("Value")
+        tilt_value = tilt.get("raw_values", {}).get("Value")
+        if pan_value is not None and tilt_value is not None:
+            grouped[("RAW_PAN_TILT", part_index, str(pan_value), str(tilt_value))].append(ref)
+
+    result: list[dict[str, Any]] = []
+    for (kind, part_index, first, second), refs in sorted(grouped.items()):
+        event: dict[str, Any] = {
+            "type": kind,
+            "part_index": part_index,
+            "fixture_refs": sorted(refs),
+            "evidence_status": "OBSERVED_IN_CUE_DATA",
+            "physical_position_semantics": "NOT_CLAIMED",
+        }
+        if kind == "POSITION_PRESET_REFERENCE":
+            event["preset_reference"] = first
+        else:
+            event["raw_values"] = {"PAN": first, "TILT": second}
+        result.append(event)
+    return result
+
+
 def _fingerprint(signature: Mapping[str, object]) -> str:
     encoded = json.dumps(signature, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
@@ -242,6 +292,7 @@ def translate_sequence_evidence(discovery: Mapping[str, Any]) -> dict[str, Any]:
         rows, parts = _cue_rows(raw_cue)
         signature = _semantic_signature(rows)
         content_signature = _content_signature(raw_cue)
+        position_behaviors = _position_behaviors(content_signature)
         cue_attributes = signature["attributes"]
         cue_dimensions = signature["dimensions"]
         attributes.update(cue_attributes)
@@ -276,6 +327,7 @@ def translate_sequence_evidence(discovery: Mapping[str, Any]) -> dict[str, Any]:
             "structural_fingerprint": _fingerprint(signature),
             "content_fingerprint": _fingerprint({"cue_data": content_signature}),
             "observed_cue_data": content_signature,
+            "observable_behaviors": position_behaviors,
             "intent_status": "NOT_INFERRED_FROM_SEQUENCE_XML",
         })
 
@@ -339,6 +391,7 @@ def translate_sequence_evidence(discovery: Mapping[str, Any]) -> dict[str, Any]:
                 "structural_fingerprint": cue["structural_fingerprint"],
                 "content_fingerprint": cue["content_fingerprint"],
                 "observed_cue_data": cue["observed_cue_data"],
+                "observable_behaviors": cue["observable_behaviors"],
             }
             for cue in cue_semantics
         ],

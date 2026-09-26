@@ -74,6 +74,25 @@ class ReverseArtisticTranslatorTests(unittest.TestCase):
         result = translate_sequence_evidence(discovery)
         self.assertEqual(result["cue_semantics"][0]["observable_layers"].get("RAW_VALUE"), None)
 
+    def test_position_behaviors_require_complete_pair_and_distinguish_preset(self):
+        discovery = sequence_export_discovery(SEQUENCE_XML, 42)
+        cues = discovery["cues"]
+        cues[0]["parts"][0]["cue_data"] = [
+            {"channel": {"fixture_id": "101", "attribute_name": "PAN"}, "raw_values": {"Value": "20"}, "preset": None},
+            {"channel": {"fixture_id": "101", "attribute_name": "TILT"}, "raw_values": {"Value": "30"}, "preset": None},
+        ]
+        cues[1]["parts"][0]["cue_data"] = [
+            {"channel": {"fixture_id": "101", "attribute_name": "PAN"}, "raw_values": {"Value": "20"}, "preset": {"no_components": ["1", "2", "13"]}},
+            {"channel": {"fixture_id": "101", "attribute_name": "TILT"}, "raw_values": {"Value": "30"}, "preset": {"no_components": ["1", "2", "13"]}},
+        ]
+        cues[2]["parts"][0]["cue_data"] = cues[0]["parts"][0]["cue_data"][:1]
+        result = translate_sequence_evidence(discovery)
+        self.assertEqual(result["cue_semantics"][0]["observable_behaviors"][0]["type"], "RAW_PAN_TILT")
+        self.assertEqual(result["cue_semantics"][0]["observable_behaviors"][0]["raw_values"], {"PAN": "20", "TILT": "30"})
+        self.assertEqual(result["cue_semantics"][1]["observable_behaviors"][0]["type"], "POSITION_PRESET_REFERENCE")
+        self.assertEqual(result["cue_semantics"][1]["observable_behaviors"][0]["preset_reference"], "2.13")
+        self.assertEqual(result["cue_semantics"][2]["observable_behaviors"], [])
+
     def test_collection_finds_cross_sequence_content_without_claiming_same_show(self):
         first = sequence_export_discovery(SEQUENCE_XML, 42)
         second = sequence_export_discovery(SEQUENCE_XML, 43)
