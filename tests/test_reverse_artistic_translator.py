@@ -46,6 +46,11 @@ class ReverseArtisticTranslatorTests(unittest.TestCase):
         self.assertEqual(first["preset_references"], ["4.101"])
         self.assertEqual(first["effect_references"], ["9"])
         self.assertIn("1.4.101", [row["preset"] for row in first["observed_cue_data"]])
+        self.assertEqual(first["observable_behaviors"], [{
+            "type": "EFFECT_REFERENCE", "part_index": "0", "effect_id": "9",
+            "fixture_refs": ["101"], "evidence_status": "OBSERVED_IN_CUE_DATA",
+            "effect_playback_semantics": "NOT_CLAIMED",
+        }])
         self.assertEqual(first["intent_status"], "NOT_INFERRED_FROM_SEQUENCE_XML")
         motifs = result["recurring_artistic_motifs"]
         self.assertEqual(motifs, [])

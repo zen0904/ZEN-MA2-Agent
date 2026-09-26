@@ -241,6 +241,33 @@ def _position_behaviors(content: list[Mapping[str, Any]]) -> list[dict[str, Any]
     return result
 
 
+def _effect_behaviors(content: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    """Group native Effect identities by Cue part and observed fixture target."""
+    grouped: dict[tuple[str, str], set[str]] = defaultdict(set)
+    for row in content:
+        effect = row.get("effect")
+        channel = row.get("channel")
+        if not isinstance(effect, str) or not isinstance(channel, Mapping):
+            continue
+        fixture = channel.get("fixture_id")
+        if not isinstance(fixture, str) or not fixture.isdigit():
+            continue
+        subfixture = channel.get("subfixture_id")
+        ref = fixture if subfixture in (None, "") else f"{fixture}.{subfixture}"
+        grouped[(str(row.get("part_index")), effect.split(".")[-1])].add(ref)
+    return [
+        {
+            "type": "EFFECT_REFERENCE",
+            "part_index": part_index,
+            "effect_id": effect_id,
+            "fixture_refs": sorted(refs),
+            "evidence_status": "OBSERVED_IN_CUE_DATA",
+            "effect_playback_semantics": "NOT_CLAIMED",
+        }
+        for (part_index, effect_id), refs in sorted(grouped.items())
+    ]
+
+
 def _fingerprint(signature: Mapping[str, object]) -> str:
     encoded = json.dumps(signature, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
@@ -292,7 +319,7 @@ def translate_sequence_evidence(discovery: Mapping[str, Any]) -> dict[str, Any]:
         rows, parts = _cue_rows(raw_cue)
         signature = _semantic_signature(rows)
         content_signature = _content_signature(raw_cue)
-        position_behaviors = _position_behaviors(content_signature)
+        observable_behaviors = _position_behaviors(content_signature) + _effect_behaviors(content_signature)
         cue_attributes = signature["attributes"]
         cue_dimensions = signature["dimensions"]
         attributes.update(cue_attributes)
@@ -327,7 +354,7 @@ def translate_sequence_evidence(discovery: Mapping[str, Any]) -> dict[str, Any]:
             "structural_fingerprint": _fingerprint(signature),
             "content_fingerprint": _fingerprint({"cue_data": content_signature}),
             "observed_cue_data": content_signature,
-            "observable_behaviors": position_behaviors,
+            "observable_behaviors": observable_behaviors,
             "intent_status": "NOT_INFERRED_FROM_SEQUENCE_XML",
         })
 
