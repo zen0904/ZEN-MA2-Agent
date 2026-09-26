@@ -117,6 +117,9 @@ class SkillRegistry:
                     elif manifest.id == "position.application_poc":
                         from .position_application_evidence import PositionApplicationPocSkill
                         self._implementations[manifest.id] = PositionApplicationPocSkill(manifest)
+                    elif manifest.id == "position.raw_cue_poc":
+                        from .position_raw_cue_poc import PositionRawCuePocSkill
+                        self._implementations[manifest.id] = PositionRawCuePocSkill(manifest)
                     elif manifest.id == "timecode.offset":
                         from .timecode_offset import TimecodeOffsetSkill
                         self._implementations[manifest.id] = TimecodeOffsetSkill(manifest)

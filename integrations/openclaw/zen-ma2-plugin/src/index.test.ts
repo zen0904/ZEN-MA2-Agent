@@ -10,6 +10,8 @@ describe("zen-ma2", () => {
       "zen_ma_visual",
       "zen_design_request",
       "zen_preview",
+      "zen_position_preview",
+      "zen_position_raw_preview",
       "zen_approve",
       "zen_worker_status",
       "zen_watchdog_status",

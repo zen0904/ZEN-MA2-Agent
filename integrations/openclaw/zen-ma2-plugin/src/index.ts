@@ -150,6 +150,25 @@ export default defineToolPlugin({
         }, config, context.signal),
     }),
     tool({
+      name: "zen_position_raw_preview",
+      label: "ZEN Raw Position Cue Preview",
+      description:
+        "Freshly verify an exact Group and register a Pan/Tilt raw Cue proof Preview. Does not approve, write MA2, or create Position Preset applicability.",
+      parameters: Type.Object({
+        expectedShowFingerprint: Type.String({ minLength: 64, maxLength: 64 }),
+        groupId: Type.Integer({ minimum: 1 }),
+        expectedGroupName: Type.String({ minLength: 1, maxLength: 256 }),
+        expectedExactRefs: Type.Array(Type.String({ minLength: 1, maxLength: 32 }), { minItems: 1, maxItems: 128 }),
+      }, { additionalProperties: false }),
+      execute: async ({ expectedShowFingerprint, groupId, expectedGroupName, expectedExactRefs }, config, context) =>
+        invokeZen("zen.position.raw.preview", {
+          expected_show_fingerprint: expectedShowFingerprint,
+          group_id: groupId,
+          expected_group_name: expectedGroupName,
+          expected_exact_refs: expectedExactRefs,
+        }, config, context.signal),
+    }),
+    tool({
       name: "zen_approve",
       label: "ZEN Approve",
       description:

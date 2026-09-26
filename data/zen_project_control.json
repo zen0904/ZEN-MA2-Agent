@@ -5,7 +5,7 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "Keep the normal OpenClaw -> ZEN lean design path convenient and fully bounded. The Position application evidence gate now has a fresh-read, approval-aware Action Preview and an exact post-write Cue-content binding model. No Position application is verified; Position remains unavailable to the ordinary Designer until an explicit owner-approved real probe proves the exact Group/Preset pair."
+    "active_objective": "Keep the normal OpenClaw -> ZEN lean design path bounded. The owner-approved Position Preset 2.1 HOME probe created Cue metadata but no CueData; its failed Agent-owned Sequence 10 was separately deleted with readback. The next bounded gate is an approval-aware raw Pan/Tilt Cue content proof, separate from Position Preset applicability. Position remains unavailable to the ordinary Designer."
   },
   "last_closed_task": {
     "id": "OPENCLAW_BOUNDED_ARTISTIC_RESOURCE_RECOVERY_002",
@@ -13,20 +13,19 @@
     "result": "The ordinary OpenClaw/ZEN lean path now reuses the same bounded current-Show evidence previously available only to the SHEESH smoke runner. Fresh direct Color Preset readback plus exact Sequence 901 / Group membership checks recover only observed Build 001 Color bindings; fresh Effect-line QTY readback promotes only reserved FX_DIM_CHASE_SLOW/MED/FAST objects proven native TEMPLATE. A live SHEESH request produced an 18-Cue PENDING_APPROVAL Preview on Sequence 302 / Executor 2.8 using verified Color Presets 4.101,4.102,4.108,4.109,4.110,4.112,4.113 and Effects 2500/2501/2502 with effect_application=REAL_MACHINE_CONTENT_VERIFIED. No approval was invoked and MA2 writes remained zero. Position/movement remains unavailable because Build 001 contains no Position application evidence. Regression: 808 tests PASS."
   },
   "next_acceptance_gate": {
-    "id": "POSITION_APPLICATION_EVIDENCE_POC_001",
+    "id": "RAW_POSITION_CUE_CONTENT_POC_001",
     "classification": "RESEARCH_UNKNOWN",
-    "status": "APPROVAL_AWARE_PREVIEW_READY_APPLICATION_UNVERIFIED",
-    "why_it_matters": "FixtureType POSITION capability alone does not prove that a current Position Preset is safely applicable to an exact Group selection. The ordinary Designer must not receive Position/movement resources until a bounded current-Show application proof exists.",
+    "status": "APPROVAL_AWARE_PREVIEW_READY_CONTENT_UNVERIFIED",
+    "why_it_matters": "The empty 2.1 HOME Preset could not prove Position application. The raw Cue probe first establishes whether explicit Pan/Tilt programmer values reach native CueData; it never promotes Preset applicability or a Designer resource.",
     "blocks_current_milestone": false,
     "dependencies": [
-      "fresh current Position Preset inventory",
       "exact current Group membership",
       "SHOW_BOUND_VERIFIED FixtureType POSITION capability for the selected exact Group",
-      "bounded typed Position Preset application plan",
+      "fixed explicit Pan/Tilt natural-value command plan",
       "explicit Preview and owner approval before any MA2 write",
-      "post-write readback that proves the Position Preset identity on the stored Cue"
+      "post-write native Sequence Export with PAN and TILT CueData for every exact selected member"
     ],
-    "next_review_condition": "Owner reviews a newly registered Position POC Action Preview. A later separate explicit approval must freshly revalidate Show/Group/Preset/Sequence identities before any write, then prove exact PAN/TILT Cue content through native Sequence Export before recording application evidence.",
+    "next_review_condition": "Owner reviews a fresh Raw Position Cue POC Action Preview. Only a later explicit approval may execute the fixed Pan/Tilt probe after fresh Show/Group/Sequence revalidation. Native CueData can verify raw transport/content only; a separate later Position Preset application gate remains required.",
     "current_evidence": [
       "BUILD_001_ACTIONS_CALL_PRESET_COLOR_ONLY_63",
       "BUILD_001_ACTIONS_SET_DIMMER_ONLY_105",
@@ -44,10 +43,13 @@
       "POSITION_POC_PREVIEW_NONEXECUTABLE_SEQUENCE_10_EXECUTOR_NONE_HISTORICAL",
       "POSITION_POC_APPROVAL_BOUNDARY_IMPLEMENTED_PREVIEW_ONLY",
       "POSITION_POC_APPROVAL_BOUNDARY_REGRESSION_828_TESTS_PASS",
-      "POSITION_POC_LIVE_E2E_NOT_RUN_FIELD_CORE_8876_OFFLINE",
+      "POSITION_POC_APPROVAL_EXECUTED_SEQUENCE_10_CUE_METADATA_ONLY_NO_CUEDATA_OWNER_REPORTED",
+      "FAILED_POSITION_POC_SEQUENCE_10_DELETED_AFTER_SEPARATE_OWNER_APPROVAL",
+      "RAW_POSITION_CUE_POC_APPROVAL_GATED_PREVIEW_IMPLEMENTED",
+      "RAW_POSITION_CUE_CONTENT_UNVERIFIED",
       "POSITION_APPLICATION_EVIDENCE_UNVERIFIED",
-      "REAL_MA_WRITE_PERFORMED_NO",
-      "MA2_WRITES_ZERO",
+      "RAW_POSITION_CUE_POC_REAL_MA_WRITE_NOT_PERFORMED",
+      "RAW_POSITION_CUE_POC_PREVIEW_WRITES_ZERO",
       "NORMAL_DESIGNER_POSITION_RESOURCE_COUNT_ZERO",
       "POSITION_APPLICATION_BINDINGS_CURRENTLY_ZERO"
     ]

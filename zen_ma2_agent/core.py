@@ -46,6 +46,9 @@ from .artistic_resources import build_artistic_resource_map
 from .position_application_evidence import (
     PositionApplicationBindingStore, PositionEvidenceError, build_position_poc_preview,
 )
+from .position_raw_cue_poc import (
+    build_position_raw_cue_preview, verify_raw_position_cue_content,
+)
 from .designer.report import write_real_song_design_report
 from .builder import FirstSongBuildError, ShowPlanBuilder
 from .song_analysis import SongAnalysisAdapter, validate_song_analysis
@@ -293,6 +296,76 @@ class AgentCore:
         if current != approved:
             raise PositionEvidenceError("POSITION_POC_STALE_APPROVED_PREVIEW")
         self.skills.get("position.application_poc")
+        return profile
+
+    def _fresh_position_raw_profile(self, *, group_id: int) -> dict[str, Any]:
+        """Refresh the raw probe's exact Show facts without relying on a Preset."""
+        if group_id != 1 or isinstance(group_id, bool) or not self.runtime.ready:
+            raise PositionEvidenceError("RAW_POSITION_POC_TARGET_OR_CONNECTION_INVALID")
+        for resource in ("groups", "fixtures", "fixture_geometry", "sequences", "presets"):
+            result = self.refresh_state(resource)
+            if result["status"] != "available":
+                raise PositionEvidenceError(f"FRESH_{resource.upper()}_READ_FAILED: {result.get('error')}")
+        groups = self.state.get("groups")
+        for row in groups.values if groups else []:
+            result = self.refresh_state("group_membership", group_no=row["number"])
+            if result["status"] != "available":
+                raise PositionEvidenceError(f"EXACT_GROUP_{row['number']}_READ_FAILED: {result.get('error')}")
+        result = self.refresh_state("fixture_type_profiles")
+        if result["status"] != "available":
+            raise PositionEvidenceError(f"FIXTURE_TYPE_PROFILES_READ_FAILED: {result.get('error')}")
+        profile = self.scan_show_profile()
+        self._recover_bounded_test_show_evidence(profile)
+        return profile
+
+    def _fresh_position_raw_preview(self, *, group_id: int) -> tuple[dict[str, Any], dict[str, Any]]:
+        profile = self._fresh_position_raw_profile(group_id=group_id)
+        return profile, build_position_raw_cue_preview(profile, group_id=group_id)
+
+    def preview_position_raw_cue_poc(
+        self, *, expected_show_fingerprint: str, group_id: int,
+        expected_group_name: str, expected_exact_refs: list[str],
+    ) -> dict[str, Any]:
+        """Register an approval-aware Raw Pan/Tilt Cue proof; Preview sends no writes."""
+        if (not isinstance(expected_show_fingerprint, str)
+                or not re.fullmatch(r"[0-9a-f]{64}", expected_show_fingerprint)
+                or group_id != 1 or isinstance(group_id, bool)
+                or not isinstance(expected_group_name, str) or not expected_group_name
+                or not isinstance(expected_exact_refs, list) or not expected_exact_refs
+                or any(not isinstance(ref, str) for ref in expected_exact_refs)):
+            raise PositionEvidenceError("RAW_POSITION_POC_EXPECTED_IDENTITY_INVALID")
+        _profile, preview = self._fresh_position_raw_preview(group_id=group_id)
+        if preview["show_identity"]["value"] != expected_show_fingerprint:
+            raise PositionEvidenceError("RAW_POSITION_POC_SHOW_FINGERPRINT_DRIFT")
+        if (preview["group"]["name"] != expected_group_name
+                or preview["group"]["exact_refs"] != expected_exact_refs):
+            raise PositionEvidenceError("RAW_POSITION_POC_GROUP_IDENTITY_DRIFT")
+        workflow = self.skills.plan_intent(
+            Intent("verify_position_raw_cue", {"position_raw_preview": preview}, "POSITION_RAW_CUE_POC"),
+            self.state, self.runtime.preferences,
+        )
+        result = self._queue_workflow(workflow)
+        action_id = result["action"]["id"]
+        self._root_workflow_status = {"state": "READY", "phase": "PREVIEW", "action_id": action_id}
+        result["action"].update({"root_state": "READY", "current_phase": "PREVIEW",
+                                 "phase": "PREVIEW", "action_id": action_id,
+                                 "preview_id": preview["preview_id"]})
+        self.runtime.log("position_raw_cue_poc_preview", {
+            "action_id": action_id, "preview_id": preview["preview_id"],
+            "show_identity": preview["show_identity"], "group": group_id,
+            "sequence": preview["sequence"]["id"], "ma2_writes": 0,
+        })
+        return result
+
+    def _ensure_position_raw_state_unchanged(self, action: ActionRecord) -> dict[str, Any]:
+        """Approval-time fresh check; never silently switch Sequence candidates."""
+        approved = action.workflow.task.intent.parameters.get("position_raw_preview")
+        if not isinstance(approved, dict):
+            raise PositionEvidenceError("RAW_POSITION_POC_APPROVED_PREVIEW_MISSING")
+        profile, current = self._fresh_position_raw_preview(group_id=approved["group"]["id"])
+        if current != approved:
+            raise PositionEvidenceError("RAW_POSITION_POC_STALE_APPROVED_PREVIEW")
+        self.skills.get("position.raw_cue_poc")
         return profile
 
     def _preview_designer_input(self, song_input: dict[str, Any], *, analysis: dict[str, Any] | None) -> dict[str, Any]:
@@ -1007,8 +1080,10 @@ class AgentCore:
             return {"status": "NO_PREVIEW", "action": None}
         record = self.actions[selected]
         action = {"id": record.id, **record.plan}
-        if record.workflow.task.intent.kind == "verify_position_application":
-            preview = record.workflow.task.intent.parameters["position_preview"]
+        if record.workflow.task.intent.kind in {"verify_position_application", "verify_position_raw_cue"}:
+            key = ("position_preview" if record.workflow.task.intent.kind == "verify_position_application"
+                   else "position_raw_preview")
+            preview = record.workflow.task.intent.parameters[key]
             action.update({"action_id": record.id, "preview_id": preview["preview_id"],
                            "phase": "PREVIEW" if record.status == "PENDING_APPROVAL" else record.status})
         return {"status": record.status, "action": action}
@@ -1444,7 +1519,7 @@ class AgentCore:
         action.status = "CANCELLED"
         if self._active_action_id == action_id:
             self._active_action_id = None
-        if action.workflow.task.intent.kind == "verify_position_application":
+        if action.workflow.task.intent.kind in {"verify_position_application", "verify_position_raw_cue"}:
             self._root_workflow_status.update({"state": "CANCELLED", "phase": "DONE", "action_id": action_id})
         self.progress = "Idle"
         self.events.emit("plan", self.snapshot())
@@ -1505,6 +1580,8 @@ class AgentCore:
             self._ensure_geometry_clone_state_unchanged(action)
         elif execution_intent.kind == "verify_position_application":
             self._ensure_position_poc_state_unchanged(action)
+        elif execution_intent.kind == "verify_position_raw_cue":
+            self._ensure_position_raw_state_unchanged(action)
         action.status = "APPROVED"
         self.progress = "Executing"
         self.events.emit("progress", {"stage": self.progress})
@@ -1514,6 +1591,8 @@ class AgentCore:
                 result = self._execute_cue_effect_application_poc(action)
             elif intent_kind == "verify_position_application":
                 result = self._execute_position_application_poc(action)
+            elif intent_kind == "verify_position_raw_cue":
+                result = self._execute_position_raw_cue_poc(action)
             else:
                 commands = self.skills.approved_commands(action.workflow.task.skill_id, action.workflow)
                 results = self.runtime.execute_approved_commands(commands)
@@ -1544,7 +1623,7 @@ class AgentCore:
             self._active_action_id = None
             if action.workflow.task.skill_id == "show.program":
                 self._root_workflow_status.update({"state": "EXECUTED", "phase": "VERIFY_ACTUAL_CONTENT", "action_id": action_id})
-            elif intent_kind == "verify_position_application":
+            elif intent_kind in {"verify_position_application", "verify_position_raw_cue"}:
                 self._root_workflow_status.update({"state": "EXECUTED", "phase": "DONE", "action_id": action_id})
             self.chat.append({"role": "assistant", "kind": "result", "text": action.result, "action_id": action_id})
             self.progress = "Verifying"
@@ -1555,7 +1634,7 @@ class AgentCore:
                 self._root_workflow_status.update(
                     {"state": "FAILED", "phase": "SELF_HEAL_IF_NEEDED", "action_id": action_id}
                 )
-            elif execution_intent.kind == "verify_position_application":
+            elif execution_intent.kind in {"verify_position_application", "verify_position_raw_cue"}:
                 self._root_workflow_status.update({"state": "FAILED", "phase": "DONE", "action_id": action_id})
             self.progress = "Idle"
             self.events.emit("error", {"message": str(exc)})
@@ -1615,6 +1694,47 @@ class AgentCore:
                 self.runtime.execute_approved_commands((commands[-1],))
             except Exception as clear_exc:
                 self.runtime.log("position_application_poc_clear_failed", {"error": str(clear_exc)})
+
+    def _execute_position_raw_cue_poc(self, action: ActionRecord) -> str:
+        """Execute only after explicit approval; retain failed new Sequence evidence."""
+        preview = action.workflow.task.intent.parameters["position_raw_preview"]
+        commands = self.skills.approved_commands(action.workflow.task.skill_id, action.workflow)
+        if len(commands) != 7:
+            raise PositionEvidenceError("RAW_POSITION_POC_APPROVED_COMMAND_PLAN_INVALID")
+        try:
+            for command in commands[:-1]:
+                response = self.runtime.execute_approved_commands((command,))[0]
+                if ma2_response_has_error(response):
+                    raise PositionEvidenceError(f"RAW_POSITION_POC_MA_COMMAND_REJECTED: {command}: {response}")
+            sequence = preview["sequence"]["id"]
+            self.verify_first_song_metadata(
+                sequence, preview["sequence"]["label"],
+                [{"cue_number": 1, "label": "POSITION_RAW_POC", "fade": 0}],
+            )
+            if self.sequence_export_provider is None:
+                raise PositionEvidenceError("RAW_POSITION_POC_SEQUENCE_EXPORT_UNAVAILABLE")
+            discovery = self.sequence_export_provider.export_and_discover(
+                self.runtime, sequence, self.runtime.preferences.get("state_adapter"), retain_export=True,
+            )
+            profile = self._fresh_position_raw_profile(group_id=preview["group"]["id"])
+            proof = verify_raw_position_cue_content(profile, preview, discovery)
+            self.runtime.log("position_raw_cue_content_verified", {
+                "action_id": action.id, "sequence": sequence,
+                "sequence_export_sha256": proof["sequence_export_sha256"],
+                "position_application_binding_recorded": False,
+            })
+            return f"RAW_POSITION_CUE_CONTENT_VERIFIED for Sequence {sequence}; no Position binding recorded."
+        except Exception as exc:
+            self.runtime.log("position_raw_cue_poc_failed", {
+                "action_id": action.id, "sequence": preview["sequence"]["id"],
+                "error": str(exc), "automatic_delete": False,
+            })
+            raise
+        finally:
+            try:
+                self.runtime.execute_approved_commands((commands[-1],))
+            except Exception as clear_exc:
+                self.runtime.log("position_raw_cue_poc_clear_failed", {"error": str(clear_exc)})
 
     def _execute_cue_effect_application_poc(self, action: ActionRecord) -> str:
         """Execute the POC in a guarded two-phase sequence.

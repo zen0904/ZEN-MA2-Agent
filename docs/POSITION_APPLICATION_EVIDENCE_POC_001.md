@@ -1,10 +1,48 @@
 # Bounded Position Application Evidence PoC
 
+## Raw Position Cue transport/content foundation (2026-09-26)
+
+The owner reports that the explicitly approved `2.1 HOME` application probe
+created Agent-owned Sequence 10 / Cue 1, but native Sequence Export contained
+no CueData because that Preset was empty. No Position binding was recorded.
+The owner separately approved deletion of that failed Sequence; fresh
+`List Sequence 10` then returned no object. This is historical operator/run
+evidence, not authority to reuse Sequence 10 without a new inventory scan.
+
+The independent `zen.position.raw.preview` path now assembles a narrow
+approval-aware Action from fresh Show, exact Group, FixtureType capability,
+Preset inventory (for the same conservative Show fingerprint), and Sequence
+inventory. It only permits Group 1, exact verified parent/subfixture selection,
+and fixed engineering natural-value commands `Attribute "Pan" At 20` and
+`Attribute "Tilt" At 30`. The Action uses first-free non-protected Sequence
+allocation, one Cue, an Agent-owned ASCII label, and no Executor. Preview
+registers `PENDING_APPROVAL` under the existing WorkflowPlan/Action registry;
+it sends no MA2 command. Approval must re-scan and compare the *entire* exact
+Preview, including Sequence candidate. A newly occupied candidate makes the
+approved Action stale; approval never silently reallocates.
+
+After a **later explicit human approval only**, the existing deterministic
+Core/Skill execution boundary may send exactly the seven previewed commands.
+Native Sequence Export must show one Cue 1 with nonempty raw Value fields on
+both PAN and TILT CueData rows for every expected exact channel ref, with no
+foreign ref. The retained native XML SHA-256 is audit evidence. No assertion
+about physical units or equality to natural values 20/30 is made by this
+parser. A failed readback leaves the new Sequence for owner review; ClearAll
+is attempted, but Delete is never automatic.
+
+`RAW_POSITION_CUE_CONTENT_VERIFIED` is intentionally **not**
+`REAL_MACHINE_CONTENT_VERIFIED` Position Preset applicability. This path never
+calls `PositionApplicationBindingStore.record_after_readback()`. The ordinary
+Designer Position resource count remains zero while the binding store is
+empty. Creating a new Agent-owned Position Preset and then proving Preset
+application is a separate future gate; this implementation does not do it.
+
 Status: **approval-aware Action Preview implemented; application unverified**.
 The prior standalone non-executable Preview remains historical discovery
 evidence, not an execution authority. No Position Group/Preset binding is
-verified by this implementation alone. No MA2 Show write, provider call, or
-owner approval occurred in this gate.
+verified by this implementation alone. The previous approval-boundary
+implementation gate itself performed no MA2 Show write or owner approval;
+the subsequent owner-approved failed application probe is recorded above.
 
 `zen.position.preview` now requires explicit expected Show fingerprint, Group
 ID/name/exact ordered refs, and Position Preset ref/label. Before registering

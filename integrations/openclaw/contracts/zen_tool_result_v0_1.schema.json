@@ -20,6 +20,7 @@
         "zen.ma.visual",
         "zen.design.request",
         "zen.position.preview",
+        "zen.position.raw.preview",
         "zen.preview",
         "zen.approve"
       ]

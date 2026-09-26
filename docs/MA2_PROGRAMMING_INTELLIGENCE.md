@@ -1,5 +1,18 @@
 # grandMA2 Programming Intelligence
 
+## Position Cue evidence boundary (bounded Test Show PoC)
+
+The owner-approved application of current Position Preset `2.1 HOME` to
+Group 1 created a Sequence/Cue with no native CueData; that Preset was empty.
+Command acceptance and Cue metadata therefore did not prove Position content,
+and no Group/Preset binding was recorded. The subsequent Raw Position Cue PoC
+uses explicit `Attribute "Pan" At 20` and `Attribute "Tilt" At 30` only behind
+the existing approval boundary. Native Sequence Export must prove nonempty
+PAN/TILT CueData for every exact selected member. The export parser preserves
+raw `Value` text but does not establish console natural-value-to-physical
+semantics; this gate must not claim exact physical aim or Preset applicability.
+See `docs/POSITION_APPLICATION_EVIDENCE_POC_001.md`.
+
 The active target is grandMA2. The Agent must reason about the cleanest,
 safest, native and maintainable implementation, not merely whether a command
 can work. Relevant capability areas include Store/Update, tracking and Cue

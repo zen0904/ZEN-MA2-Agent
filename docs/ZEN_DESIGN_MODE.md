@@ -221,3 +221,7 @@ Cue-content evidence is recorded in
 `zen.position_preset_application_binding.v0.1`. FixtureType POSITION capability
 and Position-pool inventory alone do not establish applicability. The current
 PoC is Preview-only; see `docs/POSITION_APPLICATION_EVIDENCE_POC_001.md`.
+
+The separate Raw Position Cue PoC can prove that explicit Pan/Tilt programmer
+values reach native CueData, but that transport proof does not create a
+Group/Position Preset binding or expose Position to the ordinary Designer.

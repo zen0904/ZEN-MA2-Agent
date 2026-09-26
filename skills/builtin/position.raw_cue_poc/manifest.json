@@ -1,0 +1,1 @@
+{"id":"position.raw_cue_poc","name":"Raw Position Cue POC","version":"0.1","description":"One approval-gated exact Group PAN/TILT Cue content proof; never Position Preset applicability.","intents":["verify_position_raw_cue"],"required_state":["groups","group_membership","fixtures","fixture_geometry","fixture_type_profiles","sequences"],"safety":"MODIFY","enabled":true}

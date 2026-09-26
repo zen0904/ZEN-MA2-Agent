@@ -201,6 +201,7 @@ DesignRequestHandler = Callable[[str], Mapping[str, Any]]
 PreviewHandler = Callable[[Optional[str]], Mapping[str, Any]]
 ApproveHandler = Callable[[str, bool], Mapping[str, Any]]
 PositionPreviewHandler = Callable[..., Mapping[str, Any]]
+RawPositionPreviewHandler = Callable[..., Mapping[str, Any]]
 
 
 class UnknownOpenClawTool(ValueError):
@@ -225,6 +226,7 @@ class OpenClawOperatorAdapter:
         {
             "zen.design.request",
             "zen.position.preview",
+            "zen.position.raw.preview",
             "zen.preview",
             "zen.approve",
         }
@@ -241,6 +243,7 @@ class OpenClawOperatorAdapter:
         preview_handler: Optional[PreviewHandler] = None,
         approve_handler: Optional[ApproveHandler] = None,
         position_preview_handler: Optional[PositionPreviewHandler] = None,
+        raw_position_preview_handler: Optional[RawPositionPreviewHandler] = None,
     ):
         self._status_provider = status_provider
         self._watchdog_provider = watchdog_provider
@@ -250,6 +253,7 @@ class OpenClawOperatorAdapter:
         self._preview_handler = preview_handler
         self._approve_handler = approve_handler
         self._position_preview_handler = position_preview_handler
+        self._raw_position_preview_handler = raw_position_preview_handler
 
     def invoke(
         self,
@@ -299,6 +303,19 @@ class OpenClawOperatorAdapter:
                     or not isinstance(safe_payload["expected_preset_label"], str)):
                 return self._rejected(tool_name, "INVALID_ARGUMENTS", "Position POC identities have invalid types.", request_id)
             return self._result(tool_name, "SUCCESS", dict(self._position_preview_handler(**safe_payload)), None, request_id)
+        if tool_name == "zen.position.raw.preview":
+            if self._raw_position_preview_handler is None:
+                return self._result(tool_name, "NOT_IMPLEMENTED", None, None, request_id)
+            required = {"expected_show_fingerprint", "group_id", "expected_group_name", "expected_exact_refs"}
+            if set(safe_payload) != required:
+                return self._rejected(tool_name, "INVALID_ARGUMENTS", "Exact raw Position POC identities are required.", request_id)
+            if (not isinstance(safe_payload["expected_show_fingerprint"], str)
+                    or not isinstance(safe_payload["group_id"], int) or isinstance(safe_payload["group_id"], bool)
+                    or not isinstance(safe_payload["expected_group_name"], str)
+                    or not isinstance(safe_payload["expected_exact_refs"], list)
+                    or any(not isinstance(ref, str) for ref in safe_payload["expected_exact_refs"])):
+                return self._rejected(tool_name, "INVALID_ARGUMENTS", "Raw Position POC identities have invalid types.", request_id)
+            return self._result(tool_name, "SUCCESS", dict(self._raw_position_preview_handler(**safe_payload)), None, request_id)
         if tool_name == "zen.preview":
             if self._preview_handler is None:
                 return self._result(tool_name, "NOT_IMPLEMENTED", None, None, request_id)
