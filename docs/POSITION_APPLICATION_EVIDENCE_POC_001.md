@@ -1,5 +1,55 @@
 # Bounded Position Application Evidence PoC
 
+## Consolidated Position Calibration transaction (owner-approved 2026-09-26)
+
+The owner explicitly approved replacing the separate Raw Position Cue and
+Position Preset application Actions with one more efficient calibration
+transaction. This is a workflow-design approval, not approval for any future
+live Action. A fresh live Preview and separate explicit approval remain
+mandatory before MA2 writes.
+
+The transaction is intentionally bounded to Group 1 and one newly allocated
+Agent-owned selective Position Preset plus one newly allocated Agent-owned
+Sequence with two Cues and no Executor:
+
+```text
+ClearAll
+Group 1
+Attribute "Pan" At 20
+Attribute "Tilt" At 30
+Store Cue 1 Sequence <fresh> "RAW_POSITION" Fade 0 /nc
+Store Preset 2.<fresh> "ZEN_POSITION_CAL_P<n>" /selective /nc
+ClearAll
+Group 1
+At Preset 2.<fresh>
+Store Cue 2 Sequence <fresh> "PRESET_POSITION" Fade 0 /nc
+Label Sequence <fresh> "ZEN_POSITION_CAL_SEQ<n>" /nc
+ClearAll
+```
+
+Approval-time fresh state must match the exact Preview. Phase B is unreachable
+until a direct `List Preset 2.<fresh>` read proves the newly created Preset
+has the exact expected reference, POSITION type and Agent-owned label. The
+post-write Show fingerprint is predicted from the approved pre-write profile
+plus exactly that one new Preset; any unrelated Preset or Group drift fails
+closed.
+
+One retained native Sequence Export is used for both gates. Cue 1 must contain
+exact PAN=20 and TILT=30 exported raw values for every exact Group member and no
+foreign member. Cue 2 must contain both PAN and TILT rows for every expected
+Position channel, each linked to the exact newly created Preset reference.
+Only then may the Position application binding be recorded as
+`REAL_MACHINE_CONTENT_VERIFIED`. Physical aim/degree semantics are not
+claimed from the raw numeric values.
+
+No automatic cleanup is performed. The Agent-owned calibration Preset and
+Sequence remain audit evidence until the owner separately approves deletion.
+
+Implementation regression at this gate: 858/858 Python tests PASS,
+`main.py --self-check` PASS, `git diff --check` PASS, and the OpenClaw
+plugin tests are 2/2 PASS. Implementation/Preview work performs zero MA2
+writes.
+
 ## Raw Position Cue transport/content foundation (2026-09-26)
 
 The owner reports that the explicitly approved `2.1 HOME` application probe

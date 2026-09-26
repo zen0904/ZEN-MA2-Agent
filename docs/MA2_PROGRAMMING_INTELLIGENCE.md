@@ -13,6 +13,15 @@ raw `Value` text but does not establish console natural-value-to-physical
 semantics; this gate must not claim exact physical aim or Preset applicability.
 See `docs/POSITION_APPLICATION_EVIDENCE_POC_001.md`.
 
+The current owner-approved next gate consolidates the remaining Position
+evidence into one calibration transaction: raw PAN/TILT values are stored to
+Cue 1, then to one newly allocated Agent-owned selective Position Preset,
+which is directly identity-checked before it may be called back and stored to
+Cue 2. One native Sequence Export must independently prove Cue 1 raw values
+and Cue 2 exact Preset-linked PAN+TILT rows. Preview and a fresh explicit
+owner approval still precede every live write; calibration implementation
+alone does not expose Position to the ordinary Designer.
+
 The active target is grandMA2. The Agent must reason about the cleanest,
 safest, native and maintainable implementation, not merely whether a command
 can work. Relevant capability areas include Store/Update, tracking and Cue

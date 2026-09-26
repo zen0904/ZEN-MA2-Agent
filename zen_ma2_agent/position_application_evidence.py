@@ -279,9 +279,13 @@ def derive_position_application_binding(
     sha = (discovery.get("xml_discovery") or {}).get("sha256")
     if not isinstance(sha, str) or not _SHA256.fullmatch(sha):
         raise PositionEvidenceError("SEQUENCE_EXPORT_SHA_UNAVAILABLE")
+    cue_number = (preview.get("sequence") or {}).get("cue")
+    if isinstance(cue_number, bool) or not isinstance(cue_number, int) or cue_number < 1:
+        raise PositionEvidenceError("POC_CUE_IDENTITY_UNAVAILABLE")
     cues = discovery.get("cues")
     matching = [cue for cue in cues if isinstance(cue, Mapping) and isinstance(cue.get("number"), Mapping)
-                and cue["number"].get("number") == "1" and cue["number"].get("sub_number") in (None, "", "0")]
+                and cue["number"].get("number") == str(cue_number)
+                and cue["number"].get("sub_number") in (None, "", "0")]
     if len(matching) != 1:
         raise PositionEvidenceError("POC_CUE_NOT_EXACTLY_VERIFIED")
     rows = [row for part in matching[0].get("parts", []) if isinstance(part, Mapping)
@@ -299,7 +303,7 @@ def derive_position_application_binding(
         hits.setdefault(ref, set()).add(str(channel["attribute_name"]).upper())
     # Parent Group refs can map to the only verified subfixture of that body.
     expected = _expected_channel_refs(profile, refs)
-    if set(hits) != expected or any(not attrs for attrs in hits.values()):
+    if set(hits) != expected or any(attrs != _POSITION_ATTRIBUTES for attrs in hits.values()):
         raise PositionEvidenceError("POSITION_PRESET_CUE_CONTENT_MISMATCH")
     return {
         "schema": SCHEMA, "status": "REAL_MACHINE_CONTENT_VERIFIED",
@@ -307,7 +311,7 @@ def derive_position_application_binding(
         "group_name": group.get("name"), "fixture_refs": sorted(refs),
         "reference": reference, "preset_type": "POSITION", "preset_label": preset["name"],
         "source": "MA2_POSITION_APPLICATION_POC_SEQUENCE_EXPORT",
-        "evidence": {"sequence": sequence, "cue": 1, "sequence_export_sha256": sha,
+        "evidence": {"sequence": sequence, "cue": cue_number, "sequence_export_sha256": sha,
                      "matched_channel_refs": sorted(hits),
                      "observed_attributes_by_ref": {ref: sorted(attrs) for ref, attrs in sorted(hits.items())},
                      "ma2_version_family": "grandMA2_3.9"},
@@ -334,7 +338,7 @@ def position_binding_matches_profile(profile: Mapping[str, Any], binding: Mappin
             and binding.get("fixture_refs") == sorted(refs)
             and binding.get("preset_label") == preset.get("name")
             and isinstance(evidence, Mapping)
-            and evidence.get("cue") == 1
+            and isinstance(evidence.get("cue"), int) and evidence["cue"] > 0
             and isinstance(evidence.get("sequence"), int) and evidence["sequence"] > 0
             and isinstance(evidence.get("sequence_export_sha256"), str)
             and _SHA256.fullmatch(evidence["sequence_export_sha256"])
@@ -342,7 +346,7 @@ def position_binding_matches_profile(profile: Mapping[str, Any], binding: Mappin
             and evidence.get("matched_channel_refs") == sorted(_expected_channel_refs(profile, refs))
             and isinstance(evidence.get("observed_attributes_by_ref"), Mapping)
             and set(evidence["observed_attributes_by_ref"]) == _expected_channel_refs(profile, refs)
-            and all(isinstance(attrs, list) and attrs and set(attrs) <= _POSITION_ATTRIBUTES
+            and all(isinstance(attrs, list) and set(attrs) == _POSITION_ATTRIBUTES
                     for attrs in evidence["observed_attributes_by_ref"].values())
         )
     except (PositionEvidenceError, KeyError, TypeError, ValueError):

@@ -24,6 +24,7 @@
       "zen_design_request",
       "zen_position_preview",
       "zen_position_raw_preview",
+      "zen_position_calibration_preview",
       "zen_preview",
       "zen_approve",
       "zen_worker_status",

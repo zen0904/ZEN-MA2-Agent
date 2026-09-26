@@ -5,7 +5,7 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "Keep the normal OpenClaw -> ZEN lean design path bounded. The owner-approved Position Preset 2.1 HOME probe created Cue metadata but no CueData; its failed Agent-owned Sequence 10 was separately deleted with readback. The next bounded gate is an approval-aware raw Pan/Tilt Cue content proof, separate from Position Preset applicability. Position remains unavailable to the ordinary Designer."
+    "active_objective": "Keep the normal OpenClaw -> ZEN lean design path bounded while closing Position evidence efficiently. Real-machine raw Pan/Tilt CueData has already been observed for Group 1, and the owner explicitly approved replacing separate raw/application probes with one approval-gated Position Calibration transaction. The transaction must prove raw CueData plus a newly created Agent-owned selective Position Preset application from one native Sequence Export before Position is exposed to the ordinary Designer."
   },
   "last_closed_task": {
     "id": "OPENCLAW_BOUNDED_ARTISTIC_RESOURCE_RECOVERY_002",
@@ -13,48 +13,57 @@
     "result": "The ordinary OpenClaw/ZEN lean path now reuses the same bounded current-Show evidence previously available only to the SHEESH smoke runner. Fresh direct Color Preset readback plus exact Sequence 901 / Group membership checks recover only observed Build 001 Color bindings; fresh Effect-line QTY readback promotes only reserved FX_DIM_CHASE_SLOW/MED/FAST objects proven native TEMPLATE. A live SHEESH request produced an 18-Cue PENDING_APPROVAL Preview on Sequence 302 / Executor 2.8 using verified Color Presets 4.101,4.102,4.108,4.109,4.110,4.112,4.113 and Effects 2500/2501/2502 with effect_application=REAL_MACHINE_CONTENT_VERIFIED. No approval was invoked and MA2 writes remained zero. Position/movement remains unavailable because Build 001 contains no Position application evidence. Regression: 808 tests PASS."
   },
   "next_acceptance_gate": {
-    "id": "RAW_POSITION_CUE_CONTENT_POC_001",
-    "classification": "RESEARCH_UNKNOWN",
-    "status": "APPROVAL_AWARE_PREVIEW_READY_CONTENT_UNVERIFIED",
-    "why_it_matters": "The empty 2.1 HOME Preset could not prove Position application. The raw Cue probe first establishes whether explicit Pan/Tilt programmer values reach native CueData; it never promotes Preset applicability or a Designer resource.",
+    "id": "POSITION_CALIBRATION_TRANSACTION_001",
+    "classification": "REQUIRED",
+    "status": "IMPLEMENTED_AWAITING_LIVE_PREVIEW",
+    "why_it_matters": "The raw Position write path has already produced native PAN/TILT CueData on the Test Show. The remaining evidence gap is to prove, in one bounded transaction, that a newly created Agent-owned selective Position Preset can be called back and stored with exact PAN/TILT preset references for the same verified Group.",
     "blocks_current_milestone": false,
     "dependencies": [
-      "exact current Group membership",
-      "SHOW_BOUND_VERIFIED FixtureType POSITION capability for the selected exact Group",
-      "fixed explicit Pan/Tilt natural-value command plan",
-      "explicit Preview and owner approval before any MA2 write",
-      "post-write native Sequence Export with PAN and TILT CueData for every exact selected member"
+      "exact current Group 1 membership",
+      "SHOW_BOUND_VERIFIED FixtureType POSITION capability for every exact member",
+      "first-free Agent-owned Position Preset allocation and first-free non-protected Sequence allocation",
+      "fixed explicit Pan 20 / Tilt 30 raw values",
+      "one explicit Preview and owner approval before any MA2 write",
+      "direct readback of the newly created Position Preset identity before At Preset is allowed",
+      "one retained native Sequence Export proving Cue 1 raw PAN/TILT values and Cue 2 exact Position Preset references for every expected member"
     ],
-    "next_review_condition": "Owner reviews a fresh Raw Position Cue POC Action Preview. Only a later explicit approval may execute the fixed Pan/Tilt probe after fresh Show/Group/Sequence revalidation. Native CueData can verify raw transport/content only; a separate later Position Preset application gate remains required.",
+    "next_review_condition": "Deploy the committed calibration implementation, register one fresh live Position Calibration Preview with MA2_WRITES=0, and present its exact Action/Preview/Preset/Sequence candidates for separate owner approval. No prior raw-probe approval carries over.",
     "current_evidence": [
-      "BUILD_001_ACTIONS_CALL_PRESET_COLOR_ONLY_63",
-      "BUILD_001_ACTIONS_SET_DIMMER_ONLY_105",
-      "BUILD_001_POSITION_APPLICATION_ACTIONS_ZERO",
-      "NO_DERIVE_POSITION_BINDINGS_IMPLEMENTATION_FOUND",
-      "POSITION_REMAINS_FAIL_CLOSED_IN_NORMAL_RESOURCE_MAP",
-      "COLOR_AND_TEMPLATE_EFFECT_NORMAL_PATH_RECOVERY_VERIFIED",
-      "REGRESSION_808_TESTS_PASS",
-      "MA2_WRITES_ZERO",
-      "CURRENT_POSITION_POOL_19_OBJECTS_FROM_LIST_PRESET_ALL",
-      "DIRECT_LIST_PRESET_2_1_HOME_IDENTITY_VERIFIED",
-      "POSITION_FIXTURETYPE_CAPABILITY_GROUPS_1_TO_5_SHOW_BOUND_VERIFIED",
-      "EXACT_GROUP1_PARENT_MEMBERSHIP_VERIFIED",
-      "GROUP7_HISTORICAL_MEMBERSHIP_UNRESOLVED_UNCHANGED",
-      "POSITION_POC_PREVIEW_NONEXECUTABLE_SEQUENCE_10_EXECUTOR_NONE_HISTORICAL",
-      "POSITION_POC_APPROVAL_BOUNDARY_IMPLEMENTED_PREVIEW_ONLY",
-      "POSITION_POC_APPROVAL_BOUNDARY_REGRESSION_828_TESTS_PASS",
-      "POSITION_POC_APPROVAL_EXECUTED_SEQUENCE_10_CUE_METADATA_ONLY_NO_CUEDATA_OWNER_REPORTED",
-      "FAILED_POSITION_POC_SEQUENCE_10_DELETED_AFTER_SEPARATE_OWNER_APPROVAL",
-      "RAW_POSITION_CUE_POC_APPROVAL_GATED_PREVIEW_IMPLEMENTED",
-      "RAW_POSITION_CUE_CONTENT_UNVERIFIED",
-      "POSITION_APPLICATION_EVIDENCE_UNVERIFIED",
-      "RAW_POSITION_CUE_POC_REAL_MA_WRITE_NOT_PERFORMED",
-      "RAW_POSITION_CUE_POC_PREVIEW_WRITES_ZERO",
-      "NORMAL_DESIGNER_POSITION_RESOURCE_COUNT_ZERO",
-      "POSITION_APPLICATION_BINDINGS_CURRENTLY_ZERO"
+      "POSITION_PRESET_2_1_HOME_APPLICATION_CREATED_METADATA_ONLY_NO_CUEDATA",
+      "FAILED_HOME_POC_SEQUENCE_DELETED_AFTER_SEPARATE_OWNER_APPROVAL",
+      "RAW_POSITION_REAL_MACHINE_CUEDATA_OBSERVED_GROUP1_PAN20_TILT30",
+      "REAL_MA2_EXPORT_XSI_NIL_PLACEHOLDER_PARSER_FIXED",
+      "RAW_POSITION_PARENT_REF_VERIFIER_FIXED",
+      "RAW_POSITION_EXPORT_REGRESSION_844_PASS_HISTORICAL",
+      "OWNER_APPROVED_CONSOLIDATED_POSITION_CALIBRATION_WORKFLOW_2026_09_26",
+      "POSITION_CALIBRATION_TRANSACTION_IMPLEMENTED",
+      "CALIBRATION_PRESET_STORE_FORCED_SELECTIVE",
+      "CREATED_PRESET_IDENTITY_GATE_BEFORE_PHASE_B",
+      "SINGLE_SEQUENCE_EXPORT_RAW_PLUS_PRESET_APPLICATION_VERIFICATION_IMPLEMENTED",
+      "POSITION_BINDING_REQUIRES_BOTH_PAN_AND_TILT_PER_EXACT_MEMBER",
+      "REGRESSION_858_TESTS_PASS",
+      "OPENCLAW_PLUGIN_TESTS_2_PASS",
+      "SELF_CHECK_PASS",
+      "DIFF_CHECK_PASS",
+      "MA2_WRITES_ZERO_DURING_IMPLEMENTATION",
+      "NORMAL_DESIGNER_POSITION_RESOURCE_COUNT_ZERO_UNTIL_LIVE_CALIBRATION_VERIFIED"
     ]
   },
   "human_review_decisions": [
+    {
+      "id": "POSITION_CALIBRATION_TRANSACTION_WORKFLOW_APPROVAL_001",
+      "source": "Owner conversation 2026-09-26",
+      "status": "APPROVED_FOR_PREVIEW_IMPLEMENTATION",
+      "outcomes": [
+        "REPLACE_SEPARATE_RAW_AND_PRESET_APPLICATION_ACTIONS_WITH_ONE_CALIBRATION_TRANSACTION",
+        "KEEP_SINGLE_EXPLICIT_APPROVAL_BOUNDARY_FOR_LIVE_WRITES",
+        "PROVE_RAW_CUE_AND_PRESET_APPLICATION_FROM_ONE_NATIVE_SEQUENCE_EXPORT",
+        "CREATE_ONLY_AGENT_OWNED_SELECTIVE_POSITION_PRESET_AND_AGENT_OWNED_SEQUENCE",
+        "NO_AUTOMATIC_CLEANUP_OR_DELETE",
+        "POSITION_REMAINS_FAIL_CLOSED_UNTIL_NATIVE_READBACK_VERIFIES_BOTH_STAGES"
+      ],
+      "limitations": "This decision approves the workflow design and implementation only. It does not approve any future live calibration Action automatically. Each fresh live Action still requires its own explicit owner approval after Preview."
+    },
     {
       "id": "SHEESH_TEST_SHOW_REDESIGN_AUTHORIZATION_001",
       "source": "ZEN_SHEESH_CURRENT_SHOW_REDESIGN_001.md",

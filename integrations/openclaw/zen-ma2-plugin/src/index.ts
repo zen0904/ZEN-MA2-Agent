@@ -169,6 +169,25 @@ export default defineToolPlugin({
         }, config, context.signal),
     }),
     tool({
+      name: "zen_position_calibration_preview",
+      label: "ZEN Position Calibration Preview",
+      description:
+        "Register one approval-gated Position calibration transaction that will prove raw Pan/Tilt CueData and one new Agent-owned Position Preset application. Preview only; never approves or writes MA2.",
+      parameters: Type.Object({
+        expectedShowFingerprint: Type.String({ minLength: 64, maxLength: 64 }),
+        groupId: Type.Integer({ minimum: 1 }),
+        expectedGroupName: Type.String({ minLength: 1, maxLength: 256 }),
+        expectedExactRefs: Type.Array(Type.String({ minLength: 1, maxLength: 32 }), { minItems: 1, maxItems: 128 }),
+      }, { additionalProperties: false }),
+      execute: async ({ expectedShowFingerprint, groupId, expectedGroupName, expectedExactRefs }, config, context) =>
+        invokeZen("zen.position.calibration.preview", {
+          expected_show_fingerprint: expectedShowFingerprint,
+          group_id: groupId,
+          expected_group_name: expectedGroupName,
+          expected_exact_refs: expectedExactRefs,
+        }, config, context.signal),
+    }),
+    tool({
       name: "zen_approve",
       label: "ZEN Approve",
       description:

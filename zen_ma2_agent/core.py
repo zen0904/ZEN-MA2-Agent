@@ -49,6 +49,11 @@ from .position_application_evidence import (
 from .position_raw_cue_poc import (
     build_position_raw_cue_preview, verify_raw_position_cue_content,
 )
+from .position_calibration import (
+    build_position_calibration_preview,
+    calibration_application_preview,
+    verify_calibration_raw_content,
+)
 from .designer.report import write_real_song_design_report
 from .builder import FirstSongBuildError, ShowPlanBuilder
 from .song_analysis import SongAnalysisAdapter, validate_song_analysis
@@ -366,6 +371,76 @@ class AgentCore:
         if current != approved:
             raise PositionEvidenceError("RAW_POSITION_POC_STALE_APPROVED_PREVIEW")
         self.skills.get("position.raw_cue_poc")
+        return profile
+
+    def _fresh_position_calibration_preview(
+        self, *, group_id: int,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        profile = self._fresh_position_raw_profile(group_id=group_id)
+        return profile, build_position_calibration_preview(profile, group_id=group_id)
+
+    def preview_position_calibration(
+        self, *, expected_show_fingerprint: str, group_id: int,
+        expected_group_name: str, expected_exact_refs: list[str],
+    ) -> dict[str, Any]:
+        """Register one efficient Raw + Preset Position calibration Action."""
+        if (not isinstance(expected_show_fingerprint, str)
+                or not re.fullmatch(r"[0-9a-f]{64}", expected_show_fingerprint)
+                or group_id != 1 or isinstance(group_id, bool)
+                or not isinstance(expected_group_name, str) or not expected_group_name
+                or not isinstance(expected_exact_refs, list) or not expected_exact_refs
+                or any(not isinstance(ref, str) for ref in expected_exact_refs)):
+            raise PositionEvidenceError("POSITION_CALIBRATION_EXPECTED_IDENTITY_INVALID")
+        _profile, preview = self._fresh_position_calibration_preview(group_id=group_id)
+        if preview["show_identity"]["value"] != expected_show_fingerprint:
+            raise PositionEvidenceError("POSITION_CALIBRATION_SHOW_FINGERPRINT_DRIFT")
+        if (preview["group"]["name"] != expected_group_name
+                or preview["group"]["exact_refs"] != expected_exact_refs):
+            raise PositionEvidenceError("POSITION_CALIBRATION_GROUP_IDENTITY_DRIFT")
+        workflow = self.skills.plan_intent(
+            Intent(
+                "verify_position_calibration",
+                {"position_calibration_preview": preview},
+                "POSITION_CALIBRATION",
+            ),
+            self.state, self.runtime.preferences,
+        )
+        result = self._queue_workflow(workflow)
+        action_id = result["action"]["id"]
+        self._root_workflow_status = {
+            "state": "READY", "phase": "PREVIEW", "action_id": action_id,
+        }
+        result["action"].update({
+            "root_state": "READY", "current_phase": "PREVIEW",
+            "phase": "PREVIEW", "action_id": action_id,
+            "preview_id": preview["preview_id"],
+        })
+        self.runtime.log("position_calibration_preview", {
+            "action_id": action_id,
+            "preview_id": preview["preview_id"],
+            "show_identity": preview["show_identity"],
+            "expected_postwrite_show_identity": preview["expected_postwrite_show_identity"],
+            "group": group_id,
+            "preset": preview["preset"]["reference"],
+            "sequence": preview["sequence"]["id"],
+            "ma2_writes": 0,
+        })
+        return result
+
+    def _ensure_position_calibration_state_unchanged(
+        self, action: ActionRecord,
+    ) -> dict[str, Any]:
+        approved = action.workflow.task.intent.parameters.get(
+            "position_calibration_preview"
+        )
+        if not isinstance(approved, dict):
+            raise PositionEvidenceError("POSITION_CALIBRATION_APPROVED_PREVIEW_MISSING")
+        profile, current = self._fresh_position_calibration_preview(
+            group_id=approved["group"]["id"]
+        )
+        if current != approved:
+            raise PositionEvidenceError("POSITION_CALIBRATION_STALE_APPROVED_PREVIEW")
+        self.skills.get("position.calibration")
         return profile
 
     def _preview_designer_input(self, song_input: dict[str, Any], *, analysis: dict[str, Any] | None) -> dict[str, Any]:
@@ -1582,6 +1657,8 @@ class AgentCore:
             self._ensure_position_poc_state_unchanged(action)
         elif execution_intent.kind == "verify_position_raw_cue":
             self._ensure_position_raw_state_unchanged(action)
+        elif execution_intent.kind == "verify_position_calibration":
+            self._ensure_position_calibration_state_unchanged(action)
         action.status = "APPROVED"
         self.progress = "Executing"
         self.events.emit("progress", {"stage": self.progress})
@@ -1593,6 +1670,8 @@ class AgentCore:
                 result = self._execute_position_application_poc(action)
             elif intent_kind == "verify_position_raw_cue":
                 result = self._execute_position_raw_cue_poc(action)
+            elif intent_kind == "verify_position_calibration":
+                result = self._execute_position_calibration(action)
             else:
                 commands = self.skills.approved_commands(action.workflow.task.skill_id, action.workflow)
                 results = self.runtime.execute_approved_commands(commands)
@@ -1623,7 +1702,10 @@ class AgentCore:
             self._active_action_id = None
             if action.workflow.task.skill_id == "show.program":
                 self._root_workflow_status.update({"state": "EXECUTED", "phase": "VERIFY_ACTUAL_CONTENT", "action_id": action_id})
-            elif intent_kind in {"verify_position_application", "verify_position_raw_cue"}:
+            elif intent_kind in {
+                "verify_position_application", "verify_position_raw_cue",
+                "verify_position_calibration",
+            }:
                 self._root_workflow_status.update({"state": "EXECUTED", "phase": "DONE", "action_id": action_id})
             self.chat.append({"role": "assistant", "kind": "result", "text": action.result, "action_id": action_id})
             self.progress = "Verifying"
@@ -1634,7 +1716,10 @@ class AgentCore:
                 self._root_workflow_status.update(
                     {"state": "FAILED", "phase": "SELF_HEAL_IF_NEEDED", "action_id": action_id}
                 )
-            elif execution_intent.kind in {"verify_position_application", "verify_position_raw_cue"}:
+            elif execution_intent.kind in {
+                "verify_position_application", "verify_position_raw_cue",
+                "verify_position_calibration",
+            }:
                 self._root_workflow_status.update({"state": "FAILED", "phase": "DONE", "action_id": action_id})
             self.progress = "Idle"
             self.events.emit("error", {"message": str(exc)})
@@ -1735,6 +1820,140 @@ class AgentCore:
                 self.runtime.execute_approved_commands((commands[-1],))
             except Exception as clear_exc:
                 self.runtime.log("position_raw_cue_poc_clear_failed", {"error": str(clear_exc)})
+
+    def _execute_position_calibration(self, action: ActionRecord) -> str:
+        """Run one approved raw + newly created Preset Position calibration."""
+        preview = action.workflow.task.intent.parameters["position_calibration_preview"]
+        commands = self.skills.approved_commands(
+            action.workflow.task.skill_id, action.workflow
+        )
+        if len(commands) != 12:
+            raise PositionEvidenceError("POSITION_CALIBRATION_APPROVED_COMMAND_PLAN_INVALID")
+        responses: list[str] = []
+        try:
+            # Phase A: raw Pan/Tilt Cue plus the new Agent-owned Position Preset.
+            for command in commands[:6]:
+                response = self.runtime.execute_approved_commands((command,))[0]
+                responses.append(response)
+                if ma2_response_has_error(response):
+                    raise PositionEvidenceError(
+                        f"POSITION_CALIBRATION_MA_COMMAND_REJECTED: {command}: {response}"
+                    )
+
+            preset_ref = preview["preset"]["reference"]
+            preset_label = preview["preset"]["label"]
+            direct = PresetProvider().parse(
+                self.runtime.read_state(f"List Preset {preset_ref}"), "POSITION"
+            )
+            if (
+                len(direct) != 1
+                or direct[0].get("reference") != preset_ref
+                or direct[0].get("preset_type") != "POSITION"
+                or direct[0].get("name") != preset_label
+            ):
+                raise PositionEvidenceError(
+                    "POSITION_CALIBRATION_CREATED_PRESET_IDENTITY_UNVERIFIED"
+                )
+
+            # Phase B is unreachable until the exact new Preset identity exists.
+            for command in commands[6:-1]:
+                response = self.runtime.execute_approved_commands((command,))[0]
+                responses.append(response)
+                if ma2_response_has_error(response):
+                    raise PositionEvidenceError(
+                        f"POSITION_CALIBRATION_MA_COMMAND_REJECTED: {command}: {response}"
+                    )
+
+            sequence = preview["sequence"]["id"]
+            self.verify_first_song_metadata(
+                sequence,
+                preview["sequence"]["label"],
+                [
+                    {"cue_number": 1, "label": "RAW_POSITION", "fade": 0},
+                    {"cue_number": 2, "label": "PRESET_POSITION", "fade": 0},
+                ],
+            )
+            if self.sequence_export_provider is None:
+                raise PositionEvidenceError(
+                    "POSITION_CALIBRATION_SEQUENCE_EXPORT_UNAVAILABLE"
+                )
+            discovery = self.sequence_export_provider.export_and_discover(
+                self.runtime,
+                sequence,
+                self.runtime.preferences.get("state_adapter"),
+                retain_export=True,
+            )
+
+            profile = self._fresh_position_raw_profile(
+                group_id=preview["group"]["id"]
+            )
+            if profile.get("show_identity") != preview.get(
+                "expected_postwrite_show_identity"
+            ):
+                raise PositionEvidenceError(
+                    "POSITION_CALIBRATION_POSTWRITE_SHOW_IDENTITY_DRIFT"
+                )
+            candidates = [
+                row for row in profile.get("presets", [])
+                if row.get("reference") == preset_ref
+            ]
+            if (
+                len(candidates) != 1
+                or candidates[0].get("preset_type") != "POSITION"
+                or candidates[0].get("name") != preset_label
+            ):
+                raise PositionEvidenceError(
+                    "POSITION_CALIBRATION_POSTWRITE_PRESET_IDENTITY_UNVERIFIED"
+                )
+
+            raw_proof = verify_calibration_raw_content(
+                profile, preview, discovery
+            )
+            application_preview = calibration_application_preview(
+                profile, preview
+            )
+            binding = self.position_application_bindings.record_after_readback(
+                profile, application_preview, discovery
+            )
+            self.runtime.log(
+                "position_calibration_verified",
+                {
+                    "action_id": action.id,
+                    "sequence": sequence,
+                    "preset": preset_ref,
+                    "raw_status": raw_proof["status"],
+                    "application_status": binding["status"],
+                    "sequence_export_sha256": raw_proof[
+                        "sequence_export_sha256"
+                    ],
+                    "cleanup_after_verified": False,
+                },
+            )
+            return (
+                "RAW_POSITION_CUE_CONTENT_VERIFIED; "
+                f"POSITION_APPLICATION={binding['status']}; "
+                f"Preset {preset_ref} binding recorded from Sequence {sequence} Cue 2."
+            )
+        except Exception as exc:
+            self.runtime.log(
+                "position_calibration_failed",
+                {
+                    "action_id": action.id,
+                    "sequence": preview["sequence"]["id"],
+                    "preset": preview["preset"]["reference"],
+                    "error": str(exc),
+                    "automatic_delete": False,
+                },
+            )
+            raise
+        finally:
+            try:
+                self.runtime.execute_approved_commands((commands[-1],))
+            except Exception as clear_exc:
+                self.runtime.log(
+                    "position_calibration_clear_failed",
+                    {"error": str(clear_exc)},
+                )
 
     def _execute_cue_effect_application_poc(self, action: ActionRecord) -> str:
         """Execute the POC in a guarded two-phase sequence.

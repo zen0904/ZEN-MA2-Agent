@@ -160,6 +160,9 @@ class FieldHost:
             approve_handler=approve_handler,
             position_preview_handler=getattr(self.core, "preview_position_application_poc", None),
             raw_position_preview_handler=getattr(self.core, "preview_position_raw_cue_poc", None),
+            position_calibration_preview_handler=getattr(
+                self.core, "preview_position_calibration", None
+            ),
         )
         self._stop = threading.Event()
         self._ma_thread: threading.Thread | None = None

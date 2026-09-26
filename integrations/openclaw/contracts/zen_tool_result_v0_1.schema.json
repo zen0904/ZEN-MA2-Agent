@@ -21,6 +21,7 @@
         "zen.design.request",
         "zen.position.preview",
         "zen.position.raw.preview",
+        "zen.position.calibration.preview",
         "zen.preview",
         "zen.approve"
       ]

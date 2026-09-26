@@ -50,8 +50,15 @@ class PositionApplicationEvidenceTests(unittest.TestCase):
     def discovery(self):
         rows = []
         for fixture in (101, 102):
-            rows.append({"channel": {"fixture_id": str(fixture), "subfixture_id": "1", "attribute_name": "PAN"},
-                         "preset": {"no_components": ["2", "1"]}})
+            for attribute in ("PAN", "TILT"):
+                rows.append({
+                    "channel": {
+                        "fixture_id": str(fixture),
+                        "subfixture_id": "1",
+                        "attribute_name": attribute,
+                    },
+                    "preset": {"no_components": ["2", "1"]},
+                })
         return {"schema": "zen.sequence_export_discovery.v0.1", "status": "VERIFIED",
                 "sequence_no": 2, "xml_discovery": {"sha256": "b" * 64},
                 "cues": [{"number": {"number": "1", "sub_number": "0"},

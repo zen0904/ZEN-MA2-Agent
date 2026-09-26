@@ -120,6 +120,9 @@ class SkillRegistry:
                     elif manifest.id == "position.raw_cue_poc":
                         from .position_raw_cue_poc import PositionRawCuePocSkill
                         self._implementations[manifest.id] = PositionRawCuePocSkill(manifest)
+                    elif manifest.id == "position.calibration":
+                        from .position_calibration import PositionCalibrationSkill
+                        self._implementations[manifest.id] = PositionCalibrationSkill(manifest)
                     elif manifest.id == "timecode.offset":
                         from .timecode_offset import TimecodeOffsetSkill
                         self._implementations[manifest.id] = TimecodeOffsetSkill(manifest)
