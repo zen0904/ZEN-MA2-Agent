@@ -64,10 +64,14 @@ class ShowStructureProviderTests(unittest.TestCase):
         self.assertEqual(effects[0]["attributes"],["Position","Tilt"])
         self.assertEqual(effects[1]["number"],99)
         self.assertEqual(PageProvider().parse('Page 1 "Main"\nPage 5 "Song"')[1]["name"],"Song")
-        executors=ExecutorProvider().parse('Executor 1.201 Sequence 5 "Song 01"\nExec 1.202 Effect 10 "Pan"\nExecutor 1.203')
+        executors=ExecutorProvider().parse('Executor 1.201 Sequence 5 "Song 01"\nExec 1.202 Effect 10 "Pan"\nExecutor 1.203\nExec 2.8 No.=2.8 Name=ZEN_SEQ302 Sequence=Seq 302(30) Width=1')
         self.assertEqual(executors[0]["assignment"],5)
         self.assertEqual(executors[1]["assignment_type"],"effect")
         self.assertIsNone(executors[2]["assignment_type"])
+        self.assertEqual(executors[3]["location"], "2.8")
+        self.assertEqual(executors[3]["assignment_type"], "sequence")
+        self.assertEqual(executors[3]["assignment"], 302)
+        self.assertEqual(executors[3]["label"], "ZEN_SEQ302")
 
     def test_chat_intents_auto_request_state_dependencies(self):
         self.assertEqual(parse('有哪些 Position Preset？').kind,'preset_list')

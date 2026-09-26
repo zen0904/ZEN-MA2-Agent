@@ -129,8 +129,9 @@ class ExecutorProvider:
         for line in output.splitlines():
             match=self._row.match(line.strip())
             if not match: continue
-            page, number, rest=match.groups(); sequence=re.search(r"sequence\s+(\d+)",rest,re.I); effect=re.search(r"effect\s+(\d+)",rest,re.I); macro=re.search(r"macro\s+(\d+)",rest,re.I)
+            page, number, rest=match.groups(); sequence=re.search(r"sequence(?:\s*=\s*seq)?\s+(\d+)",rest,re.I); effect=re.search(r"effect(?:\s*=\s*)?\s+(\d+)",rest,re.I); macro=re.search(r"macro(?:\s*=\s*)?\s+(\d+)",rest,re.I)
             assignment=("sequence",int(sequence.group(1))) if sequence else ("effect",int(effect.group(1))) if effect else ("macro",int(macro.group(1))) if macro else (None,None)
             label=re.search(r"['\"]([^'\"]+)['\"]",rest)
-            rows.append({"page":int(page) if page else None,"executor":int(number),"location":f"{page+'.' if page else ''}{number}","assignment_type":assignment[0],"assignment":assignment[1],"label":label.group(1) if label else rest.strip() or None})
+            table_name=re.search(r"\bName=(.*?)(?=\s+(?:Sequence|Effect|Macro)=|\s+Width=|$)",rest,re.I)
+            rows.append({"page":int(page) if page else None,"executor":int(number),"location":f"{page+'.' if page else ''}{number}","assignment_type":assignment[0],"assignment":assignment[1],"label":label.group(1) if label else table_name.group(1).strip() if table_name else rest.strip() or None})
         return rows
