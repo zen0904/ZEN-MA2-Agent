@@ -40,11 +40,12 @@ This operates on already-retained data and makes no network or MA2 call.
 For a local file, run from the repository root:
 
 ```text
-python3 -m scripts.translate_sequence_export /path/to/retained.xml --sequence 12 > design-reference.json
+python3 -m scripts.translate_sequence_export /path/to/retained.xml --sequence 12 --output design-reference.json
 ```
 
-The script writes JSON only to standard output. Shell redirection is optional;
-the script itself does not modify the source file or contact MA2. Native
+The script writes a new UTF-8 JSON file and refuses to overwrite an existing
+file. Without `--output` it writes to standard output. It does not modify the
+source XML or contact MA2. Native
 Sequence XML is retained locally on the Windows MA2 host, not committed to
 this repository.
 

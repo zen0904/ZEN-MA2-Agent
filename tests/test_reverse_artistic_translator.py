@@ -1,5 +1,12 @@
+import json
+import io
 import unittest
+from contextlib import redirect_stderr
 from copy import deepcopy
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+from scripts.translate_sequence_export import main as translate_file_main
 
 from zen_ma2_agent.reverse_artistic_translator import (
     ReverseArtisticTranslationError,
@@ -34,6 +41,18 @@ SEQUENCE_XML = b'''<MA xmlns="http://schemas.malighting.de/grandma2/xml/MA">
 
 
 class ReverseArtisticTranslatorTests(unittest.TestCase):
+    def test_cli_writes_new_utf8_json_without_overwriting(self):
+        with TemporaryDirectory() as folder:
+            source = Path(folder) / "sequence.xml"
+            output = Path(folder) / "reference.json"
+            source.write_bytes(SEQUENCE_XML)
+            self.assertEqual(translate_file_main([str(source), "--sequence", "42", "--output", str(output)]), 0)
+            raw = output.read_bytes()
+            self.assertTrue(raw.startswith(b"{\n"))
+            self.assertEqual(json.loads(raw.decode("utf-8"))["technical_structure"]["sequence_no"], 42)
+            with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                translate_file_main([str(source), "--sequence", "42", "--output", str(output)])
+
     def test_translates_native_xml_to_descriptive_reference(self):
         result = translate_sequence_xml(SEQUENCE_XML, 42)
         self.assertTrue(result["read_only"])
