@@ -5,44 +5,47 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "Sequence 302 is now a retained, owner-approved live Test Show object: 29 Cues on Executor 2.8 with native Cue label/Fade/Dimmer/Preset/stored-content verification PASS. A deterministic existing-Cue Position-only merge capability is being accepted so ZEN can add bounded relative PAN/TILT to verified existing Cues without creating a new Sequence/Executor or rewriting Dimmer, Color, labels, Fade, or other CueData. Preview plus explicit approval remain mandatory; native Sequence Export is the post-write content authority."
+    "active_objective": "Sequence 302 remains the retained owner-approved live Test Show object on Executor 2.8. The deterministic existing-Cue Position-only merge is now real-machine verified after correcting a verifier false negative: Action 97d3a82f1220 wrote bounded PAN/TILT to Cues 1-29, native post-export 719d510d7963c061 matched all 464 expected PAN/TILT rows, and canonical protected non-Position CueData is unchanged once grandMA2 Position-family companion channels are classified correctly. Fixture 9999 remained untouched. Windows regression is 894 tests / OK. Do not rewrite Sequence 302 for this acceptance; return to the M4 mainline."
   },
   "last_closed_task": {
-    "id": "FULL_ARTISTIC_POSITION_INTEGRATION_001",
-    "status": "CLOSED_SUCCESS_PREVIEW_ONLY",
-    "result": "The ordinary zen.design.request path freshly reloaded current Show resources, validated the local REAL_MACHINE_CONTENT_VERIFIED Position binding against Position Preset 2.13, and produced a normal 26-Cue full-artistic Preview on Sequence 302 / Executor 2.8. The design references Position Preset 2.13 three times and also references verified Color Presets 4.101,4.102,4.108,4.109,4.110,4.112,4.113. Root workflow is PENDING_APPROVAL / PREVIEW and MA2 writes remain zero. No calibration-specific path was used."
+    "id": "EXISTING_CUE_POSITION_MERGE_001",
+    "status": "CLOSED_SUCCESS_REAL_MACHINE_VERIFIED_AFTER_VERIFIER_FIX",
+    "result": "Owner-approved Action 97d3a82f1220 executed the exact Position-only merge on existing Sequence 302 Cues 1-29. The initial post-write verifier failed with POSITION_MERGE_NON_POSITION_CONTENT_CHANGED, but retained native XML forensic analysis proved the only added rows were grandMA2 Position-family companion channels VIRTUAL_POSITION_MODE, MARK, STAGEX, STAGEY, STAGEZ, FLIP and DIST. DIM, COLORRGB1/2/3, Preset references, Effects, labels and Fade remained unchanged; PAN/TILT matched 464/464. Verifier classification was fixed, retained pre/post XML re-verification produced identical canonical protected-content hash 4df741a03932fd59628a48a86724c98b65a1f46e7424b720448a44739d29bd5d, and Windows full suite passed 894 tests."
   },
   "next_acceptance_gate": {
     "id": "EXISTING_CUE_POSITION_MERGE_001",
-    "classification": "OWNER_APPROVAL_REQUIRED",
-    "status": "LIVE_PREVIEW_PENDING_APPROVAL",
+    "classification": "CLOSED",
+    "status": "CLOSED_SUCCESS_REAL_MACHINE_VERIFIED_AFTER_VERIFIER_FIX",
     "why_it_matters": "Closes the missing existing Sequence -> existing Cue -> Position-only merge path that previously fell back to the generic artistic provider and returned NEEDS_RESEARCH.",
     "blocks_current_milestone": false,
     "dependencies": [
-      "explicit owner approval of Action 97d3a82f1220 after reviewing Preview f53aa5c423d8521c",
-      "approval-time fresh Show/resource revalidation",
-      "Sequence 302 remains the exact ZEN-owned target with Cues 1-29",
-      "Executor 2.8 remains assigned to Sequence 302",
-      "Group 1 HYBRID exact membership remains 101,102,103,104,105,106,108,107",
-      "Position Preset 2.13 ZEN_POSITION_CAL_P13 binding remains valid",
-      "Fixture 9999 remains protected",
-      "native post-write Sequence Export verifies exact PAN/TILT and unchanged non-PAN/TILT CueData/labels/Fade/Delay"
+      "owner explicitly approved Action 97d3a82f1220 after Preview f53aa5c423d8521c",
+      "approval-time fresh Show/resource revalidation passed before live writes",
+      "Action 97d3a82f1220 executed only the bounded existing-Cue Position merge against Sequence 302 Cues 1-29",
+      "native post-write export ZEN_AGENT_SEQUENCE_302_719d510d7963c061.xml retained with SHA256 104ec49ee4582b35aee84967266d0bfe18bc6415a7d4efd32ca3a008d4ab0936",
+      "PAN/TILT post-write match 464/464 and Fixture 9999 is absent",
+      "DIM and COLORRGB1/2/3 counts/content, Preset references, Effects, Cue labels and Fade are unchanged",
+      "verified Position-family companion channels are excluded from protected non-Position fingerprinting",
+      "retained pre/post XML canonical protected-content hashes are equal at 4df741a03932fd59628a48a86724c98b65a1f46e7424b720448a44739d29bd5d",
+      "Executor 2.8 to Sequence 302 was confirmed immediately pre-write and no Executor write command was issued; a separate retained post-write Executor refresh is not available",
+      "Windows full regression suite passes 894 tests"
     ],
-    "next_review_condition": "Only after explicit owner approval of Action 97d3a82f1220, execute that exact Position-only merge Preview. Do not regenerate or substitute another Sequence/Executor.",
+    "next_review_condition": "Closed. Do not approve or replay Action 97d3a82f1220 and do not rewrite Sequence 302 for this acceptance. Return to the committed M4 mainline and select the next bounded gate from repository state/backlog.",
     "retained_live_object": {
       "sequence": 302,
       "executor": "2.8",
       "cue_count": 29,
       "action_id": "2549047d1bcd",
-      "verification": "PASS",
-      "cleanup": "DEFERRED_UNTIL_TEST_CYCLE_COMPLETE"
+      "verification": "PASS_AFTER_POSITION_MERGE_FORENSIC_REVERIFICATION",
+      "cleanup": "DEFERRED_UNTIL_TEST_CYCLE_COMPLETE",
+      "position_merge_action_id": "97d3a82f1220"
     },
     "live_preview": {
       "action_id": "97d3a82f1220",
       "preview_id": "f53aa5c423d8521c",
-      "status": "PENDING_APPROVAL",
+      "status": "EXECUTED_POSTWRITE_FALSE_NEGATIVE_RESOLVED",
       "runtime_code_commit": "cc511d06cc51",
-      "windows_full_suite": "891 tests / OK",
+      "windows_full_suite": "894 tests / OK",
       "sequence": 302,
       "cue_range": "1-29",
       "executor": "2.8",
@@ -60,7 +63,14 @@
       "position_baseline": "2.13 ZEN_POSITION_CAL_P13",
       "command_count": 452,
       "pre_non_position_sha256": "a75b9e8ce383a8d58c399717f0b267b23363cd6ba8637442d2816e30ca9d45ef",
-      "ma2_show_writes": 0
+      "owner_approved": true,
+      "post_export": "ZEN_AGENT_SEQUENCE_302_719d510d7963c061.xml",
+      "post_export_sha256": "104ec49ee4582b35aee84967266d0bfe18bc6415a7d4efd32ca3a008d4ab0936",
+      "position_matches": "464/464",
+      "protected_non_position_canonical_sha256": "4df741a03932fd59628a48a86724c98b65a1f46e7424b720448a44739d29bd5d",
+      "verifier_fix_commit": "ef774ba",
+      "ma2_show_write_occurred": true,
+      "automatic_delete": false
     },
     "invalid_actions": [
       "c9190103c3b5",
@@ -471,6 +481,30 @@
         "PREVIEW_APPROVAL_BOUNDARY_UNCHANGED"
       ],
       "limitations": "The fusion proves native stored content, supplied context observations, and bounded correlations only. It does not prove visual output, musical causality, programmer/artist intent, or authorize MA2 execution. No exact timecode, audio-derived timing, or Stage View image was available, so those evidence sources remain PARTIAL/LOW. The existing FULL_ARTISTIC_POSITION_EXECUTION_001 owner-approval gate remains unchanged."
+    },
+    {
+      "id": "POSITION_MERGE_FORENSIC_001",
+      "source": "retained Sequence 302 native exports 455a15dee8e5146b / 719d510d7963c061 + logs/agent.jsonl + verifier regression fixture",
+      "status": "CLOSED_FALSE_NEGATIVE_VERIFIER_BUG_FIXED",
+      "outcomes": [
+        "OWNER_APPROVED_ACTION_97D3A82F1220_EXECUTED",
+        "LIVE_EXISTING_SEQUENCE_302_CUES_1_TO_29_POSITION_MERGE_OCCURRED",
+        "POSTWRITE_PAN_TILT_464_OF_464_PASS",
+        "FIXTURE_9999_UNTOUCHED",
+        "DIM_1376_TO_1376_IDENTICAL",
+        "COLORRGB1_2_3_912_EACH_IDENTICAL",
+        "PRESET_REFERENCES_IDENTICAL",
+        "EFFECTS_UNCHANGED",
+        "CUE_LABELS_29_OF_29_PASS",
+        "FADE_METADATA_29_OF_29_PASS",
+        "POSITION_COMPANION_ATTRS_VIRTUAL_POSITION_MODE_MARK_STAGEX_STAGEY_STAGEZ_FLIP_DIST_CLASSIFIED_AS_POSITION_FAMILY",
+        "CANONICAL_PROTECTED_NON_POSITION_HASH_EQUAL_4DF741A03932FD59628A48A86724C98B65A1F46E7424B720448A44739D29BD5D",
+        "REAL_RETAINED_XML_REGRESSION_FIXTURE_ADDED",
+        "VERIFIER_FIX_COMMIT_EF774BA",
+        "WINDOWS_FULL_SUITE_894_TESTS_PASS",
+        "NO_ADDITIONAL_MA2_WRITE_DURING_FORENSIC_OR_FIX"
+      ],
+      "limitations": "A separate retained post-write Executor refresh is not available. Executor 2.8 -> Sequence 302 was confirmed immediately pre-write and the approved command stream contained no Assign/Executor write. A later independent read-only session did not reach READY and produced no new MA2 evidence or writes."
     }
   ],
   "backlog": [

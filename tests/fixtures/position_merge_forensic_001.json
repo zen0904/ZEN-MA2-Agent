@@ -1,0 +1,330 @@
+{
+  "post": {
+    "cues": [
+      {
+        "number": {
+          "number": "1",
+          "sub_number": "0"
+        },
+        "parts": [
+          {
+            "cue_data": [
+              {
+                "channel": {
+                  "attribute_name": "DIM",
+                  "fixture_id": "101"
+                },
+                "effect": null,
+                "effect_high_preset": null,
+                "effect_low_preset": null,
+                "multipart_indexes": {
+                  "effect": "0",
+                  "value": "0"
+                },
+                "preset": null,
+                "raw_values": {
+                  "Delay": null,
+                  "EffectFlags": null,
+                  "EffectHigh": null,
+                  "EffectLow": null,
+                  "EffectPhase": null,
+                  "EffectRate": null,
+                  "EffectWidth": null,
+                  "Fade": null,
+                  "Value": "0"
+                }
+              },
+              {
+                "channel": {
+                  "attribute_name": "VIRTUAL_POSITION_MODE",
+                  "fixture_id": "101"
+                },
+                "effect": null,
+                "effect_high_preset": null,
+                "effect_low_preset": null,
+                "multipart_indexes": {
+                  "effect": "0",
+                  "value": "0"
+                },
+                "preset": null,
+                "raw_values": {
+                  "Delay": null,
+                  "EffectFlags": null,
+                  "EffectHigh": null,
+                  "EffectLow": null,
+                  "EffectPhase": null,
+                  "EffectRate": null,
+                  "EffectWidth": null,
+                  "Fade": null,
+                  "Value": "0.5"
+                }
+              },
+              {
+                "channel": {
+                  "attribute_name": "MARK",
+                  "fixture_id": "101"
+                },
+                "effect": null,
+                "effect_high_preset": null,
+                "effect_low_preset": null,
+                "multipart_indexes": {
+                  "effect": "0",
+                  "value": "0"
+                },
+                "preset": null,
+                "raw_values": {
+                  "Delay": null,
+                  "EffectFlags": null,
+                  "EffectHigh": null,
+                  "EffectLow": null,
+                  "EffectPhase": null,
+                  "EffectRate": null,
+                  "EffectWidth": null,
+                  "Fade": null,
+                  "Value": "0"
+                }
+              },
+              {
+                "channel": {
+                  "attribute_name": "STAGEX",
+                  "fixture_id": "101"
+                },
+                "effect": null,
+                "effect_high_preset": null,
+                "effect_low_preset": null,
+                "multipart_indexes": {
+                  "effect": "0",
+                  "value": "0"
+                },
+                "preset": null,
+                "raw_values": {
+                  "Delay": null,
+                  "EffectFlags": null,
+                  "EffectHigh": null,
+                  "EffectLow": null,
+                  "EffectPhase": null,
+                  "EffectRate": null,
+                  "EffectWidth": null,
+                  "Fade": null,
+                  "Value": "-4.9822388"
+                }
+              },
+              {
+                "channel": {
+                  "attribute_name": "STAGEY",
+                  "fixture_id": "101"
+                },
+                "effect": null,
+                "effect_high_preset": null,
+                "effect_low_preset": null,
+                "multipart_indexes": {
+                  "effect": "0",
+                  "value": "0"
+                },
+                "preset": null,
+                "raw_values": {
+                  "Delay": null,
+                  "EffectFlags": null,
+                  "EffectHigh": null,
+                  "EffectLow": null,
+                  "EffectPhase": null,
+                  "EffectRate": null,
+                  "EffectWidth": null,
+                  "Fade": null,
+                  "Value": "-2.645752"
+                }
+              },
+              {
+                "channel": {
+                  "attribute_name": "STAGEZ",
+                  "fixture_id": "101"
+                },
+                "effect": null,
+                "effect_high_preset": null,
+                "effect_low_preset": null,
+                "multipart_indexes": {
+                  "effect": "0",
+                  "value": "0"
+                },
+                "preset": null,
+                "raw_values": {
+                  "Delay": null,
+                  "EffectFlags": null,
+                  "EffectHigh": null,
+                  "EffectLow": null,
+                  "EffectPhase": null,
+                  "EffectRate": null,
+                  "EffectWidth": null,
+                  "Fade": null,
+                  "Value": "0"
+                }
+              },
+              {
+                "channel": {
+                  "attribute_name": "FLIP",
+                  "fixture_id": "101"
+                },
+                "effect": null,
+                "effect_high_preset": null,
+                "effect_low_preset": null,
+                "multipart_indexes": {
+                  "effect": "0",
+                  "value": "0"
+                },
+                "preset": null,
+                "raw_values": {
+                  "Delay": null,
+                  "EffectFlags": null,
+                  "EffectHigh": null,
+                  "EffectLow": null,
+                  "EffectPhase": null,
+                  "EffectRate": null,
+                  "EffectWidth": null,
+                  "Fade": null,
+                  "Value": "-11"
+                }
+              },
+              {
+                "channel": {
+                  "attribute_name": "DIST",
+                  "fixture_id": "101"
+                },
+                "effect": null,
+                "effect_high_preset": null,
+                "effect_low_preset": null,
+                "multipart_indexes": {
+                  "effect": "0",
+                  "value": "0"
+                },
+                "preset": null,
+                "raw_values": {
+                  "Delay": null,
+                  "EffectFlags": null,
+                  "EffectHigh": null,
+                  "EffectLow": null,
+                  "EffectPhase": null,
+                  "EffectRate": null,
+                  "EffectWidth": null,
+                  "Fade": null,
+                  "Value": "0"
+                }
+              },
+              {
+                "channel": {
+                  "attribute_name": "PAN",
+                  "fixture_id": "101"
+                },
+                "effect": null,
+                "effect_high_preset": null,
+                "effect_low_preset": null,
+                "multipart_indexes": {
+                  "effect": "0",
+                  "value": "0"
+                },
+                "preset": null,
+                "raw_values": {
+                  "Delay": null,
+                  "EffectFlags": null,
+                  "EffectHigh": null,
+                  "EffectLow": null,
+                  "EffectPhase": null,
+                  "EffectRate": null,
+                  "EffectWidth": null,
+                  "Fade": null,
+                  "Value": "20"
+                }
+              },
+              {
+                "channel": {
+                  "attribute_name": "TILT",
+                  "fixture_id": "101"
+                },
+                "effect": null,
+                "effect_high_preset": null,
+                "effect_low_preset": null,
+                "multipart_indexes": {
+                  "effect": "0",
+                  "value": "0"
+                },
+                "preset": null,
+                "raw_values": {
+                  "Delay": null,
+                  "EffectFlags": null,
+                  "EffectHigh": null,
+                  "EffectLow": null,
+                  "EffectPhase": null,
+                  "EffectRate": null,
+                  "EffectWidth": null,
+                  "Fade": null,
+                  "Value": "30"
+                }
+              }
+            ],
+            "index": "0",
+            "name": "INTRO 01 BLACKOUT RESET"
+          }
+        ]
+      }
+    ],
+    "schema": "zen.sequence_export_discovery.v0.1",
+    "sequence_no": 302,
+    "status": "VERIFIED"
+  },
+  "pre": {
+    "cues": [
+      {
+        "number": {
+          "number": "1",
+          "sub_number": "0"
+        },
+        "parts": [
+          {
+            "cue_data": [
+              {
+                "channel": {
+                  "attribute_name": "DIM",
+                  "fixture_id": "101"
+                },
+                "effect": null,
+                "effect_high_preset": null,
+                "effect_low_preset": null,
+                "multipart_indexes": {
+                  "effect": "0",
+                  "value": "0"
+                },
+                "preset": null,
+                "raw_values": {
+                  "Delay": null,
+                  "EffectFlags": null,
+                  "EffectHigh": null,
+                  "EffectLow": null,
+                  "EffectPhase": null,
+                  "EffectRate": null,
+                  "EffectWidth": null,
+                  "Fade": null,
+                  "Value": "0"
+                }
+              }
+            ],
+            "index": "0",
+            "name": "INTRO 01 BLACKOUT RESET"
+          }
+        ]
+      }
+    ],
+    "schema": "zen.sequence_export_discovery.v0.1",
+    "sequence_no": 302,
+    "status": "VERIFIED"
+  },
+  "schema": "zen.position_merge_forensic_fixture.v0.1",
+  "sources": {
+    "post": {
+      "filename": "ZEN_AGENT_SEQUENCE_302_719d510d7963c061.xml",
+      "sha256": "104ec49ee4582b35aee84967266d0bfe18bc6415a7d4efd32ca3a008d4ab0936"
+    },
+    "pre": {
+      "filename": "ZEN_AGENT_SEQUENCE_302_455a15dee8e5146b.xml",
+      "sha256": "6a2246632e2d9a44f691db0bea86c6a44c52f9670984dec5ac436c325ca4f608"
+    }
+  }
+}

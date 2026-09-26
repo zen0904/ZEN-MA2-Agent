@@ -1,4 +1,5 @@
 import copy
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -13,6 +14,7 @@ from zen_ma2_agent.position_existing_cue_merge import (
     ExistingPositionMergeError,
     build_existing_position_merge_preview,
     commands_from_preview,
+    non_position_snapshot,
     verify_existing_position_merge,
 )
 
@@ -284,6 +286,30 @@ class ExistingCuePositionMergeTests(unittest.TestCase):
         self.assertEqual(verified["status"], "VERIFIED")
         self.assertEqual(verified["position_value_matches"], 16)
         self.assertEqual(verified["non_position_content"], "UNCHANGED")
+
+    def test_retained_real_seq302_forensic_fixture_preserves_nonposition_content(self):
+        fixture_path = Path(__file__).with_name("fixtures") / "position_merge_forensic_001.json"
+        evidence = json.loads(fixture_path.read_text(encoding="utf-8"))
+        self.assertEqual(
+            evidence["sources"]["pre"]["sha256"],
+            "6a2246632e2d9a44f691db0bea86c6a44c52f9670984dec5ac436c325ca4f608",
+        )
+        self.assertEqual(
+            evidence["sources"]["post"]["sha256"],
+            "104ec49ee4582b35aee84967266d0bfe18bc6415a7d4efd32ca3a008d4ab0936",
+        )
+        pre = non_position_snapshot(evidence["pre"], [1])
+        post = non_position_snapshot(evidence["post"], [1])
+        self.assertEqual(pre["sha256"], post["sha256"])
+        post_attrs = {
+            row["channel"]["attribute_name"]
+            for part in evidence["post"]["cues"][0]["parts"]
+            for row in part["cue_data"]
+        }
+        self.assertTrue({
+            "PAN", "TILT", "VIRTUAL_POSITION_MODE", "MARK", "STAGEX",
+            "STAGEY", "STAGEZ", "FLIP", "DIST",
+        }.issubset(post_attrs))
 
     def test_position_family_companion_rows_do_not_count_as_nonposition_drift(self):
         preview = build()
