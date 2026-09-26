@@ -7,6 +7,9 @@ Implemented as an offline, read-only MVP.  It consumes a retained native MA2
 produces deterministic JSON.  It does not connect to MA2, send commands,
 create previews, allocate resources, or alter the Builder/verifier path.
 
+Real-machine acceptance on controlled Sequence 12 and normal-design Sequence
+901 is recorded in `docs/MA2_REVERSE_ARTISTIC_ACCEPTANCE_001.md`.
+
 ## Existing evidence inventory
 
 | Existing component | Status and role in this MVP |
@@ -41,9 +44,9 @@ python3 -m scripts.translate_sequence_export /path/to/retained.xml --sequence 12
 ```
 
 The script writes JSON only to standard output. Shell redirection is optional;
-the script itself does not modify the source file or contact MA2. The
-repository currently contains no retained native Sequence XML, so its
-real-machine translation output still needs review against an actual export.
+the script itself does not modify the source file or contact MA2. Native
+Sequence XML is retained locally on the Windows MA2 host, not committed to
+this repository.
 
 For several parsed exports, `translate_sequence_collection(discoveries)`
 returns the per-Sequence translations and exact CueData repetitions across
