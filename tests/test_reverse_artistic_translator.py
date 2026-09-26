@@ -1,0 +1,81 @@
+import unittest
+
+from zen_ma2_agent.reverse_artistic_translator import (
+    ReverseArtisticTranslationError,
+    translate_sequence_evidence,
+    translate_sequence_xml,
+)
+from zen_ma2_agent.state.providers.sequence_export import sequence_export_discovery
+
+
+SEQUENCE_XML = b'''<MA xmlns="http://schemas.malighting.de/grandma2/xml/MA">
+  <Sequ>
+    <Cue index="1"><Number number="1" sub_number="0"/><CuePart index="0" name="BUILD"/>
+      <CueDatas>
+        <CueData value_multipart_index="0" effect_multipart_index="0"><Channel fixture_id="101" attribute_name="Dimmer"/><Value>35</Value><Fade>1.5</Fade></CueData>
+        <CueData value_multipart_index="0" effect_multipart_index="0"><Channel fixture_id="101" attribute_name="ColorRGB1"/><Preset><No>1</No><No>4</No><No>101</No></Preset></CueData>
+        <CueData value_multipart_index="0" effect_multipart_index="0"><Channel fixture_id="101" attribute_name="Pan"/><Effect><No>1</No><No>9</No></Effect></CueData>
+      </CueDatas>
+    </Cue>
+    <Cue index="2"><Number number="2" sub_number="0"/><CuePart index="0" name="IMPACT"/>
+      <CueDatas><CueData value_multipart_index="0" effect_multipart_index="0"><Channel fixture_id="102" attribute_name="Dimmer"/><Value>100</Value></CueData></CueDatas>
+    </Cue>
+    <Cue index="3"><Number number="3" sub_number="0"/><CuePart index="0" name="BUILD_RETURN"/>
+      <CueDatas>
+        <CueData value_multipart_index="0" effect_multipart_index="0"><Channel fixture_id="102" attribute_name="Dimmer"/><Value>45</Value><Fade>2</Fade></CueData>
+        <CueData value_multipart_index="0" effect_multipart_index="0"><Channel fixture_id="102" attribute_name="ColorRGB1"/><Preset><No>1</No><No>4</No><No>102</No></Preset></CueData>
+        <CueData value_multipart_index="0" effect_multipart_index="0"><Channel fixture_id="102" attribute_name="Pan"/><Effect><No>1</No><No>10</No></Effect></CueData>
+      </CueDatas>
+    </Cue>
+  </Sequ>
+</MA>'''
+
+
+class ReverseArtisticTranslatorTests(unittest.TestCase):
+    def test_translates_native_xml_to_descriptive_reference(self):
+        result = translate_sequence_xml(SEQUENCE_XML, 42)
+        self.assertTrue(result["read_only"])
+        self.assertEqual(result["translation_status"], "OBSERVED")
+        self.assertEqual(result["technical_structure"]["sequence_no"], 42)
+        self.assertEqual(result["technical_structure"]["numbered_cue_count"], 3)
+        self.assertEqual(result["technical_structure"]["observed_dimensions"], {"COLOR": 2, "DIMMER": 3, "POSITION": 2})
+        first = result["cue_semantics"][0]
+        self.assertEqual(first["observable_layers"], {"EFFECT_REFERENCE": 1, "PRESET_REFERENCE": 1, "RAW_VALUE": 1})
+        self.assertEqual(first["preset_references"], ["1.4.101"])
+        self.assertEqual(first["effect_references"], ["1.9"])
+        self.assertEqual(first["intent_status"], "NOT_INFERRED_FROM_SEQUENCE_XML")
+        motifs = result["recurring_artistic_motifs"]
+        self.assertEqual(len(motifs), 1)
+        self.assertEqual(motifs[0]["cue_numbers"], ["1", "3"])
+        reference = result["machine_readable_design_reference"]
+        self.assertIn("MA2_WRITE_COMMANDS", reference["prohibited_inferences"])
+        self.assertIn("REQUIRES_CURRENT_SHOW_RESOURCE_VALIDATION_BEFORE_ANY_REUSE", reference["use_constraints"])
+
+    def test_partial_discovery_stays_partial(self):
+        discovery = sequence_export_discovery(SEQUENCE_XML, 42)
+        discovery["status"] = "PARTIAL"
+        result = translate_sequence_evidence(discovery)
+        self.assertEqual(result["translation_status"], "PARTIAL_EVIDENCE")
+        self.assertEqual(result["technical_structure"]["source_integrity"], "PARTIAL")
+        self.assertEqual(result["machine_readable_design_reference"]["source_evidence"]["integrity"], "PARTIAL")
+
+    def test_rejects_non_read_only_or_unverified_evidence(self):
+        discovery = sequence_export_discovery(SEQUENCE_XML, 42)
+        discovery["read_only"] = False
+        with self.assertRaisesRegex(ReverseArtisticTranslationError, "READ_ONLY"):
+            translate_sequence_evidence(discovery)
+        discovery = sequence_export_discovery(SEQUENCE_XML, 42)
+        discovery["status"] = "UNSUPPORTED"
+        with self.assertRaisesRegex(ReverseArtisticTranslationError, "NOT_TRANSLATABLE"):
+            translate_sequence_evidence(discovery)
+
+    def test_does_not_elevate_numeric_values_to_artistic_claims(self):
+        result = translate_sequence_xml(SEQUENCE_XML, 42)
+        first = result["cue_semantics"][0]
+        self.assertNotIn("artistic_intent", first)
+        self.assertEqual(first["timing_values"], {"fade": ["1.5"], "delay": []})
+        self.assertNotIn("PATCH_ADDRESS_FIXTURE_IDENTITY_OR_TYPE", result["technical_structure"])
+
+
+if __name__ == "__main__":
+    unittest.main()
