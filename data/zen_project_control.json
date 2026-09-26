@@ -15,7 +15,7 @@
   "next_acceptance_gate": {
     "id": "POSITION_CALIBRATION_TRANSACTION_001",
     "classification": "REQUIRED",
-    "status": "LIVE_CALIBRATION_FAILED_FIX_IMPLEMENTED",
+    "status": "LIVE_PREVIEW_PENDING_APPROVAL",
     "why_it_matters": "The raw Position write path has already produced native PAN/TILT CueData on the Test Show. The remaining evidence gap is to prove, in one bounded transaction, that a newly created Agent-owned selective Position Preset can be called back and stored with exact PAN/TILT preset references for the same verified Group.",
     "blocks_current_milestone": false,
     "dependencies": [
@@ -27,7 +27,7 @@
       "direct readback of the newly created Position Preset identity before At Preset is allowed",
       "one retained native Sequence Export proving Cue 1 raw PAN/TILT values and Cue 2 exact Position Preset references for every expected member"
     ],
-    "next_review_condition": "Deploy the committed reactivation fix and register a fresh Position Calibration Preview. The failed Action f87b868f4a96 is consumed and cannot be reused. Any new live Action requires a new explicit owner approval.",
+    "next_review_condition": "Owner reviews corrected live Position Calibration Action 93a31909ae12 / Preview 73485224b4def31f. Only a new explicit approval may execute it after approval-time fresh revalidation. The previous approval for failed Action f87b868f4a96 is consumed.",
     "current_evidence": [
       "POSITION_PRESET_2_1_HOME_APPLICATION_CREATED_METADATA_ONLY_NO_CUEDATA",
       "FAILED_HOME_POC_SEQUENCE_DELETED_AFTER_SEPARATE_OWNER_APPROVAL",
@@ -61,14 +61,19 @@
       "CALIBRATION_FIX_REACTIVATES_PAN_TILT_AFTER_RAW_CUE_BEFORE_PRESET_STORE",
       "REGRESSION_858_TESTS_PASS_AFTER_REACTIVATION_FIX",
       "SELF_CHECK_PASS_AFTER_REACTIVATION_FIX",
-      "DIFF_CHECK_PASS_AFTER_REACTIVATION_FIX"
+      "DIFF_CHECK_PASS_AFTER_REACTIVATION_FIX",
+      "CORRECTED_LIVE_POSITION_CALIBRATION_ACTION_93A31909AE12",
+      "CORRECTED_LIVE_POSITION_CALIBRATION_PREVIEW_73485224B4DEF31F",
+      "CORRECTED_LIVE_POSITION_CALIBRATION_PRESET_2_13_SEQUENCE_12",
+      "CORRECTED_PREVIEW_REACTIVATES_PAN_TILT_BEFORE_PRESET_STORE",
+      "CORRECTED_LIVE_PREVIEW_WRITES_ZERO"
     ],
     "live_preview": {
-      "head": "4152176dad619923d3aef93558d8618122708f9d",
-      "action_id": "f87b868f4a96",
-      "preview_id": "d994c2040078ec1d",
-      "show_fingerprint": "f88c5d6fe638b8cc967432239d9f5a43dd98f354f98dbe77bdf40e0eb3383b7d",
-      "expected_postwrite_show_fingerprint": "6fd226cbb7eba2bbf37d2e07506bf401a65796ff172f37f39baf1623639e2c25",
+      "head": "f46a9ef",
+      "action_id": "93a31909ae12",
+      "preview_id": "73485224b4def31f",
+      "show_fingerprint": "6fd226cbb7eba2bbf37d2e07506bf401a65796ff172f37f39baf1623639e2c25",
+      "expected_postwrite_show_fingerprint": "290fa8ad57616cc9b909cfce12f4039042c6e6ee305f1704273f813246231d53",
       "group_id": 1,
       "group_name": "HYBRID",
       "exact_refs": [
@@ -83,12 +88,13 @@
       ],
       "pan": 20,
       "tilt": 30,
-      "preset_ref": "2.12",
-      "preset_label": "ZEN_POSITION_CAL_P12",
-      "sequence": 11,
-      "sequence_label": "ZEN_POSITION_CAL_SEQ11",
+      "preset_ref": "2.13",
+      "preset_label": "ZEN_POSITION_CAL_P13",
+      "sequence": 12,
+      "sequence_label": "ZEN_POSITION_CAL_SEQ12",
       "executor": null,
       "action_status": "PENDING_APPROVAL",
+      "reactivation_before_preset_store": true,
       "ma2_writes": 0
     },
     "failed_live_action": {

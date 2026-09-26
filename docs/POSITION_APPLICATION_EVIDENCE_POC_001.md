@@ -79,6 +79,43 @@ The failed Action is consumed. Its approval does not authorize the corrected
 future Action; a new live Preview and new explicit owner approval remain
 mandatory.
 
+### Corrected live Preview
+
+Runtime/main implementation `f46a9ef` registered corrected Action
+`93a31909ae12`, Preview `73485224b4def31f`, with
+`PENDING_APPROVAL` and `MA2_WRITES=0`. Fresh current-Show state now includes
+the retained failed evidence Preset 2.12 and Sequence 11, so the allocator
+correctly selected Preset `2.13` / `ZEN_POSITION_CAL_P13` and Sequence
+`12` / `ZEN_POSITION_CAL_SEQ12`, with no Executor.
+
+The fixed command plan explicitly reactivates programmer Position values before
+Preset creation:
+
+```text
+ClearAll
+Group 1
+Attribute "Pan" At 20
+Attribute "Tilt" At 30
+Store Cue 1 Sequence 12 "RAW_POSITION" Fade 0 /nc
+ClearAll
+Group 1
+Attribute "Pan" At 20
+Attribute "Tilt" At 30
+Store Preset 2.13 "ZEN_POSITION_CAL_P13" /selective /nc
+ClearAll
+Group 1
+At Preset 2.13
+Store Cue 2 Sequence 12 "PRESET_POSITION" Fade 0 /nc
+Label Sequence 12 "ZEN_POSITION_CAL_SEQ12" /nc
+ClearAll
+```
+
+Current Show fingerprint is
+`6fd226cbb7eba2bbf37d2e07506bf401a65796ff172f37f39baf1623639e2c25`;
+the predicted post-write fingerprint after exactly the new Preset 2.13 is
+`290fa8ad57616cc9b909cfce12f4039042c6e6ee305f1704273f813246231d53`.
+The corrected Preview is not approved by any prior Action approval.
+
 ## Raw Position Cue transport/content foundation (2026-09-26)
 
 The owner reports that the explicitly approved `2.1 HOME` application probe
