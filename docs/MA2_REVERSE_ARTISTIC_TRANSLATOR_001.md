@@ -34,6 +34,17 @@ reference = translate_sequence_xml(retained_sequence_xml, sequence_no=302)
 
 This operates on already-retained data and makes no network or MA2 call.
 
+For a local file, run from the repository root:
+
+```text
+python3 -m scripts.translate_sequence_export /path/to/retained.xml --sequence 302 > design-reference.json
+```
+
+The script writes JSON only to standard output. Shell redirection is optional;
+the script itself does not modify the source file or contact MA2. The
+repository currently contains no retained native Sequence XML, so its
+real-machine translation output still needs review against an actual export.
+
 ## Output contract
 
 `zen.ma2_reverse_artistic_translation.v0.1` contains four separate layers:
