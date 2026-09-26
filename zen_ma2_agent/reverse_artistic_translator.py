@@ -18,6 +18,7 @@ from .state.providers.sequence_export import sequence_export_discovery
 
 REVERSE_ARTISTIC_TRANSLATION_SCHEMA = "zen.ma2_reverse_artistic_translation.v0.1"
 DESIGN_REFERENCE_SCHEMA = "zen.ma2_design_reference.v0.1"
+SEQUENCE_COLLECTION_SCHEMA = "zen.ma2_reverse_sequence_collection.v0.1"
 _DISCOVERY_SCHEMA = "zen.sequence_export_discovery.v0.1"
 _SHA256 = re.compile(r"[0-9a-f]{64}")
 _DIMENSIONS = {
@@ -358,10 +359,55 @@ def translate_sequence_xml(xml: str | bytes, sequence_no: int) -> dict[str, Any]
     return translate_sequence_evidence(sequence_export_discovery(xml, sequence_no))
 
 
+def translate_sequence_collection(discoveries: list[Mapping[str, Any]]) -> dict[str, Any]:
+    """Find repeated stored content across distinct offline Sequence exports.
+
+    Native Sequence XML does not contain an authoritative Show UUID. Callers
+    must not interpret collection membership as proof of a shared Show.
+    """
+    if not discoveries:
+        raise ReverseArtisticTranslationError("SEQUENCE_COLLECTION_EMPTY")
+    translations = [translate_sequence_evidence(item) for item in discoveries]
+    sequence_numbers = [item["technical_structure"]["sequence_no"] for item in translations]
+    if len(sequence_numbers) != len(set(sequence_numbers)):
+        raise ReverseArtisticTranslationError("SEQUENCE_COLLECTION_DUPLICATE_NUMBER")
+    occurrences: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for translation in translations:
+        if translation["translation_status"] != "OBSERVED":
+            continue
+        sequence_no = translation["technical_structure"]["sequence_no"]
+        for cue in translation["cue_semantics"]:
+            if cue["evidence_status"] == "OBSERVED":
+                occurrences[cue["content_fingerprint"]].append({
+                    "sequence_no": sequence_no,
+                    "cue_number": cue["cue_number"],
+                })
+    motifs = [
+        {
+            "motif_id": f"CONTENT_{fingerprint[:12].upper()}",
+            "classification": "RECURRING_STORED_CUE_CONTENT_ACROSS_SEQUENCES",
+            "content_fingerprint": fingerprint,
+            "occurrences": occurrences[fingerprint],
+            "source_relation": "SAME_SHOW_NOT_VERIFIED_BY_SEQUENCE_XML",
+        }
+        for fingerprint in sorted(occurrences)
+        if len({item["sequence_no"] for item in occurrences[fingerprint]}) > 1
+    ]
+    return {
+        "schema": SEQUENCE_COLLECTION_SCHEMA,
+        "read_only": True,
+        "source_relation": "SAME_SHOW_NOT_VERIFIED_BY_SEQUENCE_XML",
+        "sequence_translations": translations,
+        "cross_sequence_motifs": motifs,
+    }
+
+
 __all__ = [
     "DESIGN_REFERENCE_SCHEMA",
     "REVERSE_ARTISTIC_TRANSLATION_SCHEMA",
+    "SEQUENCE_COLLECTION_SCHEMA",
     "ReverseArtisticTranslationError",
     "translate_sequence_evidence",
+    "translate_sequence_collection",
     "translate_sequence_xml",
 ]

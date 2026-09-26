@@ -45,6 +45,12 @@ the script itself does not modify the source file or contact MA2. The
 repository currently contains no retained native Sequence XML, so its
 real-machine translation output still needs review against an actual export.
 
+For several parsed exports, `translate_sequence_collection(discoveries)`
+returns the per-Sequence translations and exact CueData repetitions across
+Sequence numbers. Native Sequence XML has no authoritative Show UUID, so the
+collection explicitly marks shared-Show identity as unverified. A partial
+Sequence cannot contribute a cross-Sequence motif.
+
 ## Output contract
 
 `zen.ma2_reverse_artistic_translation.v0.1` contains four separate layers:

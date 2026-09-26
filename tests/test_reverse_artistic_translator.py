@@ -4,6 +4,7 @@ from copy import deepcopy
 from zen_ma2_agent.reverse_artistic_translator import (
     ReverseArtisticTranslationError,
     translate_sequence_evidence,
+    translate_sequence_collection,
     translate_sequence_xml,
 )
 from zen_ma2_agent.state.providers.sequence_export import sequence_export_discovery
@@ -71,6 +72,18 @@ class ReverseArtisticTranslatorTests(unittest.TestCase):
         discovery["cues"][0]["parts"][0]["cue_data"][0]["raw_values"] = {"Fade": "1.5"}
         result = translate_sequence_evidence(discovery)
         self.assertEqual(result["cue_semantics"][0]["observable_layers"].get("RAW_VALUE"), None)
+
+    def test_collection_finds_cross_sequence_content_without_claiming_same_show(self):
+        first = sequence_export_discovery(SEQUENCE_XML, 42)
+        second = sequence_export_discovery(SEQUENCE_XML, 43)
+        collection = translate_sequence_collection([first, second])
+        self.assertEqual(len(collection["cross_sequence_motifs"]), 3)
+        self.assertEqual(collection["source_relation"], "SAME_SHOW_NOT_VERIFIED_BY_SEQUENCE_XML")
+        self.assertEqual(collection["cross_sequence_motifs"][0]["occurrences"][0]["sequence_no"], 42)
+        second["status"] = "PARTIAL"
+        self.assertEqual(translate_sequence_collection([first, second])["cross_sequence_motifs"], [])
+        with self.assertRaisesRegex(ReverseArtisticTranslationError, "DUPLICATE_NUMBER"):
+            translate_sequence_collection([first, first])
 
     def test_partial_discovery_stays_partial(self):
         discovery = sequence_export_discovery(SEQUENCE_XML, 42)
