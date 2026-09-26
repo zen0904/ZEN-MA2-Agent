@@ -33,7 +33,10 @@ from .workflow import ActionStep, SkillGraphNode, Subtask, Task, WorkflowPlan
 
 PREVIEW_SCHEMA = "zen.position_existing_cue_merge_preview.v0.1"
 VERIFY_SCHEMA = "zen.position_existing_cue_merge_verification.v0.1"
-_POSITION_ATTRS = {"PAN", "TILT"}
+_PRIMARY_POSITION_ATTRS = {"PAN", "TILT"}
+_POSITION_FAMILY_ATTRS = _PRIMARY_POSITION_ATTRS | {
+    "VIRTUAL_POSITION_MODE", "MARK", "STAGEX", "STAGEY", "STAGEZ", "FLIP", "DIST",
+}
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 
 
@@ -172,7 +175,7 @@ def derive_calibrated_baseline(
     result: dict[str, dict[str, float]] = {ref: {} for ref in exact_refs}
     for row in _cue_rows(raw_cue):
         attr = _row_attribute(row)
-        if attr not in _POSITION_ATTRS:
+        if attr not in _PRIMARY_POSITION_ATTRS:
             continue
         channel = row.get("channel")
         if not isinstance(channel, Mapping):
@@ -199,7 +202,7 @@ def derive_calibrated_baseline(
     linked_hits: dict[str, set[str]] = {ref: set() for ref in exact_refs}
     for row in _cue_rows(linked_cue):
         attr = _row_attribute(row)
-        if attr not in _POSITION_ATTRS:
+        if attr not in _PRIMARY_POSITION_ATTRS:
             continue
         channel = row.get("channel")
         if not isinstance(channel, Mapping):
@@ -221,7 +224,7 @@ def derive_calibrated_baseline(
         ):
             raise ExistingPositionMergeError("POSITION_BASELINE_PRESET_LINK_MISMATCH")
         linked_hits[selection_ref].add(attr)
-    if any(attrs != _POSITION_ATTRS for attrs in linked_hits.values()):
+    if any(attrs != _PRIMARY_POSITION_ATTRS for attrs in linked_hits.values()):
         raise ExistingPositionMergeError("POSITION_BASELINE_PRESET_LINK_INCOMPLETE")
     return result
 
@@ -370,7 +373,7 @@ def non_position_snapshot(discovery: Mapping[str, Any], cue_numbers: Sequence[in
                 continue
             kept = [
                 row for row in part.get("cue_data", [])
-                if isinstance(row, Mapping) and _row_attribute(row) not in _POSITION_ATTRS
+                if isinstance(row, Mapping) and _row_attribute(row) not in _POSITION_FAMILY_ATTRS
             ]
             kept_parts.append({
                 "index": part.get("index"),
@@ -646,7 +649,7 @@ def verify_existing_position_merge(
         for row in _cue_rows(cue):
             attr = _row_attribute(row)
             channel = row.get("channel")
-            if attr not in _POSITION_ATTRS or not isinstance(channel, Mapping):
+            if attr not in _PRIMARY_POSITION_ATTRS or not isinstance(channel, Mapping):
                 continue
             raw_ref = channel.get("fixture_id")
             sub_ref = channel.get("subfixture_id")

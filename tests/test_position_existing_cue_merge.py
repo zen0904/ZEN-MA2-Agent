@@ -285,6 +285,27 @@ class ExistingCuePositionMergeTests(unittest.TestCase):
         self.assertEqual(verified["position_value_matches"], 16)
         self.assertEqual(verified["non_position_content"], "UNCHANGED")
 
+    def test_position_family_companion_rows_do_not_count_as_nonposition_drift(self):
+        preview = build()
+        post = target_discovery(with_position=preview["cue_updates"])
+        companions = (
+            "VIRTUAL_POSITION_MODE", "MARK", "STAGEX", "STAGEY",
+            "STAGEZ", "FLIP", "DIST",
+        )
+        for cue_row in post["cues"]:
+            rows = cue_row["parts"][0]["cue_data"]
+            rows.extend(row("101", attr, 0) for attr in companions)
+        verified = verify_existing_position_merge(preview, post)
+        self.assertEqual(verified["status"], "VERIFIED")
+        self.assertEqual(verified["non_position_content"], "UNCHANGED")
+
+    def test_unclassified_attribute_still_counts_as_nonposition_drift(self):
+        preview = build()
+        post = target_discovery(with_position=preview["cue_updates"])
+        post["cues"][0]["parts"][0]["cue_data"].append(row("101", "GOBO1", 1))
+        with self.assertRaisesRegex(ExistingPositionMergeError, "NON_POSITION_CONTENT_CHANGED"):
+            verify_existing_position_merge(preview, post)
+
     def test_post_write_parent_rows_canonicalize_only_when_unambiguous(self):
         preview = build()
         post = target_discovery(with_position=preview["cue_updates"])
