@@ -1827,12 +1827,15 @@ class AgentCore:
         commands = self.skills.approved_commands(
             action.workflow.task.skill_id, action.workflow
         )
-        if len(commands) != 12:
+        if len(commands) != 16:
             raise PositionEvidenceError("POSITION_CALIBRATION_APPROVED_COMMAND_PLAN_INVALID")
         responses: list[str] = []
         try:
-            # Phase A: raw Pan/Tilt Cue plus the new Agent-owned Position Preset.
-            for command in commands[:6]:
+            # Phase A: prove/store the raw Cue, then deliberately reactivate
+            # PAN/TILT before creating the Preset.  Real MA2 evidence showed
+            # Store Cue cannot be treated as preserving Preset-storable active
+            # programmer state.
+            for command in commands[:10]:
                 response = self.runtime.execute_approved_commands((command,))[0]
                 responses.append(response)
                 if ma2_response_has_error(response):
@@ -1856,7 +1859,7 @@ class AgentCore:
                 )
 
             # Phase B is unreachable until the exact new Preset identity exists.
-            for command in commands[6:-1]:
+            for command in commands[10:-1]:
                 response = self.runtime.execute_approved_commands((command,))[0]
                 responses.append(response)
                 if ma2_response_has_error(response):

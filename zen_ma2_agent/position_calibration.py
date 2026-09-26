@@ -118,6 +118,10 @@ def build_position_calibration_preview(
         f'Attribute "Pan" At {PAN_VALUE}',
         f'Attribute "Tilt" At {TILT_VALUE}',
         f'Store Cue 1 Sequence {sequence} "RAW_POSITION" Fade 0 /nc',
+        "ClearAll",
+        f"Group {group_id}",
+        f'Attribute "Pan" At {PAN_VALUE}',
+        f'Attribute "Tilt" At {TILT_VALUE}',
         f'Store Preset {preset_ref} "{preset_label}" /selective /nc',
         "ClearAll",
         f"Group {group_id}",
@@ -195,12 +199,14 @@ class PositionCalibrationSkill:
         if not isinstance(preview, dict) or preview.get("schema") != PREVIEW_SCHEMA:
             raise PositionEvidenceError("POSITION_CALIBRATION_PREVIEW_INVALID")
         commands = preview.get("candidate_commands")
-        if not isinstance(commands, list) or len(commands) != 12:
+        if not isinstance(commands, list) or len(commands) != 16:
             raise PositionEvidenceError("POSITION_CALIBRATION_COMMAND_PLAN_INVALID")
         titles = (
             "Clear programmer", "Select exact Group", "Set Pan", "Set Tilt",
-            "Store raw Cue", "Store Agent-owned Position Preset",
-            "Clear programmer", "Reselect exact Group", "Call new Position Preset",
+            "Store raw Cue", "Clear programmer", "Reselect exact Group",
+            "Reactivate Pan", "Reactivate Tilt",
+            "Store Agent-owned Position Preset", "Clear programmer",
+            "Reselect exact Group", "Call new Position Preset",
             "Store Preset-linked Cue", "Label Agent-owned Sequence",
             "Clear programmer",
         )
@@ -272,6 +278,8 @@ class PositionCalibrationSkill:
             "ClearAll", "Group 1",
             'Attribute "Pan" At 20', 'Attribute "Tilt" At 30',
             f'Store Cue 1 Sequence {sequence} "RAW_POSITION" Fade 0 /nc',
+            "ClearAll", "Group 1",
+            'Attribute "Pan" At 20', 'Attribute "Tilt" At 30',
             f'Store Preset {preset_ref} "{preset_label}" /selective /nc',
             "ClearAll", "Group 1", f"At Preset {preset_ref}",
             f'Store Cue 2 Sequence {sequence} "PRESET_POSITION" Fade 0 /nc',

@@ -50,24 +50,34 @@ Implementation regression at this gate: 858/858 Python tests PASS,
 plugin tests are 2/2 PASS. Implementation/Preview work performs zero MA2
 writes.
 
-### Current live Preview
+### Live calibration result and correction
 
-Committed main/runtime HEAD `4152176dad619923d3aef93558d8618122708f9d`
-registered live Action `f87b868f4a96`, Preview `d994c2040078ec1d`, with
-status `PENDING_APPROVAL` and zero MA2 writes. Fresh current-Show allocation
-selected Position Preset `2.12` / `ZEN_POSITION_CAL_P12` and Sequence
-`11` / `ZEN_POSITION_CAL_SEQ11`, with no Executor. Group 1 remains
-`HYBRID` with exact refs
-`101,102,103,104,105,106,108,107`. The approved candidate would use
-Pan 20 / Tilt 30, Cue 1 `RAW_POSITION`, and Cue 2 `PRESET_POSITION`.
-The current scanned Show fingerprint is
-`f88c5d6fe638b8cc967432239d9f5a43dd98f354f98dbe77bdf40e0eb3383b7d`;
-the predicted post-write fingerprint after exactly the one new Preset is
-`6fd226cbb7eba2bbf37d2e07506bf401a65796ff172f37f39baf1623639e2c25`.
+Owner explicitly approved live Action `f87b868f4a96`, Preview
+`d994c2040078ec1d`. Approval-time revalidation passed and the bounded
+transaction executed against Group 1. Position Preset `2.12` /
+`ZEN_POSITION_CAL_P12` was created and its exact identity was directly
+verified before Phase B. Sequence `11` / `ZEN_POSITION_CAL_SEQ11` was
+created with Cue 1 `RAW_POSITION` and Cue 2 `PRESET_POSITION`.
 
-This Preview is not an approval. The previous raw Position approval cannot be
-reused. Live execution requires a new explicit owner approval of Action
-`f87b868f4a96`.
+Native Sequence Export
+`ZEN_AGENT_SEQUENCE_11_ca4e803a2c9c29fd.xml` proves that Cue 1 contains
+PAN=20 and TILT=30 for every exact HYBRID member 101-108. It also proves Cue 2
+contains no CueData. The export status `PARTIAL` is therefore correct and
+must not be weakened into VERIFIED. No Position application binding was
+recorded. Preset 2.12 and Sequence 11 remain retained audit evidence; no
+automatic Delete was performed.
+
+The real-machine result disproved one workflow assumption: after storing the
+raw Cue, the transaction cannot rely on programmer values still being in a
+Preset-storable active state. The corrected transaction now performs a fresh
+`ClearAll -> Group 1 -> Attribute "Pan" At 20 -> Attribute "Tilt" At 30`
+reactivation before `Store Preset`. This remains inside the same single
+approval-gated calibration transaction and still uses one native Sequence
+Export for both final proofs.
+
+The failed Action is consumed. Its approval does not authorize the corrected
+future Action; a new live Preview and new explicit owner approval remain
+mandatory.
 
 ## Raw Position Cue transport/content foundation (2026-09-26)
 

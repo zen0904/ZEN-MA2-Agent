@@ -157,6 +157,10 @@ class PositionCalibrationTests(unittest.TestCase):
                 'Attribute "Pan" At 20',
                 'Attribute "Tilt" At 30',
                 'Store Cue 1 Sequence 2 "RAW_POSITION" Fade 0 /nc',
+                "ClearAll",
+                "Group 1",
+                'Attribute "Pan" At 20',
+                'Attribute "Tilt" At 30',
                 'Store Preset 2.3 "ZEN_POSITION_CAL_P3" /selective /nc',
                 "ClearAll",
                 "Group 1",
@@ -372,7 +376,7 @@ class PositionCalibrationCoreTests(unittest.TestCase):
                 self.core._execute_position_calibration(record)
 
         self.assertEqual(
-            sent[:6], self.preview["candidate_commands"][:6]
+            sent[:10], self.preview["candidate_commands"][:10]
         )
         self.assertNotIn(
             f"At Preset {self.preview['preset']['reference']}", sent
@@ -516,7 +520,7 @@ class PositionCalibrationCoreTests(unittest.TestCase):
             f'At Preset {self.preview["preset"]["reference"]}',
             sent,
         )
-        self.assertEqual(sent[:6], self.preview["candidate_commands"][:6])
+        self.assertEqual(sent[:10], self.preview["candidate_commands"][:10])
         self.assertEqual(sent[-1], "ClearAll")
         self.assertFalse(self.core.position_application_bindings.has_candidates())
 
