@@ -48,7 +48,8 @@ class ReverseArtisticTranslatorTests(unittest.TestCase):
             source.write_bytes(SEQUENCE_XML)
             self.assertEqual(translate_file_main([str(source), "--sequence", "42", "--output", str(output)]), 0)
             raw = output.read_bytes()
-            self.assertTrue(raw.startswith(b"{\n"))
+            self.assertTrue(raw.startswith(b"{"))
+            self.assertFalse(raw.startswith(b"\xef\xbb\xbf"))
             self.assertEqual(json.loads(raw.decode("utf-8"))["technical_structure"]["sequence_no"], 42)
             with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
                 translate_file_main([str(source), "--sequence", "42", "--output", str(output)])

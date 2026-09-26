@@ -1,6 +1,6 @@
 # MA2 Reverse Artistic Translator — Real-Machine Acceptance 001
 
-Date: 2026-09-26. Code: `7b454ef` through `8cff0b1` on GitHub `main`.
+Date: 2026-09-26. Code: GitHub `main` through the UTF-8 output CLI.
 
 ## Boundary
 
@@ -53,6 +53,15 @@ position-calibration checkout and its retained XML were not modified.
   alignment or programmer intent.
 - The translation's source SHA-256 matched the fresh XML file hash.
 
+## Machine-readable outputs
+
+The isolated Windows checkout contains
+`sequence12_design_reference_utf8.json` and
+`sequence901_design_reference_utf8.json`, produced by the offline CLI's
+`--output` option. Both files decode as UTF-8 without a BOM, parse as JSON,
+and carry source XML SHA-256 values matching the original files. The CLI
+creates new files only and refuses to overwrite an existing output.
+
 ## Sequences 5 and 6: Effect absence/presence controls
 
 Current read-only inventory identified `5 ZEN_AI_TEST_SHEESH_SEQ5` and
@@ -79,7 +88,7 @@ references.
 The retained Sequence 11 calibration export translated as `PARTIAL_EVIDENCE`.
 The collection translator excluded it from cross-Sequence motif claims.
 Focused parser, translator, content-verifier, and resource-map tests passed
-on both macOS and the Windows MA2 host: 39 tests on each platform.
+on both macOS and the Windows MA2 host: 40 tests on each platform.
 
 ## Acceptance result
 
