@@ -112,11 +112,10 @@ def discovery(preview):
             preset_rows.append({
                 "channel": {
                     "fixture_id": fixture,
-                    "subfixture_id": "1",
                     "attribute_name": attribute,
                 },
                 "raw_values": {"Value": "1"},
-                "preset": {"no_components": ["2", preset_number]},
+                "preset": {"no_components": ["1", "2", preset_number]},
             })
     return {
         "schema": "zen.sequence_export_discovery.v0.1",

@@ -13,14 +13,18 @@ raw `Value` text but does not establish console natural-value-to-physical
 semantics; this gate must not claim exact physical aim or Preset applicability.
 See `docs/POSITION_APPLICATION_EVIDENCE_POC_001.md`.
 
-The current owner-approved next gate consolidates the remaining Position
-evidence into one calibration transaction: raw PAN/TILT values are stored to
-Cue 1, then to one newly allocated Agent-owned selective Position Preset,
-which is directly identity-checked before it may be called back and stored to
-Cue 2. One native Sequence Export must independently prove Cue 1 raw values
-and Cue 2 exact Preset-linked PAN+TILT rows. Preview and a fresh explicit
-owner approval still precede every live write; calibration implementation
-alone does not expose Position to the ordinary Designer.
+The Position calibration gate is now closed on the live Test Show. Group 1
+`HYBRID` has one ordinary-Designer Position resource:
+`2.13 ZEN_POSITION_CAL_P13`. Retained native Sequence 12 export evidence
+proves Cue 1 raw PAN=20/TILT=30 for every exact Group 1 member and Cue 2
+Preset-2.13-linked PAN+TILT content for canonical single-instance refs
+101.1-108.1. The binding status is `REAL_MACHINE_CONTENT_VERIFIED` on
+current Show fingerprint
+`290fa8ad57616cc9b909cfce12f4039042c6e6ee305f1704273f813246231d53`.
+This evidence is scope-limited: it does not authorize Position for other
+Groups/Presets, and it does not claim physical degree/aim semantics for the
+raw values 20/30. Future live writes still require fresh Preview and explicit
+owner approval.
 
 The active target is grandMA2. The Agent must reason about the cleanest,
 safest, native and maintainable implementation, not merely whether a command

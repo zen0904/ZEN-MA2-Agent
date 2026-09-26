@@ -18,6 +18,10 @@ Group 1
 Attribute "Pan" At 20
 Attribute "Tilt" At 30
 Store Cue 1 Sequence <fresh> "RAW_POSITION" Fade 0 /nc
+ClearAll
+Group 1
+Attribute "Pan" At 20
+Attribute "Tilt" At 30
 Store Preset 2.<fresh> "ZEN_POSITION_CAL_P<n>" /selective /nc
 ClearAll
 Group 1
@@ -45,10 +49,9 @@ claimed from the raw numeric values.
 No automatic cleanup is performed. The Agent-owned calibration Preset and
 Sequence remain audit evidence until the owner separately approves deletion.
 
-Implementation regression at this gate: 858/858 Python tests PASS,
-`main.py --self-check` PASS, `git diff --check` PASS, and the OpenClaw
-plugin tests are 2/2 PASS. Implementation/Preview work performs zero MA2
-writes.
+Implementation regression at the closed gate: 859/859 Python tests PASS,
+`main.py --self-check` PASS and `git diff --check` PASS. The verifier fix
+and final read-only re-verification performed zero additional MA2 Show writes.
 
 ### Live calibration result and correction
 
@@ -115,6 +118,49 @@ Current Show fingerprint is
 the predicted post-write fingerprint after exactly the new Preset 2.13 is
 `290fa8ad57616cc9b909cfce12f4039042c6e6ee305f1704273f813246231d53`.
 The corrected Preview is not approved by any prior Action approval.
+
+### Corrected live execution and read-only closure
+
+The owner then explicitly approved corrected Action `93a31909ae12`. The
+transaction created selective Position Preset `2.13` /
+`ZEN_POSITION_CAL_P13` and Sequence `12` /
+`ZEN_POSITION_CAL_SEQ12`. Native Sequence Export
+`ZEN_AGENT_SEQUENCE_12_25f4bfbe73cbccfe.xml` parsed as `VERIFIED` with
+SHA-256
+`9aa1048c4b10b326f416c089ff760c712e96801c55013b735f94eb1e6fe3810d`.
+
+Cue 1 proves PAN=20 and TILT=30 for exact Group 1 members 101-108. Cue 2
+contains Position Preset 2.13 references on both PAN and TILT rows for all
+eight fixtures. grandMA2 exports these single-instance Position rows using the
+parent fixture identity (`fixture_id="101"`, etc.) even though the canonical
+application identity used by ZEN is the fixture's only verified subfixture
+(`101.1`, etc.). The verifier now canonicalizes a parent row only when fresh
+geometry proves exactly one subfixture. Multi-instance parent rows remain
+ambiguous and fail closed.
+
+The original Action completed its MA writes but was rejected by the old
+identity verifier with `POSITION_PRESET_CUE_CONTENT_MISMATCH`. No second MA
+write was required. After the verifier fix, a new read-only session freshly
+rescanned the Show and re-evaluated the retained Sequence 12 XML. The fresh
+Show fingerprint is
+`290fa8ad57616cc9b909cfce12f4039042c6e6ee305f1704273f813246231d53`.
+The re-verification produced:
+
+```text
+RAW_POSITION_CUE_CONTENT_VERIFIED=YES
+POSITION_APPLICATION=REAL_MACHINE_CONTENT_VERIFIED
+POSITION_BINDING_RECORDED=YES
+VERIFIED_BINDING_COUNT=1
+GROUP1_POSITION_EXECUTION_STATUS=VERIFIED_PRESET_RESOURCE
+GROUP1_POSITION_PRESET=2.13 ZEN_POSITION_CAL_P13
+MA2_WRITE_COMMANDS_DURING_REVERIFICATION=0
+```
+
+The local binding cache remains runtime evidence and is intentionally ignored
+by Git. Durable repo state records the verified fingerprint, exact resource
+identity, retained XML SHA and scope instead. This closes the Position
+application evidence gate for Group 1 / Preset 2.13 only. Other Groups and
+Position Presets remain unverified.
 
 ## Raw Position Cue transport/content foundation (2026-09-26)
 

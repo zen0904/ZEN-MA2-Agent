@@ -129,6 +129,36 @@ class PositionApplicationEvidenceTests(unittest.TestCase):
         with self.assertRaisesRegex(PositionEvidenceError, "POSITION_PRESET_CUE_CONTENT_MISMATCH"):
             derive_position_application_binding(profile, preview, self.discovery())
 
+    def test_real_ma2_multi_instance_parent_row_fails_closed(self):
+        profile = copy.deepcopy(self.profile)
+        profile["groups"][1]["fixture_refs_in_selection_order"] = ["701.2"]
+        preview = build_position_poc_preview(
+            profile, group_id=2, preset_ref="2.1"
+        )
+        rows = []
+        for attribute in ("PAN", "TILT"):
+            rows.append({
+                "channel": {
+                    "fixture_id": "701",
+                    "attribute_name": attribute,
+                },
+                "preset": {"no_components": ["1", "2", "1"]},
+            })
+        discovery = {
+            "schema": "zen.sequence_export_discovery.v0.1",
+            "status": "VERIFIED",
+            "sequence_no": preview["sequence"]["id"],
+            "xml_discovery": {"sha256": "d" * 64},
+            "cues": [{
+                "number": {"number": "1", "sub_number": "0"},
+                "parts": [{"cue_data": rows}],
+            }],
+        }
+        with self.assertRaisesRegex(
+            PositionEvidenceError, "MULTI_INSTANCE_PARENT_ROW_AMBIGUOUS"
+        ):
+            derive_position_application_binding(profile, preview, discovery)
+
     def test_sequence_content_must_prove_exact_position_channels(self):
         for change in ("WRONG_PRESET", "WRONG_ATTRIBUTE", "FOREIGN_REF", "PARTIAL"):
             discovery = self.discovery()

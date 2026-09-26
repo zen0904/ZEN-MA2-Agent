@@ -254,6 +254,39 @@ def _expected_channel_refs(profile: Mapping[str, Any], refs: list[str]) -> set[s
     return expected
 
 
+def _canonical_position_row_ref(
+    profile: Mapping[str, Any], channel: Mapping[str, Any],
+) -> str | None:
+    """Normalize real-MA2 parent rows only when geometry proves one subfixture.
+
+    grandMA2 Sequence Export may emit a single-instance fixture's PAN/TILT row
+    as fixture_id="101" even though the exact applicability identity is the
+    only verified subfixture "101.1".  That collapse is safe only when fresh
+    geometry proves exactly one subfixture.  Multi-instance parent rows remain
+    ambiguous and fail closed.
+    """
+    raw = _row_ref(channel)
+    if raw is None or "." in raw:
+        return raw
+
+    fixtures = {
+        item.get("fixture_id"): item
+        for item in profile.get("fixtures", [])
+        if isinstance(item, Mapping)
+    }
+    fixture = fixtures.get(int(raw))
+    if not isinstance(fixture, Mapping):
+        raise PositionEvidenceError("POSITION_CHANNEL_FIXTURE_IDENTITY_UNAVAILABLE")
+    geometry = fixture.get("stage_geometry")
+    subfixtures = geometry.get("subfixtures") if isinstance(geometry, Mapping) else None
+    if not isinstance(subfixtures, list) or len(subfixtures) != 1:
+        raise PositionEvidenceError("MULTI_INSTANCE_PARENT_ROW_AMBIGUOUS")
+    sub_id = subfixtures[0].get("subfixture_id") if isinstance(subfixtures[0], Mapping) else None
+    if isinstance(sub_id, bool) or not isinstance(sub_id, int) or sub_id < 1:
+        raise PositionEvidenceError("POSITION_CHANNEL_SUBFIXTURE_IDENTITY_UNAVAILABLE")
+    return f"{raw}.{sub_id}"
+
+
 def derive_position_application_binding(
     profile: Mapping[str, Any], preview: Mapping[str, Any], discovery: Mapping[str, Any],
 ) -> dict[str, Any]:
@@ -297,7 +330,7 @@ def derive_position_application_binding(
             continue
         if not _preset_matches(row, reference):
             continue
-        ref = _row_ref(channel)
+        ref = _canonical_position_row_ref(profile, channel)
         if ref is None:
             raise PositionEvidenceError("POSITION_CHANNEL_IDENTITY_UNAVAILABLE")
         hits.setdefault(ref, set()).add(str(channel["attribute_name"]).upper())

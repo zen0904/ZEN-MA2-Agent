@@ -5,135 +5,40 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "Keep the normal OpenClaw -> ZEN lean design path bounded while closing Position evidence efficiently. Real-machine raw Pan/Tilt CueData has already been observed for Group 1, and the owner explicitly approved replacing separate raw/application probes with one approval-gated Position Calibration transaction. The transaction must prove raw CueData plus a newly created Agent-owned selective Position Preset application from one native Sequence Export before Position is exposed to the ordinary Designer."
+    "active_objective": "Position application evidence is now closed on the live Test Show. Group 1 HYBRID has one REAL_MACHINE_CONTENT_VERIFIED Position Preset resource, 2.13 ZEN_POSITION_CAL_P13, backed by Sequence 12 native Cue export evidence. The next bounded objective is a normal full-artistic integration Preview that allows the ordinary Designer to consume the verified Position resource together with already verified resources, while keeping Preview zero-write and all existing stale/protected/foreign-object guards intact."
   },
   "last_closed_task": {
-    "id": "OPENCLAW_BOUNDED_ARTISTIC_RESOURCE_RECOVERY_002",
-    "status": "CLOSED_SUCCESS_PREVIEW_ONLY_E2E",
-    "result": "The ordinary OpenClaw/ZEN lean path now reuses the same bounded current-Show evidence previously available only to the SHEESH smoke runner. Fresh direct Color Preset readback plus exact Sequence 901 / Group membership checks recover only observed Build 001 Color bindings; fresh Effect-line QTY readback promotes only reserved FX_DIM_CHASE_SLOW/MED/FAST objects proven native TEMPLATE. A live SHEESH request produced an 18-Cue PENDING_APPROVAL Preview on Sequence 302 / Executor 2.8 using verified Color Presets 4.101,4.102,4.108,4.109,4.110,4.112,4.113 and Effects 2500/2501/2502 with effect_application=REAL_MACHINE_CONTENT_VERIFIED. No approval was invoked and MA2 writes remained zero. Position/movement remains unavailable because Build 001 contains no Position application evidence. Regression: 808 tests PASS."
+    "id": "POSITION_CALIBRATION_TRANSACTION_001",
+    "status": "CLOSED_REAL_MACHINE_CONTENT_VERIFIED",
+    "result": "Owner-approved corrected Position calibration created Agent-owned selective Preset 2.13 and Sequence 12. Native Sequence Export SHA256 9aa1048c4b10b326f416c089ff760c712e96801c55013b735f94eb1e6fe3810d is VERIFIED: Cue 1 contains PAN=20/TILT=30 for exact Group 1 members 101-108; Cue 2 contains exact Preset 2.13-linked PAN+TILT content for canonical single-instance refs 101.1-108.1. A read-only fresh re-verification on Show fingerprint 290fa8ad57616cc9b909cfce12f4039042c6e6ee305f1704273f813246231d53 recorded one REAL_MACHINE_CONTENT_VERIFIED Position binding. Normal Designer resource map now exposes Position Preset 2.13 only to Group 1. No additional MA2 write was required for the verifier fix/re-verification."
   },
   "next_acceptance_gate": {
-    "id": "POSITION_CALIBRATION_TRANSACTION_001",
+    "id": "FULL_ARTISTIC_POSITION_INTEGRATION_001",
     "classification": "REQUIRED",
-    "status": "LIVE_PREVIEW_PENDING_APPROVAL",
-    "why_it_matters": "The raw Position write path has already produced native PAN/TILT CueData on the Test Show. The remaining evidence gap is to prove, in one bounded transaction, that a newly created Agent-owned selective Position Preset can be called back and stored with exact PAN/TILT preset references for the same verified Group.",
+    "status": "READY_FOR_LIVE_PREVIEW",
+    "why_it_matters": "Position is now a verified ordinary Designer resource for Group 1. The next gate must prove that the normal OpenClaw -> ZEN full-artistic path can consume this new resource without regressing existing Color/Dimmer/Effect evidence, allocation, stale-preview protection, Fixture 9999 protection, or foreign-object guards.",
     "blocks_current_milestone": false,
     "dependencies": [
-      "exact current Group 1 membership",
-      "SHOW_BOUND_VERIFIED FixtureType POSITION capability for every exact member",
-      "first-free Agent-owned Position Preset allocation and first-free non-protected Sequence allocation",
-      "fixed explicit Pan 20 / Tilt 30 raw values",
-      "one explicit Preview and owner approval before any MA2 write",
-      "direct readback of the newly created Position Preset identity before At Preset is allowed",
-      "one retained native Sequence Export proving Cue 1 raw PAN/TILT values and Cue 2 exact Position Preset references for every expected member"
+      "current Show fingerprint fresh-read",
+      "exact Group 1 HYBRID membership unchanged",
+      "local Position binding cache validates against fresh current Show",
+      "Position Preset 2.13 exact identity unchanged",
+      "ordinary Designer resource map exposes Position only where verified",
+      "full-artistic Preview remains MA2_WRITES=0",
+      "no Patch/Address/Fixture identity/type mutation",
+      "Fixture 9999 remains protected",
+      "fresh Sequence/Executor allocation avoids occupied foreign/protected objects"
     ],
-    "next_review_condition": "Owner reviews corrected live Position Calibration Action 93a31909ae12 / Preview 73485224b4def31f. Only a new explicit approval may execute it after approval-time fresh revalidation. The previous approval for failed Action f87b868f4a96 is consumed.",
+    "next_review_condition": "Generate one normal full-artistic live Preview using the current Show and verify that the ordinary Designer sees Position Preset 2.13 for Group 1 alongside the already verified resource set. Stop at PENDING_APPROVAL with MA2_WRITES=0.",
     "current_evidence": [
-      "POSITION_PRESET_2_1_HOME_APPLICATION_CREATED_METADATA_ONLY_NO_CUEDATA",
-      "FAILED_HOME_POC_SEQUENCE_DELETED_AFTER_SEPARATE_OWNER_APPROVAL",
-      "RAW_POSITION_REAL_MACHINE_CUEDATA_OBSERVED_GROUP1_PAN20_TILT30",
-      "REAL_MA2_EXPORT_XSI_NIL_PLACEHOLDER_PARSER_FIXED",
-      "RAW_POSITION_PARENT_REF_VERIFIER_FIXED",
-      "RAW_POSITION_EXPORT_REGRESSION_844_PASS_HISTORICAL",
-      "OWNER_APPROVED_CONSOLIDATED_POSITION_CALIBRATION_WORKFLOW_2026_09_26",
-      "POSITION_CALIBRATION_TRANSACTION_IMPLEMENTED",
-      "CALIBRATION_PRESET_STORE_FORCED_SELECTIVE",
-      "CREATED_PRESET_IDENTITY_GATE_BEFORE_PHASE_B",
-      "SINGLE_SEQUENCE_EXPORT_RAW_PLUS_PRESET_APPLICATION_VERIFICATION_IMPLEMENTED",
-      "POSITION_BINDING_REQUIRES_BOTH_PAN_AND_TILT_PER_EXACT_MEMBER",
-      "REGRESSION_858_TESTS_PASS",
-      "OPENCLAW_PLUGIN_TESTS_2_PASS",
+      "POSITION_CALIBRATION_GATE_CLOSED",
+      "POSITION_BINDING_REAL_MACHINE_CONTENT_VERIFIED",
+      "GROUP1_POSITION_PRESET_2_13_EXPOSED_TO_NORMAL_DESIGNER",
+      "POSITION_RESOURCE_COUNT_GROUP1_1",
+      "REGRESSION_859_TESTS_PASS",
       "SELF_CHECK_PASS",
-      "DIFF_CHECK_PASS",
-      "MA2_WRITES_ZERO_DURING_IMPLEMENTATION",
-      "NORMAL_DESIGNER_POSITION_RESOURCE_COUNT_ZERO_UNTIL_LIVE_CALIBRATION_VERIFIED",
-      "LIVE_POSITION_CALIBRATION_PREVIEW_ACTION_F87B868F4A96",
-      "LIVE_POSITION_CALIBRATION_PREVIEW_D994C2040078EC1D",
-      "LIVE_POSITION_CALIBRATION_PRESET_2_12_SEQUENCE_11",
-      "LIVE_POSITION_CALIBRATION_PREVIEW_WRITES_ZERO",
-      "LIVE_CALIBRATION_F87B868F4A96_EXECUTED_FAILED",
-      "LIVE_CALIBRATION_PRESET_2_12_IDENTITY_VERIFIED_BEFORE_PHASE_B",
-      "LIVE_CALIBRATION_CUE1_RAW_PAN20_TILT30_ALL_GROUP1_MEMBERS",
-      "LIVE_CALIBRATION_CUE2_EMPTY_NO_CUEDATA",
-      "LIVE_CALIBRATION_SEQUENCE_EXPORT_PARTIAL_CORRECTLY_NOT_PARSER_FALSE_NEGATIVE",
-      "LIVE_CALIBRATION_NO_POSITION_BINDING_RECORDED",
-      "LIVE_CALIBRATION_OBJECTS_RETAINED_NO_AUTOMATIC_DELETE",
-      "CALIBRATION_FIX_REACTIVATES_PAN_TILT_AFTER_RAW_CUE_BEFORE_PRESET_STORE",
-      "REGRESSION_858_TESTS_PASS_AFTER_REACTIVATION_FIX",
-      "SELF_CHECK_PASS_AFTER_REACTIVATION_FIX",
-      "DIFF_CHECK_PASS_AFTER_REACTIVATION_FIX",
-      "CORRECTED_LIVE_POSITION_CALIBRATION_ACTION_93A31909AE12",
-      "CORRECTED_LIVE_POSITION_CALIBRATION_PREVIEW_73485224B4DEF31F",
-      "CORRECTED_LIVE_POSITION_CALIBRATION_PRESET_2_13_SEQUENCE_12",
-      "CORRECTED_PREVIEW_REACTIVATES_PAN_TILT_BEFORE_PRESET_STORE",
-      "CORRECTED_LIVE_PREVIEW_WRITES_ZERO"
-    ],
-    "live_preview": {
-      "head": "f46a9ef",
-      "action_id": "93a31909ae12",
-      "preview_id": "73485224b4def31f",
-      "show_fingerprint": "6fd226cbb7eba2bbf37d2e07506bf401a65796ff172f37f39baf1623639e2c25",
-      "expected_postwrite_show_fingerprint": "290fa8ad57616cc9b909cfce12f4039042c6e6ee305f1704273f813246231d53",
-      "group_id": 1,
-      "group_name": "HYBRID",
-      "exact_refs": [
-        "101",
-        "102",
-        "103",
-        "104",
-        "105",
-        "106",
-        "108",
-        "107"
-      ],
-      "pan": 20,
-      "tilt": 30,
-      "preset_ref": "2.13",
-      "preset_label": "ZEN_POSITION_CAL_P13",
-      "sequence": 12,
-      "sequence_label": "ZEN_POSITION_CAL_SEQ12",
-      "executor": null,
-      "action_status": "PENDING_APPROVAL",
-      "reactivation_before_preset_store": true,
-      "ma2_writes": 0
-    },
-    "failed_live_action": {
-      "action_id": "f87b868f4a96",
-      "preview_id": "d994c2040078ec1d",
-      "result": "FAILED_POSITION_CALIBRATION_SEQUENCE_CONTENT_UNVERIFIED",
-      "preset_ref": "2.12",
-      "preset_label": "ZEN_POSITION_CAL_P12",
-      "sequence": 11,
-      "sequence_label": "ZEN_POSITION_CAL_SEQ11",
-      "raw_cue": {
-        "cue": 1,
-        "status": "REAL_MACHINE_RAW_CONTENT_PRESENT",
-        "exact_refs": [
-          "101",
-          "102",
-          "103",
-          "104",
-          "105",
-          "106",
-          "107",
-          "108"
-        ],
-        "pan": "20",
-        "tilt": "30"
-      },
-      "preset_cue": {
-        "cue": 2,
-        "status": "EMPTY_NO_CUEDATA"
-      },
-      "sequence_export": "ZEN_AGENT_SEQUENCE_11_ca4e803a2c9c29fd.xml",
-      "sequence_export_status": "PARTIAL_CORRECTLY",
-      "position_binding_recorded": false,
-      "automatic_delete": false,
-      "retained_objects": [
-        "Preset 2.12 ZEN_POSITION_CAL_P12",
-        "Sequence 11 ZEN_POSITION_CAL_SEQ11"
-      ]
-    }
+      "DIFF_CHECK_PASS"
+    ]
   },
   "human_review_decisions": [
     {
@@ -465,6 +370,31 @@
         "REGRESSION_808_TESTS_PASS"
       ],
       "limitations": "This closes normal-path Color/Dimmer/Template-Effect evidence plumbing only. It does not authorize Position or movement. No current Position Preset applicability binding has been proven, and no MA2 approval/write was performed for the 18-Cue Preview."
+    },
+    {
+      "id": "POSITION_CALIBRATION_TRANSACTION_001",
+      "source": "docs/POSITION_APPLICATION_EVIDENCE_POC_001.md + retained Sequence 12 native export",
+      "status": "CLOSED_REAL_MACHINE_CONTENT_VERIFIED",
+      "outcomes": [
+        "OWNER_APPROVED_CORRECTED_POSITION_CALIBRATION_ACTION_93A31909AE12",
+        "AGENT_OWNED_SELECTIVE_POSITION_PRESET_2_13_CREATED",
+        "AGENT_OWNED_SEQUENCE_12_CREATED",
+        "CUE1_RAW_POSITION_PAN20_TILT30_ALL_GROUP1_MEMBERS_VERIFIED",
+        "CUE2_PRESET_2_13_LINKED_PAN_TILT_ALL_GROUP1_MEMBERS_VERIFIED",
+        "SEQUENCE_12_NATIVE_EXPORT_VERIFIED",
+        "SEQUENCE_EXPORT_SHA256_9AA1048C4B10B326F416C089FF760C712E96801C55013B735F94EB1E6FE3810D",
+        "SINGLE_INSTANCE_PARENT_EXPORT_ROWS_CANONICALIZED_ONLY_WITH_EXACT_ONE_SUBFIXTURE_GEOMETRY",
+        "MULTI_INSTANCE_PARENT_ROWS_REMAIN_FAIL_CLOSED",
+        "POSITION_BINDING_REAL_MACHINE_CONTENT_VERIFIED",
+        "NORMAL_DESIGNER_GROUP1_POSITION_RESOURCE_COUNT_1",
+        "NORMAL_DESIGNER_POSITION_PRESET_2_13_ONLY",
+        "FRESH_SHOW_FINGERPRINT_290FA8AD57616CC9B909CFCE12F4039042C6E6EE305F1704273F813246231D53",
+        "READ_ONLY_REVERIFICATION_MA2_WRITE_COMMANDS_ZERO",
+        "REGRESSION_859_TESTS_PASS",
+        "SELF_CHECK_PASS",
+        "DIFF_CHECK_PASS"
+      ],
+      "limitations": "The verified Position binding is scoped to current Show fingerprint, exact Group 1 membership and Preset 2.13 identity. It does not generalize Position applicability to other Groups or Presets, does not claim physical degree/aim semantics for exported values 20/30, and does not authorize any future MA2 write."
     }
   ],
   "backlog": [
