@@ -15,7 +15,7 @@
   "next_acceptance_gate": {
     "id": "POSITION_CALIBRATION_TRANSACTION_001",
     "classification": "REQUIRED",
-    "status": "IMPLEMENTED_AWAITING_LIVE_PREVIEW",
+    "status": "LIVE_PREVIEW_PENDING_APPROVAL",
     "why_it_matters": "The raw Position write path has already produced native PAN/TILT CueData on the Test Show. The remaining evidence gap is to prove, in one bounded transaction, that a newly created Agent-owned selective Position Preset can be called back and stored with exact PAN/TILT preset references for the same verified Group.",
     "blocks_current_milestone": false,
     "dependencies": [
@@ -27,7 +27,7 @@
       "direct readback of the newly created Position Preset identity before At Preset is allowed",
       "one retained native Sequence Export proving Cue 1 raw PAN/TILT values and Cue 2 exact Position Preset references for every expected member"
     ],
-    "next_review_condition": "Deploy the committed calibration implementation, register one fresh live Position Calibration Preview with MA2_WRITES=0, and present its exact Action/Preview/Preset/Sequence candidates for separate owner approval. No prior raw-probe approval carries over.",
+    "next_review_condition": "Owner reviews the live Position Calibration Action f87b868f4a96 / Preview d994c2040078ec1d. Only a new explicit approval may execute it after approval-time fresh revalidation. No earlier raw Position approval carries over.",
     "current_evidence": [
       "POSITION_PRESET_2_1_HOME_APPLICATION_CREATED_METADATA_ONLY_NO_CUEDATA",
       "FAILED_HOME_POC_SEQUENCE_DELETED_AFTER_SEPARATE_OWNER_APPROVAL",
@@ -46,8 +46,40 @@
       "SELF_CHECK_PASS",
       "DIFF_CHECK_PASS",
       "MA2_WRITES_ZERO_DURING_IMPLEMENTATION",
-      "NORMAL_DESIGNER_POSITION_RESOURCE_COUNT_ZERO_UNTIL_LIVE_CALIBRATION_VERIFIED"
-    ]
+      "NORMAL_DESIGNER_POSITION_RESOURCE_COUNT_ZERO_UNTIL_LIVE_CALIBRATION_VERIFIED",
+      "LIVE_POSITION_CALIBRATION_PREVIEW_ACTION_F87B868F4A96",
+      "LIVE_POSITION_CALIBRATION_PREVIEW_D994C2040078EC1D",
+      "LIVE_POSITION_CALIBRATION_PRESET_2_12_SEQUENCE_11",
+      "LIVE_POSITION_CALIBRATION_PREVIEW_WRITES_ZERO"
+    ],
+    "live_preview": {
+      "head": "4152176dad619923d3aef93558d8618122708f9d",
+      "action_id": "f87b868f4a96",
+      "preview_id": "d994c2040078ec1d",
+      "show_fingerprint": "f88c5d6fe638b8cc967432239d9f5a43dd98f354f98dbe77bdf40e0eb3383b7d",
+      "expected_postwrite_show_fingerprint": "6fd226cbb7eba2bbf37d2e07506bf401a65796ff172f37f39baf1623639e2c25",
+      "group_id": 1,
+      "group_name": "HYBRID",
+      "exact_refs": [
+        "101",
+        "102",
+        "103",
+        "104",
+        "105",
+        "106",
+        "108",
+        "107"
+      ],
+      "pan": 20,
+      "tilt": 30,
+      "preset_ref": "2.12",
+      "preset_label": "ZEN_POSITION_CAL_P12",
+      "sequence": 11,
+      "sequence_label": "ZEN_POSITION_CAL_SEQ11",
+      "executor": null,
+      "action_status": "PENDING_APPROVAL",
+      "ma2_writes": 0
+    }
   },
   "human_review_decisions": [
     {
