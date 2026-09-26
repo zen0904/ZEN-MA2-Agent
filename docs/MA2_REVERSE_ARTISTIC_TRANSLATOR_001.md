@@ -62,6 +62,9 @@ Sequence cannot contribute a cross-Sequence motif.
    `PRESET_REFERENCE`, `EFFECT_REFERENCE`), attributes, dimensions, timing
    strings, resource identities, a broad structural fingerprint, and a strict
    stored-content fingerprint.
+   Native Preset addresses such as `1.2.13` retain their full path in raw
+   CueData while `preset_references` uses the resource-map identity `2.13`.
+   Effect references similarly use the final pool ID.
 3. `recurring_artistic_motifs` — only exact repetitions of stored CueData,
    including targets, values, timing, Preset/Effect identities, and Cue parts.
    Shared attributes alone never establish a motif. Partial exports do not

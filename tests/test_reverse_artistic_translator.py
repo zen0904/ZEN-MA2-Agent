@@ -43,8 +43,9 @@ class ReverseArtisticTranslatorTests(unittest.TestCase):
         self.assertEqual(result["technical_structure"]["observed_dimensions"], {"COLOR": 2, "DIMMER": 3, "POSITION": 2})
         first = result["cue_semantics"][0]
         self.assertEqual(first["observable_layers"], {"EFFECT_REFERENCE": 1, "PRESET_REFERENCE": 1, "RAW_VALUE": 1})
-        self.assertEqual(first["preset_references"], ["1.4.101"])
-        self.assertEqual(first["effect_references"], ["1.9"])
+        self.assertEqual(first["preset_references"], ["4.101"])
+        self.assertEqual(first["effect_references"], ["9"])
+        self.assertIn("1.4.101", [row["preset"] for row in first["observed_cue_data"]])
         self.assertEqual(first["intent_status"], "NOT_INFERRED_FROM_SEQUENCE_XML")
         motifs = result["recurring_artistic_motifs"]
         self.assertEqual(motifs, [])

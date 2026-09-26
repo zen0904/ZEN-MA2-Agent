@@ -91,6 +91,19 @@ def _address_reference(value: object) -> str | None:
     return ".".join(cleaned) if all(item.isdigit() for item in cleaned) else None
 
 
+def _preset_reference(value: object) -> str | None:
+    """Use the same pool/item suffix identity as the current resource map."""
+    raw = _address_reference(value)
+    parts = raw.split(".") if raw else []
+    return ".".join(parts[-2:]) if len(parts) >= 2 else None
+
+
+def _effect_reference(value: object) -> str | None:
+    """Effect pool identity is the last native address component."""
+    raw = _address_reference(value)
+    return raw.split(".")[-1] if raw else None
+
+
 def _has_raw_value(row: Mapping[str, Any]) -> bool:
     values = row.get("raw_values")
     return isinstance(values, Mapping) and values.get("Value") is not None
@@ -100,9 +113,9 @@ def _layer_kinds(row: Mapping[str, Any]) -> tuple[str, ...]:
     kinds: list[str] = []
     if _has_raw_value(row):
         kinds.append("RAW_VALUE")
-    if _address_reference(row.get("preset")):
+    if _preset_reference(row.get("preset")):
         kinds.append("PRESET_REFERENCE")
-    if _address_reference(row.get("effect")):
+    if _effect_reference(row.get("effect")):
         kinds.append("EFFECT_REFERENCE")
     return tuple(kinds) or ("UNCLASSIFIED_CUE_DATA",)
 
@@ -241,9 +254,9 @@ def translate_sequence_evidence(discovery: Mapping[str, Any]) -> dict[str, Any]:
             if fixture is not None:
                 fixture_ids.add(fixture)
                 cue_fixtures.add(fixture)
-            if (reference := _address_reference(row.get("preset"))):
+            if (reference := _preset_reference(row.get("preset"))):
                 preset_refs[reference] += 1
-            if (reference := _address_reference(row.get("effect"))):
+            if (reference := _effect_reference(row.get("effect"))):
                 effect_refs[reference] += 1
         cue_semantics.append({
             "cue_number": number,
@@ -254,8 +267,8 @@ def translate_sequence_evidence(discovery: Mapping[str, Any]) -> dict[str, Any]:
             "observable_attributes": cue_attributes,
             "observable_dimensions": cue_dimensions,
             "fixture_count": len(cue_fixtures),
-            "preset_references": sorted({_address_reference(row.get("preset")) for row in rows} - {None}),
-            "effect_references": sorted({_address_reference(row.get("effect")) for row in rows} - {None}),
+            "preset_references": sorted({_preset_reference(row.get("preset")) for row in rows} - {None}),
+            "effect_references": sorted({_effect_reference(row.get("effect")) for row in rows} - {None}),
             "timing_values": {
                 "fade": sorted(set(_decimal_values(rows, "Fade"))),
                 "delay": sorted(set(_decimal_values(rows, "Delay"))),
