@@ -328,7 +328,7 @@ class ReadyClient:
 
 class ExistingCuePositionMergeCoreTests(unittest.TestCase):
     request = (
-        "只更新 Position 既有 Sequence 302 Group 1 Preset 2.13 "
+        "Position-only existing Sequence 302 Group 1 Preset 2.13 "
         "Cues 1-4 Executor 2.8"
     )
 
