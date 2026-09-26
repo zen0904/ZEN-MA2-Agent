@@ -430,6 +430,30 @@
         "NO_PATCH_ADDRESS_FIXTURE_IDENTITY_TYPE_WRITE"
       ],
       "limitations": "This closes integration at Preview level only. The 26-Cue design has not been written to Sequence 302 / Executor 2.8. Effects were available in current Show evidence but not selected by this artistic design, so this Preview does not add new Effect execution evidence. Any live execution requires separate explicit owner approval and fresh-state revalidation."
+    },
+    {
+      "id": "EVIDENCE_FUSION_REAL_SHOW_ACCEPTANCE_001",
+      "source": "docs/MA2_EVIDENCE_FUSION_ACCEPTANCE_001.md",
+      "status": "CLOSED_SUCCESS_READ_ONLY_OFFLINE",
+      "outcomes": [
+        "OFFLINE_EVIDENCE_FUSION_REAL_SHOW_ACCEPTANCE_PASS",
+        "SEQUENCE_901_NATIVE_TRANSLATION_OBSERVED",
+        "SEQUENCE_901_EXACT_CONTENT_RECURRENCE_CUE5_CUE10_VERIFIED",
+        "SUPPLIED_SONG_STRUCTURE_HOOK_TAG_CORRELATION_MEDIUM_ONLY",
+        "TIMING_TIMECODE_UNAVAILABLE_RETAINED_AS_PARTIAL_LOW",
+        "AUDIO_ANALYSIS_UNAVAILABLE_RETAINED_AS_PARTIAL_LOW",
+        "STAGE_VIEW_IMAGE_UNAVAILABLE_RETAINED_AS_PARTIAL_LOW",
+        "HYPOTHESIS_FIXED_LOW_NOT_FACT_NOT_EXECUTION_AUTHORIZATION",
+        "SEQUENCE_6_EFFECT_REFERENCE_CONTROL_PRESERVED",
+        "SEQUENCE_12_RAW_POSITION_AND_PRESET_2_13_CONTROL_PRESERVED",
+        "UTF8_NO_BOM_PASS",
+        "CLI_REFUSES_OVERWRITE_PASS",
+        "MACOS_FULL_TESTS_873_PASS",
+        "WINDOWS_FOCUSED_TESTS_14_PASS",
+        "MA2_WRITES_ZERO",
+        "PREVIEW_APPROVAL_BOUNDARY_UNCHANGED"
+      ],
+      "limitations": "The fusion proves native stored content, supplied context observations, and bounded correlations only. It does not prove visual output, musical causality, programmer/artist intent, or authorize MA2 execution. No exact timecode, audio-derived timing, or Stage View image was available, so those evidence sources remain PARTIAL/LOW. The existing FULL_ARTISTIC_POSITION_EXECUTION_001 owner-approval gate remains unchanged."
     }
   ],
   "backlog": [
