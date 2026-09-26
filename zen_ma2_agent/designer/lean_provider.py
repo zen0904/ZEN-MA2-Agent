@@ -158,7 +158,7 @@ def compile_lean_artistic_intent(
     *,
     request: str,
     resource_map: Mapping[str, Any],
-    active_sequence_range: tuple[int, int] = (301, 400),
+    active_sequence_range: tuple[int, int] = (1, 9999),
     target_executor: str = "2.001",
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     if not isinstance(request, str) or not request.strip() or len(request) > 2048:

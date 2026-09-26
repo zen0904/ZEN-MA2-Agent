@@ -86,6 +86,26 @@ class LeanRootProviderTests(unittest.TestCase):
         self.assertIsNotNone(action["id"])
         self.assertEqual(core.runtime.client, None)
 
+    def test_root_lean_path_allocates_first_safe_sequence_from_front(self):
+        provider = FakeDesignProvider()
+        core = AgentCore(AgentRuntime(Path(".")), design_intelligence_provider=provider)
+        seed_native_state(core)
+        core.state.put(
+            "sequences",
+            [
+                {"number": 1, "name": "FOREIGN_SEQUENCE_1"},
+                {"number": 2, "name": "ZEN_SEQUENCE_2"},
+            ],
+            source="fake",
+        )
+        with patch("zen_ma2_agent.core.build_artistic_resource_map", return_value=resource_map()):
+            action = core.program_show_request("design/program this song")["action"]
+
+        child = action["continuation_context"]["child_execution"]["parameters"]
+        self.assertEqual(child["sequence"], 3)
+        self.assertIn('Store Cue 1 Sequence 3 "OPEN"', action["command"])
+        self.assertNotIn("Sequence 301", action["command"])
+
     def test_root_lean_path_threads_bounded_show_bindings_into_resource_map(self):
         provider = FakeDesignProvider()
         core = AgentCore(AgentRuntime(Path(".")), design_intelligence_provider=provider)
@@ -195,7 +215,7 @@ class LeanRootProviderTests(unittest.TestCase):
             )
             self.assertEqual(len(plan["cues"]), count)
             self.assertEqual(audit["provider_contract"], "ARTISTIC_CUES_V0_2")
-            self.assertEqual(plan["active_sequence_range"], [301, 400])
+            self.assertEqual(plan["active_sequence_range"], [1, 9999])
             self.assertEqual(plan["target_executor"], "2.001")
 
     def test_integer_group_id_alias_is_canonicalized_without_guessing(self):

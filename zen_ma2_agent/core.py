@@ -1014,7 +1014,6 @@ class AgentCore:
             provider_output,
             request=request,
             resource_map=resource_map,
-            active_sequence_range=(301, 400),
             target_executor="2.001",
         )
         if effect_application and any(
