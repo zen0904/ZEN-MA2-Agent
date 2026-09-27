@@ -270,6 +270,81 @@ class ExistingCueDynamicProgramMergeCoreTests(unittest.TestCase):
         self.assertEqual(set(result), {"4.101"})
 
 
+class ExistingCueDynamicProtectedNormalizationTests(unittest.TestCase):
+    @staticmethod
+    def _discovery(effect_flags, value="32"):
+        return {
+            "sequence_no": 302,
+            "status": "VERIFIED",
+            "cues": [{
+                "number": {"number": "4", "sub_number": "0"},
+                "parts": [{
+                    "index": "0",
+                    "name": "VERSE 01",
+                    "cue_data": [{
+                        "channel": {"fixture_id": "101", "attribute_name": "DIM"},
+                        "raw_values": {
+                            "Value": value, "Fade": None, "Delay": None,
+                            "EffectFlags": effect_flags, "EffectLow": None,
+                            "EffectHigh": None, "EffectRate": None,
+                            "EffectPhase": None, "EffectWidth": None,
+                        },
+                        "preset": None, "effect": None,
+                        "multipart_indexes": {"value": "0", "effect": "0"},
+                    }],
+                }],
+            }],
+        }
+
+    def test_empty_effect_flags_and_null_are_semantically_equivalent(self):
+        kwargs = {
+            "cue_effects": {4: None},
+            "target_fixture_refs": ["101"],
+            "cue_presets": {4: []},
+            "cue_channel_refs": {},
+        }
+        before = protected_content_snapshot(self._discovery(None), **kwargs)
+        after = protected_content_snapshot(self._discovery(""), **kwargs)
+        self.assertEqual(before["sha256"], after["sha256"])
+
+    def test_empty_effect_low_high_preset_representation_is_ignored_when_effect_change_is_allowed(self):
+        before = self._discovery(None, "32")
+        after = copy.deepcopy(before)
+        before_row = before["cues"][0]["parts"][0]["cue_data"][0]
+        after_row = after["cues"][0]["parts"][0]["cue_data"][0]
+        before_row["effect_low_preset"] = None
+        before_row["effect_high_preset"] = None
+        after_row["effect_low_preset"] = {"no_components": []}
+        after_row["effect_high_preset"] = {"no_components": []}
+        before_row["effect"] = None
+        after_row["effect"] = {"no_components": ["1", "2500"]}
+        after_row["raw_values"].update({
+            "EffectFlags": "", "EffectLow": "0", "EffectHigh": "100",
+            "EffectRate": "0.5", "EffectPhase": "0", "EffectWidth": "100",
+        })
+        kwargs = {
+            "cue_effects": {4: {"id": 2500, "kind": "DIMMER_CHASE"}},
+            "target_fixture_refs": ["101"],
+            "cue_presets": {4: []},
+            "cue_channel_refs": {},
+        }
+        self.assertEqual(
+            protected_content_snapshot(before, **kwargs)["sha256"],
+            protected_content_snapshot(after, **kwargs)["sha256"],
+        )
+
+    def test_static_dimmer_value_change_remains_protected(self):
+        kwargs = {
+            "cue_effects": {4: None},
+            "target_fixture_refs": ["101"],
+            "cue_presets": {4: []},
+            "cue_channel_refs": {},
+        }
+        before = protected_content_snapshot(self._discovery(None, "32"), **kwargs)
+        after = protected_content_snapshot(self._discovery("", "33"), **kwargs)
+        self.assertNotEqual(before["sha256"], after["sha256"])
+
+
 class ExistingCueDynamicApprovalSignatureTests(unittest.TestCase):
     def test_raw_export_sha_drift_does_not_invalidate_semantically_identical_preview(self):
         approved = build_dynamic()

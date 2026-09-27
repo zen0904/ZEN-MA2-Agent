@@ -213,6 +213,13 @@ def _normalize_protected_row(
 ) -> dict[str, Any] | None:
     attr = _row_attr(row)
     normalized = deepcopy(dict(row))
+    raw_values = normalized.get("raw_values")
+    if isinstance(raw_values, dict) and raw_values.get("EffectFlags") == "":
+        # grandMA2 may serialize an absent EffectFlags field as either null or
+        # an empty string after a Cue is re-stored. Both mean "no flags" and
+        # must not manufacture protected-content drift. Keep every meaningful
+        # Effect field and the static Value untouched.
+        raw_values["EffectFlags"] = None
 
     # Position / Preset application may legitimately replace raw value and
     # Preset metadata, but only on the exact target ref chosen by the Preview.
@@ -231,6 +238,8 @@ def _normalize_protected_row(
     # protected.
     if effect_change_allowed:
         normalized.pop("effect", None)
+        normalized.pop("effect_low_preset", None)
+        normalized.pop("effect_high_preset", None)
         raw_values = normalized.get("raw_values")
         if isinstance(raw_values, dict):
             normalized["raw_values"] = {
