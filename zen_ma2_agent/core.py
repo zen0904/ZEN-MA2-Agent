@@ -969,6 +969,7 @@ class AgentCore:
             resource_map,
             allowed_executable_operations=dynamic_operations,
             group_ids={target_group_id},
+            preset_dimensions={"COLOR", "FOCUS", "BEAM", "GOBO"},
         )
         design_context["existing_cue_dynamic_merge_contract"] = {
             "sequence": spec["sequence_no"],

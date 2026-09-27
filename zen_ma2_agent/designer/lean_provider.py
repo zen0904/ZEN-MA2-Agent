@@ -61,6 +61,7 @@ def build_provider_resource_contract(
     *,
     allowed_executable_operations: set[str] | frozenset[str] | None = None,
     group_ids: set[int] | frozenset[int] | None = None,
+    preset_dimensions: set[str] | frozenset[str] | None = None,
 ) -> dict[str, Any]:
     """Compact contract containing only resources executable in the caller route.
 
@@ -75,10 +76,20 @@ def build_provider_resource_contract(
         wanted_groups = {int(value) for value in group_ids if isinstance(value, int) and not isinstance(value, bool)}
         groups = [group for group in groups if group.get("group_id") in wanted_groups]
     allowed = None if allowed_executable_operations is None else {str(value).upper() for value in allowed_executable_operations}
+    allowed_preset_dimensions = (
+        None
+        if preset_dimensions is None
+        else {str(value).upper() for value in preset_dimensions}
+    )
     if allowed is not None:
         for group in groups:
             if "CALL_PRESET" not in allowed:
                 group["presets"] = []
+            elif allowed_preset_dimensions is not None:
+                group["presets"] = [
+                    preset for preset in group.get("presets", [])
+                    if str(preset.get("dimension") or "").upper() in allowed_preset_dimensions
+                ]
             if "CALL_EFFECT" not in allowed:
                 group["effects"] = []
             dimensions = group.get("dimensions")
@@ -104,6 +115,10 @@ def build_provider_resource_contract(
                         or (
                             dimension in PRESET_BACKED_DIMENSIONS
                             and "CALL_PRESET" in allowed
+                            and (
+                                allowed_preset_dimensions is None
+                                or dimension in allowed_preset_dimensions
+                            )
                             and original == "VERIFIED_PRESET_RESOURCE"
                         )
                     )

@@ -351,6 +351,26 @@ class LeanRootProviderTests(unittest.TestCase):
         )
         self.assertEqual([row["group_id"] for row in contract["group_resources"]], [1])
 
+    def test_provider_contract_can_hide_position_preset_for_pattern_only_route(self):
+        mapped = resource_map()
+        group = mapped["groups"][0]
+        group["preset_resources"] = [
+            {"dimension": "POSITION", "reference": "2.13", "name": "HOME"},
+            {"dimension": "COLOR", "reference": "4.101", "name": "RED"},
+        ]
+        group["dimensions"]["POSITION"] = {"execution_status": "VERIFIED_PRESET_RESOURCE"}
+        group["dimensions"]["COLOR"] = {"execution_status": "VERIFIED_PRESET_RESOURCE"}
+        contract = build_provider_resource_contract(
+            mapped,
+            allowed_executable_operations=frozenset({"CALL_PRESET"}),
+            group_ids={1},
+            preset_dimensions={"COLOR", "FOCUS", "BEAM", "GOBO"},
+        )
+        only = contract["group_resources"][0]
+        self.assertEqual([row["reference"] for row in only["presets"]], ["4.101"])
+        self.assertEqual(only["dimensions"]["POSITION"]["route_execution_status"], "INTENT_ONLY")
+        self.assertEqual(only["dimensions"]["COLOR"]["route_execution_status"], "EXECUTABLE")
+
     def test_route_scoped_compiler_rejects_otherwise_verified_but_disallowed_action(self):
         mapped = resource_map()
         mapped["groups"][0]["preset_resources"] = [{
