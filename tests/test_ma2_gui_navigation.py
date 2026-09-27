@@ -96,11 +96,9 @@ class MA2GuiNavigationTests(unittest.TestCase):
         )
         result = service.navigate_and_observe()
         self.assertEqual(result["status"], "SUCCESS")
-        self.assertEqual(
-            seen,
-            ["Screen 2", "Screen 3", "Screen 4", "Screen 5", "Screen 6"],
-        )
+        self.assertEqual(seen, ["Screen 6"])
         self.assertEqual(navigator.calls, [])
+        self.assertEqual(service.observation_provider.calls, 0)
         self.assertTrue(result["observation"]["stage_view_visible"])
         self.assertEqual(result["ma2_show_writes"], 0)
 

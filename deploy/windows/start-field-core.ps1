@@ -12,12 +12,19 @@ param(
 
     [int]$OperatorPort = 8876,
 
-    [int]$BridgePort = 8877
+    [int]$BridgePort = 8877,
+
+    [switch]$EnableMA2GuiNavigation
 )
 
 $ErrorActionPreference = "Stop"
 $repo = (Resolve-Path $RepoRoot).Path
 $env:ZEN_HOME = $ZenHome
+if ($EnableMA2GuiNavigation) {
+    $env:ZEN_MA2_GUI_NAV_ENABLED = "1"
+} else {
+    Remove-Item Env:ZEN_MA2_GUI_NAV_ENABLED -ErrorAction SilentlyContinue
+}
 $main = Join-Path $repo "main.py"
 
 if (-not (Test-Path $main)) {

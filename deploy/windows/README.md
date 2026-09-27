@@ -41,6 +41,14 @@ python scripts\host_preflight.py --target ma=<MA_HOST>:30000 --target peer=<OTHE
 .\deploy\windows\start-field-core.ps1 -RepoRoot C:\path\to\ZEN-MA2-Agent -ZenHome C:\ZEN
 ```
 
+To expose the bounded `zen.ma.stage.visual` native-screen navigation/capture path on a verified Windows MA2 host, opt in explicitly:
+
+```powershell
+.\deploy\windows\start-field-core.ps1 -RepoRoot C:\path\to\ZEN-MA2-Agent -ZenHome C:\ZEN -EnableMA2GuiNavigation
+```
+
+The stage-visual path has no MA command/write authority. It first attempts background capture of existing native MA2 Screen windows and only falls back to the bounded Screen 2/3/4 navigation rail when required.
+
 Optional Worker endpoints can be supplied after the real addresses are known.
 
 ## Manual Worker smoke

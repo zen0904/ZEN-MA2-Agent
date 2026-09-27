@@ -193,11 +193,11 @@ class MA2StageViewNavigationService:
         *,
         candidate_observation_provider: CandidateObservationProvider | None = None,
         candidate_titles: tuple[str, ...] = (
+            "Screen 6",
             "Screen 2",
             "Screen 3",
             "Screen 4",
             "Screen 5",
-            "Screen 6",
         ),
         screens: tuple[MA2Screen, ...] = (
             MA2Screen.SCREEN_2,
@@ -212,15 +212,14 @@ class MA2StageViewNavigationService:
         self.screens = screens
 
     def navigate_and_observe(self) -> dict[str, Any]:
-        initial = dict(self.observation_provider())
-        self._validate_observation(initial)
         attempts: list[dict[str, Any]] = []
-        if initial["stage_view_visible"]:
-            return self._result("SUCCESS", initial, attempts, None)
+        initial: dict[str, Any] | None = None
 
-        # Safest path first: inspect already-existing native MA2 screen windows
-        # with background PrintWindow capture. No GUI input is needed and Vision
-        # remains observe/verify-only.
+        # Safest and cheapest path first: inspect already-existing native MA2
+        # screen windows with background PrintWindow capture. Screen 6 is tried
+        # first because the verified current host keeps Stage View there. This
+        # avoids an unnecessary main-window Vision pass before the likely target
+        # and still makes no GUI input or MA command/write.
         if self.candidate_observation_provider is not None:
             for title in self.candidate_titles:
                 try:
@@ -248,6 +247,15 @@ class MA2StageViewNavigationService:
                 if observed["stage_view_visible"]:
                     return self._result("SUCCESS", observed, attempts, None)
                 initial = observed
+
+        # Only pay for the main onPC-window observation when no existing native
+        # candidate has already proven Stage View. It also provides the fallback
+        # observation required before bounded Screen 2/3/4 navigation.
+        if initial is None:
+            initial = dict(self.observation_provider())
+            self._validate_observation(initial)
+            if initial["stage_view_visible"]:
+                return self._result("SUCCESS", initial, attempts, None)
 
         for screen in self.screens:
             try:
