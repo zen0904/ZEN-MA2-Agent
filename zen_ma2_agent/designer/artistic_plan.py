@@ -16,7 +16,11 @@ import re
 from typing import Any, Iterable, Mapping
 
 from .schema import ShowPlanSchemaError, validate_show_plan
-from ..artistic_capabilities import ARTISTIC_DIMENSIONS, CAPABILITY_INTENT_USES
+from ..artistic_capabilities import (
+    ARTISTIC_DIMENSIONS,
+    CAPABILITY_INTENT_USES,
+    normalize_artistic_dimensions,
+)
 
 
 class ArtisticPlanCompileError(ValueError):
@@ -315,36 +319,40 @@ def _compile_capability_intent(
         if not isinstance(item, Mapping):
             raise ArtisticPlanCompileError(f"Capability intent {index} must be an object.")
         group = _group_id(item.get("group"), verified_group_ids)
-        dimension = str(item.get("dimension") or "").strip().upper()
+        dimensions = normalize_artistic_dimensions(item.get("dimension"))
         use = str(item.get("use") or "").strip().upper()
         reason = str(item.get("reason") or "").strip()
-        if dimension not in ARTISTIC_DIMENSIONS:
-            raise ArtisticPlanCompileError(f"Unsupported artistic capability dimension: {dimension or '<empty>'}.")
+        if not dimensions or any(dimension not in ARTISTIC_DIMENSIONS for dimension in dimensions):
+            raw_dimension = str(item.get("dimension") or "").strip().upper()
+            raise ArtisticPlanCompileError(
+                f"Unsupported artistic capability dimension: {raw_dimension or '<empty>'}."
+            )
         if use not in CAPABILITY_INTENT_USES:
             raise ArtisticPlanCompileError(f"Capability intent use must be one of {sorted(CAPABILITY_INTENT_USES)}.")
         if len(reason) > 512:
             raise ArtisticPlanCompileError("Capability intent reason exceeds 512 characters.")
-        evidence = (verified_capability_status or {}).get(group, {}).get(dimension, {})
-        technical_status = str(evidence.get("technical_status") or "UNKNOWN")
-        execution_status = str(evidence.get("execution_status") or "NO_VERIFIED_RESOURCE")
-        if use in {"USE", "OPTIONAL"} and verified_capability_status is not None and technical_status != "SHOW_BOUND_VERIFIED":
-            raise ArtisticPlanCompileError(
-                f"{dimension} technical capability is not SHOW_BOUND_VERIFIED for Group {group}."
-            )
-        compiled.append({
-            "group": group,
-            "dimension": dimension,
-            "use": use,
-            "reason": reason,
-            "technical_status": technical_status,
-            "execution_status": execution_status,
-            "execution_authorized": execution_status in {
-                "VERIFIED_PRESET_RESOURCE",
-                "VERIFIED_EFFECT_RESOURCE",
-                "SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL",
-                "SHOW_BOUND_VERIFIED_FIXTURE_TYPE_CAPABILITY",
-            },
-        })
+        for dimension in dimensions:
+            evidence = (verified_capability_status or {}).get(group, {}).get(dimension, {})
+            technical_status = str(evidence.get("technical_status") or "UNKNOWN")
+            execution_status = str(evidence.get("execution_status") or "NO_VERIFIED_RESOURCE")
+            if use in {"USE", "OPTIONAL"} and verified_capability_status is not None and technical_status != "SHOW_BOUND_VERIFIED":
+                raise ArtisticPlanCompileError(
+                    f"{dimension} technical capability is not SHOW_BOUND_VERIFIED for Group {group}."
+                )
+            compiled.append({
+                "group": group,
+                "dimension": dimension,
+                "use": use,
+                "reason": reason,
+                "technical_status": technical_status,
+                "execution_status": execution_status,
+                "execution_authorized": execution_status in {
+                    "VERIFIED_PRESET_RESOURCE",
+                    "VERIFIED_EFFECT_RESOURCE",
+                    "SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL",
+                    "SHOW_BOUND_VERIFIED_FIXTURE_TYPE_CAPABILITY",
+                },
+            })
     return compiled
 
 def _cue_labels(

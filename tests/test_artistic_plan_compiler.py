@@ -138,6 +138,41 @@ class ArtisticPlanCompilerTests(unittest.TestCase):
         self.assertTrue(audit["artistic_capability_intents_preserved"])
         self.assertTrue(audit["capability_execution_is_separate_from_intent"])
 
+    def test_capability_dimension_aliases_are_canonicalized_without_granting_execution(self):
+        provider_plan = {
+            "cues": [{
+                "fade": 0,
+                "actions": [{"group": 1, "dimmer": 80}],
+                "capability_intent": [
+                    {"group": 1, "dimension": "SHUTTER/STROBE", "use": "OPTIONAL", "reason": "impact option"},
+                    {"group": 1, "dimension": "PRISM/PRISM_ROTATION", "use": "AVOID", "reason": "keep clean beams"},
+                    {"group": 1, "dimension": "GOBO ROTATION", "use": "AVOID", "reason": "static texture"},
+                ],
+            }]
+        }
+        status = {1: {
+            "SHUTTER": {"technical_status": "SHOW_BOUND_VERIFIED", "execution_status": "NO_VERIFIED_RESOURCE"},
+            "STROBE": {"technical_status": "SHOW_BOUND_VERIFIED", "execution_status": "NO_VERIFIED_RESOURCE"},
+            "PRISM": {"technical_status": "SHOW_BOUND_VERIFIED", "execution_status": "NO_VERIFIED_RESOURCE"},
+            "PRISM_ROTATION": {"technical_status": "SHOW_BOUND_VERIFIED", "execution_status": "NO_VERIFIED_RESOURCE"},
+            "GOBO_ROTATION": {"technical_status": "SHOW_BOUND_VERIFIED", "execution_status": "NO_VERIFIED_RESOURCE"},
+        }}
+        plan, _audit = compile_artistic_cue_plan(
+            provider_plan, song="SHEESH", target_executor="2.001", active_sequence_range=[1, 9999],
+            verified_group_ids=self.groups, verified_preset_refs=self.presets,
+            verified_preset_types=self.preset_types, verified_effect_ids=self.effects,
+            verified_capability_status=status,
+        )
+        intent = plan["cues"][0]["capability_intent"]
+        self.assertEqual(
+            [item["dimension"] for item in intent],
+            ["SHUTTER", "STROBE", "PRISM", "PRISM_ROTATION", "GOBO_ROTATION"],
+        )
+        self.assertTrue(all(item["execution_authorized"] is False for item in intent))
+        self.assertEqual(plan["cues"][0]["actions"], [{
+            "operation": "SET_DIMMER", "target": {"type": "group", "ref": 1}, "level": 80,
+        }])
+
     def test_capability_use_fails_closed_without_verified_technical_support(self):
         provider_plan = {
             "cues": [{
