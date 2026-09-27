@@ -2,7 +2,7 @@
 
 Date: 2026-09-27 (Taiwan)
 
-Status: `OFFLINE_IMPLEMENTED_AWAITING_LIVE_PREVIEW`
+Status: `OFFLINE_HARDENED_AWAITING_FRESH_LIVE_PREVIEW`
 
 ## Goal
 
@@ -123,7 +123,9 @@ Protected:
 
 Effect allowance does not hide static Dimmer drift. Regression proves that a `DIM Value 55 -> 56` change still fails closed even when an Effect was intentionally attached.
 
-Existing Effect state is captured from the native pre-export before the Lighting Designer call. If a Cue already contains an Effect and the Designer requests a different Effect, `replace_effect_ids` must explicitly name the complete existing Effect-ID set being authorized for replacement. This field is authorization metadata, not a Delete command. Post-write native verification requires the exact expected Effect-ID set on every target fixture; a retained old ID, missing new ID, or unrelated new Effect fails closed.
+Existing Effect state is captured from the native pre-export before the Lighting Designer call. The durable real-machine proof establishes `At Effect <id>` application on a disposable Cue that did not already contain an Effect; it does **not** establish replacement or clear/release semantics for a Cue that already contains Effect data. Therefore this route now fails closed if a new Effect is requested on a Cue with any existing Effect, and any non-empty `replace_effect_ids` is non-executable until a separate bounded replacement grammar is proven on disposable Agent-owned content. A Cue with no new Effect call preserves its existing Effect state. Post-write native verification still requires the exact expected Effect-ID set on every target exact fixture/subfixture reference.
+
+During the 2026-09-27 hardening audit, the latest retained read-only Sequence 302 export `ZEN_AGENT_SEQUENCE_302_7b4e3f70acfad1a7.xml` was parsed and showed no Effect references on Group 1 fixtures 101-108 for Cues 1-29. This retained export is forensic evidence only; a fresh live pre-export remains the authority before any future Preview/approval.
 
 ## Approval semantics
 
@@ -133,7 +135,7 @@ Preview may use one Lighting Designer call. Approval-time revalidation performs 
 
 Windows authoritative suite:
 
-`928 tests / OK`
+`939 tests / OK`
 
 Coverage includes:
 
@@ -143,16 +145,20 @@ Coverage includes:
 - existing Sequence path never allocates a replacement Sequence
 - different Cues may use different verified Effects
 - Position and Effect coexist as one Cue-level composite intent while using separate verified Store grammars
-- existing Effect replacement requires explicit `replace_effect_ids` authorization
+- existing Effect mutation/replacement fails closed until a separate real-machine replacement grammar is verified
 - post-write Effect-ID sets must match exactly on every target fixture
 - no-new-Effect Cues preserve their pre-existing Effect set
 - explicit Position intent required
-- Effect variation required for dynamic mode
+- Effect-state variation is evaluated from the expected post-merge state, so one verified Effect plus preserved no-new-Effect Cues is valid variation
 - static Dimmer/Color/unplanned Effect drift fails closed
 - Fixture 9999 protection
 - root routing bypasses generic Builder
 - fresh spatial context is target-Group bounded
 - durable real-machine Effect grammar capability cannot silently disappear
+- exact Preview schema, Cue order, and Cue-number uniqueness fail closed
+- Effect verification is bound to verified Effect kind/attribute family (current `DIMMER_CHASE` -> `DIM`)
+- Effect preservation uses exact fixture/subfixture identity with unambiguous parent-row canonicalization only
+- route-scoped provider contracts expose only resources executable by the selected write route while retaining technical capabilities as intent-only context
 
 ## Current acceptance state
 

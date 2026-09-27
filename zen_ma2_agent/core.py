@@ -692,8 +692,8 @@ class AgentCore:
     @staticmethod
     def _verified_dynamic_effects(
         resource_map: Mapping[str, Any], group_id: int,
-    ) -> dict[int, str]:
-        result: dict[int, str] = {}
+    ) -> dict[int, dict[str, str]]:
+        result: dict[int, dict[str, str]] = {}
         groups = resource_map.get("groups")
         for group in groups if isinstance(groups, list) else []:
             if not isinstance(group, Mapping) or group.get("group_id") != group_id:
@@ -706,7 +706,12 @@ class AgentCore:
                     and isinstance(effect.get("effect_id"), int)
                     and str(effect.get("name") or "").strip()
                 ):
-                    result[int(effect["effect_id"])] = str(effect["name"]).strip()
+                    kind = str(effect.get("kind") or "").strip().upper()
+                    if kind:
+                        result[int(effect["effect_id"])] = {
+                            "label": str(effect["name"]).strip(),
+                            "kind": kind,
+                        }
         return result
 
     @staticmethod
@@ -822,6 +827,7 @@ class AgentCore:
             pre_discovery,
             cue_numbers=range(spec["cue_start"], spec["cue_end"] + 1),
             target_fixture_refs=position_preview["group"]["exact_refs"],
+            cue_channel_refs=position_preview["group"]["cue_channel_refs"],
         )
         spatial_context = self._current_dynamic_spatial_context(
             position_profile, position_preview
@@ -836,7 +842,10 @@ class AgentCore:
             artistic_resource_map=resource_map,
         )
         design_context = dict(compact["context"])
-        design_context["verified_resource_contract"] = build_provider_resource_contract(resource_map)
+        dynamic_operations = frozenset({"CALL_EFFECT"})
+        design_context["verified_resource_contract"] = build_provider_resource_contract(
+            resource_map, allowed_executable_operations=dynamic_operations
+        )
         design_context["existing_cue_dynamic_merge_contract"] = {
             "sequence": spec["sequence_no"],
             "group": spec["group_id"],
@@ -846,14 +855,16 @@ class AgentCore:
             "exact_cue_count": len(cue_labels),
             "requires_explicit_position_pattern_per_cue": True,
             "requires_effect_state_variation": True,
-            "allowed_executable_operations": ["CALL_EFFECT"],
+            "effect_state_variation_definition": "At least two Cue states; NO_NEW_EFFECT_CALL and one verified Effect ID count as distinct states.",
+            "allowed_executable_operations": sorted(dynamic_operations),
             "resource_creation_allowed": False,
             "sequence_allocation_allowed": False,
             "existing_effect_ids_by_cue_ref": deepcopy(existing_effect_ids),
             "effect_replacement_contract": {
-                "explicit_replace_effect_ids_required": True,
-                "replace_ids_are_authorization_not_delete_commands": True,
+                "existing_effect_replacement_supported": False,
+                "replacement_grammar_verified": False,
                 "release_or_clear_effect_grammar_verified": False,
+                "new_effect_call_on_cue_with_existing_effect": "FAIL_CLOSED",
                 "no_new_effect_call_means_preserve_existing_effect_state": True,
                 "postwrite_exact_effect_set_verification_required": True,
             },
@@ -876,6 +887,7 @@ class AgentCore:
             active_sequence_range=(spec["sequence_no"], spec["sequence_no"]),
             target_executor=spec.get("expected_executor") or "UNASSIGNED_EXISTING",
             cue_labels=cue_labels,
+            allowed_executable_operations=dynamic_operations,
         )
         verified_effects = self._verified_dynamic_effects(resource_map, spec["group_id"])
         preview = build_existing_cue_dynamic_program_preview(

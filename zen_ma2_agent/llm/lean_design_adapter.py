@@ -47,12 +47,14 @@ Use only resources explicitly exposed in verified_resource_contract.
 If context contains `existing_cue_dynamic_merge_contract`, preserve its exact Cue count/order,
 use the supplied existing Cue labels, emit an explicit position_pattern for every Cue, and use
 only the executable action families allowed by that contract. Do not create or request new
-Sequences, Effects, Presets, Groups, or Executor assignments. Effect variation means attach
-verified existing Effects to the intended existing Cues, not merely create one Effect resource.
-If `existing_effect_ids_by_cue_ref` shows any Effect on a Cue where you request a new Effect,
-`replace_effect_ids` MUST explicitly list the complete set of existing Effect IDs you intend the
-new Effect call to replace. Omitting a new Effect call preserves existing Effect state; it does
-NOT mean clear/release because no release grammar is verified.
+Sequences, Effects, Presets, Groups, or Executor assignments. Effect-state variation may be one verified Effect on some Cues and NO_NEW_EFFECT_CALL on others;
+it does not require inventing a second Effect ID. It means varying intended Cue state, not merely
+creating one Effect resource.
+If `existing_effect_ids_by_cue_ref` shows any Effect on a Cue, do NOT request a new Effect
+on that Cue: existing-Effect replacement/clear grammar is not real-machine verified and this
+route fails closed. Omitting a new Effect call preserves existing Effect state; it does NOT mean
+clear/release. `replace_effect_ids` is not executable in this route until a separate replacement
+grammar is verified.
 Do not invent unavailable resources. Return JSON only, with no markdown.
 """
 

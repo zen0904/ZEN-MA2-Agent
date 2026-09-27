@@ -44,9 +44,9 @@ def effect_capability():
 
 def effects():
     return {1: {
-        2500: "ZEN_FX_DIM_CHASE_SLOW_GROUP1",
-        2501: "ZEN_FX_DIM_CHASE_MED_GROUP1",
-        2502: "ZEN_FX_DIM_CHASE_FAST_GROUP1",
+        2500: {"label": "ZEN_FX_DIM_CHASE_SLOW_GROUP1", "kind": "DIMMER_CHASE"},
+        2501: {"label": "ZEN_FX_DIM_CHASE_MED_GROUP1", "kind": "DIMMER_CHASE"},
+        2502: {"label": "ZEN_FX_DIM_CHASE_FAST_GROUP1", "kind": "DIMMER_CHASE"},
     }}
 
 
@@ -340,6 +340,52 @@ class ExistingCueDynamicProgramMergeTests(unittest.TestCase):
         self.assertIn("ClearAll", between)
         self.assertTrue(any(command.startswith("Fixture ") for command in between))
 
+    def test_preview_helper_requires_exact_schema(self):
+        preview = build_dynamic()
+        preview.pop("schema")
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "PREVIEW_SCHEMA_INVALID"):
+            commands_from_dynamic_preview(preview)
+
+    def test_artistic_cue_order_and_uniqueness_are_fail_closed(self):
+        plan = artistic_plan()
+        plan["cues"][0], plan["cues"][1] = plan["cues"][1], plan["cues"][0]
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "CUE_ORDER_MISMATCH"):
+            build_dynamic(plan=plan)
+
+        plan = artistic_plan()
+        plan["cues"].append(copy.deepcopy(plan["cues"][0]))
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "DUPLICATE_ARTISTIC_CUE_NUMBER"):
+            build_dynamic(plan=plan)
+
+    def test_effect_on_wrong_attribute_family_is_rejected(self):
+        pre = target_discovery()
+        preview = build_dynamic(pre=pre, pos=build_position(target=pre))
+        post = post_from(pre, preview)
+        for item in post["cues"][0]["parts"][0]["cue_data"]:
+            effect = item.get("effect") or {}
+            parts = effect.get("no_components") if isinstance(effect, dict) else None
+            if isinstance(parts, list) and parts and str(parts[-1]) == "2500":
+                item["channel"]["attribute_name"] = "COLORRGB1"
+                break
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "PROTECTED_CONTENT_CHANGED"):
+            verify_existing_cue_dynamic_program_merge(preview, post)
+
+    def test_effect_allowance_does_not_expand_to_sibling_subfixture(self):
+        pre = target_discovery()
+        sibling = effect_row(101, 2502)
+        sibling["channel"]["subfixture_id"] = "2"
+        pre["cues"][0]["parts"][0]["cue_data"].append(sibling)
+        cue_effects = {1: {"id": 2500, "kind": "DIMMER_CHASE"}}
+        before = protected_content_snapshot(
+            pre, cue_effects=cue_effects, target_fixture_refs=["101.1"]
+        )
+        post = copy.deepcopy(pre)
+        post["cues"][0]["parts"][0]["cue_data"][-1]["effect"] = {"no_components": ["1", "2501"]}
+        after = protected_content_snapshot(
+            post, cue_effects=cue_effects, target_fixture_refs=["101.1"]
+        )
+        self.assertNotEqual(before["sha256"], after["sha256"])
+
     def test_unverified_effect_or_application_capability_fails_closed(self):
         bad = effects()
         bad[1].pop(2501)
@@ -347,6 +393,45 @@ class ExistingCueDynamicProgramMergeTests(unittest.TestCase):
             build_dynamic(verified_effects=bad)
         with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "EFFECT_APPLICATION_UNVERIFIED"):
             build_dynamic(capability={})
+
+    def test_one_effect_plus_no_new_effect_is_valid_variation(self):
+        plan = artistic_plan()
+        for cue_item in plan["cues"]:
+            cue_item["actions"] = []
+        plan["cues"][0]["actions"] = [{
+            "operation": "CALL_EFFECT",
+            "target": {"type": "group", "ref": 1},
+            "effect_ref": {"id": 2500},
+        }]
+        preview = build_dynamic(plan=plan)
+        self.assertEqual(preview["cue_effects"]["1"]["id"], 2500)
+        self.assertIsNone(preview["cue_effects"]["2"])
+
+    def test_root_effect_row_canonicalizes_to_unique_dotted_selection(self):
+        discovery = target_discovery()
+        observed = effect_row(101, 2500)
+        observed["channel"].pop("subfixture_id", None)
+        discovery["cues"][0]["parts"][0]["cue_data"].append(observed)
+        result = effect_ids_by_cue_ref(
+            discovery,
+            cue_numbers=[1],
+            target_fixture_refs=["101.1"],
+            cue_channel_refs={"101.1": "101.1"},
+        )
+        self.assertEqual(result["1"]["101.1"], [2500])
+
+    def test_root_effect_row_is_ambiguous_for_multiple_dotted_selections(self):
+        discovery = target_discovery()
+        observed = effect_row(101, 2500)
+        observed["channel"].pop("subfixture_id", None)
+        discovery["cues"][0]["parts"][0]["cue_data"].append(observed)
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "PARENT_ROW_AMBIGUOUS"):
+            effect_ids_by_cue_ref(
+                discovery,
+                cue_numbers=[1],
+                target_fixture_refs=["101.1", "101.2"],
+                cue_channel_refs={"101.1": "101.1", "101.2": "101.2"},
+            )
 
     def test_single_effect_state_is_rejected_as_non_dynamic(self):
         plan = artistic_plan()
@@ -405,7 +490,7 @@ class ExistingCueDynamicProgramMergeTests(unittest.TestCase):
         with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "PROTECTED_CONTENT_CHANGED"):
             verify_existing_cue_dynamic_program_merge(preview, post)
 
-    def test_existing_effect_replacement_requires_explicit_complete_consent(self):
+    def test_existing_effect_mutation_is_blocked_until_replacement_grammar_is_verified(self):
         pre = target_discovery()
         pre["cues"][0]["parts"][0]["cue_data"].extend([effect_row(101, 2500), effect_row(102, 2500)])
         plan = artistic_plan()
@@ -414,36 +499,12 @@ class ExistingCueDynamicProgramMergeTests(unittest.TestCase):
             "target": {"type": "group", "ref": 1},
             "effect_ref": {"id": 2501},
         }]
-        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "UNRELATED_EFFECT_CONFLICT"):
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "EXISTING_EFFECT_MUTATION_UNVERIFIED"):
             build_dynamic(pre=pre, pos=build_position(target=pre), plan=plan)
-        plan["cues"][0]["replace_effect_ids"] = [2500]
-        preview = build_dynamic(pre=pre, pos=build_position(target=pre), plan=plan)
-        self.assertEqual(preview["cue_updates"][0]["replace_effect_ids"], [2500])
-        self.assertEqual(
-            sorted({effect_id for ids in preview["pre_effect_ids_by_cue_ref"]["1"].values() for effect_id in ids}),
-            [2500],
-        )
 
-    def test_postwrite_effect_set_must_exactly_replace_authorized_old_id(self):
-        pre = target_discovery()
-        pre["cues"][0]["parts"][0]["cue_data"].extend([effect_row(101, 2500), effect_row(102, 2500)])
-        plan = artistic_plan()
-        plan["cues"][0]["actions"] = [{
-            "operation": "CALL_EFFECT",
-            "target": {"type": "group", "ref": 1},
-            "effect_ref": {"id": 2501},
-        }]
         plan["cues"][0]["replace_effect_ids"] = [2500]
-        preview = build_dynamic(pre=pre, pos=build_position(target=pre), plan=plan)
-        good = post_from(pre, preview)
-        verified = verify_existing_cue_dynamic_program_merge(preview, good)
-        self.assertEqual(verified["status"], "VERIFIED")
-        self.assertEqual(verified["effect_set_checks"], 8)
-
-        bad = copy.deepcopy(good)
-        bad["cues"][0]["parts"][0]["cue_data"].append(effect_row(101, 2500))
-        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "EFFECT_SET_MISMATCH"):
-            verify_existing_cue_dynamic_program_merge(preview, bad)
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "REPLACEMENT_GRAMMAR_UNVERIFIED"):
+            build_dynamic(pre=pre, pos=build_position(target=pre), plan=plan)
 
     def test_no_new_effect_call_preserves_preexisting_effect_set(self):
         pre = target_discovery()
