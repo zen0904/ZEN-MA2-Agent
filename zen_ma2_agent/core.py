@@ -2651,10 +2651,29 @@ class AgentCore:
         metadata = self._fresh_existing_cue_metadata(sequence_no=302, cue_start=1, cue_end=29)
         if metadata != preview.get("target_sequence", {}).get("cue_metadata"):
             raise Sequence302ResourceMergeError("SEQ302_APPROVAL_TIME_METADATA_DRIFT")
-        effect_rows = EffectProvider().parse(self.runtime.read_state("List Effect"))
-        occupied = {row.get("number") for row in effect_rows}
-        if occupied & {2500, 2501, 2502}:
-            raise Sequence302ResourceMergeError("SEQ302_APPROVAL_TIME_EFFECT_SLOT_DRIFT")
+        try:
+            fresh_assignments = self._sequence_executor_assignments(302)
+        except ExistingPositionMergeError as exc:
+            raise Sequence302ResourceMergeError("SEQ302_APPROVAL_TIME_EXECUTOR_READ_FAILED") from exc
+        fresh_executor_identity = [
+            {
+                "page": item.get("page"),
+                "executor": item.get("executor"),
+                "location": item.get("location"),
+                "label": item.get("label"),
+            }
+            for item in fresh_assignments
+        ]
+        if fresh_executor_identity != preview.get("target_sequence", {}).get("executor_assignments"):
+            raise Sequence302ResourceMergeError("SEQ302_APPROVAL_TIME_EXECUTOR_DRIFT")
+        for effect_id in (2500, 2501, 2502):
+            direct_raw = self.runtime.read_state(f"List Effect {effect_id}")
+            direct_rows = EffectProvider().parse(direct_raw)
+            if any(row.get("number") == effect_id for row in direct_rows):
+                raise Sequence302ResourceMergeError("SEQ302_APPROVAL_TIME_EFFECT_SLOT_DRIFT")
+            detail_raw = self.runtime.read_state(f"List Effect 1.{effect_id}.*")
+            if re.search(r"\bEffectline\b|\bQTY\s*=|\bAttrib(?:ute)?\b.*\bDIM\b", detail_raw, re.I):
+                raise Sequence302ResourceMergeError("SEQ302_APPROVAL_TIME_EFFECT_LINE_DRIFT")
         for resource in preview.get("position_presets_to_create", []):
             reference = resource.get("reference")
             direct = PresetProvider().parse(

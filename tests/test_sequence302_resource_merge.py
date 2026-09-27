@@ -2,6 +2,7 @@ import copy
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 from shutil import copytree
 
@@ -200,6 +201,58 @@ class Sequence302ResourceMergeTests(unittest.TestCase):
             inspected = core.preview_action(result["action"]["id"])
             self.assertEqual(inspected["action"]["preview_id"], result["action"]["preview_id"])
             self.assertIsNone(core.runtime.client)
+
+    def _approval_guard_core(self):
+        with tempfile.TemporaryDirectory(prefix="zen-seq302-approval-") as temp:
+            root = Path(temp)
+            copytree(Path(__file__).resolve().parents[1] / "skills", root / "skills")
+            core = AgentCore(AgentRuntime(root))
+            for resource in (
+                "groups", "group_membership", "fixtures", "fixture_geometry",
+                "fixture_type_profiles", "presets", "effects", "sequences",
+                "cues", "executors",
+            ):
+                core.state.put(resource, [], source="test")
+            result = core.preview_sequence302_resource_merge(
+                position_preview=position_preview(),
+                pre_discovery=discovery(),
+                explicit_raw_plan=explicit_plan(),
+                current_presets=[{"reference": "2.1", "preset_type": "POSITION", "name": "FOREIGN"}],
+                fresh_effect_empty_evidence=empty_effect_evidence(),
+                dimmer_applicability_evidence=dimmer_evidence(),
+                effect_application_capability=effect_capability(),
+            )
+            yield core, core.actions[result["action"]["id"]]
+
+    def test_approval_time_executor_drift_fails_before_write(self):
+        for core, action in self._approval_guard_core():
+            preview = action.workflow.task.intent.parameters["sequence302_resource_merge_preview"]
+            expected_meta = preview["target_sequence"]["cue_metadata"]
+            with patch.object(core.sequence_export_provider, "export_and_discover", return_value=discovery()), \
+                 patch.object(core, "_fresh_existing_cue_metadata", return_value=expected_meta), \
+                 patch.object(core, "_sequence_executor_assignments", return_value=[]), \
+                 patch.object(core.runtime, "execute_approved_commands", side_effect=AssertionError("write")) as execute:
+                with self.assertRaisesRegex(Sequence302ResourceMergeError, "APPROVAL_TIME_EXECUTOR_DRIFT"):
+                    core._ensure_sequence302_resource_state_unchanged(action)
+            execute.assert_not_called()
+
+    def test_approval_time_effect_line_drift_fails_before_write(self):
+        for core, action in self._approval_guard_core():
+            preview = action.workflow.task.intent.parameters["sequence302_resource_merge_preview"]
+            expected_meta = preview["target_sequence"]["cue_metadata"]
+            expected_exec = preview["target_sequence"]["executor_assignments"]
+            def read_state(command):
+                if command == "List Effect 1.2501.*":
+                    return "Effectline 1 None None DIM Abs Pwm\nQTY=None\n"
+                return "WARNING, NO OBJECTS FOUND FOR LIST\n"
+            with patch.object(core.sequence_export_provider, "export_and_discover", return_value=discovery()), \
+                 patch.object(core, "_fresh_existing_cue_metadata", return_value=expected_meta), \
+                 patch.object(core, "_sequence_executor_assignments", return_value=expected_exec), \
+                 patch.object(core.runtime, "read_state", side_effect=read_state), \
+                 patch.object(core.runtime, "execute_approved_commands", side_effect=AssertionError("write")) as execute:
+                with self.assertRaisesRegex(Sequence302ResourceMergeError, "APPROVAL_TIME_EFFECT_LINE_DRIFT"):
+                    core._ensure_sequence302_resource_state_unchanged(action)
+            execute.assert_not_called()
 
     def test_rejects_nonempty_effect_slot(self):
         evidence = empty_effect_evidence()
