@@ -57,3 +57,12 @@ operator contract and treat workflow changes as explicit proposals.
 Never guess undocumented MA2 behavior, mutate production objects during
 research, or commit caches/build outputs. Check current status and safety
 boundaries before acting.
+
+## Compact output and continuity
+
+For all substantial ZEN work, also follow `docs/ZEN_COMPACT_HANDOFF_PROTOCOL.md`.
+Chat is a compact operator surface; canonical continuity lives in committed repo state,
+`data/zen_project_control.json`, relevant evidence reports, and original retained logs.
+Do not paste long raw logs or repeat full handoffs into chat when exact IDs/paths suffice.
+A continuation must reconstruct from those authoritative records and then continue from
+the recorded next acceptance gate without asking the owner to restate prior work.
