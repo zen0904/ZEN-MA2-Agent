@@ -1,0 +1,3551 @@
+{
+  "schema": "zen.existing_cue_dynamic_program_merge_offline_artifact.v0.1",
+  "status": "OFFLINE_CONTRACT_FIXTURE_NOT_APPROVABLE",
+  "action_id": null,
+  "provenance": "DETERMINISTIC_REGRESSION_FIXTURE_NOT_LIVE_MA2_EVIDENCE",
+  "limitations": [
+    "Cue labels and evidence hashes are fixture values, not current native Sequence 302 evidence.",
+    "No approval or execution path may consume this artifact."
+  ],
+  "preview": {
+    "schema": "zen.existing_cue_dynamic_program_merge_preview.v0.1",
+    "status": "OFFLINE_CONTRACT_FIXTURE_NOT_APPROVABLE",
+    "show_identity": {
+      "kind": "SCANNED_SHOW_PROFILE_FINGERPRINT",
+      "value": "1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    "target_sequence": {
+      "id": 302,
+      "label": "ZEN_SEQ302",
+      "cue_start": 1,
+      "cue_end": 29,
+      "pre_export_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "pre_non_position_sha256": "54cd2fe28cc9fc38fb592ce690f972e993484b2bfe533ee9baeb77bb1e7b8dc5",
+      "cue_metadata": [
+        {
+          "number": 1,
+          "name": "SHEESH_01",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 2,
+          "name": "SHEESH_02",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 3,
+          "name": "SHEESH_03",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 4,
+          "name": "SHEESH_04",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 5,
+          "name": "SHEESH_05",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 6,
+          "name": "SHEESH_06",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 7,
+          "name": "SHEESH_07",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 8,
+          "name": "SHEESH_08",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 9,
+          "name": "SHEESH_09",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 10,
+          "name": "SHEESH_10",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 11,
+          "name": "SHEESH_11",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 12,
+          "name": "SHEESH_12",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 13,
+          "name": "SHEESH_13",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 14,
+          "name": "SHEESH_14",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 15,
+          "name": "SHEESH_15",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 16,
+          "name": "SHEESH_16",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 17,
+          "name": "SHEESH_17",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 18,
+          "name": "SHEESH_18",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 19,
+          "name": "SHEESH_19",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 20,
+          "name": "SHEESH_20",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 21,
+          "name": "SHEESH_21",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 22,
+          "name": "SHEESH_22",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 23,
+          "name": "SHEESH_23",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 24,
+          "name": "SHEESH_24",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 25,
+          "name": "SHEESH_25",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 26,
+          "name": "SHEESH_26",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 27,
+          "name": "SHEESH_27",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 28,
+          "name": "SHEESH_28",
+          "fade": 0.5,
+          "delay": 0.0
+        },
+        {
+          "number": 29,
+          "name": "SHEESH_29",
+          "fade": 0.5,
+          "delay": 0.0
+        }
+      ],
+      "executor_assignments": [
+        {
+          "page": 2,
+          "executor": 8,
+          "location": "2.8",
+          "label": "ZEN_SEQ302"
+        }
+      ],
+      "pre_protected_content_sha256": "9c33ff68108c7f734b0cd2723795d6b47fe8396fbb8af8536f026d35472a8767"
+    },
+    "group": {
+      "id": 1,
+      "name": "HYBRID",
+      "exact_refs": [
+        "101.1",
+        "102.1",
+        "103.1",
+        "104.1",
+        "105.1",
+        "106.1",
+        "107.1",
+        "108.1"
+      ],
+      "cue_channel_refs": {
+        "101.1": "101.1",
+        "102.1": "102.1",
+        "103.1": "103.1",
+        "104.1": "104.1",
+        "105.1": "105.1",
+        "106.1": "106.1",
+        "107.1": "107.1",
+        "108.1": "108.1"
+      }
+    },
+    "baseline": {
+      "preset_reference": "2.13",
+      "preset_label": "ZEN_POSITION_CAL_P13",
+      "calibration_sequence": 12,
+      "calibration_export_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "values_by_fixture": {
+        "101.1": {
+          "pan": 20.0,
+          "tilt": 30.0
+        },
+        "102.1": {
+          "pan": 20.0,
+          "tilt": 30.0
+        },
+        "103.1": {
+          "pan": 20.0,
+          "tilt": 30.0
+        },
+        "104.1": {
+          "pan": 20.0,
+          "tilt": 30.0
+        },
+        "105.1": {
+          "pan": 20.0,
+          "tilt": 30.0
+        },
+        "106.1": {
+          "pan": 20.0,
+          "tilt": 30.0
+        },
+        "107.1": {
+          "pan": 20.0,
+          "tilt": 30.0
+        },
+        "108.1": {
+          "pan": 20.0,
+          "tilt": 30.0
+        }
+      }
+    },
+    "direction_semantics": {
+      "scope": "CURRENT_TEST_SHOW_OPERATOR_VERIFIED",
+      "pan_negative": "STAGE_RIGHT",
+      "pan_positive": "STAGE_LEFT",
+      "tilt_negative": "AUDIENCE_FRONT",
+      "tilt_positive": "UPSTAGE_INWARD",
+      "xyz_sign_mapping_claimed": false,
+      "high_low_claimed": false
+    },
+    "fixture_limits": {
+      "101.1": {
+        "pan": [
+          -315.0,
+          315.0
+        ],
+        "tilt": [
+          -135.0,
+          135.0
+        ]
+      },
+      "102.1": {
+        "pan": [
+          -315.0,
+          315.0
+        ],
+        "tilt": [
+          -135.0,
+          135.0
+        ]
+      },
+      "103.1": {
+        "pan": [
+          -315.0,
+          315.0
+        ],
+        "tilt": [
+          -135.0,
+          135.0
+        ]
+      },
+      "104.1": {
+        "pan": [
+          -315.0,
+          315.0
+        ],
+        "tilt": [
+          -135.0,
+          135.0
+        ]
+      },
+      "105.1": {
+        "pan": [
+          -315.0,
+          315.0
+        ],
+        "tilt": [
+          -135.0,
+          135.0
+        ]
+      },
+      "106.1": {
+        "pan": [
+          -315.0,
+          315.0
+        ],
+        "tilt": [
+          -135.0,
+          135.0
+        ]
+      },
+      "107.1": {
+        "pan": [
+          -315.0,
+          315.0
+        ],
+        "tilt": [
+          -135.0,
+          135.0
+        ]
+      },
+      "108.1": {
+        "pan": [
+          -315.0,
+          315.0
+        ],
+        "tilt": [
+          -135.0,
+          135.0
+        ]
+      }
+    },
+    "effect_application": {
+      "grammar": "AT_EFFECT_POOL_CALL",
+      "capability_status": "REAL_MACHINE_CONTENT_VERIFIED",
+      "resources": [
+        {
+          "effect_id": 2500,
+          "label": "FX_DIM_CHASE_SLOW",
+          "group_id": 1,
+          "ownership": "ZEN_AGENT",
+          "show_identity": {
+            "kind": "SCANNED_SHOW_PROFILE_FINGERPRINT",
+            "value": "1111111111111111111111111111111111111111111111111111111111111111"
+          },
+          "fresh": true,
+          "list_effect_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+          "catalog_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "effect_id": 2501,
+          "label": "FX_DIM_CHASE_MED",
+          "group_id": 1,
+          "ownership": "ZEN_AGENT",
+          "show_identity": {
+            "kind": "SCANNED_SHOW_PROFILE_FINGERPRINT",
+            "value": "1111111111111111111111111111111111111111111111111111111111111111"
+          },
+          "fresh": true,
+          "list_effect_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+          "catalog_sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+        },
+        {
+          "effect_id": 2502,
+          "label": "FX_DIM_CHASE_FAST",
+          "group_id": 1,
+          "ownership": "ZEN_AGENT",
+          "show_identity": {
+            "kind": "SCANNED_SHOW_PROFILE_FINGERPRINT",
+            "value": "1111111111111111111111111111111111111111111111111111111111111111"
+          },
+          "fresh": true,
+          "list_effect_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+          "catalog_sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+        }
+      ]
+    },
+    "position_amplitude": {
+      "scale": 1.5,
+      "basis": "OPERATOR_FEEDBACK_PLUS_STAGE_VIEW_OBSERVATION_AND_FIXTURE_LIMITS",
+      "capture_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "physical_targeting_claimed": false
+    },
+    "cue_updates": [
+      {
+        "cue_number": 1,
+        "cue_label": "SHEESH_01",
+        "effect_intent": "STATIC_LOOK",
+        "effect_id": null,
+        "target_group": 1,
+        "position_pattern": "CENTER",
+        "expected_pan_range": [
+          20.0,
+          20.0
+        ],
+        "expected_tilt_range": [
+          30.0,
+          30.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "a2ad591333d4987a7321a0ddca68223f845de0d8708ee9db3362b7cedfe42cc4"
+      },
+      {
+        "cue_number": 2,
+        "cue_label": "SHEESH_02",
+        "effect_intent": "DIMMER_CHASE_SLOW",
+        "effect_id": 2500,
+        "target_group": 1,
+        "position_pattern": "LEFT",
+        "expected_pan_range": [
+          29.0,
+          29.0
+        ],
+        "expected_tilt_range": [
+          30.0,
+          30.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION",
+          "EFFECT"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "7c7d4b4fa39ba1348b113d17113add09c43c61a94c2d0ab1ad9d1fdf0c1b5fa5"
+      },
+      {
+        "cue_number": 3,
+        "cue_label": "SHEESH_03",
+        "effect_intent": "DIMMER_CHASE_MED",
+        "effect_id": 2501,
+        "target_group": 1,
+        "position_pattern": "RIGHT",
+        "expected_pan_range": [
+          11.0,
+          11.0
+        ],
+        "expected_tilt_range": [
+          30.0,
+          30.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION",
+          "EFFECT"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "d08a3222dc45f5604abb6622422752f180a58868104b8b6087914be7a18a93ad"
+      },
+      {
+        "cue_number": 4,
+        "cue_label": "SHEESH_04",
+        "effect_intent": "DIMMER_CHASE_FAST",
+        "effect_id": 2502,
+        "target_group": 1,
+        "position_pattern": "FRONT",
+        "expected_pan_range": [
+          20.0,
+          20.0
+        ],
+        "expected_tilt_range": [
+          22.5,
+          22.5
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION",
+          "EFFECT"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "bbc6e15dac6f4b41e720467fea382ede9229c6b32601ca9990805c0428e1be1c"
+      },
+      {
+        "cue_number": 5,
+        "cue_label": "SHEESH_05",
+        "effect_intent": "ALTERNATE",
+        "effect_id": 2501,
+        "target_group": 1,
+        "position_pattern": "UPSTAGE",
+        "expected_pan_range": [
+          20.0,
+          20.0
+        ],
+        "expected_tilt_range": [
+          37.5,
+          37.5
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION",
+          "EFFECT"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "33a74089ddd83abb0f9204414a8a961db25580afca2ce25e8fb91ca394370e65"
+      },
+      {
+        "cue_number": 6,
+        "cue_label": "SHEESH_06",
+        "effect_intent": "PULSE",
+        "effect_id": 2502,
+        "target_group": 1,
+        "position_pattern": "NARROW_FAN",
+        "expected_pan_range": [
+          11.0,
+          29.0
+        ],
+        "expected_tilt_range": [
+          30.0,
+          30.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION",
+          "EFFECT"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -6.428571428571429,
+            "delta_tilt": 0.0,
+            "pan": 13.571428571428571,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -3.8571428571428568,
+            "delta_tilt": 0.0,
+            "pan": 16.142857142857142,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -1.2857142857142856,
+            "delta_tilt": 0.0,
+            "pan": 18.714285714285715,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 1.2857142857142856,
+            "delta_tilt": 0.0,
+            "pan": 21.285714285714285,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 3.8571428571428568,
+            "delta_tilt": 0.0,
+            "pan": 23.857142857142858,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 6.428571428571429,
+            "delta_tilt": 0.0,
+            "pan": 26.42857142857143,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "9efbbe66477d99792c722f82ef75139ef9e787673951d96a0830ff213133f1c2"
+      },
+      {
+        "cue_number": 7,
+        "cue_label": "SHEESH_07",
+        "effect_intent": "HIT",
+        "effect_id": 2502,
+        "target_group": 1,
+        "position_pattern": "WIDE_FAN",
+        "expected_pan_range": [
+          2.0,
+          38.0
+        ],
+        "expected_tilt_range": [
+          30.0,
+          30.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION",
+          "EFFECT"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -18.0,
+            "delta_tilt": 0.0,
+            "pan": 2.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -12.857142857142858,
+            "delta_tilt": 0.0,
+            "pan": 7.142857142857142,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -7.7142857142857135,
+            "delta_tilt": 0.0,
+            "pan": 12.285714285714286,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -2.571428571428571,
+            "delta_tilt": 0.0,
+            "pan": 17.42857142857143,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 2.571428571428571,
+            "delta_tilt": 0.0,
+            "pan": 22.57142857142857,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 7.7142857142857135,
+            "delta_tilt": 0.0,
+            "pan": 27.714285714285715,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 12.857142857142858,
+            "delta_tilt": 0.0,
+            "pan": 32.85714285714286,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 18.0,
+            "delta_tilt": 0.0,
+            "pan": 38.0,
+            "tilt": 30.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "e1a7674014a29f869e7cc3e634ffe259174c67af5b1e496bec9078044227e218"
+      },
+      {
+        "cue_number": 8,
+        "cue_label": "SHEESH_08",
+        "effect_intent": "BUILD",
+        "effect_id": 2500,
+        "target_group": 1,
+        "position_pattern": "CROSS",
+        "expected_pan_range": [
+          8.0,
+          32.0
+        ],
+        "expected_tilt_range": [
+          30.0,
+          30.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION",
+          "EFFECT"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 12.0,
+            "delta_tilt": 0.0,
+            "pan": 32.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 8.571428571428571,
+            "delta_tilt": 0.0,
+            "pan": 28.57142857142857,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 5.142857142857142,
+            "delta_tilt": 0.0,
+            "pan": 25.142857142857142,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 1.7142857142857142,
+            "delta_tilt": 0.0,
+            "pan": 21.714285714285715,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -1.7142857142857142,
+            "delta_tilt": 0.0,
+            "pan": 18.285714285714285,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -5.142857142857142,
+            "delta_tilt": 0.0,
+            "pan": 14.857142857142858,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -8.571428571428571,
+            "delta_tilt": 0.0,
+            "pan": 11.428571428571429,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -12.0,
+            "delta_tilt": 0.0,
+            "pan": 8.0,
+            "tilt": 30.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "9125cf2284db1f40997380f8e05dd36edc145595f91a320f4556da2fdbae346b"
+      },
+      {
+        "cue_number": 9,
+        "cue_label": "SHEESH_09",
+        "effect_intent": "RELEASE",
+        "effect_id": null,
+        "target_group": 1,
+        "position_pattern": "ALTERNATE",
+        "expected_pan_range": [
+          8.0,
+          32.0
+        ],
+        "expected_tilt_range": [
+          27.0,
+          33.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -12.0,
+            "delta_tilt": -3.0,
+            "pan": 8.0,
+            "tilt": 27.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 12.0,
+            "delta_tilt": 3.0,
+            "pan": 32.0,
+            "tilt": 33.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -12.0,
+            "delta_tilt": -3.0,
+            "pan": 8.0,
+            "tilt": 27.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 12.0,
+            "delta_tilt": 3.0,
+            "pan": 32.0,
+            "tilt": 33.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -12.0,
+            "delta_tilt": -3.0,
+            "pan": 8.0,
+            "tilt": 27.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 12.0,
+            "delta_tilt": 3.0,
+            "pan": 32.0,
+            "tilt": 33.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -12.0,
+            "delta_tilt": -3.0,
+            "pan": 8.0,
+            "tilt": 27.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 12.0,
+            "delta_tilt": 3.0,
+            "pan": 32.0,
+            "tilt": 33.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "e77f0da80918e9870b1683351a685e3a1cad24fc9be051ff290922ff56d5187f"
+      },
+      {
+        "cue_number": 10,
+        "cue_label": "SHEESH_10",
+        "effect_intent": "BLACKOUT",
+        "effect_id": null,
+        "target_group": 1,
+        "position_pattern": "EXPLODE",
+        "expected_pan_range": [
+          2.0,
+          38.0
+        ],
+        "expected_tilt_range": [
+          24.0,
+          36.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -18.0,
+            "delta_tilt": -6.0,
+            "pan": 2.0,
+            "tilt": 24.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -12.857142857142858,
+            "delta_tilt": 6.0,
+            "pan": 7.142857142857142,
+            "tilt": 36.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -7.7142857142857135,
+            "delta_tilt": -6.0,
+            "pan": 12.285714285714286,
+            "tilt": 24.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -2.571428571428571,
+            "delta_tilt": 6.0,
+            "pan": 17.42857142857143,
+            "tilt": 36.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 2.571428571428571,
+            "delta_tilt": -6.0,
+            "pan": 22.57142857142857,
+            "tilt": 24.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 7.7142857142857135,
+            "delta_tilt": 6.0,
+            "pan": 27.714285714285715,
+            "tilt": 36.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 12.857142857142858,
+            "delta_tilt": -6.0,
+            "pan": 32.85714285714286,
+            "tilt": 24.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 18.0,
+            "delta_tilt": 6.0,
+            "pan": 38.0,
+            "tilt": 36.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "ac4e0ee013639da239327f049bd646d427cb6d93e0c0410edcc6ba5edbdd44bb"
+      },
+      {
+        "cue_number": 11,
+        "cue_label": "SHEESH_11",
+        "effect_intent": "RESET",
+        "effect_id": null,
+        "target_group": 1,
+        "position_pattern": "COLLAPSE",
+        "expected_pan_range": [
+          11.0,
+          29.0
+        ],
+        "expected_tilt_range": [
+          33.0,
+          33.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 3.0,
+            "pan": 29.0,
+            "tilt": 33.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 6.428571428571429,
+            "delta_tilt": 3.0,
+            "pan": 26.42857142857143,
+            "tilt": 33.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 3.8571428571428568,
+            "delta_tilt": 3.0,
+            "pan": 23.857142857142858,
+            "tilt": 33.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 1.2857142857142856,
+            "delta_tilt": 3.0,
+            "pan": 21.285714285714285,
+            "tilt": 33.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -1.2857142857142856,
+            "delta_tilt": 3.0,
+            "pan": 18.714285714285715,
+            "tilt": 33.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -3.8571428571428568,
+            "delta_tilt": 3.0,
+            "pan": 16.142857142857142,
+            "tilt": 33.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -6.428571428571429,
+            "delta_tilt": 3.0,
+            "pan": 13.571428571428571,
+            "tilt": 33.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 3.0,
+            "pan": 11.0,
+            "tilt": 33.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "3c73db5c53f93832dce080c9ed8c929e58ab174ec16db747371b70eb75e93c73"
+      },
+      {
+        "cue_number": 12,
+        "cue_label": "SHEESH_12",
+        "effect_intent": "STATIC_LOOK",
+        "effect_id": null,
+        "target_group": 1,
+        "position_pattern": "CENTER",
+        "expected_pan_range": [
+          20.0,
+          20.0
+        ],
+        "expected_tilt_range": [
+          30.0,
+          30.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "6368bdd68602447718b8b0c4d65813f52915b9bb55d89ba98fc0a521186712d0"
+      },
+      {
+        "cue_number": 13,
+        "cue_label": "SHEESH_13",
+        "effect_intent": "DIMMER_CHASE_SLOW",
+        "effect_id": 2500,
+        "target_group": 1,
+        "position_pattern": "LEFT",
+        "expected_pan_range": [
+          29.0,
+          29.0
+        ],
+        "expected_tilt_range": [
+          30.0,
+          30.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION",
+          "EFFECT"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "ae6c2f166d009f3f2aa01c0991c32b687cb2a536d986c50b481040dcc678fb28"
+      },
+      {
+        "cue_number": 14,
+        "cue_label": "SHEESH_14",
+        "effect_intent": "DIMMER_CHASE_MED",
+        "effect_id": 2501,
+        "target_group": 1,
+        "position_pattern": "RIGHT",
+        "expected_pan_range": [
+          11.0,
+          11.0
+        ],
+        "expected_tilt_range": [
+          30.0,
+          30.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION",
+          "EFFECT"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "b96a6cb6185b54aecfe2f81d1295db45f5e5559aa408c042e512c594556ba9b3"
+      },
+      {
+        "cue_number": 15,
+        "cue_label": "SHEESH_15",
+        "effect_intent": "DIMMER_CHASE_FAST",
+        "effect_id": 2502,
+        "target_group": 1,
+        "position_pattern": "FRONT",
+        "expected_pan_range": [
+          20.0,
+          20.0
+        ],
+        "expected_tilt_range": [
+          22.5,
+          22.5
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION",
+          "EFFECT"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "2c721146e7a03d52f833264a5d9effc47df0d8c5bc675606c408b3e160afc4da"
+      },
+      {
+        "cue_number": 16,
+        "cue_label": "SHEESH_16",
+        "effect_intent": "ALTERNATE",
+        "effect_id": 2501,
+        "target_group": 1,
+        "position_pattern": "UPSTAGE",
+        "expected_pan_range": [
+          20.0,
+          20.0
+        ],
+        "expected_tilt_range": [
+          37.5,
+          37.5
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION",
+          "EFFECT"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "e72cb09a2134f9b2de5d3c7c4e1f0e43b0386f25803fb7babccd5f4227f5538b"
+      },
+      {
+        "cue_number": 17,
+        "cue_label": "SHEESH_17",
+        "effect_intent": "PULSE",
+        "effect_id": 2502,
+        "target_group": 1,
+        "position_pattern": "NARROW_FAN",
+        "expected_pan_range": [
+          11.0,
+          29.0
+        ],
+        "expected_tilt_range": [
+          30.0,
+          30.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION",
+          "EFFECT"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -6.428571428571429,
+            "delta_tilt": 0.0,
+            "pan": 13.571428571428571,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -3.8571428571428568,
+            "delta_tilt": 0.0,
+            "pan": 16.142857142857142,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -1.2857142857142856,
+            "delta_tilt": 0.0,
+            "pan": 18.714285714285715,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 1.2857142857142856,
+            "delta_tilt": 0.0,
+            "pan": 21.285714285714285,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 3.8571428571428568,
+            "delta_tilt": 0.0,
+            "pan": 23.857142857142858,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 6.428571428571429,
+            "delta_tilt": 0.0,
+            "pan": 26.42857142857143,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "d725f89dcc0e46caec6030292c5f33b28ed113967823945794e50716b2694393"
+      },
+      {
+        "cue_number": 18,
+        "cue_label": "SHEESH_18",
+        "effect_intent": "HIT",
+        "effect_id": 2502,
+        "target_group": 1,
+        "position_pattern": "WIDE_FAN",
+        "expected_pan_range": [
+          2.0,
+          38.0
+        ],
+        "expected_tilt_range": [
+          30.0,
+          30.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION",
+          "EFFECT"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -18.0,
+            "delta_tilt": 0.0,
+            "pan": 2.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -12.857142857142858,
+            "delta_tilt": 0.0,
+            "pan": 7.142857142857142,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -7.7142857142857135,
+            "delta_tilt": 0.0,
+            "pan": 12.285714285714286,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -2.571428571428571,
+            "delta_tilt": 0.0,
+            "pan": 17.42857142857143,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 2.571428571428571,
+            "delta_tilt": 0.0,
+            "pan": 22.57142857142857,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 7.7142857142857135,
+            "delta_tilt": 0.0,
+            "pan": 27.714285714285715,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 12.857142857142858,
+            "delta_tilt": 0.0,
+            "pan": 32.85714285714286,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 18.0,
+            "delta_tilt": 0.0,
+            "pan": 38.0,
+            "tilt": 30.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "0fc29ac69e17f7aebb1d5b164ec50b749915c12da84a9051c73031d12d6051d4"
+      },
+      {
+        "cue_number": 19,
+        "cue_label": "SHEESH_19",
+        "effect_intent": "BUILD",
+        "effect_id": 2500,
+        "target_group": 1,
+        "position_pattern": "CROSS",
+        "expected_pan_range": [
+          8.0,
+          32.0
+        ],
+        "expected_tilt_range": [
+          30.0,
+          30.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION",
+          "EFFECT"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 12.0,
+            "delta_tilt": 0.0,
+            "pan": 32.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 8.571428571428571,
+            "delta_tilt": 0.0,
+            "pan": 28.57142857142857,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 5.142857142857142,
+            "delta_tilt": 0.0,
+            "pan": 25.142857142857142,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 1.7142857142857142,
+            "delta_tilt": 0.0,
+            "pan": 21.714285714285715,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -1.7142857142857142,
+            "delta_tilt": 0.0,
+            "pan": 18.285714285714285,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -5.142857142857142,
+            "delta_tilt": 0.0,
+            "pan": 14.857142857142858,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -8.571428571428571,
+            "delta_tilt": 0.0,
+            "pan": 11.428571428571429,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -12.0,
+            "delta_tilt": 0.0,
+            "pan": 8.0,
+            "tilt": 30.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "1e1936d57e8758502a0ea004b6febb62888dbb82a4a8c2a643250871ffe00e0f"
+      },
+      {
+        "cue_number": 20,
+        "cue_label": "SHEESH_20",
+        "effect_intent": "RELEASE",
+        "effect_id": null,
+        "target_group": 1,
+        "position_pattern": "ALTERNATE",
+        "expected_pan_range": [
+          8.0,
+          32.0
+        ],
+        "expected_tilt_range": [
+          27.0,
+          33.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -12.0,
+            "delta_tilt": -3.0,
+            "pan": 8.0,
+            "tilt": 27.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 12.0,
+            "delta_tilt": 3.0,
+            "pan": 32.0,
+            "tilt": 33.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -12.0,
+            "delta_tilt": -3.0,
+            "pan": 8.0,
+            "tilt": 27.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 12.0,
+            "delta_tilt": 3.0,
+            "pan": 32.0,
+            "tilt": 33.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -12.0,
+            "delta_tilt": -3.0,
+            "pan": 8.0,
+            "tilt": 27.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 12.0,
+            "delta_tilt": 3.0,
+            "pan": 32.0,
+            "tilt": 33.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -12.0,
+            "delta_tilt": -3.0,
+            "pan": 8.0,
+            "tilt": 27.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 12.0,
+            "delta_tilt": 3.0,
+            "pan": 32.0,
+            "tilt": 33.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "cd6d7f78bf36966a8bbfb6682382336259e8233faab4aaaab5dec0455645d092"
+      },
+      {
+        "cue_number": 21,
+        "cue_label": "SHEESH_21",
+        "effect_intent": "BLACKOUT",
+        "effect_id": null,
+        "target_group": 1,
+        "position_pattern": "EXPLODE",
+        "expected_pan_range": [
+          2.0,
+          38.0
+        ],
+        "expected_tilt_range": [
+          24.0,
+          36.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -18.0,
+            "delta_tilt": -6.0,
+            "pan": 2.0,
+            "tilt": 24.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -12.857142857142858,
+            "delta_tilt": 6.0,
+            "pan": 7.142857142857142,
+            "tilt": 36.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -7.7142857142857135,
+            "delta_tilt": -6.0,
+            "pan": 12.285714285714286,
+            "tilt": 24.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -2.571428571428571,
+            "delta_tilt": 6.0,
+            "pan": 17.42857142857143,
+            "tilt": 36.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 2.571428571428571,
+            "delta_tilt": -6.0,
+            "pan": 22.57142857142857,
+            "tilt": 24.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 7.7142857142857135,
+            "delta_tilt": 6.0,
+            "pan": 27.714285714285715,
+            "tilt": 36.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 12.857142857142858,
+            "delta_tilt": -6.0,
+            "pan": 32.85714285714286,
+            "tilt": 24.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 18.0,
+            "delta_tilt": 6.0,
+            "pan": 38.0,
+            "tilt": 36.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "5ea7daea5bf0747dec2feebb1a588ffdc880be157cc130123a967400531a62de"
+      },
+      {
+        "cue_number": 22,
+        "cue_label": "SHEESH_22",
+        "effect_intent": "RESET",
+        "effect_id": null,
+        "target_group": 1,
+        "position_pattern": "COLLAPSE",
+        "expected_pan_range": [
+          11.0,
+          29.0
+        ],
+        "expected_tilt_range": [
+          33.0,
+          33.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 3.0,
+            "pan": 29.0,
+            "tilt": 33.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 6.428571428571429,
+            "delta_tilt": 3.0,
+            "pan": 26.42857142857143,
+            "tilt": 33.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 3.8571428571428568,
+            "delta_tilt": 3.0,
+            "pan": 23.857142857142858,
+            "tilt": 33.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 1.2857142857142856,
+            "delta_tilt": 3.0,
+            "pan": 21.285714285714285,
+            "tilt": 33.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -1.2857142857142856,
+            "delta_tilt": 3.0,
+            "pan": 18.714285714285715,
+            "tilt": 33.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -3.8571428571428568,
+            "delta_tilt": 3.0,
+            "pan": 16.142857142857142,
+            "tilt": 33.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -6.428571428571429,
+            "delta_tilt": 3.0,
+            "pan": 13.571428571428571,
+            "tilt": 33.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 3.0,
+            "pan": 11.0,
+            "tilt": 33.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "191086793d65209a00f3f7a040efe51231cc7796334cae21a31b06ebd65c04ed"
+      },
+      {
+        "cue_number": 23,
+        "cue_label": "SHEESH_23",
+        "effect_intent": "STATIC_LOOK",
+        "effect_id": null,
+        "target_group": 1,
+        "position_pattern": "CENTER",
+        "expected_pan_range": [
+          20.0,
+          20.0
+        ],
+        "expected_tilt_range": [
+          30.0,
+          30.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 0.0,
+            "pan": 20.0,
+            "tilt": 30.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "7481b621ef9c8fb6a8d0de723f89507c1358ebe920a7bd6f2136f0ebf37d407c"
+      },
+      {
+        "cue_number": 24,
+        "cue_label": "SHEESH_24",
+        "effect_intent": "DIMMER_CHASE_SLOW",
+        "effect_id": 2500,
+        "target_group": 1,
+        "position_pattern": "LEFT",
+        "expected_pan_range": [
+          29.0,
+          29.0
+        ],
+        "expected_tilt_range": [
+          30.0,
+          30.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION",
+          "EFFECT"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "c40b1056b51af43ab8d8da153f0993e609121a04285cc1e2cd21ed0ece54c0d9"
+      },
+      {
+        "cue_number": 25,
+        "cue_label": "SHEESH_25",
+        "effect_intent": "DIMMER_CHASE_MED",
+        "effect_id": 2501,
+        "target_group": 1,
+        "position_pattern": "RIGHT",
+        "expected_pan_range": [
+          11.0,
+          11.0
+        ],
+        "expected_tilt_range": [
+          30.0,
+          30.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION",
+          "EFFECT"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "9c639a5f2a3c8a902cfd773e2c1ff0413df15d6fa951339ae5b234533383c82b"
+      },
+      {
+        "cue_number": 26,
+        "cue_label": "SHEESH_26",
+        "effect_intent": "DIMMER_CHASE_FAST",
+        "effect_id": 2502,
+        "target_group": 1,
+        "position_pattern": "FRONT",
+        "expected_pan_range": [
+          20.0,
+          20.0
+        ],
+        "expected_tilt_range": [
+          22.5,
+          22.5
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION",
+          "EFFECT"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": -7.5,
+            "pan": 20.0,
+            "tilt": 22.5
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "d574b1a1637c4331e4b0e352009e37869efd7afda9627986ca366273e5d6d39b"
+      },
+      {
+        "cue_number": 27,
+        "cue_label": "SHEESH_27",
+        "effect_intent": "ALTERNATE",
+        "effect_id": 2501,
+        "target_group": 1,
+        "position_pattern": "UPSTAGE",
+        "expected_pan_range": [
+          20.0,
+          20.0
+        ],
+        "expected_tilt_range": [
+          37.5,
+          37.5
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION",
+          "EFFECT"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 0.0,
+            "delta_tilt": 7.5,
+            "pan": 20.0,
+            "tilt": 37.5
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "7bdc2fd5bed00aa9460cd4eb50c83274726f0c3584b6a6bb4def18f6d1951fd7"
+      },
+      {
+        "cue_number": 28,
+        "cue_label": "SHEESH_28",
+        "effect_intent": "PULSE",
+        "effect_id": 2502,
+        "target_group": 1,
+        "position_pattern": "NARROW_FAN",
+        "expected_pan_range": [
+          11.0,
+          29.0
+        ],
+        "expected_tilt_range": [
+          30.0,
+          30.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION",
+          "EFFECT"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -9.0,
+            "delta_tilt": 0.0,
+            "pan": 11.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -6.428571428571429,
+            "delta_tilt": 0.0,
+            "pan": 13.571428571428571,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -3.8571428571428568,
+            "delta_tilt": 0.0,
+            "pan": 16.142857142857142,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -1.2857142857142856,
+            "delta_tilt": 0.0,
+            "pan": 18.714285714285715,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 1.2857142857142856,
+            "delta_tilt": 0.0,
+            "pan": 21.285714285714285,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 3.8571428571428568,
+            "delta_tilt": 0.0,
+            "pan": 23.857142857142858,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 6.428571428571429,
+            "delta_tilt": 0.0,
+            "pan": 26.42857142857143,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 9.0,
+            "delta_tilt": 0.0,
+            "pan": 29.0,
+            "tilt": 30.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "21cb460cf876a9fde86ad2164f61c858b100727c24e67d158e9db0f920c54223"
+      },
+      {
+        "cue_number": 29,
+        "cue_label": "SHEESH_29",
+        "effect_intent": "HIT",
+        "effect_id": 2502,
+        "target_group": 1,
+        "position_pattern": "WIDE_FAN",
+        "expected_pan_range": [
+          2.0,
+          38.0
+        ],
+        "expected_tilt_range": [
+          30.0,
+          30.0
+        ],
+        "intended_attribute_families_changed": [
+          "POSITION",
+          "EFFECT"
+        ],
+        "fixtures": [
+          {
+            "fixture_ref": "101.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -18.0,
+            "delta_tilt": 0.0,
+            "pan": 2.0,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "102.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -12.857142857142858,
+            "delta_tilt": 0.0,
+            "pan": 7.142857142857142,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "103.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -7.7142857142857135,
+            "delta_tilt": 0.0,
+            "pan": 12.285714285714286,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "104.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": -2.571428571428571,
+            "delta_tilt": 0.0,
+            "pan": 17.42857142857143,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "105.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 2.571428571428571,
+            "delta_tilt": 0.0,
+            "pan": 22.57142857142857,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "106.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 7.7142857142857135,
+            "delta_tilt": 0.0,
+            "pan": 27.714285714285715,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "107.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 12.857142857142858,
+            "delta_tilt": 0.0,
+            "pan": 32.85714285714286,
+            "tilt": 30.0
+          },
+          {
+            "fixture_ref": "108.1",
+            "baseline_pan": 20.0,
+            "baseline_tilt": 30.0,
+            "delta_pan": 18.0,
+            "delta_tilt": 0.0,
+            "pan": 38.0,
+            "tilt": 30.0
+          }
+        ],
+        "replace_effect_ids": [],
+        "preserved_content_fingerprint": "e6d9a55be803d7fe3fb9ec954ad7c0e78acde6e080173dfc8a1c4eb39e23c0bc"
+      }
+    ],
+    "write_scope": {
+      "existing_sequence_only": true,
+      "existing_cues_only": true,
+      "store_mode": "MERGE_CUEONLY",
+      "create_sequence": false,
+      "allocate_sequence": false,
+      "create_effect": false,
+      "modify_executor_assignment": false,
+      "modify_patch_address_fixture_identity_or_type": false,
+      "fixture_9999_forbidden": true,
+      "allowed_attribute_families": [
+        "POSITION",
+        "EFFECT"
+      ]
+    },
+    "preservation": {
+      "pre_protected_content_sha256": "9c33ff68108c7f734b0cd2723795d6b47fe8396fbb8af8536f026d35472a8767",
+      "pre_protected_content_by_cue": {
+        "1": "a2ad591333d4987a7321a0ddca68223f845de0d8708ee9db3362b7cedfe42cc4",
+        "2": "7c7d4b4fa39ba1348b113d17113add09c43c61a94c2d0ab1ad9d1fdf0c1b5fa5",
+        "3": "d08a3222dc45f5604abb6622422752f180a58868104b8b6087914be7a18a93ad",
+        "4": "bbc6e15dac6f4b41e720467fea382ede9229c6b32601ca9990805c0428e1be1c",
+        "5": "33a74089ddd83abb0f9204414a8a961db25580afca2ce25e8fb91ca394370e65",
+        "6": "9efbbe66477d99792c722f82ef75139ef9e787673951d96a0830ff213133f1c2",
+        "7": "e1a7674014a29f869e7cc3e634ffe259174c67af5b1e496bec9078044227e218",
+        "8": "9125cf2284db1f40997380f8e05dd36edc145595f91a320f4556da2fdbae346b",
+        "9": "e77f0da80918e9870b1683351a685e3a1cad24fc9be051ff290922ff56d5187f",
+        "10": "ac4e0ee013639da239327f049bd646d427cb6d93e0c0410edcc6ba5edbdd44bb",
+        "11": "3c73db5c53f93832dce080c9ed8c929e58ab174ec16db747371b70eb75e93c73",
+        "12": "6368bdd68602447718b8b0c4d65813f52915b9bb55d89ba98fc0a521186712d0",
+        "13": "ae6c2f166d009f3f2aa01c0991c32b687cb2a536d986c50b481040dcc678fb28",
+        "14": "b96a6cb6185b54aecfe2f81d1295db45f5e5559aa408c042e512c594556ba9b3",
+        "15": "2c721146e7a03d52f833264a5d9effc47df0d8c5bc675606c408b3e160afc4da",
+        "16": "e72cb09a2134f9b2de5d3c7c4e1f0e43b0386f25803fb7babccd5f4227f5538b",
+        "17": "d725f89dcc0e46caec6030292c5f33b28ed113967823945794e50716b2694393",
+        "18": "0fc29ac69e17f7aebb1d5b164ec50b749915c12da84a9051c73031d12d6051d4",
+        "19": "1e1936d57e8758502a0ea004b6febb62888dbb82a4a8c2a643250871ffe00e0f",
+        "20": "cd6d7f78bf36966a8bbfb6682382336259e8233faab4aaaab5dec0455645d092",
+        "21": "5ea7daea5bf0747dec2feebb1a588ffdc880be157cc130123a967400531a62de",
+        "22": "191086793d65209a00f3f7a040efe51231cc7796334cae21a31b06ebd65c04ed",
+        "23": "7481b621ef9c8fb6a8d0de723f89507c1358ebe920a7bd6f2136f0ebf37d407c",
+        "24": "c40b1056b51af43ab8d8da153f0993e609121a04285cc1e2cd21ed0ece54c0d9",
+        "25": "9c639a5f2a3c8a902cfd773e2c1ff0413df15d6fa951339ae5b234533383c82b",
+        "26": "d574b1a1637c4331e4b0e352009e37869efd7afda9627986ca366273e5d6d39b",
+        "27": "7bdc2fd5bed00aa9460cd4eb50c83274726f0c3584b6a6bb4def18f6d1951fd7",
+        "28": "21cb460cf876a9fde86ad2164f61c858b100727c24e67d158e9db0f920c54223",
+        "29": "e6d9a55be803d7fe3fb9ec954ad7c0e78acde6e080173dfc8a1c4eb39e23c0bc"
+      },
+      "pre_effect_ids_by_cue_ref": {
+        "1": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "2": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "3": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "4": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "5": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "6": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "7": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "8": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "9": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "10": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "11": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "12": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "13": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "14": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "15": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "16": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "17": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "18": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "19": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "20": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "21": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "22": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "23": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "24": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "25": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "26": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "27": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "28": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        },
+        "29": {
+          "101.1": [],
+          "102.1": [],
+          "103.1": [],
+          "104.1": [],
+          "105.1": [],
+          "106.1": [],
+          "107.1": [],
+          "108.1": []
+        }
+      },
+      "must_remain_unchanged": [
+        "Cue labels",
+        "Fade/Delay",
+        "Color",
+        "unrelated Dimmer static values",
+        "unrelated Presets",
+        "unrelated Effects",
+        "Sequence identity",
+        "Executor assignment"
+      ]
+    },
+    "approval": "BLOCKED_UNTIL_FRESH_NATIVE_SEQUENCE_GROUP_EFFECT_AND_GEOMETRY_EVIDENCE",
+    "ma2_writes": 0,
+    "command_count": 484,
+    "command_plan_sha256": "bc343d50eda0f1b5561e0cbfcbbef6c61a40e01f7f2df4ec3aef755be71d52e0",
+    "preview_id": "e0a02092184325e8"
+  },
+  "ma2_writes": 0
+}

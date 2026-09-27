@@ -126,6 +126,9 @@ class SkillRegistry:
                     elif manifest.id == "position.existing_cue_merge":
                         from .position_existing_cue_merge import ExistingPositionMergeSkill
                         self._implementations[manifest.id] = ExistingPositionMergeSkill(manifest)
+                    elif manifest.id == "existing_cue.dynamic_program_merge":
+                        from .existing_cue_dynamic_program_merge import ExistingCueDynamicProgramMergeSkill
+                        self._implementations[manifest.id] = ExistingCueDynamicProgramMergeSkill(manifest)
                     elif manifest.id == "timecode.offset":
                         from .timecode_offset import TimecodeOffsetSkill
                         self._implementations[manifest.id] = TimecodeOffsetSkill(manifest)

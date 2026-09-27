@@ -5,12 +5,12 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "CURRENT_SHOW_SPATIAL_EVIDENCE now has live Stage View visual evidence through a zero-MA-authority path. The remote GUI investigation proved that grandMA2 exposes native Screen 2-6 top-level windows; Screen 6 contains Stage View and is captured directly with PRINTWINDOW_RENDERFULLCONTENT. The bounded service returns stage_view_visible=true, write_authority=NONE and ma2_show_writes=0. Sequence 302 remains retained and unchanged, Action 97d3a82f1220 must not be replayed, and Fixture 9999 remains untouched. Next work may consume this screenshot only as visual observation; it does not establish exact physical geometry or authorize spatial writeback."
+    "active_objective": "EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001 is implemented offline: deterministic per-Cue Effect plus Position merges target only verified existing Agent-owned Sequence/Cues, preserve protected content by fingerprint, require fresh Sequence/Group/Effect/geometry/calibration evidence, reject Fixture 9999 and stale evidence, and perform zero MA2 writes. The offline 29-Cue contract Preview is non-approvable fixture evidence; the next gate is generation of a fresh native-evidence Preview inside the already authenticated Field Core."
   },
   "last_closed_task": {
-    "id": "MA2_REMOTE_GUI_NAVIGATION_001",
-    "status": "CLOSED_SUCCESS_LIVE_STAGE_VIEW_EVIDENCE_ZERO_SHOW_WRITES",
-    "result": "Enumerated native grandMA2 HWNDs, added exact-title background PrintWindow capture for Screen 2-6, implemented an opt-in fail-closed Screen 2/3/4 navigation fallback and OpenClaw tool contract zen.ma.stage.visual, and live-verified Screen 6 as Stage View with capture SHA256 fdb237dd3950a71306276dbed49d248c8a9d32c97b0b65b5e0ec1aad715b8e71. Vision reported capture_readable=true and stage_view_visible=true with write_authority=NONE and ma2_show_writes=0. No MA command, approval, Action replay, Sequence 302 rewrite, playback trigger, Fixture 9999 change or Show write occurred. The authoritative Windows unittest suite passed 904 tests."
+    "id": "EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001",
+    "status": "OFFLINE_IMPLEMENTATION_COMPLETE_LIVE_PREVIEW_BLOCKED_FRESH_EVIDENCE_MA2_WRITES_ZERO",
+    "result": "Added existing_cue.dynamic_program_merge with verified At Effect grammar, explicit bounded PAN/TILT, per-Cue protected-content fingerprints, unrelated Effect preservation/replacement gates, native post-write verifier, 13 direct regressions and a 29-Cue non-approvable offline Preview artifact. Full Windows suite passed 917 tests. Action 8a5d699c36fa remained rejected; Actions were not approved or executed."
   },
   "next_acceptance_gate": {
     "id": "CURRENT_SHOW_SPATIAL_EVIDENCE",
@@ -475,6 +475,28 @@
         "WINDOWS_FULL_SUITE_904_TESTS_PASS"
       ],
       "limitations": "The Stage View image is visual evidence only and remains UNBOUND_VISUAL_OBSERVATION until separately bound to current Show/fingerprint evidence. It does not prove patch/address, fixture capability, exact physical geometry, XYZ sign mapping, performer zones, preset applicability or artistic correctness. The pointer fallback supports only the calibrated current onPC main-window geometry and fails closed when foreground activation or HWND ownership cannot be verified."
+    },
+    {
+      "id": "EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001",
+      "source": "EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001.md + zen_ma2_agent/existing_cue_dynamic_program_merge.py + tests/test_existing_cue_dynamic_program_merge.py",
+      "status": "OFFLINE_IMPLEMENTATION_COMPLETE_LIVE_PREVIEW_BLOCKED_FRESH_EVIDENCE",
+      "outcomes": [
+        "EXISTING_SEQUENCE_CUE_EFFECT_PLUS_POSITION_COMPOSITE_COMPILER_IMPLEMENTED",
+        "NO_SEQUENCE_ALLOCATION_OR_REPLACEMENT_PATH",
+        "VERIFIED_AT_EFFECT_GRAMMAR_ONLY",
+        "PER_CUE_EFFECT_VARIATION_SUPPORTED",
+        "PER_CUE_POSITION_PATTERN_AND_RANGE_PREVIEWED",
+        "OPERATOR_STAGE_VIEW_AMPLITUDE_SCALE_BOUNDED_BY_FIXTURE_LIMITS",
+        "PROTECTED_CONTENT_FINGERPRINTED_PER_CUE",
+        "UNRELATED_EFFECT_REPLACEMENT_REQUIRES_EXPLICIT_PLAN",
+        "FIXTURE_9999_REJECTED",
+        "STALE_SEQUENCE_EFFECT_GROUP_EVIDENCE_REJECTED",
+        "NATIVE_POSTWRITE_EFFECT_POSITION_AND_PRESERVATION_VERIFIER_IMPLEMENTED",
+        "OFFLINE_29_CUE_PREVIEW_ARTIFACT_NOT_APPROVABLE",
+        "WINDOWS_FULL_SUITE_917_TESTS_PASS",
+        "MA2_WRITES_ZERO"
+      ],
+      "limitations": "No real Action was registered because a separate read-only MA2 connection authenticated as guest and could not recover the verified Position binding. Fresh native Sequence 302, Group, Effect, geometry/capability and calibration evidence must be collected inside the already authenticated Field Core before an approvable Preview exists. The offline artifact uses deterministic regression-fixture labels/hashes and cannot be approved."
     }
   ],
   "backlog": [
