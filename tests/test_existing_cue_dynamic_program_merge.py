@@ -270,6 +270,33 @@ class ExistingCueDynamicProgramMergeCoreTests(unittest.TestCase):
         self.assertEqual(set(result), {"4.101"})
 
 
+class ExistingCueDynamicApprovalSignatureTests(unittest.TestCase):
+    def test_raw_export_sha_drift_does_not_invalidate_semantically_identical_preview(self):
+        approved = build_dynamic()
+        current = copy.deepcopy(approved)
+        approved["target_sequence"]["pre_export_sha256"] = "a" * 64
+        current["target_sequence"]["pre_export_sha256"] = "b" * 64
+        self.assertEqual(
+            AgentCore._dynamic_merge_semantic_signature(approved),
+            AgentCore._dynamic_merge_semantic_signature(current),
+        )
+
+    def test_stable_sequence_or_protected_content_drift_still_invalidates_preview(self):
+        approved = build_dynamic()
+        for mutate in (
+            lambda p: p["target_sequence"].__setitem__("pre_non_position_sha256", "0" * 64),
+            lambda p: p.__setitem__("pre_protected_content_sha256", "1" * 64),
+            lambda p: p["target_sequence"]["cue_metadata"][0].__setitem__("name", "DRIFTED"),
+            lambda p: p["target_sequence"]["executor_assignments"][0].__setitem__("location", "2.9"),
+        ):
+            current = copy.deepcopy(approved)
+            mutate(current)
+            self.assertNotEqual(
+                AgentCore._dynamic_merge_semantic_signature(approved),
+                AgentCore._dynamic_merge_semantic_signature(current),
+            )
+
+
 class ExistingCueDynamicIdentityNormalizationTests(unittest.TestCase):
     def test_show_identity_is_compared_after_artistic_evidence_normalization(self):
         core = object.__new__(AgentCore)

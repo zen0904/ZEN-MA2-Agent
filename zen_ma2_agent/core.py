@@ -1069,9 +1069,24 @@ class AgentCore:
     @staticmethod
     def _dynamic_merge_semantic_signature(preview: Mapping[str, Any]) -> dict[str, Any]:
         position = preview.get("position_preview")
+        target = preview.get("target_sequence") or {}
+        # Do not compare target_sequence.pre_export_sha256 here. MA2 exports may
+        # change XML-level metadata between read-only exports while parsed Cue
+        # semantics stay byte-for-byte equivalent. Stable Cue/protected-content
+        # hashes, metadata, Executor ownership, Group identity and the complete
+        # deterministic command plan remain approval-time authority.
+        stable_target = {
+            "id": target.get("id"),
+            "label": target.get("label"),
+            "cue_start": target.get("cue_start"),
+            "cue_end": target.get("cue_end"),
+            "pre_non_position_sha256": target.get("pre_non_position_sha256"),
+            "cue_metadata": target.get("cue_metadata"),
+            "executor_assignments": target.get("executor_assignments"),
+        }
         return {
             "show_identity": preview.get("show_identity"),
-            "target_sequence": preview.get("target_sequence"),
+            "target_sequence": stable_target,
             "group": preview.get("group"),
             "position": AgentCore._position_merge_semantic_signature(dict(position)) if isinstance(position, Mapping) else None,
             "cue_updates": preview.get("cue_updates"),
