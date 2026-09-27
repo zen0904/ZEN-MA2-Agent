@@ -60,6 +60,7 @@ def build_provider_resource_contract(
     resource_map: Mapping[str, Any],
     *,
     allowed_executable_operations: set[str] | frozenset[str] | None = None,
+    group_ids: set[int] | frozenset[int] | None = None,
 ) -> dict[str, Any]:
     """Compact contract containing only resources executable in the caller route.
 
@@ -70,6 +71,9 @@ def build_provider_resource_contract(
     compact artistic resource map / capability summary.
     """
     groups = model_resource_contract(resource_map)
+    if group_ids is not None:
+        wanted_groups = {int(value) for value in group_ids if isinstance(value, int) and not isinstance(value, bool)}
+        groups = [group for group in groups if group.get("group_id") in wanted_groups]
     allowed = None if allowed_executable_operations is None else {str(value).upper() for value in allowed_executable_operations}
     if allowed is not None:
         for group in groups:

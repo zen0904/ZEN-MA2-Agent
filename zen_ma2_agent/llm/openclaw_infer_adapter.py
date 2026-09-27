@@ -14,6 +14,8 @@ from .lean_design_adapter import _SYSTEM_PROMPT
 
 DEFAULT_OPENCLAW_AGENT = "main"
 DEFAULT_OPENCLAW_TIMEOUT_SECONDS = 90.0
+DEFAULT_OPENCLAW_REASONING = "low"
+_ALLOWED_REASONING = frozenset({"off", "low", "medium", "high", "xhigh", "max", "adaptive"})
 DISABLED_VALUES = frozenset({"0", "false", "no", "off"})
 _HELPER_NAME = "openclaw_sdk_infer.mjs"
 
@@ -25,6 +27,7 @@ class OpenClawInferConfig:
     openclaw_config_path: str
     agent: str = DEFAULT_OPENCLAW_AGENT
     timeout_seconds: float = DEFAULT_OPENCLAW_TIMEOUT_SECONDS
+    reasoning: str = DEFAULT_OPENCLAW_REASONING
 
     def __post_init__(self) -> None:
         if not str(self.node_executable).strip():
@@ -37,6 +40,8 @@ class OpenClawInferConfig:
             raise ValueError("OpenClaw agent must be non-empty.")
         if not 1.0 <= float(self.timeout_seconds) <= 300.0:
             raise ValueError("OpenClaw inference timeout must be from 1 to 300 seconds.")
+        if str(self.reasoning).strip().lower() not in _ALLOWED_REASONING:
+            raise ValueError("OpenClaw inference reasoning level is invalid.")
 
 
 Runner = Callable[..., subprocess.CompletedProcess[str]]
@@ -107,6 +112,7 @@ class OpenClawInferLeanDesignIntelligence:
         envelope = {
             "system_prompt": _SYSTEM_PROMPT,
             "user_prompt": f"INPUT_JSON:\n{user_payload}",
+            "reasoning": self.config.reasoning,
         }
 
         helper = self.helper_path
@@ -182,6 +188,8 @@ class OpenClawInferLeanDesignIntelligence:
 
         self.last_diagnostics = {
             "source": "openclaw_sdk_isolated_completion",
+            "reasoning": self.config.reasoning,
+            "input_bytes": len(user_payload.encode("utf-8")),
             "agent": self.config.agent,
             "provider": str(payload.get("provider") or ""),
             "model": str(payload.get("model") or ""),
@@ -198,6 +206,7 @@ class OpenClawInferLeanDesignIntelligence:
             "source": "openclaw_sdk_isolated_completion",
             "agent": self.config.agent,
             "transport": "sdk-local",
+            "reasoning": self.config.reasoning,
             "one_shot": True,
             "tools_available_to_model": False,
             "credential_owner": "openclaw",
@@ -298,6 +307,9 @@ def load_openclaw_infer_design_intelligence() -> OpenClawInferLeanDesignIntellig
         "ZEN_OPENCLAW_INFER_TIMEOUT_SECONDS",
         str(DEFAULT_OPENCLAW_TIMEOUT_SECONDS),
     ).strip()
+    reasoning = os.environ.get(
+        "ZEN_OPENCLAW_INFER_REASONING", DEFAULT_OPENCLAW_REASONING
+    ).strip().lower()
     try:
         timeout = float(raw_timeout)
     except ValueError as exc:
@@ -310,6 +322,7 @@ def load_openclaw_infer_design_intelligence() -> OpenClawInferLeanDesignIntellig
             openclaw_config_path=str(config_path),
             agent=agent,
             timeout_seconds=timeout,
+            reasoning=reasoning,
         )
     )
 

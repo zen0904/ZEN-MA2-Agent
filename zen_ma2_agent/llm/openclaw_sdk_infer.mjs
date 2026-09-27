@@ -59,6 +59,8 @@ try {
       tools: [],
     },
     options: {
+      reasoning:
+        typeof request.reasoning === "string" ? request.reasoning : "low",
       maxTokens:
         typeof prepared.model?.maxTokens === "number" &&
         Number.isFinite(prepared.model.maxTokens)

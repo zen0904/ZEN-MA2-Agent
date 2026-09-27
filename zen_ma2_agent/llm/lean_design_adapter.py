@@ -46,9 +46,11 @@ color_preset, position_preset, focus_preset, beam_preset, gobo_preset, or effect
 Use only resources explicitly exposed in verified_resource_contract.
 If context contains `existing_cue_dynamic_merge_contract`, preserve its exact Cue count/order,
 use the supplied existing Cue labels, emit an explicit position_pattern for every Cue, and use
-only the executable action families allowed by that contract. For each Cue, explicitly classify
-fresh verified capability families as USE, AVOID, or OPTIONAL in capability_intent, with a concise
-artistic reason; do not turn Prism, Gobo, Strobe, or any other family into a hard requirement.
+only the executable action families allowed by that contract. Keep capability_intent sparse:
+include only capability families for which you are making an explicit USE, AVOID, or OPTIONAL
+artistic decision on that Cue, with a concise reason. Omitted fresh verified capability families
+mean NOT_SELECTED for that Cue and ZEN will record that deterministically in Preview; omission does
+not authorize execution. Do not turn Prism, Gobo, Strobe, or any other family into a hard requirement.
 Do not create or request new
 Sequences, Effects, Presets, Groups, or Executor assignments. Effect-state variation may be one
 verified Effect on some Cues and NO_NEW_EFFECT_CALL on others; it does not require inventing a

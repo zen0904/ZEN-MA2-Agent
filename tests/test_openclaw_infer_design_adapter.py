@@ -88,6 +88,8 @@ class OpenClawInferDesignAdapterTests(unittest.TestCase):
             runner.input_payload["user_prompt"],
         )
         self.assertIn('"group_id":1', runner.input_payload["user_prompt"])
+        self.assertEqual(runner.input_payload["reasoning"], "low")
+        self.assertIn("Keep capability_intent sparse", runner.input_payload["system_prompt"])
         self.assertFalse(runner.input_path.exists())
         self.assertNotIn("make this song dramatic", " ".join(runner.command))
         self.assertEqual(provider.last_diagnostics["provider"], "openai")
@@ -189,6 +191,8 @@ class OpenClawInferDesignAdapterTests(unittest.TestCase):
         self.assertEqual(provider.config.openclaw_config_path, str(config_path))
         self.assertEqual(provider.config.agent, "main")
         self.assertEqual(provider.config.timeout_seconds, 75.0)
+        self.assertEqual(provider.config.reasoning, "low")
+        self.assertEqual(provider.safe_summary()["reasoning"], "low")
         self.assertFalse(provider.safe_summary()["tools_available_to_model"])
 
 

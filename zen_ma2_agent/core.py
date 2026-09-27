@@ -940,19 +940,35 @@ class AgentCore:
         spatial_context = self._current_dynamic_spatial_context(
             position_profile, position_preview
         )
+        target_group_id = int(spec["group_id"])
+        scoped_resource_map = deepcopy(resource_map)
+        scoped_resource_map["groups"] = [
+            deepcopy(row)
+            for row in resource_map.get("groups", [])
+            if isinstance(row, Mapping) and row.get("group_id") == target_group_id
+        ]
         compact = assemble_compact_design_context(
             song_context={"song": request, "brief": request},
             spatial_context=spatial_context,
-            groups=profile.get("groups", []),
-            presets=profile.get("presets", []),
-            effects=profile.get("effects", []),
+            groups=[
+                row for row in profile.get("groups", [])
+                if isinstance(row, Mapping)
+                and row.get("group_id", row.get("number")) == target_group_id
+            ],
+            # The exact executable resource identities are already projected in
+            # verified_resource_contract. Do not duplicate the global pools into
+            # this one-Group existing-Cue route.
+            presets=[],
+            effects=[],
             capability_profiles=profile.get("fixture_type_profiles", []),
-            artistic_resource_map=resource_map,
+            artistic_resource_map=scoped_resource_map,
         )
         design_context = dict(compact["context"])
         dynamic_operations = frozenset({"CALL_PRESET", "CALL_EFFECT"})
         design_context["verified_resource_contract"] = build_provider_resource_contract(
-            resource_map, allowed_executable_operations=dynamic_operations
+            resource_map,
+            allowed_executable_operations=dynamic_operations,
+            group_ids={target_group_id},
         )
         design_context["existing_cue_dynamic_merge_contract"] = {
             "sequence": spec["sequence_no"],

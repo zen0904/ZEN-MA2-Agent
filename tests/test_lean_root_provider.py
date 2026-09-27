@@ -1,3 +1,4 @@
+from copy import deepcopy
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -336,6 +337,19 @@ class LeanRootProviderTests(unittest.TestCase):
         self.assertEqual(group["dimensions"]["EFFECT"]["route_execution_status"], "EXECUTABLE")
         self.assertEqual(group["dimensions"]["PRISM"]["resource_execution_status"], "NO_VERIFIED_RESOURCE")
         self.assertEqual(group["dimensions"]["PRISM"]["route_execution_status"], "INTENT_ONLY")
+
+    def test_provider_resource_contract_can_be_scoped_to_exact_target_group(self):
+        mapped = resource_map()
+        second = deepcopy(mapped["groups"][0])
+        second["group_id"] = 2
+        second["name"] = "OTHER"
+        mapped["groups"].append(second)
+        contract = build_provider_resource_contract(
+            mapped,
+            allowed_executable_operations=frozenset({"CALL_PRESET", "CALL_EFFECT"}),
+            group_ids={1},
+        )
+        self.assertEqual([row["group_id"] for row in contract["group_resources"]], [1])
 
     def test_route_scoped_compiler_rejects_otherwise_verified_but_disallowed_action(self):
         mapped = resource_map()
