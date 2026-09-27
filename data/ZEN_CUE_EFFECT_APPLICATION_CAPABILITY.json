@@ -1,0 +1,29 @@
+{
+  "schema": "zen.cue_effect_application.v0.2",
+  "status": "REAL_MACHINE_CONTENT_VERIFIED",
+  "grammar": "AT_EFFECT_POOL_CALL",
+  "ma2_version_family": "grandMA2_3.9",
+  "verified_at": null,
+  "provenance": {
+    "state": "RECOVERED_FROM_DURABLE_REAL_MACHINE_REPORT",
+    "source": "ZEN_CUE_EFFECT_APPLICATION_AT_EFFECT_001.md",
+    "project_evidence_id": "CUE_EFFECT_AT_EFFECT_REAL_MACHINE_001",
+    "recovery_does_not_assert_current_effect_object_identity": true
+  },
+  "evidence": {
+    "effect_id": 2,
+    "effect_label": "ZEN_FX_DIM_CHASE_SLOW_GROUP1",
+    "target_group": 1,
+    "sequence": 6,
+    "cue": 1,
+    "sequence_export_sha256": "2801690a2c512bd0fc5ba1930aef4cc2538090357e6b086519619beecaab4cbd"
+  },
+  "verification": {
+    "effect_reference": "VERIFIED",
+    "target": "VERIFIED",
+    "sequence": "VERIFIED",
+    "cue": "VERIFIED",
+    "application": "REAL_MACHINE_CONTENT_VERIFIED",
+    "cue_content_readback": "VERIFIED"
+  }
+}

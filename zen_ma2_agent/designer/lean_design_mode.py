@@ -25,7 +25,7 @@ MULTI_AGENT_DEFAULT = False
 
 _MAX_TEXT = 4000
 _MAX_LIST = 128
-_CUE_KEYS = ("id", "cue_number", "label", "fade", "actions", "intent")
+_CUE_KEYS = ("id", "cue_number", "label", "fade", "actions", "position_pattern", "position_scale", "capability_intent", "intent")
 _GROUP_KEYS = ("group_id", "name")
 _PRESET_KEYS = ("reference", "preset_type", "name")
 _EFFECT_KEYS = ("effect_id", "name")
@@ -353,6 +353,9 @@ def build_delta_revision_context(
     preset_refs: set[str] = set()
     effect_refs: set[int] = set()
     for cue in compact_plan["cues"]:
+        for capability in cue.get("capability_intent", []) if isinstance(cue.get("capability_intent"), list) else []:
+            if isinstance(capability, Mapping) and isinstance(capability.get("group"), int):
+                group_refs.add(capability["group"])
         for action in cue.get("actions", []) if isinstance(cue.get("actions"), list) else []:
             if not isinstance(action, Mapping):
                 continue

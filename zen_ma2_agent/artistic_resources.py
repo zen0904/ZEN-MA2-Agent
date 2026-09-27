@@ -15,44 +15,21 @@ from typing import Any, Iterable, Mapping, Sequence
 
 from .cue_effect_application import cue_effect_capability_is_content_verified
 from .position_application_evidence import position_binding_matches_profile
+from .artistic_capabilities import (
+    ARTISTIC_DIMENSIONS,
+    PRESET_BACKED_DIMENSIONS,
+    TECHNICAL_CAPABILITY_KEYS,
+)
 
 ARTISTIC_RESOURCE_MAP_SCHEMA = "zen.artistic_resource_map.v0.1"
 SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL = "SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL"
 SHOW_BOUND_VERIFIED_FIXTURE_TYPE_CAPABILITY = "SHOW_BOUND_VERIFIED_FIXTURE_TYPE_CAPABILITY"
 
-ARTISTIC_DIMENSIONS = (
-    "DIMMER",
-    "COLOR",
-    "POSITION",
-    "FOCUS",
-    "BEAM",
-    "GOBO",
-    "PRISM",
-    "ZOOM",
-    "FROST",
-    "EFFECT",
-    "MOVEMENT",
-    "STROBE",
-)
-
-_PRESET_DIMENSIONS = {"COLOR", "POSITION", "FOCUS", "BEAM", "GOBO"}
+_PRESET_DIMENSIONS = set(PRESET_BACKED_DIMENSIONS)
 _STRICT_EFFECT_TEMPLATES = {
     "FX_DIM_CHASE_SLOW": ("DIMMER_CHASE", "SLOW"),
     "FX_DIM_CHASE_MED": ("DIMMER_CHASE", "MED"),
     "FX_DIM_CHASE_FAST": ("DIMMER_CHASE", "FAST"),
-}
-
-_CAPABILITY_KEYS = {
-    "DIMMER": "DIMMER",
-    "COLOR": "COLOR",
-    "POSITION": "POSITION",
-    "FOCUS": "FOCUS",
-    "BEAM": "BEAM",
-    "GOBO": "GOBO",
-    "PRISM": "PRISM",
-    "ZOOM": "ZOOM",
-    "FROST": "FROST",
-    "STROBE": "SHUTTER_STROBE",
 }
 
 
@@ -94,15 +71,12 @@ def _technical_dimension_status(
     fixture_type_labels: Sequence[str],
     profiles: Mapping[str, Mapping[str, Any]],
 ) -> dict[str, Any]:
-    capability_key = _CAPABILITY_KEYS.get(dimension)
+    capability_key = TECHNICAL_CAPABILITY_KEYS.get(dimension)
     if capability_key is None:
-        if dimension == "MOVEMENT":
-            capability_key = "POSITION"
-        else:
-            return {
-                "status": "UNKNOWN",
-                "reason": "No verified technical capability classifier exists for this artistic dimension.",
-            }
+        return {
+            "status": "UNKNOWN",
+            "reason": "No verified technical capability classifier exists for this artistic dimension.",
+        }
     if not fixture_type_labels:
         return {"status": "UNKNOWN", "reason": "Group has no verified fixture membership."}
 
@@ -595,6 +569,35 @@ def effect_applicability_from_map(resource_map: Mapping[str, Any]) -> dict[int, 
         result[group["group_id"]] = ids
     return result
 
+
+
+def capability_status_from_map(resource_map: Mapping[str, Any]) -> dict[int, dict[str, dict[str, str]]]:
+    """Return the exact per-Group capability boundary used by artistic compilation.
+
+    Technical capability and executable resource status remain separate on
+    purpose. SHOW_BOUND_VERIFIED technical evidence does not authorize a raw MA
+    Attribute write.
+    """
+    result: dict[int, dict[str, dict[str, str]]] = {}
+    groups = resource_map.get("groups")
+    for group in groups if isinstance(groups, list) else []:
+        if not isinstance(group, Mapping):
+            continue
+        group_id = group.get("group_id")
+        if isinstance(group_id, bool) or not isinstance(group_id, int) or group_id < 1:
+            continue
+        dimensions = group.get("dimensions")
+        rows: dict[str, dict[str, str]] = {}
+        for dimension, evidence in dimensions.items() if isinstance(dimensions, Mapping) else []:
+            if not isinstance(evidence, Mapping):
+                continue
+            technical = evidence.get("technical_capability")
+            rows[str(dimension).upper()] = {
+                "technical_status": str((technical or {}).get("status") or "UNKNOWN") if isinstance(technical, Mapping) else "UNKNOWN",
+                "execution_status": str(evidence.get("execution_status") or "NO_VERIFIED_RESOURCE"),
+            }
+        result[group_id] = rows
+    return result
 
 def model_resource_contract(resource_map: Mapping[str, Any]) -> list[dict[str, Any]]:
     """Return only Group-bound executable resources for the designer prompt."""

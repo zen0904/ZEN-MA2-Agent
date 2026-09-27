@@ -4,6 +4,8 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
+from ..artistic_capabilities import ARTISTIC_DIMENSIONS, CAPABILITY_INTENT_USES
+
 
 SHOW_PLAN_SCHEMA = "zen.show_plan.v0.1"
 _FORBIDDEN_KEYS = {"command", "commands", "telnet", "ma_command", "raw_command", "lua"}
@@ -44,6 +46,35 @@ def validate_show_plan(plan: dict[str, Any]) -> dict[str, Any]:
                 raise ShowPlanSchemaError(f"Cue {index} requires a non-negative fade.")
             if not isinstance(cue["actions"], list):
                 raise ShowPlanSchemaError(f"Cue {index} actions must be a list.")
+            pattern = cue.get("position_pattern")
+            if pattern is not None and pattern not in {
+                "CENTER", "LEFT", "RIGHT", "FRONT", "UPSTAGE", "NARROW_FAN",
+                "WIDE_FAN", "CROSS", "ALTERNATE", "EXPLODE", "COLLAPSE",
+            }:
+                raise ShowPlanSchemaError(f"Cue {index} has invalid position_pattern.")
+            scale = cue.get("position_scale")
+            if scale is not None and (
+                isinstance(scale, bool) or not isinstance(scale, (int, float)) or not 0.5 <= float(scale) <= 2.5
+            ):
+                raise ShowPlanSchemaError(f"Cue {index} has invalid position_scale.")
+            capability_intent = cue.get("capability_intent", [])
+            if not isinstance(capability_intent, list):
+                raise ShowPlanSchemaError(f"Cue {index} capability_intent must be a list.")
+            for item in capability_intent:
+                if not isinstance(item, dict):
+                    raise ShowPlanSchemaError(f"Cue {index} contains invalid capability intent.")
+                group = item.get("group")
+                dimension = str(item.get("dimension") or "").upper()
+                use = str(item.get("use") or "").upper()
+                reason = item.get("reason")
+                if isinstance(group, bool) or not isinstance(group, int) or group < 1:
+                    raise ShowPlanSchemaError(f"Cue {index} capability intent has invalid Group.")
+                if dimension not in ARTISTIC_DIMENSIONS:
+                    raise ShowPlanSchemaError(f"Cue {index} capability intent has invalid dimension.")
+                if use not in CAPABILITY_INTENT_USES:
+                    raise ShowPlanSchemaError(f"Cue {index} capability intent has invalid use mode.")
+                if reason is not None and (not isinstance(reason, str) or len(reason) > 512):
+                    raise ShowPlanSchemaError(f"Cue {index} capability intent reason is invalid.")
             for action in cue["actions"]:
                 if not isinstance(action, dict) or action.get("operation") not in _OPERATIONS or not isinstance(action.get("target"), dict):
                     raise ShowPlanSchemaError(f"Cue {index} contains an invalid typed action.")

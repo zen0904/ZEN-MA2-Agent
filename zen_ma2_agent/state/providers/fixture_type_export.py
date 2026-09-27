@@ -283,11 +283,31 @@ def fixture_type_capability_inventory(channels: list[dict[str, Any]]) -> dict[st
         "PAN": state(pan),
         "TILT": state(tilt),
         "POSITION": state(pan and tilt),
+        "BEAM": state(
+            "BEAM" in tokens["presets"]
+            or "BEAM" in tokens["features"]
+            or contains("PRISM")
+            or any_token("FROST", "IRIS", "SHUTTER")
+            or contains("STROBE")
+        ),
         "GOBO": state(contains("GOBO") or "GOBO" in tokens["presets"]),
+        "GOBO_ROTATION": state(
+            any(
+                "GOBO" in token and ("ROT" in token or "INDEX" in token)
+                for where in tokens for token in tokens[where]
+            )
+        ),
         "PRISM": state(contains("PRISM")),
-        "ZOOM": state(any_token("ZOOM")),
-        "FOCUS": state(any_token("FOCUS")),
-        "FROST": state(any_token("FROST")),
+        "PRISM_ROTATION": state(
+            any(
+                "PRISM" in token and ("ROT" in token or "_POS" in token or "INDEX" in token)
+                for where in tokens for token in tokens[where]
+            )
+        ),
+        "ZOOM": state(any_token("ZOOM") or contains("ZOOM")),
+        "FOCUS": state(any_token("FOCUS") or contains("FOCUS")),
+        "FROST": state(any_token("FROST") or contains("FROST")),
+        "IRIS": state(any_token("IRIS") or contains("IRIS")),
         "SHUTTER_STROBE": state(any_token("SHUTTER", "STROBEMODE", "STROBEDURATION") or contains("STROBE")),
         # A generic ChannelType inventory has no safe universal definition of
         # pixel topology or shape behavior.  Keep that distinction explicit.

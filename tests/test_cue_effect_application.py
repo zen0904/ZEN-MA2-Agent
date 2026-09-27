@@ -81,6 +81,22 @@ class CueEffectApplicationTests(unittest.TestCase):
             self.assertEqual(recorded["verification"]["cue_content_readback"], "PARTIAL")
             self.assertIsNone(capability.load_verified())
 
+    def test_repository_retains_durable_real_machine_effect_application_capability(self):
+        root = Path(__file__).resolve().parents[1]
+        verified = CueEffectApplicationCapability(root).load_verified()
+        self.assertIsNotNone(verified)
+        self.assertEqual(verified["grammar"], "AT_EFFECT_POOL_CALL")
+        self.assertEqual(verified["verification"]["cue_content_readback"], "VERIFIED")
+        self.assertEqual(
+            verified["evidence"]["sequence_export_sha256"],
+            "2801690a2c512bd0fc5ba1930aef4cc2538090357e6b086519619beecaab4cbd",
+        )
+        self.assertTrue(
+            verified.get("provenance", {}).get(
+                "recovery_does_not_assert_current_effect_object_identity"
+            )
+        )
+
     def test_content_verified_record_enables_capability(self):
         with tempfile.TemporaryDirectory() as directory:
             capability = CueEffectApplicationCapability(Path(directory))

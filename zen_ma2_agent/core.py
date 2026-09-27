@@ -3,10 +3,11 @@ from __future__ import annotations
 import json
 import re
 import uuid
+from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from time import monotonic
-from typing import Any
+from typing import Any, Mapping
 
 from .events import EventBus
 from .config import save_preferences
@@ -58,6 +59,12 @@ from .position_existing_cue_merge import (
     ExistingPositionMergeError,
     build_existing_position_merge_preview,
     verify_existing_position_merge,
+)
+from .existing_cue_dynamic_program_merge import (
+    ExistingCueDynamicProgramMergeError,
+    build_existing_cue_dynamic_program_preview,
+    protected_content_snapshot,
+    verify_existing_cue_dynamic_program_merge,
 )
 from .designer.report import write_real_song_design_report
 from .builder import FirstSongBuildError, ShowPlanBuilder
@@ -449,6 +456,38 @@ class AgentCore:
         return profile
 
     @staticmethod
+    def _parse_existing_dynamic_merge_request(request: str) -> dict[str, Any] | None:
+        """Recognize an explicit existing-Sequence dynamic Position/Effect request."""
+        text = request.strip()
+        lower = text.lower()
+        has_dynamic = any(token in lower for token in ("dynamic", "effect", "effects")) or any(
+            token in text for token in ("??", "??")
+        )
+        has_existing = "existing" in lower or "??" in text or "??" in text
+        if not has_dynamic or not has_existing or "position" not in lower or "sequence" not in lower:
+            return None
+        sequence_match = re.search(r"\bSequence\s+([1-9]\d*)\b", text, re.I)
+        group_match = re.search(r"\bGroup\s+([1-9]\d*)\b", text, re.I)
+        preset_match = re.search(r"\bPreset\s+(2\.[1-9]\d*)\b", text, re.I)
+        cue_match = re.search(r"\bCues?\s+([1-9]\d*)\s*[-~?]\s*([1-9]\d*)\b", text, re.I)
+        executor_match = re.search(r"\bExecutor\s+([1-9]\d*\.[1-9]\d*)\b", text, re.I)
+        if not sequence_match or not group_match or not preset_match or not cue_match:
+            raise ExistingCueDynamicProgramMergeError(
+                "DYNAMIC_MERGE_REQUEST_REQUIRES_EXISTING_SEQUENCE_GROUP_POSITION_PRESET_AND_CUE_RANGE"
+            )
+        cue_start, cue_end = int(cue_match.group(1)), int(cue_match.group(2))
+        if cue_end < cue_start:
+            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_CUE_RANGE_INVALID")
+        return {
+            "sequence_no": int(sequence_match.group(1)),
+            "group_id": int(group_match.group(1)),
+            "preset_ref": preset_match.group(1),
+            "cue_start": cue_start,
+            "cue_end": cue_end,
+            "expected_executor": executor_match.group(1) if executor_match else None,
+        }
+
+    @staticmethod
     def _parse_existing_position_merge_request(request: str) -> dict[str, Any] | None:
         """Recognize only an explicit existing-Sequence Position-only repair."""
         text = request.strip()
@@ -624,6 +663,288 @@ class AgentCore:
             self.state,
             self.runtime.preferences,
         )
+
+    @staticmethod
+    def _verified_dynamic_effects(
+        resource_map: Mapping[str, Any], group_id: int,
+    ) -> dict[int, str]:
+        result: dict[int, str] = {}
+        groups = resource_map.get("groups")
+        for group in groups if isinstance(groups, list) else []:
+            if not isinstance(group, Mapping) or group.get("group_id") != group_id:
+                continue
+            resources = group.get("effect_resources")
+            for effect in resources if isinstance(resources, list) else []:
+                if (
+                    isinstance(effect, Mapping)
+                    and effect.get("application_status") == "REAL_MACHINE_CONTENT_VERIFIED"
+                    and isinstance(effect.get("effect_id"), int)
+                    and str(effect.get("name") or "").strip()
+                ):
+                    result[int(effect["effect_id"])] = str(effect["name"]).strip()
+        return result
+
+    @staticmethod
+    def _current_dynamic_spatial_context(
+        profile: Mapping[str, Any],
+        position_preview: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """Build bounded fresh spatial evidence for the existing-Cue Designer.
+
+        This deliberately does not consume stale cached Stage View calibration
+        artifacts. Structured current-show geometry and the operator-verified
+        PAN/TILT direction semantics are supplied with their limitations intact.
+        """
+        show_identity = position_preview.get("show_identity")
+        fingerprint = (
+            str(show_identity.get("value") or "")
+            if isinstance(show_identity, Mapping)
+            else ""
+        )
+        group = position_preview.get("group")
+        refs = group.get("exact_refs") if isinstance(group, Mapping) else None
+        if not isinstance(refs, list) or not refs:
+            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_SPATIAL_GROUP_EVIDENCE_MISSING")
+        roots = {str(ref).split(".", 1)[0] for ref in refs}
+        geometry_rows: list[dict[str, Any]] = []
+        for fixture in profile.get("fixtures", []) if isinstance(profile.get("fixtures"), list) else []:
+            if not isinstance(fixture, Mapping):
+                continue
+            fixture_id = fixture.get("fixture_id")
+            if str(fixture_id) not in roots:
+                continue
+            if str(fixture_id) == "9999":
+                raise ExistingCueDynamicProgramMergeError("PROTECTED_FIXTURE_9999")
+            geometry_rows.append({
+                "fixture_id": fixture_id,
+                "fixture_type": fixture.get("fixture_type"),
+                "stage_geometry": deepcopy(fixture.get("stage_geometry")),
+            })
+        geometry_rows.sort(key=lambda row: str(row.get("fixture_id")))
+        if not geometry_rows:
+            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_SPATIAL_GEOMETRY_MISSING")
+
+        direction = deepcopy(position_preview.get("direction_semantics") or {})
+        pattern_semantics = deepcopy(position_preview.get("pattern_semantics") or {})
+        return {
+            "show_fingerprint": fingerprint or None,
+            "spatial_bootstrap_mode": "CURRENT_SHOW_STRUCTURED_POSITION_EVIDENCE",
+            "stage_frame": {
+                "authority": "CURRENT_SHOW_STRUCTURED_GEOMETRY_PLUS_OPERATOR_PAN_TILT_REFERENCE",
+                "stage_view_pixels_authority": "SUPPLEMENTAL_ONLY_NOT_STRUCTURED_GEOMETRY_AUTHORITY",
+            },
+            "coordinate_system": direction,
+            "spatial_strategy": (
+                "Use verified relative Position shapes and fresh target-Group geometry; "
+                "do not infer physical target points, XYZ sign mapping, high/low semantics, "
+                "or venue geometry from unavailable/unbound Stage View pixels."
+            ),
+            "position_summary": {
+                "target_group": {
+                    "id": group.get("id") if isinstance(group, Mapping) else None,
+                    "name": group.get("name") if isinstance(group, Mapping) else None,
+                    "exact_refs": deepcopy(refs),
+                },
+                "baseline": deepcopy(position_preview.get("baseline") or {}),
+                "direction_semantics": direction,
+                "pattern_semantics": pattern_semantics,
+                "fixture_limits": deepcopy(position_preview.get("fixture_limits") or {}),
+            },
+            "geometry_summary": geometry_rows,
+        }
+
+    def _plan_existing_dynamic_merge_child(
+        self, request: str, spec: dict[str, Any],
+    ) -> WorkflowPlan:
+        if self.design_intelligence_provider is None:
+            raise ExistingCueDynamicProgramMergeError(
+                "DYNAMIC_MERGE_DESIGN_INTELLIGENCE_UNAVAILABLE"
+            )
+        position_profile, position_preview = self._fresh_existing_position_merge_preview(**spec)
+        profile = self._collect_lean_design_profile()
+        if profile.get("show_identity") != position_profile.get("show_identity"):
+            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_SHOW_IDENTITY_DRIFT")
+        resource_map, effect_application = self._build_current_artistic_resource_map(profile)
+        if not effect_application:
+            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_EFFECT_APPLICATION_UNVERIFIED")
+
+        target = position_preview["target_sequence"]
+        cue_labels = [str(row["cue_label"]) for row in position_preview["cue_updates"]]
+        spatial_context = self._current_dynamic_spatial_context(
+            position_profile, position_preview
+        )
+        compact = assemble_compact_design_context(
+            song_context={"song": request, "brief": request},
+            spatial_context=spatial_context,
+            groups=profile.get("groups", []),
+            presets=profile.get("presets", []),
+            effects=profile.get("effects", []),
+            capability_profiles=profile.get("fixture_type_profiles", []),
+            artistic_resource_map=resource_map,
+        )
+        design_context = dict(compact["context"])
+        design_context["verified_resource_contract"] = build_provider_resource_contract(resource_map)
+        design_context["existing_cue_dynamic_merge_contract"] = {
+            "sequence": spec["sequence_no"],
+            "group": spec["group_id"],
+            "cue_start": spec["cue_start"],
+            "cue_end": spec["cue_end"],
+            "cue_labels": cue_labels,
+            "exact_cue_count": len(cue_labels),
+            "requires_explicit_position_pattern_per_cue": True,
+            "requires_effect_state_variation": True,
+            "allowed_executable_operations": ["CALL_EFFECT"],
+            "resource_creation_allowed": False,
+            "sequence_allocation_allowed": False,
+            "spatial_evidence_authority": {
+                "structured_current_show_geometry": True,
+                "operator_pan_tilt_direction_semantics": True,
+                "stage_view_pixels": "SUPPLEMENTAL_ONLY_NOT_BOUND_AS_PHYSICAL_TRUTH",
+                "physical_targeting_claimed": False,
+                "xyz_sign_mapping_claimed": False,
+                "high_low_claimed": False,
+            },
+        }
+        provider_output = invoke_primary_design(
+            self.design_intelligence_provider, request, design_context
+        )
+        compiled, audit = compile_lean_artistic_intent(
+            provider_output,
+            request=request,
+            resource_map=resource_map,
+            active_sequence_range=(spec["sequence_no"], spec["sequence_no"]),
+            target_executor=spec.get("expected_executor") or "UNASSIGNED_EXISTING",
+            cue_labels=cue_labels,
+        )
+        if self.sequence_export_provider is None:
+            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_SEQUENCE_EXPORT_UNAVAILABLE")
+        pre_discovery = self.sequence_export_provider.export_and_discover(
+            self.runtime,
+            spec["sequence_no"],
+            self.runtime.preferences.get("state_adapter"),
+            retain_export=True,
+        )
+        verified_effects = self._verified_dynamic_effects(resource_map, spec["group_id"])
+        preview = build_existing_cue_dynamic_program_preview(
+            position_preview=position_preview,
+            pre_discovery=pre_discovery,
+            artistic_plan=compiled,
+            verified_effects_by_group={spec["group_id"]: verified_effects},
+            effect_application_capability=effect_application,
+        )
+        self.runtime.log(
+            "existing_cue_dynamic_program_preview",
+            {
+                "preview_id": preview["preview_id"],
+                "sequence": spec["sequence_no"],
+                "cue_start": spec["cue_start"],
+                "cue_end": spec["cue_end"],
+                "group": spec["group_id"],
+                "effect_ids": sorted(verified_effects),
+                "command_count": preview["command_count"],
+                "designer_audit": audit,
+                "context_hash": compact["context_hash"],
+                "ma2_writes": 0,
+            },
+        )
+        return self.skills.plan_intent(
+            Intent(
+                "merge_existing_cue_dynamic_program",
+                {"dynamic_merge_preview": preview},
+                "EXISTING_CUE_DYNAMIC_PROGRAM_MERGE",
+            ),
+            self.state,
+            self.runtime.preferences,
+        )
+
+    @staticmethod
+    def _dynamic_merge_semantic_signature(preview: Mapping[str, Any]) -> dict[str, Any]:
+        position = preview.get("position_preview")
+        return {
+            "show_identity": preview.get("show_identity"),
+            "target_sequence": preview.get("target_sequence"),
+            "group": preview.get("group"),
+            "position": AgentCore._position_merge_semantic_signature(dict(position)) if isinstance(position, Mapping) else None,
+            "cue_updates": preview.get("cue_updates"),
+            "cue_effects": preview.get("cue_effects"),
+            "pre_protected_content_sha256": preview.get("pre_protected_content_sha256"),
+            "write_scope": preview.get("write_scope"),
+            "command_plan_sha256": preview.get("command_plan_sha256"),
+        }
+
+    @staticmethod
+    def _dynamic_plan_from_preview(preview: Mapping[str, Any]) -> dict[str, Any]:
+        cues = []
+        effects = preview.get("cue_effects") or {}
+        group_id = (preview.get("group") or {}).get("id")
+        for update in preview.get("cue_updates", []):
+            number = update.get("cue_number")
+            effect = effects.get(str(number)) if isinstance(effects, Mapping) else None
+            actions = []
+            if isinstance(effect, Mapping):
+                actions.append({
+                    "operation": "CALL_EFFECT",
+                    "target": {"type": "group", "ref": group_id},
+                    "effect_ref": {"id": effect.get("id")},
+                })
+            cues.append({
+                "id": f"cue_{int(number):03d}",
+                "cue_number": number,
+                "label": update.get("cue_label"),
+                "fade": 0,
+                "position_pattern": update.get("position_pattern"),
+                "position_scale": update.get("position_scale", 1.0),
+                "capability_intent": deepcopy(update.get("capability_intent") or []),
+                "actions": actions,
+            })
+        return {"schema": "zen.show_plan.v0.1", "cues": cues}
+
+    def _ensure_existing_dynamic_merge_state_unchanged(
+        self, action: ActionRecord,
+    ) -> dict[str, Any]:
+        _skill, intent = self._effective_execution_context(action)
+        approved = intent.parameters.get("dynamic_merge_preview")
+        if not isinstance(approved, dict):
+            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_APPROVED_PREVIEW_MISSING")
+        target = approved.get("target_sequence") or {}
+        group = approved.get("group") or {}
+        position = approved.get("position_preview") or {}
+        baseline = position.get("baseline") or {}
+        assignments = target.get("executor_assignments") or []
+        expected_executor = (
+            str(assignments[0].get("location"))
+            if len(assignments) == 1 and isinstance(assignments[0], Mapping) and assignments[0].get("location")
+            else None
+        )
+        position_profile, current_position = self._fresh_existing_position_merge_preview(
+            sequence_no=target.get("id"),
+            group_id=group.get("id"),
+            preset_ref=baseline.get("preset_reference"),
+            cue_start=target.get("cue_start"),
+            cue_end=target.get("cue_end"),
+            expected_executor=expected_executor,
+        )
+        profile = self._collect_lean_design_profile()
+        if profile.get("show_identity") != position_profile.get("show_identity"):
+            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_SHOW_IDENTITY_DRIFT")
+        resource_map, effect_application = self._build_current_artistic_resource_map(profile)
+        verified_effects = self._verified_dynamic_effects(resource_map, int(group["id"]))
+        if self.sequence_export_provider is None:
+            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_SEQUENCE_EXPORT_UNAVAILABLE")
+        pre_discovery = self.sequence_export_provider.export_and_discover(
+            self.runtime, int(target["id"]), self.runtime.preferences.get("state_adapter"), retain_export=True
+        )
+        current = build_existing_cue_dynamic_program_preview(
+            position_preview=current_position,
+            pre_discovery=pre_discovery,
+            artistic_plan=self._dynamic_plan_from_preview(approved),
+            verified_effects_by_group={int(group["id"]): verified_effects},
+            effect_application_capability=effect_application,
+        )
+        if self._dynamic_merge_semantic_signature(current) != self._dynamic_merge_semantic_signature(approved):
+            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_STALE_APPROVED_PREVIEW")
+        self.skills.get("existing_cue.dynamic_program_merge")
+        return current
 
     @staticmethod
     def _position_merge_semantic_signature(preview: dict[str, Any]) -> dict[str, Any]:
@@ -1214,26 +1535,26 @@ class AgentCore:
         )
         return evidence
 
-    def _plan_lean_design_child(self, root: WorkflowPlan, request: str) -> WorkflowPlan:
-        """Run one injected artistic call, compile it, then reuse show.builder."""
-        if self.design_intelligence_provider is None:
-            raise ValueError("No design intelligence provider is configured.")
-
-        profile = self._collect_lean_design_profile()
+    def _build_current_artistic_resource_map(
+        self, profile: dict[str, Any],
+    ) -> tuple[dict[str, Any], dict[str, Any] | None]:
+        """Build the same current-Show resource contract for all design paths."""
         effect_application = self.cue_effect_application_capability.load_verified()
         preset_bindings, dimmer_bindings = self._recover_bounded_test_show_evidence(profile)
-        # A cached Position proof is useful only with fresh exact current-Show
-        # identity and direct current Preset ref/type/label readback. This
-        # never creates an application binding or touches MA2 Show state.
         for binding in self.position_application_bindings.load_verified(profile):
             reference = binding["reference"]
             try:
-                current = PresetProvider().parse(self.runtime.read_state(f"List Preset {reference}"), "POSITION")
+                current = PresetProvider().parse(
+                    self.runtime.read_state(f"List Preset {reference}"), "POSITION"
+                )
             except (ConnectionError, PermissionError, ValueError):
                 continue
-            if (len(current) == 1 and current[0].get("reference") == reference
-                    and current[0].get("preset_type") == "POSITION"
-                    and current[0].get("name") == binding["preset_label"]):
+            if (
+                len(current) == 1
+                and current[0].get("reference") == reference
+                and current[0].get("preset_type") == "POSITION"
+                and current[0].get("name") == binding["preset_label"]
+            ):
                 preset_bindings.append(binding)
         self._recover_bounded_template_effect_inventory(profile)
         resource_map = build_artistic_resource_map(
@@ -1243,6 +1564,15 @@ class AgentCore:
             effect_catalog_entries=self.effect_catalog.load().get("entries", []),
             effect_application_capability=effect_application,
         )
+        return resource_map, effect_application
+
+    def _plan_lean_design_child(self, root: WorkflowPlan, request: str) -> WorkflowPlan:
+        """Run one injected artistic call, compile it, then reuse show.builder."""
+        if self.design_intelligence_provider is None:
+            raise ValueError("No design intelligence provider is configured.")
+
+        profile = self._collect_lean_design_profile()
+        resource_map, effect_application = self._build_current_artistic_resource_map(profile)
         compact = assemble_compact_design_context(
             song_context={"song": request, "brief": request},
             groups=profile.get("groups", []),
@@ -1322,6 +1652,50 @@ class AgentCore:
 
         root_intent = Intent("program_show", {"request": request}, request)
         root = self.skills.plan_intent(root_intent, self.state, self.runtime.preferences)
+
+        explicit_dynamic_merge = self._parse_existing_dynamic_merge_request(request)
+        if explicit_dynamic_merge is not None:
+            try:
+                child = self._plan_existing_dynamic_merge_child(request, explicit_dynamic_merge)
+                workflow = compose_show_program_child(root, child)
+            except (
+                ExistingCueDynamicProgramMergeError, ExistingPositionMergeError, SkillError,
+                ArtisticPlanCompileError, LeanDesignProviderError, ConnectionError, ValueError
+            ) as exc:
+                workflow = set_show_program_state(
+                    root, "NEEDS_INPUT",
+                    str(exc) or "Unable to prepare existing Cue Dynamic Program merge safely.",
+                    phase="DISCOVER",
+                )
+            self._root_workflow_status = {
+                "state": workflow.root_state or ("READY" if workflow.executable else "NEEDS_INPUT"),
+                "phase": workflow.current_phase or ROOT_PHASES[0],
+                "action_id": None,
+            }
+            self.runtime.log("root_workflow", workflow.as_dict())
+            if not workflow.executable:
+                self.events.emit("plan", self.snapshot())
+                return {
+                    "type": ResponseType.ACTION_PLAN.value,
+                    "message": workflow.preview_note,
+                    "action": {"id": None, "status": "ROOT_WORKFLOW", **workflow.as_dict()},
+                }
+            action_id = uuid.uuid4().hex[:12]
+            if self._active_action_id and self.actions.get(self._active_action_id):
+                self.actions[self._active_action_id].status = "CANCELLED"
+            record = ActionRecord(action_id, workflow)
+            self.actions[action_id] = record
+            self._active_action_id = action_id
+            self._root_workflow_status.update(
+                {"state": "PENDING_APPROVAL", "phase": "PREVIEW", "action_id": action_id}
+            )
+            self.progress = "Waiting for approval"
+            self.events.emit("plan", self.snapshot())
+            return {
+                "type": ResponseType.ACTION_PLAN.value,
+                "message": workflow.preview_note,
+                "action": {"id": action_id, "status": record.status, **record.plan},
+            }
 
         explicit_position_merge = self._parse_existing_position_merge_request(request)
         if explicit_position_merge is not None:
@@ -1447,7 +1821,11 @@ class AgentCore:
             return {"status": "NO_PREVIEW", "action": None}
         record = self.actions[selected]
         action = {"id": record.id, **record.plan}
-        if record.workflow.task.intent.kind in {"verify_position_application", "verify_position_raw_cue"}:
+        if record.workflow.task.intent.kind == "merge_existing_cue_dynamic_program":
+            preview = record.workflow.task.intent.parameters["dynamic_merge_preview"]
+            action.update({"action_id": record.id, "preview_id": preview["preview_id"],
+                           "phase": "PREVIEW" if record.status == "PENDING_APPROVAL" else record.status})
+        elif record.workflow.task.intent.kind in {"verify_position_application", "verify_position_raw_cue"}:
             key = ("position_preview" if record.workflow.task.intent.kind == "verify_position_application"
                    else "position_raw_preview")
             preview = record.workflow.task.intent.parameters[key]
@@ -1953,6 +2331,8 @@ class AgentCore:
             self._ensure_position_calibration_state_unchanged(action)
         elif execution_intent.kind == "merge_existing_cue_position":
             self._ensure_existing_position_merge_state_unchanged(action)
+        elif execution_intent.kind == "merge_existing_cue_dynamic_program":
+            self._ensure_existing_dynamic_merge_state_unchanged(action)
         action.status = "APPROVED"
         self.progress = "Executing"
         self.events.emit("progress", {"stage": self.progress})
@@ -1968,6 +2348,8 @@ class AgentCore:
                 result = self._execute_position_calibration(action)
             elif intent_kind == "merge_existing_cue_position":
                 result = self._execute_existing_position_merge(action)
+            elif intent_kind == "merge_existing_cue_dynamic_program":
+                result = self._execute_existing_dynamic_merge(action)
             else:
                 commands = self.skills.approved_commands(action.workflow.task.skill_id, action.workflow)
                 results = self.runtime.execute_approved_commands(commands)
@@ -1999,7 +2381,7 @@ class AgentCore:
             if action.workflow.task.skill_id == "show.program":
                 self._root_workflow_status.update({
                     "state": "EXECUTED",
-                    "phase": "DONE" if intent_kind == "merge_existing_cue_position" else "VERIFY_ACTUAL_CONTENT",
+                    "phase": "DONE" if intent_kind in {"merge_existing_cue_position", "merge_existing_cue_dynamic_program"} else "VERIFY_ACTUAL_CONTENT",
                     "action_id": action_id,
                 })
             elif intent_kind in {
@@ -2026,6 +2408,107 @@ class AgentCore:
             raise
         self.events.emit("execution", self.snapshot())
         return {"id": action.id, "status": action.status, "result": action.result}
+
+    def _execute_existing_dynamic_merge(self, action: ActionRecord) -> str:
+        """Execute one approved existing-Cue Position+Effect merge and verify it."""
+        _skill_id, intent = self._effective_execution_context(action)
+        preview = intent.parameters.get("dynamic_merge_preview")
+        if not isinstance(preview, dict):
+            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_APPROVED_PREVIEW_MISSING")
+        commands = self.skills.approved_commands(
+            action.workflow.task.skill_id, action.workflow
+        )
+        if not commands or commands[-1] != "ClearAll":
+            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_APPROVED_COMMAND_PLAN_INVALID")
+        target = preview.get("target_sequence") or {}
+        sequence = target.get("id")
+        if isinstance(sequence, bool) or not isinstance(sequence, int) or sequence < 1:
+            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_SEQUENCE_INVALID")
+        try:
+            for command in commands[:-1]:
+                response = self.runtime.execute_approved_commands((command,))[0]
+                if ma2_response_has_error(response):
+                    raise ExistingCueDynamicProgramMergeError(
+                        f"DYNAMIC_MERGE_MA_COMMAND_REJECTED: {command}: {response}"
+                    )
+            if self.sequence_export_provider is None:
+                raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_SEQUENCE_EXPORT_UNAVAILABLE")
+            discovery = self.sequence_export_provider.export_and_discover(
+                self.runtime, sequence, self.runtime.preferences.get("state_adapter"), retain_export=True
+            )
+            verification = verify_existing_cue_dynamic_program_merge(preview, discovery)
+
+            expected_metadata = (preview.get("position_preview") or {}).get("target_sequence", {}).get("cue_metadata") or []
+            post_metadata = self._fresh_existing_cue_metadata(
+                sequence_no=sequence, cue_start=target.get("cue_start"), cue_end=target.get("cue_end")
+            )
+            if post_metadata != expected_metadata:
+                raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_CUE_METADATA_CHANGED")
+
+            position = preview.get("position_preview") or {}
+            baseline = position.get("baseline") or {}
+            post_profile = self._fresh_position_poc_profile(
+                group_id=preview["group"]["id"], preset_ref=baseline.get("preset_reference")
+            )
+            if post_profile.get("show_identity") != preview.get("show_identity"):
+                raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_POSTWRITE_SHOW_IDENTITY_DRIFT")
+            sequence_rows = [
+                row for row in post_profile.get("sequences", [])
+                if isinstance(row, dict) and row.get("number") == sequence
+            ]
+            if len(sequence_rows) != 1 or sequence_rows[0].get("name") != target.get("label"):
+                raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_POSTWRITE_SEQUENCE_IDENTITY_DRIFT")
+            expected_assignments = target.get("executor_assignments") or []
+            current_assignments = [
+                {
+                    "page": row.get("page"), "executor": row.get("executor"),
+                    "location": row.get("location"), "label": row.get("label"),
+                }
+                for row in self._sequence_executor_assignments(sequence)
+            ]
+            if current_assignments != expected_assignments:
+                raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_EXECUTOR_ASSIGNMENT_CHANGED")
+
+            self.runtime.log(
+                "existing_cue_dynamic_program_merge_verified",
+                {
+                    "action_id": action.id,
+                    "sequence": sequence,
+                    "cue_count": verification["cue_count"],
+                    "position_value_matches": verification["position_value_matches"],
+                    "effect_fixture_matches": verification["effect_fixture_matches"],
+                    "protected_content": verification["protected_content"],
+                    "cue_fade_delay_metadata": "UNCHANGED",
+                    "show_identity": "UNCHANGED",
+                    "executor_assignment": "UNCHANGED",
+                    "post_export_sha256": verification["post_export_sha256"],
+                    "automatic_delete": False,
+                },
+            )
+            return (
+                "DYNAMIC_MERGE VERIFIED - "
+                f"Sequence {sequence}; {verification['cue_count']} Cues; "
+                f"{verification['position_value_matches']} PAN/TILT values and "
+                f"{verification['effect_fixture_matches']} Effect fixture references matched; "
+                "protected content, Cue metadata, Show identity and Executor assignment unchanged."
+            )
+        except Exception as exc:
+            self.runtime.log(
+                "existing_cue_dynamic_program_merge_failed",
+                {
+                    "action_id": action.id, "sequence": sequence,
+                    "error": str(exc), "automatic_delete": False,
+                },
+            )
+            raise
+        finally:
+            try:
+                self.runtime.execute_approved_commands((commands[-1],))
+            except Exception as clear_exc:
+                self.runtime.log(
+                    "existing_cue_dynamic_program_merge_clear_failed",
+                    {"error": str(clear_exc)},
+                )
 
     def _execute_existing_position_merge(self, action: ActionRecord) -> str:
         """Execute one approved Position-only merge and verify native content."""

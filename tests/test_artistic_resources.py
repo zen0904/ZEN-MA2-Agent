@@ -3,6 +3,7 @@ import unittest
 from zen_ma2_agent.artistic_resources import (
     ARTISTIC_RESOURCE_MAP_SCHEMA,
     build_artistic_resource_map,
+    capability_status_from_map,
     effect_applicability_from_map,
     model_resource_contract,
     preset_applicability_from_map,
@@ -43,10 +44,14 @@ class ArtisticResourceMapTests(unittest.TestCase):
                         "COLOR": {"status": "SHOW_BOUND_VERIFIED"},
                         "POSITION": {"status": "SHOW_BOUND_VERIFIED"},
                         "FOCUS": {"status": "SHOW_BOUND_VERIFIED"},
+                        "BEAM": {"status": "SHOW_BOUND_VERIFIED"},
                         "GOBO": {"status": "SHOW_BOUND_VERIFIED"},
+                        "GOBO_ROTATION": {"status": "SHOW_BOUND_VERIFIED"},
                         "PRISM": {"status": "SHOW_BOUND_VERIFIED"},
+                        "PRISM_ROTATION": {"status": "SHOW_BOUND_VERIFIED"},
                         "ZOOM": {"status": "SHOW_BOUND_VERIFIED"},
                         "FROST": {"status": "NOT_PRESENT_IN_EXPORTED_PROFILE"},
+                        "IRIS": {"status": "SHOW_BOUND_VERIFIED"},
                         "SHUTTER_STROBE": {"status": "SHOW_BOUND_VERIFIED"},
                     },
                 }
@@ -114,6 +119,20 @@ class ArtisticResourceMapTests(unittest.TestCase):
         self.assertEqual([item["reference"] for item in group1["preset_resources"]], ["4.101"])
         self.assertEqual(group2["preset_resources"], [])
         self.assertEqual(preset_applicability_from_map(result), {1: {"4.101"}, 2: set()})
+
+    def test_technical_optics_are_visible_without_becoming_executable_resources(self):
+        result = self.build()
+        group = result["groups"][0]
+        self.assertEqual(group["dimensions"]["PRISM"]["technical_capability"]["status"], "SHOW_BOUND_VERIFIED")
+        self.assertEqual(group["dimensions"]["PRISM"]["execution_status"], "NO_VERIFIED_RESOURCE")
+        self.assertEqual(group["dimensions"]["BEAM"]["technical_capability"]["status"], "SHOW_BOUND_VERIFIED")
+        self.assertEqual(group["dimensions"]["GOBO_ROTATION"]["technical_capability"]["status"], "SHOW_BOUND_VERIFIED")
+        self.assertEqual(group["dimensions"]["IRIS"]["technical_capability"]["status"], "SHOW_BOUND_VERIFIED")
+        status = capability_status_from_map(result)[1]
+        self.assertEqual(status["PRISM"], {
+            "technical_status": "SHOW_BOUND_VERIFIED",
+            "execution_status": "NO_VERIFIED_RESOURCE",
+        })
 
     def test_effect_inventory_does_not_become_designer_resource_by_existence(self):
         result = self.build()

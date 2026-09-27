@@ -1,136 +1,31 @@
 import copy
+import json
+import tempfile
 import unittest
 from pathlib import Path
+from shutil import copytree
+from unittest.mock import patch
 
+from zen_ma2_agent.core import AgentCore
+from zen_ma2_agent.models import Intent
+from zen_ma2_agent.runtime import AgentRuntime
+from zen_ma2_agent.telnet_client import ConnectionState
 from zen_ma2_agent.existing_cue_dynamic_program_merge import (
     ExistingCueDynamicProgramMergeError,
     build_existing_cue_dynamic_program_preview,
-    commands_from_preview,
+    commands_from_dynamic_preview,
+    protected_content_snapshot,
     verify_existing_cue_dynamic_program_merge,
 )
-from zen_ma2_agent.skill_system import SkillRegistry
-
-
-REFS = [f"{fixture}.1" for fixture in range(101, 109)]
-EFFECTS = {
-    "DIMMER_CHASE_SLOW": 2500,
-    "DIMMER_CHASE_MED": 2501,
-    "DIMMER_CHASE_FAST": 2502,
-    "ALTERNATE": 2501,
-    "PULSE": 2502,
-    "HIT": 2502,
-    "BUILD": 2500,
-}
-INTENTS = [
-    "STATIC_LOOK", "DIMMER_CHASE_SLOW", "DIMMER_CHASE_MED",
-    "DIMMER_CHASE_FAST", "ALTERNATE", "PULSE", "HIT", "BUILD",
-    "RELEASE", "BLACKOUT", "RESET",
-]
-PATTERNS = [
-    "CENTER", "LEFT", "RIGHT", "FRONT", "UPSTAGE", "NARROW_FAN",
-    "WIDE_FAN", "CROSS", "ALTERNATE", "EXPLODE", "COLLAPSE",
-]
-
-
-def profile(refs=REFS):
-    return {
-        "show_identity": {"kind": "SCANNED_SHOW_PROFILE_FINGERPRINT", "value": "1" * 64},
-        "fixtures": [
-            {
-                "fixture_id": int(ref.split(".")[0]),
-                "fixture_type": "HYBRID_MOVING",
-                "stage_geometry": {"subfixtures": [{"subfixture_id": 1}]},
-            }
-            for ref in refs
-            if ref.split(".")[0] != "9999"
-        ],
-        "fixture_type_profiles": [{
-            "status": "SHOW_BOUND_VERIFIED",
-            "fixture_type": {"list_label": "HYBRID_MOVING"},
-            "capabilities": {"POSITION": {"status": "SHOW_BOUND_VERIFIED"}},
-            "channels": [
-                {"attribute": "PAN", "functions": [{"from": "-315", "to": "315"}]},
-                {"attribute": "TILT", "functions": [{"from": "-135", "to": "135"}]},
-            ],
-        }],
-        "groups": [{
-            "group_id": 1,
-            "name": "HYBRID",
-            "fixture_refs_in_selection_order": list(refs),
-            "membership": {"status": "SUPPORTED", "source": "ma2_group_export_xml"},
-        }],
-        "sequences": [{"number": 302, "name": "ZEN_SEQ302"}],
-        "effects": [
-            {"effect_id": 2500, "name": "FX_DIM_CHASE_SLOW", "kind": "TEMPLATE"},
-            {"effect_id": 2501, "name": "FX_DIM_CHASE_MED", "kind": "TEMPLATE"},
-            {"effect_id": 2502, "name": "FX_DIM_CHASE_FAST", "kind": "TEMPLATE"},
-        ],
-    }
-
-
-def row(fixture, attribute, value, *, effect=None, preset=None):
-    result = {
-        "channel": {
-            "fixture_id": str(fixture),
-            "subfixture_id": "1",
-            "attribute_name": attribute,
-        },
-        "raw_values": {"Value": str(value)},
-        "preset": None,
-        "effect": None,
-    }
-    if effect is not None:
-        result["effect"] = {"no_components": ["1", str(effect)]}
-    if preset is not None:
-        result["preset"] = {"no_components": ["1", "2", str(preset)]}
-    return result
-
-
-def cue(number, label, rows):
-    return {
-        "number": {"number": str(number), "sub_number": "0"},
-        "parts": [{"index": "0", "name": label, "cue_data": rows}],
-    }
-
-
-def target_discovery():
-    return {
-        "schema": "zen.sequence_export_discovery.v0.1",
-        "status": "VERIFIED",
-        "sequence_no": 302,
-        "xml_discovery": {"sha256": "c" * 64},
-        "cues": [
-            cue(number, f"SHEESH_{number:02d}", [
-                *[row(fixture, "DIM", 100) for fixture in range(101, 109)],
-                *[row(fixture, "COLORRGB1", 50, preset=101) for fixture in range(101, 109)],
-            ])
-            for number in range(1, 30)
-        ],
-    }
-
-
-def calibration_discovery():
-    raw = [row(fixture, attr, value) for fixture in range(101, 109) for attr, value in (("PAN", 20), ("TILT", 30))]
-    linked = [row(fixture, attr, 1, preset=13) for fixture in range(101, 109) for attr in ("PAN", "TILT")]
-    return {
-        "schema": "zen.sequence_export_discovery.v0.1",
-        "status": "VERIFIED",
-        "sequence_no": 12,
-        "xml_discovery": {"sha256": "b" * 64},
-        "cues": [cue(1, "RAW_POSITION", raw), cue(2, "PRESET_POSITION", linked)],
-    }
-
-
-def position_binding(refs=REFS):
-    return {
-        "status": "REAL_MACHINE_CONTENT_VERIFIED",
-        "show_identity": profile(refs)["show_identity"],
-        "group_id": 1,
-        "fixture_refs": sorted(refs),
-        "reference": "2.13",
-        "preset_label": "ZEN_POSITION_CAL_P13",
-        "evidence": {"sequence": 12, "cue": 2, "sequence_export_sha256": "a" * 64},
-    }
+from tests.test_position_existing_cue_merge import (
+    LABELS,
+    build as build_position,
+    cue,
+    cue_metadata,
+    row,
+    target_discovery,
+    profile,
+)
 
 
 def effect_capability():
@@ -146,198 +41,327 @@ def effect_capability():
     }
 
 
-def effect_resources(*, fresh=True):
-    return [
-        {
-            "effect_id": effect_id,
-            "label": label,
-            "group_id": 1,
-            "ownership": "ZEN_AGENT",
-            "show_identity": profile()["show_identity"],
-            "fresh": fresh,
-            "list_effect_sha256": str(effect_id)[0] * 64,
-            "catalog_sha256": str(effect_id)[-1] * 64,
-        }
-        for effect_id, label in (
-            (2500, "FX_DIM_CHASE_SLOW"),
-            (2501, "FX_DIM_CHASE_MED"),
-            (2502, "FX_DIM_CHASE_FAST"),
-        )
-    ]
+def effects():
+    return {1: {
+        2500: "ZEN_FX_DIM_CHASE_SLOW_GROUP1",
+        2501: "ZEN_FX_DIM_CHASE_MED_GROUP1",
+        2502: "ZEN_FX_DIM_CHASE_FAST_GROUP1",
+    }}
 
 
 def artistic_plan():
-    result = []
-    for number in range(1, 30):
-        intent = INTENTS[(number - 1) % len(INTENTS)]
-        result.append({
+    patterns = ["EXPLODE", "CROSS", "UPSTAGE", "WIDE_FAN"]
+    effect_ids = [2500, None, 2501, 2502]
+    cues = []
+    for number, (label, pattern, effect_id) in enumerate(zip(LABELS, patterns, effect_ids), 1):
+        actions = [] if effect_id is None else [{
+            "operation": "CALL_EFFECT",
+            "target": {"type": "group", "ref": 1},
+            "effect_ref": {"id": effect_id},
+        }]
+        cues.append({
+            "id": f"cue_{number:03d}",
             "cue_number": number,
-            "cue_label": f"SHEESH_{number:02d}",
-            "effect_intent": intent,
-            "effect_id": EFFECTS.get(intent),
-            "position_pattern": PATTERNS[(number - 1) % len(PATTERNS)],
+            "label": label,
+            "fade": 0.5,
+            "position_pattern": pattern,
+            "position_scale": 1.5 if number in {1, 4} else 1.0,
+            "capability_intent": [{
+                "group": 1,
+                "dimension": "PRISM",
+                "use": "OPTIONAL" if number == 1 else "AVOID",
+                "reason": "impact option" if number == 1 else "keep beam clean",
+                "technical_status": "SHOW_BOUND_VERIFIED",
+                "execution_status": "NO_VERIFIED_RESOURCE",
+                "execution_authorized": False,
+            }],
+            "actions": actions,
         })
-    return result
+    return {"schema": "zen.show_plan.v0.1", "cues": cues}
 
 
-def metadata():
-    return [
-        {"number": number, "name": f"SHEESH_{number:02d}", "fade": 0.5, "delay": 0.0}
-        for number in range(1, 30)
-    ]
-
-
-def stage_evidence():
+def effect_row(fixture, effect_id):
     return {
-        "capture_readable": True,
-        "stage_view_visible": True,
-        "capture_sha256": "d" * 64,
-        "operator_assessment": "PRIOR_VARIATION_TOO_SMALL",
-        "recommended_scale": 1.5,
+        "multipart_indexes": {"value": "0", "effect": "0"},
+        "channel": {
+            "fixture_id": str(fixture),
+            "subfixture_id": "1",
+            "attribute_name": "DIM",
+        },
+        "raw_values": {
+            "EffectRate": "1",
+            "EffectLow": "0",
+            "EffectHigh": "100",
+        },
+        "preset": None,
+        "effect": {"no_components": ["1", str(effect_id)]},
     }
 
 
-def build(**overrides):
-    profile_value = overrides.pop("profile", profile())
-    args = {
-        "target_discovery": target_discovery(),
-        "calibration_discovery": calibration_discovery(),
-        "position_binding": position_binding(),
-        "effect_application_capability": effect_capability(),
-        "effect_resources": effect_resources(),
-        "artistic_cue_plan": artistic_plan(),
-        "stage_view_evidence": stage_evidence(),
-        "sequence_no": 302,
-        "group_id": 1,
-        "cue_start": 1,
-        "cue_end": 29,
-        "executor_assignments": [{"page": 2, "executor": 8, "location": "2.8", "label": "ZEN_SEQ302"}],
-        "cue_metadata": metadata(),
+def build_dynamic(*, pre=None, plan=None, pos=None, verified_effects=None, capability=None):
+    pre = pre or target_discovery()
+    pos = pos or build_position(target=pre)
+    return build_existing_cue_dynamic_program_preview(
+        position_preview=pos,
+        pre_discovery=pre,
+        artistic_plan=plan or artistic_plan(),
+        verified_effects_by_group=effects() if verified_effects is None else verified_effects,
+        effect_application_capability=effect_capability() if capability is None else capability,
+    )
+
+
+def post_from(pre, preview):
+    post = copy.deepcopy(pre)
+    post["xml_discovery"] = {"sha256": "d" * 64}
+    cues = {
+        int(item["number"]["number"]): item
+        for item in post["cues"]
     }
-    args.update(overrides)
-    return build_existing_cue_dynamic_program_preview(profile_value, **args)
-
-
-def post_discovery(preview):
-    result = target_discovery()
-    by_number = {cue_row["number"]["number"]: cue_row for cue_row in result["cues"]}
-    for update in preview["cue_updates"]:
-        rows = by_number[str(update["cue_number"])]["parts"][0]["cue_data"]
-        if update.get("effect_id") is not None:
-            for fixture in range(101, 109):
-                dim = next(item for item in rows if item["channel"]["fixture_id"] == str(fixture) and item["channel"]["attribute_name"] == "DIM")
-                dim["effect"] = {"no_components": ["1", str(update["effect_id"])]}
+    positioned = {
+        int(item["cue_number"]): item
+        for item in preview["position_preview"]["cue_updates"]
+    }
+    for number, update in positioned.items():
+        rows = cues[number]["parts"][0]["cue_data"]
         for fixture in update["fixtures"]:
-            root = fixture["fixture_ref"].split(".")[0]
-            rows.extend((row(root, "PAN", fixture["pan"]), row(root, "TILT", fixture["tilt"])))
-    result["xml_discovery"]["sha256"] = "e" * 64
-    return result
+            root, _, sub = str(fixture["fixture_ref"]).partition(".")
+            rows.extend([
+                row(root, "PAN", fixture["pan"], subfixture=sub or None),
+                row(root, "TILT", fixture["tilt"], subfixture=sub or None),
+            ])
+        effect = preview["cue_effects"][str(number)]
+        if effect is not None:
+            rows.extend([effect_row(101, effect["id"]), effect_row(102, effect["id"])])
+    return post
+
+
+class ReadyClient:
+    state = ConnectionState.READY
+    authenticated_user = "MM"
+    audit_entries = []
+
+    def execute(self, command):
+        raise AssertionError(f"unexpected direct transport: {command}")
+
+
+class ExistingCueDynamicProgramMergeCoreTests(unittest.TestCase):
+    request = (
+        "Dynamic existing Sequence 302 Position Effect Group 1 Preset 2.13 "
+        "Cues 1-4 Executor 2.8"
+    )
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix="zen-existing-dynamic-")
+        root = Path(self.temp.name)
+        copytree(Path(__file__).resolve().parents[1] / "skills", root / "skills")
+        self.core = AgentCore(AgentRuntime(root))
+        self.core.runtime.client = ReadyClient()
+        for resource in (
+            "groups", "group_membership", "fixtures", "fixture_geometry",
+            "fixture_type_profiles", "presets", "effects", "sequences", "executors",
+        ):
+            self.core.state.put(resource, [], source="test")
+        self.preview = build_dynamic()
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def child(self):
+        return self.core.skills.plan_intent(
+            Intent(
+                "merge_existing_cue_dynamic_program",
+                {"dynamic_merge_preview": self.preview},
+                self.request,
+            ),
+            self.core.state,
+            self.core.runtime.preferences,
+        )
+
+    def test_root_routes_dynamic_existing_merge_before_generic_builder(self):
+        with patch.object(
+            self.core, "_plan_existing_dynamic_merge_child", return_value=self.child(),
+        ), patch.object(
+            self.core, "_plan_lean_design_child",
+            side_effect=AssertionError("generic provider path must not run"),
+        ):
+            action = self.core.program_show_request(self.request)["action"]
+        self.assertEqual(action["task"]["skill_id"], "show.program")
+        self.assertEqual(
+            action["skill_graph"][-1]["skill_id"],
+            "existing_cue.dynamic_program_merge",
+        )
+        child = action["continuation_context"]["child_execution"]
+        self.assertEqual(child["intent_kind"], "merge_existing_cue_dynamic_program")
+        self.assertEqual(action["status"], "PENDING_APPROVAL")
+        self.assertIn("Position=EXPLODE", action["preview_note"] )
+        self.assertIn("Effect=2500", action["preview_note"] )
+        self.assertNotIn("Sequence 303", action["preview_note"] )
+
+
+class ExistingCueDynamicProgramMergeRoutingTests(unittest.TestCase):
+    def test_ascii_existing_dynamic_request_is_parsed_before_generic_design(self):
+        parsed = AgentCore._parse_existing_dynamic_merge_request(
+            "Dynamic existing Sequence 302 Position Effect Group 1 Preset 2.13 Cues 1-29 Executor 2.8"
+        )
+        self.assertEqual(parsed, {
+            "sequence_no": 302, "group_id": 1, "preset_ref": "2.13",
+            "cue_start": 1, "cue_end": 29, "expected_executor": "2.8",
+        })
+        self.assertIsNone(AgentCore._parse_existing_position_merge_request(
+            "Dynamic existing Sequence 302 Position Effect Group 1 Preset 2.13 Cues 1-29 Executor 2.8"
+        ))
+
+    def test_dynamic_parser_requires_explicit_existing_target_and_effect_semantics(self):
+        self.assertIsNone(AgentCore._parse_existing_dynamic_merge_request(
+            "Program Sequence 302 Position Group 1 Preset 2.13 Cues 1-29"
+        ))
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "REQUIRES_EXISTING_SEQUENCE"):
+            AgentCore._parse_existing_dynamic_merge_request(
+                "Dynamic existing Sequence 302 Position Effect"
+            )
+
+
+class ExistingCueDynamicSpatialContextTests(unittest.TestCase):
+    def test_fresh_spatial_context_is_target_group_bounded_and_preserves_limitations(self):
+        current_profile = profile()
+        preview = build_position(profile=current_profile)
+        spatial = AgentCore._current_dynamic_spatial_context(current_profile, preview)
+        self.assertEqual(spatial["show_fingerprint"], "1" * 64)
+        self.assertEqual(
+            spatial["spatial_bootstrap_mode"],
+            "CURRENT_SHOW_STRUCTURED_POSITION_EVIDENCE",
+        )
+        self.assertEqual(
+            spatial["coordinate_system"]["pan_negative"], "STAGE_RIGHT"
+        )
+        self.assertFalse(spatial["coordinate_system"]["xyz_sign_mapping_claimed"])
+        self.assertFalse(
+            spatial["position_summary"]["pattern_semantics"]["physical_targeting_claimed"]
+        )
+        self.assertEqual(
+            {str(row["fixture_id"]) for row in spatial["geometry_summary"]},
+            {"101", "102"},
+        )
+        self.assertEqual(
+            spatial["stage_frame"]["stage_view_pixels_authority"],
+            "SUPPLEMENTAL_ONLY_NOT_STRUCTURED_GEOMETRY_AUTHORITY",
+        )
+        payload = json.dumps(spatial, sort_keys=True)
+        self.assertNotIn("9999", payload)
+        self.assertNotIn("physical_targeting_claimed\": true", payload.lower())
+
+    def test_spatial_context_rejects_protected_fixture_9999(self):
+        current_profile = profile()
+        current_profile["fixtures"].append({
+            "fixture_id": 9999,
+            "fixture_type": "PROTECTED",
+            "stage_geometry": {"subfixtures": [{"subfixture_id": 1}]},
+        })
+        preview = build_position(profile=current_profile)
+        preview["group"]["exact_refs"].append("9999.1")
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "PROTECTED_FIXTURE_9999"):
+            AgentCore._current_dynamic_spatial_context(current_profile, preview)
 
 
 class ExistingCueDynamicProgramMergeTests(unittest.TestCase):
-    def test_builtin_skill_is_discoverable(self):
-        registry = SkillRegistry(Path(__file__).resolve().parents[1])
-        registry.discover()
-        manifest = registry.get("existing_cue.dynamic_program_merge")
-        self.assertIn("merge_existing_cue_dynamic_program", manifest.intents)
+    def test_preview_targets_existing_sequence_and_combines_position_effects(self):
+        preview = build_dynamic()
+        self.assertEqual(preview["target_sequence"]["id"], 302)
+        self.assertEqual(preview["cue_updates"][0]["position_pattern"], "EXPLODE")
+        self.assertEqual(preview["cue_updates"][0]["position_scale"], 1.5)
+        self.assertEqual(preview["cue_updates"][0]["effect"]["id"], 2500)
+        self.assertIsNone(preview["cue_updates"][1]["effect"])
+        self.assertFalse(preview["cue_updates"][0]["capability_intent"][0]["execution_authorized"])
+        self.assertGreater(preview["cue_updates"][0]["expected_pan_range"][1] - preview["cue_updates"][0]["expected_pan_range"][0], 20)
+        self.assertEqual(preview["ma2_writes"], 0)
 
-    def test_existing_seq302_path_never_allocates_new_sequence(self):
-        preview = build()
-        commands = commands_from_preview(preview)
+    def test_command_plan_never_allocates_or_creates_resources(self):
+        commands = commands_from_dynamic_preview(build_dynamic())
         joined = "\n".join(commands)
-        self.assertIn("Store Cue 29 Sequence 302 /merge /cueonly /nc", joined)
+        self.assertIn("At Effect 2500", joined)
+        self.assertIn("At Effect 2501", joined)
+        self.assertIn("Store Cue 1 Sequence 302 /merge /cueonly /nc", joined)
+        self.assertNotIn("Store Effect", joined)
+        self.assertNotIn("Label ", joined)
+        self.assertNotIn("Assign ", joined)
         self.assertNotIn("Sequence 303", joined)
-        self.assertNotIn("Label Sequence", joined)
-        self.assertNotIn("Assign Executor", joined)
-        self.assertFalse(preview["write_scope"]["allocate_sequence"])
+        self.assertNotIn("Prism", joined)
+        self.assertNotIn("Zoom", joined)
+        self.assertNotIn("Frost", joined)
 
-    def test_effect_is_attached_to_requested_existing_cue(self):
-        preview = build()
-        commands = commands_from_preview(preview)
-        index = commands.index("At Effect 2500")
-        self.assertEqual(commands[index - 1], "Group 1")
-        self.assertEqual(commands[index + 1], "Store Cue 2 Sequence 302 /merge /cueonly /nc")
+    def test_unverified_effect_or_application_capability_fails_closed(self):
+        bad = effects()
+        bad[1].pop(2501)
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "EFFECT_NOT_VERIFIED"):
+            build_dynamic(verified_effects=bad)
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "EFFECT_APPLICATION_UNVERIFIED"):
+            build_dynamic(capability={})
 
-    def test_different_cues_use_different_effects(self):
-        preview = build()
-        chosen = {cue["effect_id"] for cue in preview["cue_updates"] if cue["effect_id"] is not None}
-        self.assertEqual(chosen, {2500, 2501, 2502})
-
-    def test_position_and_effect_coexist_in_same_cue_workflow(self):
-        preview = build()
-        cue2 = preview["cue_updates"][1]
-        self.assertEqual(cue2["effect_id"], 2500)
-        self.assertEqual(cue2["position_pattern"], "LEFT")
-        self.assertGreater(max(abs(item["delta_pan"]) for item in cue2["fixtures"]), 5)
-        commands = commands_from_preview(preview)
-        self.assertIn('Attribute "Pan" At 29', commands)
-
-    def test_unknown_unplanned_attribute_drift_fails_closed(self):
-        preview = build()
-        post = post_discovery(preview)
-        post["cues"][0]["parts"][0]["cue_data"].append(row(101, "GOBO1", 7))
-        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "PROTECTED_CONTENT_CHANGED"):
-            verify_existing_cue_dynamic_program_merge(preview, profile(), post)
-
-    def test_unrelated_existing_effect_requires_explicit_replacement_plan(self):
-        target = target_discovery()
-        target["cues"][1]["parts"][0]["cue_data"][0]["effect"] = {
-            "no_components": ["1", "2499"]
-        }
-        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "UNRELATED_EFFECT_CONFLICT"):
-            build(target_discovery=target)
+    def test_single_effect_state_is_rejected_as_non_dynamic(self):
         plan = artistic_plan()
-        plan[1]["replace_effect_ids"] = [2499]
-        preview = build(target_discovery=target, artistic_cue_plan=plan)
-        self.assertEqual(preview["cue_updates"][1]["replace_effect_ids"], [2499])
+        for cue_item in plan["cues"]:
+            cue_item["actions"] = [{
+                "operation": "CALL_EFFECT",
+                "target": {"type": "group", "ref": 1},
+                "effect_ref": {"id": 2500},
+            }]
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "EFFECT_VARIATION_REQUIRED"):
+            build_dynamic(plan=plan)
 
-    def test_fixture9999_is_rejected(self):
-        changed = profile(["9999.1", *REFS[1:]])
-        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "FIXTURE_9999"):
-            build(profile=changed, position_binding=position_binding(["9999.1", *REFS[1:]]))
+    def test_missing_position_or_unrelated_executable_action_is_noncompliant(self):
+        plan = artistic_plan()
+        plan["cues"][0].pop("position_pattern")
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "POSITION_INTENT_MISSING"):
+            build_dynamic(plan=plan)
+        plan = artistic_plan()
+        plan["cues"][0]["actions"].append({
+            "operation": "SET_DIMMER", "target": {"type": "group", "ref": 1}, "level": 100,
+        })
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "UNSUPPORTED_EXECUTABLE_ACTION"):
+            build_dynamic(plan=plan)
 
-    def test_stale_sequence_effect_or_group_evidence_blocks(self):
-        changed = target_discovery()
-        changed["status"] = "STALE"
-        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "EXPORT_NOT_FRESH"):
-            build(target_discovery=changed)
-        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "EFFECT_EVIDENCE_STALE"):
-            build(effect_resources=effect_resources(fresh=False))
-        changed_profile = profile()
-        changed_profile["groups"][0]["membership"]["status"] = "STALE"
-        with self.assertRaises(Exception):
-            build(profile=changed_profile)
+    def test_post_write_position_effect_and_protected_content_verify(self):
+        pre = target_discovery()
+        # Static target-fixture values remain protected even when an Effect is intentionally attached.
+        pre["cues"][0]["parts"][0]["cue_data"].append(row("101", "DIM", 55))
+        pos = build_position(target=pre)
+        preview = build_dynamic(pre=pre, pos=pos)
+        post = post_from(pre, preview)
+        verified = verify_existing_cue_dynamic_program_merge(preview, post)
+        self.assertEqual(verified["status"], "VERIFIED")
+        self.assertEqual(verified["position_value_matches"], 16)
+        self.assertEqual(verified["effect_fixture_matches"], 6)
+        self.assertEqual(verified["protected_content"], "UNCHANGED")
 
-    def test_effect_creation_without_cue_application_is_noncompliant(self):
-        preview = build()
-        preview["cue_updates"] = []
-        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "CUE_APPLICATIONS_MISSING"):
-            commands_from_preview(preview)
+    def test_static_dimmer_value_drift_is_not_hidden_by_effect_allowance(self):
+        pre = target_discovery()
+        pre["cues"][0]["parts"][0]["cue_data"].append(row("101", "DIM", 55))
+        preview = build_dynamic(pre=pre, pos=build_position(target=pre))
+        post = post_from(pre, preview)
+        for item in post["cues"][0]["parts"][0]["cue_data"]:
+            channel = item.get("channel") or {}
+            if channel.get("fixture_id") == "101" and channel.get("attribute_name") == "DIM" and (item.get("raw_values") or {}).get("Value") == "55":
+                item["raw_values"]["Value"] = "56"
+                break
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "PROTECTED_CONTENT_CHANGED"):
+            verify_existing_cue_dynamic_program_merge(preview, post)
 
-    def test_position_requested_without_position_is_noncompliant(self):
-        preview = build()
-        preview["cue_updates"][0]["fixtures"] = []
-        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "POSITION_APPLICATION_MISSING"):
-            commands_from_preview(preview)
+    def test_unplanned_color_or_effect_on_no_effect_cue_fails_closed(self):
+        pre = target_discovery()
+        preview = build_dynamic(pre=pre, pos=build_position(target=pre))
+        post = post_from(pre, preview)
+        post["cues"][1]["parts"][0]["cue_data"].append(effect_row(101, 2502))
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "PROTECTED_CONTENT_CHANGED"):
+            verify_existing_cue_dynamic_program_merge(preview, post)
 
-    def test_native_postwrite_verification_separates_intended_and_protected(self):
-        preview = build()
-        result = verify_existing_cue_dynamic_program_merge(preview, profile(), post_discovery(preview))
-        self.assertEqual(result["status"], "VERIFIED")
-        self.assertEqual(result["cue_count"], 29)
-        self.assertEqual(result["position_value_matches"], 29 * 8 * 2)
-        self.assertGreater(result["effect_fixture_matches"], 0)
-        self.assertEqual(result["protected_content"], "UNCHANGED")
-
-    def test_operator_stage_evidence_scales_but_fixture_limits_still_bound(self):
-        preview = build()
-        self.assertEqual(preview["position_amplitude"]["scale"], 1.5)
-        wide = next(item for item in preview["cue_updates"] if item["position_pattern"] == "WIDE_FAN")
-        self.assertAlmostEqual(max(abs(row["delta_pan"]) for row in wide["fixtures"]), 18.0)
-        bad = stage_evidence()
-        bad["recommended_scale"] = 3.0
-        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "SCALE_INVALID"):
-            build(stage_view_evidence=bad)
+    def test_effect_metadata_is_the_only_scrubbed_nonposition_family(self):
+        pre = target_discovery()
+        preview = build_dynamic(pre=pre, pos=build_position(target=pre))
+        post = post_from(pre, preview)
+        effects_map = {int(k): v for k, v in preview["cue_effects"].items()}
+        before = protected_content_snapshot(pre, cue_effects=effects_map, target_fixture_refs=preview["group"]["exact_refs"])
+        after = protected_content_snapshot(post, cue_effects=effects_map, target_fixture_refs=preview["group"]["exact_refs"])
+        self.assertEqual(before["sha256"], after["sha256"])
 
 
 if __name__ == "__main__":

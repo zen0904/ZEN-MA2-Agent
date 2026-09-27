@@ -9,6 +9,7 @@ from .artistic_plan import ArtisticPlanCompileError, compile_artistic_cue_plan
 from ..artistic_resources import (
     SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL,
     SHOW_BOUND_VERIFIED_FIXTURE_TYPE_CAPABILITY,
+    capability_status_from_map,
     effect_applicability_from_map,
     model_resource_contract,
     preset_applicability_from_map,
@@ -133,6 +134,22 @@ def canonicalize_provider_artistic_shape(value: Mapping[str, Any]) -> dict[str, 
     for cue_index, cue in enumerate(cues, start=1):
         if not isinstance(cue, Mapping):
             continue
+        capability_intent = cue.get("capability_intent")
+        if isinstance(capability_intent, list):
+            for intent_index, item in enumerate(capability_intent, start=1):
+                if not isinstance(item, dict) or "group_id" not in item:
+                    continue
+                alias = item.get("group_id")
+                if not isinstance(alias, int) or isinstance(alias, bool):
+                    raise ArtisticPlanCompileError(
+                        f"Cue {cue_index} capability intent {intent_index} group_id alias must be an integer."
+                    )
+                if "group" in item and item.get("group") != alias:
+                    raise ArtisticPlanCompileError(
+                        f"Cue {cue_index} capability intent {intent_index} contains conflicting Group identities."
+                    )
+                item["group"] = alias
+                item.pop("group_id", None)
         actions = cue.get("actions")
         if not isinstance(actions, list):
             continue
@@ -160,6 +177,7 @@ def compile_lean_artistic_intent(
     resource_map: Mapping[str, Any],
     active_sequence_range: tuple[int, int] = (1, 9999),
     target_executor: str = "2.001",
+    cue_labels: list[str] | tuple[str, ...] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     if not isinstance(request, str) or not request.strip() or len(request) > 2048:
         raise ArtisticPlanCompileError("Lean design request must be a non-empty bounded string.")
@@ -200,6 +218,8 @@ def compile_lean_artistic_intent(
         verified_preset_applicability=preset_applicability_from_map(resource_map),
         verified_effect_applicability=effect_applicability,
         verified_dimmer_applicability=dimmer_applicability,
+        verified_capability_status=capability_status_from_map(resource_map),
+        cue_labels=cue_labels,
     )
     return attach_verified_effect_identity_labels(plan, resource_map), audit
 

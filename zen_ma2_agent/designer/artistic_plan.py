@@ -16,6 +16,7 @@ import re
 from typing import Any, Iterable, Mapping
 
 from .schema import ShowPlanSchemaError, validate_show_plan
+from ..artistic_capabilities import ARTISTIC_DIMENSIONS, CAPABILITY_INTENT_USES
 
 
 class ArtisticPlanCompileError(ValueError):
@@ -263,6 +264,75 @@ def _compile_action(
     )
 
 
+
+
+_POSITION_PATTERNS = frozenset({
+    "CENTER", "LEFT", "RIGHT", "FRONT", "UPSTAGE", "NARROW_FAN",
+    "WIDE_FAN", "CROSS", "ALTERNATE", "EXPLODE", "COLLAPSE",
+})
+
+def _position_intent(source_cue: Mapping[str, Any]) -> tuple[str | None, float | None]:
+    raw_pattern = source_cue.get("position_pattern")
+    pattern = str(raw_pattern).strip().upper() if raw_pattern is not None else None
+    if pattern is not None and pattern not in _POSITION_PATTERNS:
+        raise ArtisticPlanCompileError(f"Unsupported Position pattern: {pattern}.")
+    raw_scale = source_cue.get("position_scale")
+    if raw_scale is None:
+        return pattern, None
+    if isinstance(raw_scale, bool) or not isinstance(raw_scale, (int, float)):
+        raise ArtisticPlanCompileError("Position scale must be numeric.")
+    scale = float(raw_scale)
+    if not math.isfinite(scale) or not 0.5 <= scale <= 2.5:
+        raise ArtisticPlanCompileError("Position scale must be within 0.5..2.5.")
+    return pattern, scale
+
+def _compile_capability_intent(
+    value: object,
+    *,
+    verified_group_ids: set[int],
+    verified_capability_status: Mapping[int, Mapping[str, Mapping[str, str]]] | None,
+) -> list[dict[str, object]]:
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise ArtisticPlanCompileError("Cue capability_intent must be a list.")
+    compiled: list[dict[str, object]] = []
+    for index, item in enumerate(value, start=1):
+        if not isinstance(item, Mapping):
+            raise ArtisticPlanCompileError(f"Capability intent {index} must be an object.")
+        group = _group_id(item.get("group"), verified_group_ids)
+        dimension = str(item.get("dimension") or "").strip().upper()
+        use = str(item.get("use") or "").strip().upper()
+        reason = str(item.get("reason") or "").strip()
+        if dimension not in ARTISTIC_DIMENSIONS:
+            raise ArtisticPlanCompileError(f"Unsupported artistic capability dimension: {dimension or '<empty>'}.")
+        if use not in CAPABILITY_INTENT_USES:
+            raise ArtisticPlanCompileError(f"Capability intent use must be one of {sorted(CAPABILITY_INTENT_USES)}.")
+        if len(reason) > 512:
+            raise ArtisticPlanCompileError("Capability intent reason exceeds 512 characters.")
+        evidence = (verified_capability_status or {}).get(group, {}).get(dimension, {})
+        technical_status = str(evidence.get("technical_status") or "UNKNOWN")
+        execution_status = str(evidence.get("execution_status") or "NO_VERIFIED_RESOURCE")
+        if use in {"USE", "OPTIONAL"} and verified_capability_status is not None and technical_status != "SHOW_BOUND_VERIFIED":
+            raise ArtisticPlanCompileError(
+                f"{dimension} technical capability is not SHOW_BOUND_VERIFIED for Group {group}."
+            )
+        compiled.append({
+            "group": group,
+            "dimension": dimension,
+            "use": use,
+            "reason": reason,
+            "technical_status": technical_status,
+            "execution_status": execution_status,
+            "execution_authorized": execution_status in {
+                "VERIFIED_PRESET_RESOURCE",
+                "VERIFIED_EFFECT_RESOURCE",
+                "SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL",
+                "SHOW_BOUND_VERIFIED_FIXTURE_TYPE_CAPABILITY",
+            },
+        })
+    return compiled
+
 def _cue_labels(
     provider_cues: list[object],
     supplied: Iterable[str] | None,
@@ -298,6 +368,7 @@ def compile_artistic_cue_plan(
     verified_preset_applicability: Mapping[int, Iterable[str]] | None = None,
     verified_effect_applicability: Mapping[int, Iterable[int]] | None = None,
     verified_dimmer_applicability: Mapping[int, Any] | None = None,
+    verified_capability_status: Mapping[int, Mapping[str, Mapping[str, str]]] | None = None,
     cue_labels: Iterable[str] | None = None,
 ) -> tuple[dict[str, Any], dict[str, object]]:
     """Compile provider art intent into strict zen.show_plan.v0.1.
@@ -362,13 +433,26 @@ def compile_artistic_cue_plan(
             )
             for item in actions
         ]
-        compiled_cues.append({
+        position_pattern, position_scale = _position_intent(source_cue)
+        capability_intent = _compile_capability_intent(
+            source_cue.get("capability_intent"),
+            verified_group_ids=verified_group_ids,
+            verified_capability_status=verified_capability_status,
+        )
+        compiled_cue = {
             "id": f"cue_{index:03d}",
             "cue_number": index,
             "label": labels[index - 1],
             "fade": _fade(source_cue.get("fade")),
             "actions": compiled_actions,
-        })
+        }
+        if position_pattern is not None:
+            compiled_cue["position_pattern"] = position_pattern
+        if position_scale is not None:
+            compiled_cue["position_scale"] = position_scale
+        if capability_intent:
+            compiled_cue["capability_intent"] = capability_intent
+        compiled_cues.append(compiled_cue)
 
     compiled: dict[str, Any] = {
         "schema": "zen.show_plan.v0.1",
@@ -392,7 +476,10 @@ def compile_artistic_cue_plan(
             "cues[].id",
             "cues[].cue_number",
         ],
-        "provider_owned_fields": ["cues[].fade", "cues[].actions"],
+        "provider_owned_fields": [
+            "cues[].fade", "cues[].actions", "cues[].capability_intent",
+            "cues[].position_pattern", "cues[].position_scale",
+        ],
         "supported_compact_dimensions": [
             "DIMMER",
             "PRESET",
@@ -403,6 +490,8 @@ def compile_artistic_cue_plan(
             "GOBO_PRESET",
             "EFFECT",
         ],
+        "artistic_capability_intents_preserved": True,
+        "capability_execution_is_separate_from_intent": True,
         "cue_labels_source": "CALLER" if cue_labels is not None else "PROVIDER_OR_GENERIC",
         "legacy_typed_actions_accepted": True,
         "preset_applicability_enforced": preset_applicability is not None,

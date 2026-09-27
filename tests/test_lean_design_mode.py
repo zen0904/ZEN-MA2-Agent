@@ -136,6 +136,21 @@ class LeanDesignModeTests(unittest.TestCase):
         self.assertEqual({row["effect_id"] for row in context["relevant_effects"]}, {3520})
         self.assertEqual(delta["delta_revision_call_budget"], 1)
 
+    def test_delta_context_preserves_capability_intent_and_its_group_scope(self):
+        plan = json.loads(json.dumps(self.plan))
+        plan["cues"][3]["capability_intent"] = [
+            {"group": 1, "dimension": "PRISM", "use": "OPTIONAL", "reason": "impact option"}
+        ]
+        delta = build_delta_revision_context(
+            accepted_artistic_plan=plan,
+            owner_revision_text="Cue 4 is too full before the drop.",
+            groups=self.groups, presets=self.presets, effects=self.effects,
+        )
+        context = delta["context"]
+        cue4 = next(cue for cue in context["accepted_artistic_plan"]["cues"] if cue["cue_number"] == 4)
+        self.assertEqual(cue4["capability_intent"][0]["dimension"], "PRISM")
+        self.assertEqual({row["group_id"] for row in context["relevant_groups"]}, {1, 2})
+
     def test_label_can_select_revision_region(self):
         delta = build_delta_revision_context(
             accepted_artistic_plan=self.plan,

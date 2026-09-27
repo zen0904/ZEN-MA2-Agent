@@ -118,6 +118,11 @@ class LeanDesignAdapterTests(unittest.TestCase):
         self.assertIn("Never emit MA2 commands", call["system"])
         self.assertIn("exact field `group`", call["system"])
         self.assertIn("Never use `group_id`", call["system"])
+        self.assertIn("capability_intent", call["system"])
+        self.assertIn("PRISM/PRISM_ROTATION", call["system"])
+        normalized_prompt = " ".join(call["system"].split())
+        self.assertIn("do not use a capability merely because the fixture has it", normalized_prompt)
+        self.assertIn("DO NOT invent an action or raw Attribute value", call["system"])
         payload = json.loads(call["user"])
         self.assertEqual(payload["request"], "make this song dramatic")
         self.assertEqual(

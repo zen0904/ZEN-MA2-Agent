@@ -612,9 +612,71 @@ def build_existing_position_merge_preview(
     return proposal
 
 
+
+def retarget_position_preview(
+    preview: Mapping[str, Any],
+    cue_position_intent: Mapping[int, Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Apply explicit artistic Position patterns to an existing safe preview.
+
+    This remains a relative raw/natural MA-value language. It does not claim
+    degrees, physical target points, or visible-stage semantics.
+    """
+    if preview.get("schema") != PREVIEW_SCHEMA:
+        raise ExistingPositionMergeError("POSITION_MERGE_PREVIEW_SCHEMA_INVALID")
+    result = json.loads(json.dumps(preview))
+    updates = result.get("cue_updates")
+    baseline = result.get("baseline", {}).get("values_by_fixture")
+    limits = result.get("fixture_limits")
+    if not isinstance(updates, list) or not isinstance(baseline, Mapping) or not isinstance(limits, Mapping):
+        raise ExistingPositionMergeError("POSITION_MERGE_PREVIEW_INVALID")
+    for update in updates:
+        number = update.get("cue_number")
+        intent = cue_position_intent.get(number) if isinstance(number, int) else None
+        if not isinstance(intent, Mapping):
+            continue
+        pattern = str(intent.get("pattern") or update.get("pattern") or "").upper()
+        scale_raw = intent.get("scale", 1.0)
+        if isinstance(scale_raw, bool) or not isinstance(scale_raw, (int, float)):
+            raise ExistingPositionMergeError("POSITION_SCALE_INVALID")
+        scale = float(scale_raw)
+        if not math.isfinite(scale) or not 0.5 <= scale <= 2.5:
+            raise ExistingPositionMergeError("POSITION_SCALE_INVALID")
+        fixtures = update.get("fixtures")
+        if not isinstance(fixtures, list) or not fixtures:
+            raise ExistingPositionMergeError("POSITION_MERGE_CUE_INVALID")
+        offsets = _pattern_offsets(pattern, len(fixtures))
+        for fixture, (dpan0, dtilt0) in zip(fixtures, offsets):
+            ref = str(fixture.get("fixture_ref") or "")
+            base = baseline.get(ref)
+            bound = limits.get(ref)
+            if not isinstance(base, Mapping) or not isinstance(bound, Mapping):
+                raise ExistingPositionMergeError("POSITION_MERGE_FIXTURE_EVIDENCE_MISSING")
+            dpan, dtilt = dpan0 * scale, dtilt0 * scale
+            fixture.update({
+                "baseline_pan": float(base["pan"]),
+                "baseline_tilt": float(base["tilt"]),
+                "delta_pan": dpan,
+                "delta_tilt": dtilt,
+                "pan": _bounded_value(float(base["pan"]), dpan, tuple(bound["pan"])),
+                "tilt": _bounded_value(float(base["tilt"]), dtilt, tuple(bound["tilt"])),
+            })
+        update["pattern"] = pattern
+        update["scale"] = scale
+        update["pattern_source"] = "ARTISTIC_PLAN"
+    commands = commands_from_preview(result)
+    result["command_count"] = len(commands)
+    result["command_plan_sha256"] = hashlib.sha256("\n".join(commands).encode("ascii")).hexdigest()
+    result.pop("preview_id", None)
+    canonical = json.dumps(result, sort_keys=True, ensure_ascii=True, separators=(",", ":")).encode("ascii")
+    result["preview_id"] = hashlib.sha256(canonical).hexdigest()[:16]
+    return result
+
 def verify_existing_position_merge(
     preview: Mapping[str, Any],
     post_discovery: Mapping[str, Any],
+    *,
+    verify_non_position: bool = True,
 ) -> dict[str, Any]:
     if preview.get("schema") != PREVIEW_SCHEMA:
         raise ExistingPositionMergeError("POSITION_MERGE_PREVIEW_SCHEMA_INVALID")
@@ -625,9 +687,10 @@ def verify_existing_position_merge(
     if not isinstance(updates, list) or not updates:
         raise ExistingPositionMergeError("POSITION_MERGE_PREVIEW_CUES_INVALID")
     wanted = [int(cue["cue_number"]) for cue in updates]
-    post_non_position = non_position_snapshot(post_discovery, wanted)
-    if post_non_position["sha256"] != preview["target_sequence"]["pre_non_position_sha256"]:
-        raise ExistingPositionMergeError("POSITION_MERGE_NON_POSITION_CONTENT_CHANGED")
+    if verify_non_position:
+        post_non_position = non_position_snapshot(post_discovery, wanted)
+        if post_non_position["sha256"] != preview["target_sequence"]["pre_non_position_sha256"]:
+            raise ExistingPositionMergeError("POSITION_MERGE_NON_POSITION_CONTENT_CHANGED")
 
     cues = {
         _cue_number(cue): cue
@@ -698,7 +761,7 @@ def verify_existing_position_merge(
         "sequence": sequence,
         "cue_count": len(updates),
         "position_value_matches": matched,
-        "non_position_content": "UNCHANGED",
+        "non_position_content": "UNCHANGED" if verify_non_position else "VERIFIED_BY_COMPOSITE_CALLER",
         "cue_labels": "UNCHANGED",
         "post_export_sha256": (post_discovery.get("xml_discovery") or {}).get("sha256"),
     }

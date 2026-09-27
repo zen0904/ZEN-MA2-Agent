@@ -1,507 +1,376 @@
-"""Bounded Effect + Position merge for verified existing grandMA2 Cues.
+"""Bounded existing-Cue Position + Effect composite merge.
 
-This capability consumes an explicit artistic per-Cue plan plus fresh native
-Sequence, Group, Effect, geometry and Position-calibration evidence.  It can
-only emit the real-machine-verified ``Group <n>; At Effect <n>`` grammar and
-explicit PAN/TILT values followed by ``Store Cue ... /merge /cueonly``.
-
-It never allocates or creates a Sequence, Effect, Group, Executor or fixture,
-and it is not a generic MA command interface.
+This capability exists specifically to close the gap between artistic per-Cue
+dynamic intent and the already verified grandMA2 application grammars. It does
+not allocate Sequences, create Effects, assign Executors, or expose a generic MA
+command interface.
 """
 from __future__ import annotations
 
-import copy
+from copy import deepcopy
 import hashlib
 import json
-import math
 import re
 from typing import Any, Mapping, Sequence
 
+from .cue_content_verifier import verify_cue_content
 from .cue_effect_application import cue_effect_capability_is_content_verified
 from .models import Intent
-from .position_application_evidence import _canonical_position_row_ref
 from .position_existing_cue_merge import (
     ExistingPositionMergeError,
-    _bounded_value,
-    _cue_label,
-    _cue_number,
-    _cue_rows,
+    _POSITION_FAMILY_ATTRS,
     _fmt,
-    _pattern_offsets,
-    _row_attribute,
-    build_existing_position_merge_preview,
+    retarget_position_preview,
+    verify_existing_position_merge,
 )
 from .workflow import ActionStep, SkillGraphNode, Subtask, Task, WorkflowPlan
 
-
-PREVIEW_SCHEMA = "zen.existing_cue_dynamic_program_merge_preview.v0.1"
+PREVIEW_SCHEMA = "zen.existing_cue_dynamic_program_merge.v0.1"
 VERIFY_SCHEMA = "zen.existing_cue_dynamic_program_merge_verification.v0.1"
-_SHA256 = re.compile(r"[0-9a-f]{64}\Z")
-_POSITION_FAMILY = {
-    "PAN", "TILT", "VIRTUAL_POSITION_MODE", "MARK", "STAGEX", "STAGEY",
-    "STAGEZ", "FLIP", "DIST",
-}
-_DYNAMIC_INTENTS = {
-    "DIMMER_CHASE_SLOW", "DIMMER_CHASE_MED", "DIMMER_CHASE_FAST",
-    "ALTERNATE", "PULSE", "HIT", "BUILD",
-}
-_NO_EFFECT_INTENTS = {"STATIC_LOOK", "RELEASE", "BLACKOUT", "RESET"}
-_POSITION_PATTERNS = {
-    "CENTER", "LEFT", "RIGHT", "FRONT", "UPSTAGE", "NARROW_FAN",
-    "WIDE_FAN", "CROSS", "ALTERNATE", "EXPLODE", "COLLAPSE",
-}
 
 
 class ExistingCueDynamicProgramMergeError(ValueError):
     pass
 
 
-def _require_sha(value: object, code: str) -> str:
-    if not isinstance(value, str) or not _SHA256.fullmatch(value):
-        raise ExistingCueDynamicProgramMergeError(code)
-    return value
+def _cue_number(cue: Mapping[str, Any]) -> int:
+    value = cue.get("number")
+    if not isinstance(value, Mapping):
+        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_CUE_NUMBER_MISSING")
+    raw = value.get("number")
+    sub = value.get("sub_number")
+    if not str(raw).isdigit() or sub not in (None, "", "0", 0):
+        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_CUE_NUMBER_INVALID")
+    return int(raw)
 
 
-def _show_identity(profile: Mapping[str, Any]) -> Mapping[str, Any]:
-    identity = profile.get("show_identity")
-    if not isinstance(identity, Mapping) or not identity.get("value"):
-        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_SHOW_IDENTITY_UNAVAILABLE")
-    return identity
+def _cue_label(cue: Mapping[str, Any]) -> str:
+    parts = cue.get("parts")
+    if not isinstance(parts, list) or not parts or not isinstance(parts[0], Mapping):
+        return ""
+    return str(parts[0].get("name") or "")
 
 
-def _effect_id(row: Mapping[str, Any]) -> int | None:
-    effect = row.get("effect")
-    parts = effect.get("no_components") if isinstance(effect, Mapping) else None
-    if not isinstance(parts, list) or not parts:
-        return None
-    last = str(parts[-1])
-    return int(last) if last.isdigit() and int(last) > 0 else None
+def _row_attr(row: Mapping[str, Any]) -> str:
+    channel = row.get("channel")
+    return str(channel.get("attribute_name") or "").upper() if isinstance(channel, Mapping) else ""
 
 
-def _canonical_ref(profile: Mapping[str, Any], row: Mapping[str, Any]) -> str | None:
+def _row_root_fixture(row: Mapping[str, Any]) -> str | None:
     channel = row.get("channel")
     if not isinstance(channel, Mapping):
         return None
-    try:
-        return _canonical_position_row_ref(profile, channel)
-    except Exception:
-        fixture = channel.get("fixture_id")
-        sub = channel.get("subfixture_id")
-        if not str(fixture).isdigit():
-            return None
-        result = str(int(str(fixture)))
-        if sub not in (None, "") and str(sub).isdigit():
-            result += f".{int(str(sub))}"
-        return result
+    raw = channel.get("fixture_id")
+    if raw is None or not str(raw).isdigit():
+        return None
+    return str(int(raw))
 
 
-def _effect_resources(
-    profile: Mapping[str, Any],
-    resources: Sequence[Mapping[str, Any]],
+def _canonical_sha(value: object) -> str:
+    raw = json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":")).encode("ascii")
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _normalize_protected_row(
+    row: Mapping[str, Any],
     *,
-    group_id: int,
-) -> dict[int, dict[str, Any]]:
-    identity = _show_identity(profile)
-    inventory = {
-        item.get("effect_id"): item
-        for item in profile.get("effects", [])
-        if isinstance(item, Mapping)
-        and isinstance(item.get("effect_id"), int)
-        and not isinstance(item.get("effect_id"), bool)
-    }
-    result: dict[int, dict[str, Any]] = {}
-    for item in resources:
-        effect_id = item.get("effect_id")
-        if isinstance(effect_id, bool) or not isinstance(effect_id, int) or effect_id < 1:
-            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_EFFECT_ID_INVALID")
-        current = inventory.get(effect_id)
-        if not isinstance(current, Mapping) or current.get("name") != item.get("label"):
-            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_EFFECT_FRESH_LIST_MISMATCH")
-        if (
-            item.get("fresh") is not True
-            or item.get("ownership") != "ZEN_AGENT"
-            or item.get("show_identity") != identity
-            or item.get("group_id") != group_id
-        ):
-            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_EFFECT_EVIDENCE_STALE")
-        _require_sha(item.get("list_effect_sha256"), "DYNAMIC_MERGE_EFFECT_LIST_SHA_INVALID")
-        _require_sha(item.get("catalog_sha256"), "DYNAMIC_MERGE_EFFECT_CATALOG_SHA_INVALID")
-        result[effect_id] = dict(item)
-    if not result:
-        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_EFFECT_RESOURCES_EMPTY")
-    return result
+    effect_change_allowed: bool,
+) -> dict[str, Any] | None:
+    if _row_attr(row) in _POSITION_FAMILY_ATTRS:
+        return None
+    normalized = deepcopy(dict(row))
+    if not effect_change_allowed:
+        return normalized
+
+    # Effect application is allowed to alter only Effect identity and Effect*
+    # metadata. Static Value/Fade/Delay, Preset identity, channel identity and
+    # all unrelated attributes remain protected.
+    normalized.pop("effect", None)
+    raw_values = normalized.get("raw_values")
+    if isinstance(raw_values, dict):
+        normalized["raw_values"] = {
+            key: value for key, value in raw_values.items()
+            if not str(key).startswith("Effect")
+        }
+    multipart = normalized.get("multipart_indexes")
+    if isinstance(multipart, dict):
+        normalized["multipart_indexes"] = {
+            key: value for key, value in multipart.items() if key != "effect"
+        }
+
+    meaningful_raw = normalized.get("raw_values")
+    preset = normalized.get("preset")
+    if (not isinstance(meaningful_raw, Mapping) or not meaningful_raw) and preset in (None, {}, []):
+        # A post-write row that exists solely to carry Effect metadata is an
+        # intended representation and must not create a false preservation diff.
+        return None
+    return normalized
 
 
-def _cue_map(discovery: Mapping[str, Any], sequence_no: int) -> dict[int, Mapping[str, Any]]:
-    if (
-        discovery.get("schema") != "zen.sequence_export_discovery.v0.1"
-        or discovery.get("status") != "VERIFIED"
-        or discovery.get("sequence_no") != sequence_no
-    ):
-        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_SEQUENCE_EXPORT_NOT_FRESH_VERIFIED")
-    _require_sha(
-        (discovery.get("xml_discovery") or {}).get("sha256"),
-        "DYNAMIC_MERGE_SEQUENCE_EXPORT_SHA_INVALID",
-    )
-    result: dict[int, Mapping[str, Any]] = {}
-    for cue in discovery.get("cues", []):
-        if not isinstance(cue, Mapping):
-            continue
-        number = _cue_number(cue)
-        if number in result:
-            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_DUPLICATE_CUE")
-        result[number] = cue
-    return result
-
-
-def _protected_snapshot(
-    profile: Mapping[str, Any],
+def protected_content_snapshot(
     discovery: Mapping[str, Any],
-    cue_plan: Sequence[Mapping[str, Any]],
-    exact_refs: Sequence[str],
+    *,
+    cue_effects: Mapping[int, Mapping[str, Any] | None],
+    target_fixture_refs: Sequence[str],
 ) -> dict[str, Any]:
-    planned_effect_cues = {
-        int(item["cue_number"])
-        for item in cue_plan
-        if item.get("effect_id") is not None
-    }
-    exact = set(exact_refs)
+    target_roots = {str(ref).split(".", 1)[0] for ref in target_fixture_refs}
     rows: list[dict[str, Any]] = []
-    by_cue: dict[str, str] = {}
-    for cue in discovery.get("cues", []):
+    for cue in discovery.get("cues", []) if isinstance(discovery.get("cues"), list) else []:
         if not isinstance(cue, Mapping):
             continue
         number = _cue_number(cue)
-        planned = next((item for item in cue_plan if item.get("cue_number") == number), None)
-        if planned is None:
+        if number not in cue_effects:
             continue
-        parts: list[dict[str, Any]] = []
-        for part in cue.get("parts", []):
+        allow_effect = cue_effects[number] is not None
+        parts_out = []
+        for part in cue.get("parts", []) if isinstance(cue.get("parts"), list) else []:
             if not isinstance(part, Mapping):
                 continue
-            kept: list[dict[str, Any]] = []
-            for source in part.get("cue_data", []):
-                if not isinstance(source, Mapping):
+            normalized_rows = []
+            for row in part.get("cue_data", []) if isinstance(part.get("cue_data"), list) else []:
+                if not isinstance(row, Mapping):
                     continue
-                if _row_attribute(source) in _POSITION_FAMILY:
-                    continue
-                row = copy.deepcopy(dict(source))
-                if number in planned_effect_cues and _canonical_ref(profile, row) in exact:
-                    row.pop("effect", None)
-                kept.append(row)
-            parts.append({
+                row_effect_allowed = allow_effect and _row_root_fixture(row) in target_roots
+                normalized = _normalize_protected_row(row, effect_change_allowed=row_effect_allowed)
+                if normalized is not None:
+                    normalized_rows.append(normalized)
+            normalized_rows.sort(key=lambda item: json.dumps(item, sort_keys=True, ensure_ascii=True, separators=(",", ":")))
+            parts_out.append({
                 "index": part.get("index"),
                 "name": part.get("name"),
-                "cue_data": kept,
+                "cue_data": normalized_rows,
             })
-        cue_snapshot = {"cue_number": number, "parts": parts}
-        rows.append(cue_snapshot)
-        cue_canonical = json.dumps(
-            cue_snapshot, sort_keys=True, ensure_ascii=True, separators=(",", ":")
-        ).encode("ascii")
-        by_cue[str(number)] = hashlib.sha256(cue_canonical).hexdigest()
+        rows.append({"cue_number": number, "parts": parts_out})
     rows.sort(key=lambda item: item["cue_number"])
-    canonical = json.dumps(rows, sort_keys=True, ensure_ascii=True, separators=(",", ":")).encode("ascii")
-    return {
-        "rows": rows,
-        "sha256": hashlib.sha256(canonical).hexdigest(),
-        "by_cue": by_cue,
-    }
+    return {"rows": rows, "sha256": _canonical_sha(rows)}
 
 
-def _effects_by_cue_ref(
-    profile: Mapping[str, Any],
-    discovery: Mapping[str, Any],
-    cue_numbers: Sequence[int],
-    exact_refs: Sequence[str],
-) -> dict[str, dict[str, list[int]]]:
-    wanted = set(cue_numbers)
-    exact = set(exact_refs)
-    result: dict[str, dict[str, set[int]]] = {
-        str(number): {ref: set() for ref in exact_refs} for number in cue_numbers
-    }
-    for cue in discovery.get("cues", []):
-        if not isinstance(cue, Mapping):
+def _effect_inventory(
+    verified_effects_by_group: Mapping[int, Mapping[int, str]],
+    group_id: int,
+) -> dict[int, str]:
+    raw = verified_effects_by_group.get(group_id)
+    if not isinstance(raw, Mapping):
+        return {}
+    result: dict[int, str] = {}
+    for key, label in raw.items():
+        if isinstance(key, bool) or not isinstance(key, int) or key < 1:
             continue
-        number = _cue_number(cue)
-        if number not in wanted:
-            continue
-        for row in _cue_rows(cue):
-            ref = _canonical_ref(profile, row)
-            effect = _effect_id(row)
-            if ref in exact and effect is not None:
-                result[str(number)][ref].add(effect)
-    return {
-        number: {ref: sorted(values) for ref, values in refs.items()}
-        for number, refs in result.items()
-    }
-
-
-def _scaled_position_updates(
-    position_preview: Mapping[str, Any],
-    cue_plan: Sequence[Mapping[str, Any]],
-    scale: float,
-) -> list[dict[str, Any]]:
-    baseline = position_preview["baseline"]["values_by_fixture"]
-    limits = position_preview["fixture_limits"]
-    refs = list(position_preview["group"]["exact_refs"])
-    result: list[dict[str, Any]] = []
-    by_number = {int(row["cue_number"]): row for row in cue_plan}
-    for original in position_preview["cue_updates"]:
-        number = int(original["cue_number"])
-        plan = by_number[number]
-        pattern = str(plan["position_pattern"])
-        offsets = _pattern_offsets(pattern, len(refs))
-        fixture_rows = []
-        for ref, (raw_pan, raw_tilt) in zip(refs, offsets):
-            dpan, dtilt = raw_pan * scale, raw_tilt * scale
-            base = baseline[ref]
-            pan_bounds = tuple(float(value) for value in limits[ref]["pan"])
-            tilt_bounds = tuple(float(value) for value in limits[ref]["tilt"])
-            pan = _bounded_value(float(base["pan"]), dpan, pan_bounds)
-            tilt = _bounded_value(float(base["tilt"]), dtilt, tilt_bounds)
-            fixture_rows.append({
-                "fixture_ref": ref,
-                "baseline_pan": float(base["pan"]),
-                "baseline_tilt": float(base["tilt"]),
-                "delta_pan": dpan,
-                "delta_tilt": dtilt,
-                "pan": pan,
-                "tilt": tilt,
-            })
-        result.append({
-            "cue_number": number,
-            "cue_label": original["cue_label"],
-            "effect_intent": plan["effect_intent"],
-            "effect_id": plan.get("effect_id"),
-            "target_group": position_preview["group"]["id"],
-            "position_pattern": pattern,
-            "expected_pan_range": [
-                min(item["pan"] for item in fixture_rows),
-                max(item["pan"] for item in fixture_rows),
-            ],
-            "expected_tilt_range": [
-                min(item["tilt"] for item in fixture_rows),
-                max(item["tilt"] for item in fixture_rows),
-            ],
-            "intended_attribute_families_changed": [
-                "POSITION", *( ["EFFECT"] if plan.get("effect_id") is not None else [] )
-            ],
-            "fixtures": fixture_rows,
-        })
+        text = str(label or "").strip()
+        if text:
+            result[key] = text
     return result
 
 
 def build_existing_cue_dynamic_program_preview(
-    profile: Mapping[str, Any],
     *,
-    target_discovery: Mapping[str, Any],
-    calibration_discovery: Mapping[str, Any],
-    position_binding: Mapping[str, Any],
-    effect_application_capability: Mapping[str, Any],
-    effect_resources: Sequence[Mapping[str, Any]],
-    artistic_cue_plan: Sequence[Mapping[str, Any]],
-    stage_view_evidence: Mapping[str, Any],
-    sequence_no: int,
-    group_id: int,
-    cue_start: int,
-    cue_end: int,
-    executor_assignments: Sequence[Mapping[str, Any]] = (),
-    cue_metadata: Sequence[Mapping[str, Any]] = (),
+    position_preview: Mapping[str, Any],
+    pre_discovery: Mapping[str, Any],
+    artistic_plan: Mapping[str, Any],
+    verified_effects_by_group: Mapping[int, Mapping[int, str]],
+    effect_application_capability: object,
+    require_effect_variation: bool = True,
+    require_explicit_position: bool = True,
 ) -> dict[str, Any]:
-    if not cue_effect_capability_is_content_verified(dict(effect_application_capability)):
-        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_EFFECT_GRAMMAR_NOT_VERIFIED")
-    group_rows = [
-        row for row in profile.get("groups", [])
-        if isinstance(row, Mapping) and row.get("group_id") == group_id
-    ]
-    if len(group_rows) != 1:
-        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_GROUP_EVIDENCE_UNAVAILABLE")
-    if any(str(ref).split(".", 1)[0] == "9999" for ref in group_rows[0].get("fixture_refs_in_selection_order", [])):
-        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_FIXTURE_9999_FORBIDDEN")
-    cues = _cue_map(target_discovery, sequence_no)
-    wanted = list(range(cue_start, cue_end + 1))
-    if set(cues) < set(wanted):
-        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_CUE_RANGE_INCOMPLETE")
-    plan_by_number = {
-        item.get("cue_number"): item
-        for item in artistic_cue_plan
-        if isinstance(item, Mapping)
-    }
-    if set(plan_by_number) != set(wanted) or len(artistic_cue_plan) != len(wanted):
-        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_ARTISTIC_PLAN_MUST_COVER_EVERY_CUE")
-    resources = _effect_resources(profile, effect_resources, group_id=group_id)
-    for number in wanted:
-        item = plan_by_number[number]
-        intent = item.get("effect_intent")
-        pattern = item.get("position_pattern")
-        if intent not in _DYNAMIC_INTENTS | _NO_EFFECT_INTENTS:
-            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_EFFECT_INTENT_UNKNOWN")
-        if pattern not in _POSITION_PATTERNS:
-            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_POSITION_PATTERN_UNKNOWN")
-        effect_id = item.get("effect_id")
-        if intent in _DYNAMIC_INTENTS and effect_id not in resources:
-            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_DYNAMIC_CUE_REQUIRES_VERIFIED_EFFECT")
-        if intent in _NO_EFFECT_INTENTS and effect_id is not None:
-            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_STATIC_CUE_MUST_NOT_ATTACH_EFFECT")
-        if item.get("cue_label") != _cue_label(cues[number]):
-            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_CUE_LABEL_MISMATCH")
-
+    if position_preview.get("schema") != "zen.position_existing_cue_merge_preview.v0.1":
+        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_POSITION_PREVIEW_INVALID")
+    target = position_preview.get("target_sequence")
+    group = position_preview.get("group")
+    if not isinstance(target, Mapping) or not isinstance(group, Mapping):
+        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_POSITION_PREVIEW_INVALID")
+    sequence = target.get("id")
+    group_id = group.get("id")
+    fixture_refs = group.get("exact_refs")
     if (
-        stage_view_evidence.get("capture_readable") is not True
-        or stage_view_evidence.get("stage_view_visible") is not True
-        or stage_view_evidence.get("operator_assessment") != "PRIOR_VARIATION_TOO_SMALL"
+        isinstance(sequence, bool) or not isinstance(sequence, int) or sequence < 1
+        or isinstance(group_id, bool) or not isinstance(group_id, int) or group_id < 1
+        or not isinstance(fixture_refs, list) or not fixture_refs
     ):
-        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_POSITION_SCALE_EVIDENCE_INSUFFICIENT")
-    _require_sha(stage_view_evidence.get("capture_sha256"), "DYNAMIC_MERGE_STAGE_CAPTURE_SHA_INVALID")
-    scale = stage_view_evidence.get("recommended_scale")
-    if isinstance(scale, bool) or not isinstance(scale, (int, float)) or not math.isfinite(float(scale)) or not 1.0 < float(scale) <= 2.5:
-        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_POSITION_SCALE_INVALID")
+        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_TARGET_INVALID")
+    if pre_discovery.get("status") != "VERIFIED" or pre_discovery.get("sequence_no") != sequence:
+        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_PRE_EXPORT_NOT_VERIFIED")
+    pre_sha = (pre_discovery.get("xml_discovery") or {}).get("sha256")
+    expected_pre_sha = target.get("pre_export_sha256")
+    if expected_pre_sha and pre_sha and expected_pre_sha != pre_sha:
+        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_PRE_EXPORT_IDENTITY_MISMATCH")
+    if not cue_effect_capability_is_content_verified(effect_application_capability):
+        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_EFFECT_APPLICATION_UNVERIFIED")
 
-    position_preview = build_existing_position_merge_preview(
-        profile,
-        target_discovery=target_discovery,
-        calibration_discovery=calibration_discovery,
-        binding=position_binding,
-        sequence_no=sequence_no,
-        group_id=group_id,
-        cue_start=cue_start,
-        cue_end=cue_end,
-        executor_assignments=executor_assignments,
-        cue_metadata=cue_metadata,
-    )
-    exact_refs = position_preview["group"]["exact_refs"]
-    if any(str(ref).split(".", 1)[0] == "9999" for ref in exact_refs):
-        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_FIXTURE_9999_FORBIDDEN")
-    updates = _scaled_position_updates(position_preview, artistic_cue_plan, float(scale))
-    protected = _protected_snapshot(profile, target_discovery, artistic_cue_plan, exact_refs)
-    pre_effects = _effects_by_cue_ref(
-        profile, target_discovery, wanted, exact_refs
-    )
-    plan_by_number = {int(item["cue_number"]): item for item in artistic_cue_plan}
-    for update in updates:
-        cue_no = int(update["cue_number"])
-        planned_replacements = plan_by_number[cue_no].get("replace_effect_ids", [])
-        if not isinstance(planned_replacements, list) or any(
-            isinstance(value, bool) or not isinstance(value, int) or value < 1
-            for value in planned_replacements
-        ):
-            raise ExistingCueDynamicProgramMergeError(
-                "DYNAMIC_MERGE_EFFECT_REPLACEMENT_PLAN_INVALID"
-            )
-        existing_ids = {
-            effect
-            for values in pre_effects[str(cue_no)].values()
-            for effect in values
-        }
-        if update.get("effect_id") is not None and existing_ids:
-            if set(planned_replacements) != existing_ids:
+    plan_cues = artistic_plan.get("cues")
+    if not isinstance(plan_cues, list) or not plan_cues:
+        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_ARTISTIC_PLAN_EMPTY")
+    position_updates = position_preview.get("cue_updates")
+    if not isinstance(position_updates, list) or not position_updates:
+        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_POSITION_CUES_EMPTY")
+    wanted = [int(row["cue_number"]) for row in position_updates]
+    by_number = {
+        cue.get("cue_number"): cue for cue in plan_cues
+        if isinstance(cue, Mapping) and isinstance(cue.get("cue_number"), int)
+    }
+    if set(by_number) != set(wanted):
+        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_CUE_SET_MISMATCH")
+
+    effects = _effect_inventory(verified_effects_by_group, group_id)
+    cue_effects: dict[int, dict[str, Any] | None] = {}
+    position_intent: dict[int, dict[str, Any]] = {}
+    cue_intents: dict[int, list[dict[str, Any]]] = {}
+    update_labels = {int(row["cue_number"]): str(row.get("cue_label") or "") for row in position_updates}
+
+    for number in wanted:
+        cue = by_number[number]
+        if str(cue.get("label") or "") != update_labels[number]:
+            raise ExistingCueDynamicProgramMergeError(f"DYNAMIC_MERGE_CUE_LABEL_MISMATCH_{number}")
+        pattern = cue.get("position_pattern")
+        scale = cue.get("position_scale", 1.0)
+        if require_explicit_position and not isinstance(pattern, str):
+            raise ExistingCueDynamicProgramMergeError(f"DYNAMIC_MERGE_POSITION_INTENT_MISSING_CUE_{number}")
+        if isinstance(pattern, str):
+            position_intent[number] = {"pattern": pattern, "scale": scale}
+
+        capability_intent = cue.get("capability_intent")
+        cue_intents[number] = deepcopy(capability_intent) if isinstance(capability_intent, list) else []
+        found: dict[str, Any] | None = None
+        actions = cue.get("actions")
+        if not isinstance(actions, list):
+            raise ExistingCueDynamicProgramMergeError(f"DYNAMIC_MERGE_ACTIONS_INVALID_CUE_{number}")
+        for action in actions:
+            if not isinstance(action, Mapping):
+                raise ExistingCueDynamicProgramMergeError(f"DYNAMIC_MERGE_ACTION_INVALID_CUE_{number}")
+            operation = action.get("operation")
+            if operation != "CALL_EFFECT":
                 raise ExistingCueDynamicProgramMergeError(
-                    "DYNAMIC_MERGE_UNRELATED_EFFECT_CONFLICT"
+                    f"DYNAMIC_MERGE_UNSUPPORTED_EXECUTABLE_ACTION_CUE_{number}_{operation}"
                 )
-        elif planned_replacements:
-            raise ExistingCueDynamicProgramMergeError(
-                "DYNAMIC_MERGE_EFFECT_REPLACEMENT_WITHOUT_EXISTING_EFFECT"
-            )
-        update["replace_effect_ids"] = sorted(planned_replacements)
-        update["preserved_content_fingerprint"] = protected["by_cue"][str(update["cue_number"])]
-    preview: dict[str, Any] = {
+            target_ref = (action.get("target") or {}).get("ref") if isinstance(action.get("target"), Mapping) else None
+            if target_ref != group_id:
+                raise ExistingCueDynamicProgramMergeError(f"DYNAMIC_MERGE_EFFECT_GROUP_MISMATCH_CUE_{number}")
+            effect_id = (action.get("effect_ref") or {}).get("id") if isinstance(action.get("effect_ref"), Mapping) else None
+            if isinstance(effect_id, bool) or not isinstance(effect_id, int) or effect_id not in effects:
+                raise ExistingCueDynamicProgramMergeError(f"DYNAMIC_MERGE_EFFECT_NOT_VERIFIED_CUE_{number}")
+            if found is not None:
+                raise ExistingCueDynamicProgramMergeError(f"DYNAMIC_MERGE_MULTIPLE_EFFECTS_UNVERIFIED_CUE_{number}")
+            found = {"id": effect_id, "label": effects[effect_id], "group": group_id}
+        cue_effects[number] = found
+
+    states = {None if value is None else value["id"] for value in cue_effects.values()}
+    if require_effect_variation and (all(value is None for value in cue_effects.values()) or len(states) < 2):
+        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_EFFECT_VARIATION_REQUIRED")
+
+    try:
+        positioned = retarget_position_preview(position_preview, position_intent)
+    except ExistingPositionMergeError as exc:
+        raise ExistingCueDynamicProgramMergeError(str(exc)) from exc
+
+    protected = protected_content_snapshot(
+        pre_discovery,
+        cue_effects=cue_effects,
+        target_fixture_refs=[str(ref) for ref in fixture_refs],
+    )
+    cue_updates = []
+    positioned_by_number = {int(row["cue_number"]): row for row in positioned["cue_updates"]}
+    for number in wanted:
+        position = positioned_by_number[number]
+        effect = cue_effects[number]
+        intents = cue_intents[number]
+        cue_updates.append({
+            "cue_number": number,
+            "cue_label": position["cue_label"],
+            "position_pattern": position["pattern"],
+            "position_scale": position.get("scale", 1.0),
+            "expected_pan_range": [
+                min(float(row["pan"]) for row in position["fixtures"]),
+                max(float(row["pan"]) for row in position["fixtures"]),
+            ],
+            "expected_tilt_range": [
+                min(float(row["tilt"]) for row in position["fixtures"]),
+                max(float(row["tilt"]) for row in position["fixtures"]),
+            ],
+            "effect": deepcopy(effect),
+            "capability_intent": intents,
+            "used_capability_families": ["POSITION"] + (["EFFECT"] if effect else []),
+            "intentionally_unused_capabilities": sorted({
+                str(item.get("dimension")) for item in intents
+                if isinstance(item, Mapping) and str(item.get("use") or "").upper() == "AVOID"
+            }),
+        })
+
+    result: dict[str, Any] = {
         "schema": PREVIEW_SCHEMA,
         "status": "PREVIEW_ONLY",
-        "show_identity": _show_identity(profile),
-        "target_sequence": {
-            **position_preview["target_sequence"],
-            "pre_protected_content_sha256": protected["sha256"],
-        },
-        "group": position_preview["group"],
-        "baseline": position_preview["baseline"],
-        "direction_semantics": position_preview["direction_semantics"],
-        "fixture_limits": position_preview["fixture_limits"],
-        "effect_application": {
-            "grammar": "AT_EFFECT_POOL_CALL",
-            "capability_status": effect_application_capability.get("status"),
-            "resources": [resources[key] for key in sorted(resources)],
-        },
-        "position_amplitude": {
-            "scale": float(scale),
-            "basis": "OPERATOR_FEEDBACK_PLUS_STAGE_VIEW_OBSERVATION_AND_FIXTURE_LIMITS",
-            "capture_sha256": stage_view_evidence["capture_sha256"],
-            "physical_targeting_claimed": False,
-        },
-        "cue_updates": updates,
+        "show_identity": positioned.get("show_identity"),
+        "target_sequence": deepcopy(dict(target)),
+        "group": deepcopy(dict(group)),
+        "position_preview": positioned,
+        "cue_updates": cue_updates,
+        "cue_effects": {str(key): deepcopy(value) for key, value in cue_effects.items()},
+        "pre_protected_content_sha256": protected["sha256"],
         "write_scope": {
             "existing_sequence_only": True,
             "existing_cues_only": True,
-            "store_mode": "MERGE_CUEONLY",
+            "position_family": True,
+            "verified_effect_application": True,
             "create_sequence": False,
-            "allocate_sequence": False,
             "create_effect": False,
-            "modify_executor_assignment": False,
-            "modify_patch_address_fixture_identity_or_type": False,
-            "fixture_9999_forbidden": True,
-            "allowed_attribute_families": ["POSITION", "EFFECT"],
-        },
-        "preservation": {
-            "pre_protected_content_sha256": protected["sha256"],
-            "pre_protected_content_by_cue": protected["by_cue"],
-            "pre_effect_ids_by_cue_ref": pre_effects,
-            "must_remain_unchanged": [
-                "Cue labels", "Fade/Delay", "Color", "unrelated Dimmer static values",
-                "unrelated Presets", "unrelated Effects", "Sequence identity",
-                "Executor assignment",
-            ],
+            "create_executor": False,
+            "assign_executor": False,
+            "modify_label": False,
+            "modify_fade_delay": False,
+            "modify_color": False,
+            "modify_unrelated_dimmer_value": False,
+            "modify_patch": False,
+            "modify_address": False,
+            "modify_fixture_identity_or_type": False,
         },
         "approval": "EXPLICIT_OWNER_APPROVAL_REQUIRED",
         "ma2_writes": 0,
     }
-    commands = commands_from_preview(preview)
-    preview["command_count"] = len(commands)
-    preview["command_plan_sha256"] = hashlib.sha256("\n".join(commands).encode("ascii")).hexdigest()
-    canonical = json.dumps(preview, sort_keys=True, ensure_ascii=True, separators=(",", ":")).encode("ascii")
-    preview["preview_id"] = hashlib.sha256(canonical).hexdigest()[:16]
-    return preview
+    commands = commands_from_dynamic_preview(result)
+    result["command_count"] = len(commands)
+    result["command_plan_sha256"] = hashlib.sha256("\n".join(commands).encode("ascii")).hexdigest()
+    result["preview_id"] = _canonical_sha(result)[:16]
+    return result
 
 
-def commands_from_preview(preview: Mapping[str, Any]) -> tuple[str, ...]:
-    if preview.get("schema") != PREVIEW_SCHEMA:
+def _commands_for_update(sequence: int, group_id: int, position: Mapping[str, Any], effect: Mapping[str, Any] | None) -> list[str]:
+    commands = ["ClearAll"]
+    grouped: dict[tuple[str, str], list[str]] = {}
+    fixtures = position.get("fixtures")
+    if not isinstance(fixtures, list) or not fixtures:
+        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_POSITION_FIXTURES_INVALID")
+    for item in fixtures:
+        ref = str(item["fixture_ref"])
+        key = (_fmt(float(item["pan"])), _fmt(float(item["tilt"])))
+        grouped.setdefault(key, []).append(ref)
+    for (pan, tilt), refs in grouped.items():
+        commands.append("Fixture " + " + ".join(refs))
+        commands.append(f'Attribute "Pan" At {pan}')
+        commands.append(f'Attribute "Tilt" At {tilt}')
+    if effect is not None:
+        commands.append(f"Group {group_id}")
+        commands.append(f"At Effect {effect['id']}")
+    commands.append(f"Store Cue {position['cue_number']} Sequence {sequence} /merge /cueonly /nc")
+    return commands
+
+
+def commands_from_dynamic_preview(preview: Mapping[str, Any]) -> tuple[str, ...]:
+    if preview.get("schema") != PREVIEW_SCHEMA and preview.get("schema") is not None:
         raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_PREVIEW_SCHEMA_INVALID")
     sequence = (preview.get("target_sequence") or {}).get("id")
-    group = (preview.get("group") or {}).get("id")
-    if isinstance(sequence, bool) or not isinstance(sequence, int) or sequence < 1:
-        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_SEQUENCE_INVALID")
-    if isinstance(group, bool) or not isinstance(group, int) or group < 1:
-        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_GROUP_INVALID")
-    updates = preview.get("cue_updates")
-    if not isinstance(updates, list) or not updates:
-        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_CUE_APPLICATIONS_MISSING")
+    group_id = (preview.get("group") or {}).get("id")
+    position = (preview.get("position_preview") or {}).get("cue_updates")
+    effects = preview.get("cue_effects")
+    if (
+        isinstance(sequence, bool) or not isinstance(sequence, int) or sequence < 1
+        or isinstance(group_id, bool) or not isinstance(group_id, int) or group_id < 1
+        or not isinstance(position, list) or not position
+        or not isinstance(effects, Mapping)
+    ):
+        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_PREVIEW_INVALID")
     commands: list[str] = []
-    effect_applications = 0
-    for cue in updates:
-        fixtures = cue.get("fixtures") if isinstance(cue, Mapping) else None
-        if not isinstance(fixtures, list) or not fixtures:
-            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_POSITION_APPLICATION_MISSING")
-        number = cue["cue_number"]
-        effect = cue.get("effect_id")
-        if effect is not None:
-            effect_applications += 1
-            commands.extend((
-                "ClearAll", f"Group {group}", f"At Effect {effect}",
-                f"Store Cue {number} Sequence {sequence} /merge /cueonly /nc",
-            ))
-        commands.append("ClearAll")
-        grouped: dict[tuple[str, str], list[str]] = {}
-        for fixture in fixtures:
-            key = (_fmt(float(fixture["pan"])), _fmt(float(fixture["tilt"])))
-            grouped.setdefault(key, []).append(str(fixture["fixture_ref"]))
-        for (pan, tilt), refs in grouped.items():
-            commands.extend((
-                "Fixture " + " + ".join(refs),
-                f'Attribute "Pan" At {pan}',
-                f'Attribute "Tilt" At {tilt}',
-            ))
-        commands.append(f"Store Cue {number} Sequence {sequence} /merge /cueonly /nc")
-    if effect_applications == 0:
-        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_EFFECT_CUE_APPLICATION_MISSING")
+    for update in position:
+        number = update.get("cue_number")
+        effect = effects.get(str(number))
+        commands.extend(_commands_for_update(sequence, group_id, update, effect if isinstance(effect, Mapping) else None))
     commands.append("ClearAll")
     if any(not command.isascii() for command in commands):
         raise ExistingCueDynamicProgramMergeError("NON_ASCII_MA_TEXT")
@@ -510,106 +379,106 @@ def commands_from_preview(preview: Mapping[str, Any]) -> tuple[str, ...]:
 
 def verify_existing_cue_dynamic_program_merge(
     preview: Mapping[str, Any],
-    profile: Mapping[str, Any],
     post_discovery: Mapping[str, Any],
 ) -> dict[str, Any]:
     if preview.get("schema") != PREVIEW_SCHEMA:
         raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_PREVIEW_SCHEMA_INVALID")
-    sequence = preview["target_sequence"]["id"]
-    cues = _cue_map(post_discovery, sequence)
-    protected = _protected_snapshot(
-        profile, post_discovery, preview["cue_updates"], preview["group"]["exact_refs"]
+    sequence = (preview.get("target_sequence") or {}).get("id")
+    if post_discovery.get("status") != "VERIFIED" or post_discovery.get("sequence_no") != sequence:
+        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_POST_EXPORT_NOT_VERIFIED")
+    effects_raw = preview.get("cue_effects")
+    fixture_refs = (preview.get("group") or {}).get("exact_refs")
+    if not isinstance(effects_raw, Mapping) or not isinstance(fixture_refs, list):
+        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_PREVIEW_INVALID")
+    effects = {int(key): value if isinstance(value, Mapping) else None for key, value in effects_raw.items()}
+    protected = protected_content_snapshot(
+        post_discovery,
+        cue_effects=effects,
+        target_fixture_refs=[str(ref) for ref in fixture_refs],
     )
-    if protected["sha256"] != preview["preservation"]["pre_protected_content_sha256"]:
+    if protected["sha256"] != preview.get("pre_protected_content_sha256"):
         raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_PROTECTED_CONTENT_CHANGED")
-    reverse = {
-        str(value): str(key)
-        for key, value in preview["group"]["cue_channel_refs"].items()
-    }
-    position_matches = 0
+
+    try:
+        position_report = verify_existing_position_merge(
+            preview["position_preview"], post_discovery, verify_non_position=False
+        )
+    except ExistingPositionMergeError as exc:
+        raise ExistingCueDynamicProgramMergeError(str(exc)) from exc
+
+    group_id = int(preview["group"]["id"])
+    member_roots = sorted({int(str(ref).split(".", 1)[0]) for ref in fixture_refs})
     effect_matches = 0
-    for update in preview["cue_updates"]:
-        number = update["cue_number"]
-        cue = cues.get(number)
-        if not isinstance(cue, Mapping) or _cue_label(cue) != update["cue_label"]:
-            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_CUE_IDENTITY_CHANGED")
-        rows = _cue_rows(cue)
-        observed_position: dict[tuple[str, str], float] = {}
-        observed_effects: dict[str, set[int]] = {ref: set() for ref in reverse.values()}
-        for row in rows:
-            ref = _canonical_ref(profile, row)
-            selection = reverse.get(ref or "")
-            if selection is None:
-                continue
-            attr = _row_attribute(row)
-            if attr in {"PAN", "TILT"}:
-                raw = row.get("raw_values")
-                value = raw.get("Value") if isinstance(raw, Mapping) else None
-                if value is not None:
-                    observed_position[(selection, attr)] = float(value)
-            effect_id = _effect_id(row)
-            if effect_id is not None:
-                observed_effects.setdefault(selection, set()).add(effect_id)
-        for fixture in update["fixtures"]:
-            ref = fixture["fixture_ref"]
-            for attr, key in (("PAN", "pan"), ("TILT", "tilt")):
-                actual = observed_position.get((ref, attr))
-                if actual is None or not math.isclose(actual, float(fixture[key]), abs_tol=0.001, rel_tol=0):
-                    raise ExistingCueDynamicProgramMergeError(
-                        f"DYNAMIC_MERGE_POSITION_MISMATCH_CUE_{number}_{ref}_{attr}"
-                    )
-                position_matches += 1
-            if update.get("effect_id") is not None:
-                expected_effects = set(
-                    preview["preservation"]["pre_effect_ids_by_cue_ref"]
-                    [str(number)][ref]
-                )
-                if update.get("replace_effect_ids"):
-                    expected_effects.difference_update(update["replace_effect_ids"])
-                expected_effects.add(int(update["effect_id"]))
-                if observed_effects.get(ref, set()) != expected_effects:
-                    raise ExistingCueDynamicProgramMergeError(
-                        f"DYNAMIC_MERGE_EFFECT_MISMATCH_CUE_{number}_{ref}"
-                    )
-                effect_matches += 1
+    for number, effect in effects.items():
+        if effect is None:
+            continue
+        expected = {
+            "cues": [{
+                "cue_number": number,
+                "label": next(
+                    str(item.get("cue_label") or "") for item in preview["cue_updates"]
+                    if item.get("cue_number") == number
+                ),
+                "actions": [{
+                    "operation": "CALL_EFFECT",
+                    "target": {"type": "group", "ref": group_id},
+                    "effect_ref": {"id": int(effect["id"])},
+                }],
+            }]
+        }
+        report = verify_cue_content(expected, post_discovery, {group_id: member_roots})
+        if report.get("status") != "VERIFIED":
+            raise ExistingCueDynamicProgramMergeError(f"DYNAMIC_MERGE_EFFECT_READBACK_MISMATCH_CUE_{number}")
+        effect_matches += len(member_roots)
+
     return {
         "schema": VERIFY_SCHEMA,
         "status": "VERIFIED",
         "sequence": sequence,
-        "cue_count": len(preview["cue_updates"]),
-        "position_value_matches": position_matches,
+        "cue_count": len(preview.get("cue_updates") or []),
+        "position_value_matches": position_report["position_value_matches"],
         "effect_fixture_matches": effect_matches,
         "protected_content": "UNCHANGED",
+        "cue_labels": "UNCHANGED",
         "post_export_sha256": (post_discovery.get("xml_discovery") or {}).get("sha256"),
     }
 
 
 def preview_text(preview: Mapping[str, Any]) -> str:
+    target = preview["target_sequence"]
+    group = preview["group"]
     lines = [
-        "EXISTING CUE DYNAMIC PROGRAM MERGE - PREVIEW ONLY",
+        "EXISTING CUE DYNAMIC PROGRAM MERGE - PREVIEW",
         "",
-        f"Sequence: {preview['target_sequence']['id']} {preview['target_sequence']['label']}",
-        f"Cues: {preview['target_sequence']['cue_start']}-{preview['target_sequence']['cue_end']}",
-        f"Group: {preview['group']['id']} {preview['group']['name']}",
-        f"Position amplitude scale: {preview['position_amplitude']['scale']}",
+        f"Sequence: {target['id']} {target['label']}",
+        f"Cues: {target['cue_start']}-{target['cue_end']}",
+        f"Group: {group['id']} {group['name']}",
+        "Mode: existing Cue /merge /cueonly; Position + verified Effect only",
         "",
-        "Per-Cue plan:",
+        "Per-Cue design:",
     ]
     for cue in preview["cue_updates"]:
-        effect = cue.get("effect_id") or "NONE"
+        effect = cue.get("effect")
+        effect_text = "none" if effect is None else f"{effect['id']} {effect['label']}"
+        used = ",".join(cue.get("used_capability_families") or [])
         lines.append(
-            f"- Cue {cue['cue_number']} {cue['cue_label']} | Effect={cue['effect_intent']}:{effect} "
-            f"| Group={cue['target_group']} | Position={cue['position_pattern']} "
-            f"| PAN={cue['expected_pan_range']} TILT={cue['expected_tilt_range']} "
-            f"| change={','.join(cue['intended_attribute_families_changed'])} "
-            f"| preserve={cue['preserved_content_fingerprint'][:12]}"
+            f"- Cue {cue['cue_number']} {cue['cue_label']} | Position={cue['position_pattern']} "
+            f"x{cue['position_scale']} P={cue['expected_pan_range']} T={cue['expected_tilt_range']} "
+            f"| Effect={effect_text} | families={used}"
         )
-    lines.extend((
+        for item in cue.get("capability_intent") or []:
+            if isinstance(item, Mapping):
+                lines.append(
+                    f"  intent Group {item.get('group')} {item.get('dimension')}={item.get('use')} "
+                    f"execution={item.get('execution_status')} reason={item.get('reason')}"
+                )
+    lines += [
         "",
-        "Preserved: labels, Fade/Delay, Color, unrelated Dimmer/Preset/Effect content, Sequence identity, Executor assignment.",
-        "No Sequence or Effect allocation. Fixture 9999 forbidden. Explicit owner approval required.",
-        "MA2_WRITES=0",
-    ))
+        "Protected: static Dimmer Value, Color, Presets, Cue labels, Fade/Delay, unrelated Effects, Sequence identity and Executor assignment.",
+        "No Sequence/Effect/Executor/Preset/Group creation. No Assign. No Patch/Address/Fixture identity/type write.",
+        "Capability intent without verified execution resource remains intent-only and generates no MA command.",
+        "Explicit owner approval required before any MA2 write.",
+    ]
     return "\n".join(lines)
 
 
@@ -621,17 +490,23 @@ class ExistingCueDynamicProgramMergeSkill:
         return self.manifest.enabled and intent.kind == "merge_existing_cue_dynamic_program" and state.has(self.manifest.required_state)
 
     def create_task(self, intent: Intent) -> Task:
-        return Task("existing-cue-dynamic-program-merge", "Existing Cue Dynamic Program Merge", intent, self.manifest.id, self.manifest.required_state)
+        return Task(
+            "existing-cue-dynamic-program-merge",
+            "Existing Cue Dynamic Program Merge",
+            intent,
+            self.manifest.id,
+            self.manifest.required_state,
+        )
 
     def plan(self, task: Task, state: Any, preferences: dict[str, Any]) -> WorkflowPlan:
-        preview = task.intent.parameters.get("dynamic_program_merge_preview")
+        preview = task.intent.parameters.get("dynamic_merge_preview")
         if not isinstance(preview, Mapping) or preview.get("schema") != PREVIEW_SCHEMA:
             raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_PREVIEW_INVALID")
-        commands = commands_from_preview(preview)
+        commands = commands_from_dynamic_preview(preview)
         steps = tuple(
             ActionStep(
                 f"dynamic-merge-{index}",
-                "Deterministic existing-Cue Effect/Position merge command",
+                "Deterministic existing-Cue Position/Effect merge command",
                 "command",
                 command,
                 "MODIFY",
@@ -642,37 +517,42 @@ class ExistingCueDynamicProgramMergeSkill:
         return WorkflowPlan(
             task,
             (
-                Subtask("fresh-evidence", "Fresh Sequence/Group/Effect/geometry evidence", "Planning"),
-                Subtask("preview", "Review per-Cue Effect and Position preservation diff", "Planning"),
-                Subtask("execute", "Merge only approved Effect and Position families", "Execution"),
-                Subtask("verify", "Native Sequence Export preservation verification", "Verification"),
+                Subtask("fresh-evidence", "Verify existing Sequence, Group, Effect and Position evidence", "Planning"),
+                Subtask("artistic-plan", "Review per-Cue Position, Effect and capability intent", "Planning"),
+                Subtask("execute", "Merge approved Position/Effect into existing Cues", "Execution"),
+                Subtask("verify", "Native Sequence Export + protected-content verification", "Verification"),
             ),
             (SkillGraphNode("root", self.manifest.id, "Existing Cue Dynamic Program Merge"),),
             steps,
             "MODIFY",
             preview_text(preview),
             ("PREVIEW",),
-            "Fresh native Sequence Export must verify planned Effect/PAN/TILT values and unchanged protected content.",
-            "No automatic rollback or deletion; retain native exports as evidence.",
+            "Native Sequence Export must match approved Position and Effect identities while protected content stays unchanged.",
+            "No automatic rollback; retain native pre/post evidence.",
             True,
             "PREVIEW",
             "READY",
         )
 
     def validate(self, plan: WorkflowPlan, state: Any) -> None:
-        preview = plan.task.intent.parameters.get("dynamic_program_merge_preview")
-        if not isinstance(preview, Mapping) or plan.commands != commands_from_preview(preview):
+        preview = plan.task.intent.parameters.get("dynamic_merge_preview")
+        if (
+            plan.task.skill_id != self.manifest.id
+            or plan.safety != "MODIFY"
+            or not isinstance(preview, Mapping)
+            or plan.commands != commands_from_dynamic_preview(preview)
+        ):
             raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_WORKFLOW_INVALID")
         for command in plan.commands:
             if command == "ClearAll":
                 continue
-            if re.fullmatch(r"Group [1-9]\d*", command):
-                continue
-            if re.fullmatch(r"At Effect [1-9]\d*", command):
-                continue
             if re.fullmatch(r"Fixture [1-9]\d*(?:\.[1-9]\d*)?(?: \+ [1-9]\d*(?:\.[1-9]\d*)?)*", command):
                 continue
             if re.fullmatch(r'Attribute "(?:Pan|Tilt)" At -?\d+(?:\.\d+)?', command):
+                continue
+            if re.fullmatch(r"Group [1-9]\d*", command):
+                continue
+            if re.fullmatch(r"At Effect [1-9]\d*", command):
                 continue
             if re.fullmatch(r"Store Cue [1-9]\d* Sequence [1-9]\d* /merge /cueonly /nc", command):
                 continue
@@ -681,3 +561,15 @@ class ExistingCueDynamicProgramMergeSkill:
     def execute(self, approved_plan: WorkflowPlan) -> tuple[str, ...]:
         self.validate(approved_plan, None)
         return approved_plan.commands
+
+
+__all__ = [
+    "ExistingCueDynamicProgramMergeError",
+    "ExistingCueDynamicProgramMergeSkill",
+    "PREVIEW_SCHEMA",
+    "VERIFY_SCHEMA",
+    "build_existing_cue_dynamic_program_preview",
+    "commands_from_dynamic_preview",
+    "protected_content_snapshot",
+    "verify_existing_cue_dynamic_program_merge",
+]

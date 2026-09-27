@@ -19,7 +19,21 @@ patch/address operations, Fixture identity changes, allocation decisions, or
 executor/sequence addresses.
 
 Output shape:
-{"cues":[{"label":"...", "fade":0, "actions":[...]}]}
+{"cues":[{"label":"...", "fade":0, "actions":[...], "position_pattern":"WIDE_FAN", "position_scale":1.5, "capability_intent":[...]}]}
+
+`position_pattern` is optional and may be CENTER, LEFT, RIGHT, FRONT, UPSTAGE, NARROW_FAN,
+WIDE_FAN, CROSS, ALTERNATE, EXPLODE, or COLLAPSE. `position_scale` is optional 0.5..2.5
+and controls bounded relative movement magnitude, not physical degrees. Choose Position from music,
+choreography, Stage View/spatial context and cue contrast; do not mechanically rotate patterns.
+`capability_intent` is optional artistic reasoning, never an MA2 command channel.
+Each item uses {"group":1,"dimension":"PRISM","use":"USE|AVOID|OPTIONAL","reason":"..."}.
+Consider the complete verified fixture vocabulary exposed by the resource map, including
+DIMMER, COLOR, POSITION/MOVEMENT, FOCUS, BEAM, GOBO/GOBO_ROTATION, PRISM/PRISM_ROTATION,
+ZOOM, FROST, IRIS, SHUTTER/STROBE, and EFFECT. Use a feature only when artistically
+justified by music, choreography, spatial geometry, visual density, and cue contrast; do
+not use a capability merely because the fixture has it. If technical capability exists but
+no verified execution resource exists, preserve the artistic intent in capability_intent
+and DO NOT invent an action or raw Attribute value.
 
 Each compact action MUST use the exact field `group` with a JSON integer Group ID.
 Never use `group_id`, a Group name/string, `target`, or `operation` in compact actions.
@@ -30,6 +44,11 @@ Examples:
 Each action must contain exactly one artistic value such as dimmer, preset,
 color_preset, position_preset, focus_preset, beam_preset, gobo_preset, or effect.
 Use only resources explicitly exposed in verified_resource_contract.
+If context contains `existing_cue_dynamic_merge_contract`, preserve its exact Cue count/order,
+use the supplied existing Cue labels, emit an explicit position_pattern for every Cue, and use
+only the executable action families allowed by that contract. Do not create or request new
+Sequences, Effects, Presets, Groups, or Executor assignments. Effect variation means attach
+verified existing Effects to the intended existing Cues, not merely create one Effect resource.
 Do not invent unavailable resources. Return JSON only, with no markdown.
 """
 

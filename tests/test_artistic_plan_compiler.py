@@ -67,6 +67,59 @@ class ArtisticPlanCompilerTests(unittest.TestCase):
         self.assertEqual(actions[3]["operation"], "CALL_EFFECT")
         self.assertEqual(actions[3]["effect_ref"], {"id": 3520})
 
+    def test_capability_intent_is_preserved_without_inventing_commands(self):
+        provider_plan = {
+            "cues": [{
+                "fade": 0,
+                "actions": [{"group": 1, "dimmer": 80}],
+                "capability_intent": [
+                    {"group": 1, "dimension": "PRISM", "use": "USE", "reason": "chorus density"},
+                    {"group": 1, "dimension": "FROST", "use": "AVOID", "reason": "keep beams crisp"},
+                ],
+            }]
+        }
+        plan, audit = compile_artistic_cue_plan(
+            provider_plan,
+            song="SHEESH",
+            target_executor="2.001",
+            active_sequence_range=[1, 9999],
+            verified_group_ids=self.groups,
+            verified_preset_refs=self.presets,
+            verified_preset_types=self.preset_types,
+            verified_effect_ids=self.effects,
+            verified_capability_status={1: {
+                "PRISM": {"technical_status": "SHOW_BOUND_VERIFIED", "execution_status": "NO_VERIFIED_RESOURCE"},
+                "FROST": {"technical_status": "SHOW_BOUND_VERIFIED", "execution_status": "NO_VERIFIED_RESOURCE"},
+            }},
+        )
+        intent = plan["cues"][0]["capability_intent"]
+        self.assertEqual(intent[0]["dimension"], "PRISM")
+        self.assertFalse(intent[0]["execution_authorized"])
+        self.assertEqual(plan["cues"][0]["actions"], [{
+            "operation": "SET_DIMMER", "target": {"type": "group", "ref": 1}, "level": 80,
+        }])
+        self.assertTrue(audit["artistic_capability_intents_preserved"])
+        self.assertTrue(audit["capability_execution_is_separate_from_intent"])
+
+    def test_capability_use_fails_closed_without_verified_technical_support(self):
+        provider_plan = {
+            "cues": [{
+                "fade": 0,
+                "actions": [{"group": 1, "dimmer": 20}],
+                "capability_intent": [{"group": 1, "dimension": "PRISM", "use": "USE"}],
+            }]
+        }
+        with self.assertRaisesRegex(ArtisticPlanCompileError, "PRISM technical capability"):
+            compile_artistic_cue_plan(
+                provider_plan,
+                song="SHEESH", target_executor="2.001", active_sequence_range=[1, 9999],
+                verified_group_ids=self.groups, verified_preset_refs=self.presets,
+                verified_preset_types=self.preset_types, verified_effect_ids=self.effects,
+                verified_capability_status={1: {
+                    "PRISM": {"technical_status": "NOT_PRESENT_IN_GROUP_FIXTURE_TYPES", "execution_status": "NO_VERIFIED_RESOURCE"}
+                }},
+            )
+
     def test_dimension_specific_preset_type_mismatch_fails_closed(self):
         provider_plan = {
             "cues": [{"fade": 1, "actions": [{"group": 1, "color_preset": "6.2"}]}]

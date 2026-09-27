@@ -112,6 +112,31 @@ class FixtureTypeExportBindingTests(unittest.TestCase):
         }])
         self.assertEqual(capabilities["PRISM"]["status"], "SHOW_BOUND_VERIFIED")
 
+    def test_capability_inventory_classifies_beam_and_rotating_optics(self):
+        capabilities = fixture_type_capability_inventory([
+            {
+                "attribute": "EFFECTWHEEL", "feature": "EFFECT", "preset": "BEAM",
+                "functions": [
+                    {"attribute": "PRISMA1", "feature": "BEAM1", "preset": "BEAM"},
+                    {"attribute": "PRISMA1_ROT", "feature": "BEAM1", "preset": "BEAM"},
+                ],
+            },
+            {
+                "attribute": "GOBO1_POS", "feature": "GOBO1", "preset": "GOBO",
+                "functions": [{"attribute": "GOBO1_ROT", "feature": "GOBO1", "preset": "GOBO"}],
+            },
+            {"attribute": "ZOOM", "feature": "FOCUS", "preset": "FOCUS", "functions": []},
+            {"attribute": "FROST", "feature": "BEAM1", "preset": "BEAM", "functions": []},
+            {"attribute": "IRIS", "feature": "BEAM1", "preset": "BEAM", "functions": []},
+            {"attribute": "SHUTTER", "feature": "SHUTTER", "preset": "BEAM",
+             "functions": [{"attribute": "STROBE", "feature": "SHUTTER", "preset": "BEAM"}]},
+        ])
+        for dimension in (
+            "BEAM", "GOBO", "GOBO_ROTATION", "PRISM", "PRISM_ROTATION",
+            "ZOOM", "FOCUS", "FROST", "IRIS", "SHUTTER_STROBE",
+        ):
+            self.assertEqual(capabilities[dimension]["status"], "SHOW_BOUND_VERIFIED", dimension)
+
     def test_fresh_unique_fixture_type_export_accepts_filesystem_mtime_skew(self):
         class SkewedRuntime(ExportRuntime):
             def export_fixture_type_file(inner, fixture_type_id, filename):

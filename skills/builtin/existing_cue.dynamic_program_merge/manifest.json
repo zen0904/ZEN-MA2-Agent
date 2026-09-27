@@ -1,1 +1,10 @@
-{"id":"existing_cue.dynamic_program_merge","name":"Existing Cue Dynamic Program Merge","version":"0.1","description":"Approval-gated deterministic Effect plus Position merge into verified existing Agent-owned Cues with preservation diff and native export verification.","intents":["merge_existing_cue_dynamic_program"],"required_state":["groups","group_membership","fixtures","fixture_geometry","fixture_type_profiles","presets","effects","sequences","executors"],"safety":"MODIFY","enabled":true}
+{
+  "id": "existing_cue.dynamic_program_merge",
+  "name": "Existing Cue Dynamic Program Merge",
+  "version": "0.1.0",
+  "description": "Merge verified per-Cue Position and Effect intent into an existing Agent-owned Sequence without allocating replacement Show objects.",
+  "intents": ["merge_existing_cue_dynamic_program"],
+  "required_state": ["fixtures", "groups", "group_membership", "fixture_type_profiles", "presets", "effects", "sequences", "executors"],
+  "safety": "MODIFY",
+  "enabled": true
+}
