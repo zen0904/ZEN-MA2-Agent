@@ -67,6 +67,11 @@ from .existing_cue_dynamic_program_merge import (
     protected_content_snapshot,
     verify_existing_cue_dynamic_program_merge,
 )
+from .sequence302_resource_merge import (
+    Sequence302ResourceMergeError,
+    build_sequence302_resource_merge_preview,
+    verify_sequence302_resource_merge,
+)
 from .designer.report import write_real_song_design_report
 from .builder import FirstSongBuildError, ShowPlanBuilder
 from .song_analysis import SongAnalysisAdapter, validate_song_analysis
@@ -437,6 +442,56 @@ class AgentCore:
             "preset": preview["preset"]["reference"],
             "sequence": preview["sequence"]["id"],
             "ma2_writes": 0,
+        })
+        return result
+
+    def preview_sequence302_resource_merge(
+        self,
+        *,
+        position_preview: Mapping[str, Any],
+        pre_discovery: Mapping[str, Any],
+        explicit_raw_plan: list[dict[str, Any]],
+        current_presets: list[dict[str, Any]],
+        fresh_effect_empty_evidence: Mapping[int, Mapping[str, Any]],
+        dimmer_applicability_evidence: Mapping[str, Any],
+        effect_application_capability: object,
+        source_action_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Validate and register one bounded resource-authoring Preview."""
+        preview = build_sequence302_resource_merge_preview(
+            position_preview=position_preview,
+            pre_discovery=pre_discovery,
+            explicit_raw_plan=explicit_raw_plan,
+            current_presets=current_presets,
+            fresh_effect_empty_evidence=fresh_effect_empty_evidence,
+            dimmer_applicability_evidence=dimmer_applicability_evidence,
+            effect_application_capability=effect_application_capability,
+            source_action_id=source_action_id,
+        )
+        workflow = self.skills.plan_intent(
+            Intent(
+                "merge_sequence302_authored_resources",
+                {"sequence302_resource_merge_preview": preview},
+                "SEQUENCE302_RESOURCE_AUTHORING_MERGE",
+            ),
+            self.state,
+            self.runtime.preferences,
+        )
+        result = self._queue_workflow(workflow)
+        action_id = result["action"]["id"]
+        self._root_workflow_status = {
+            "state": "READY", "phase": "PREVIEW", "action_id": action_id,
+        }
+        result["action"].update({
+            "root_state": "READY", "current_phase": "PREVIEW",
+            "phase": "PREVIEW", "action_id": action_id,
+            "preview_id": preview["preview_id"],
+        })
+        self.runtime.log("sequence302_resource_merge_preview", {
+            "action_id": action_id, "preview_id": preview["preview_id"],
+            "position_preset_count": len(preview["position_presets_to_create"]),
+            "effects": [2500, 2501, 2502], "sequence": 302,
+            "cue_range": [1, 29], "group": 1, "ma2_writes": 0,
         })
         return result
 
@@ -1958,6 +2013,10 @@ class AgentCore:
             preview = record.workflow.task.intent.parameters["dynamic_merge_preview"]
             action.update({"action_id": record.id, "preview_id": preview["preview_id"],
                            "phase": "PREVIEW" if record.status == "PENDING_APPROVAL" else record.status})
+        elif record.workflow.task.intent.kind == "merge_sequence302_authored_resources":
+            preview = record.workflow.task.intent.parameters["sequence302_resource_merge_preview"]
+            action.update({"action_id": record.id, "preview_id": preview["preview_id"],
+                           "phase": "PREVIEW" if record.status == "PENDING_APPROVAL" else record.status})
         elif record.workflow.task.intent.kind in {"verify_position_application", "verify_position_raw_cue"}:
             key = ("position_preview" if record.workflow.task.intent.kind == "verify_position_application"
                    else "position_raw_preview")
@@ -2397,7 +2456,10 @@ class AgentCore:
         action.status = "CANCELLED"
         if self._active_action_id == action_id:
             self._active_action_id = None
-        if action.workflow.task.intent.kind in {"verify_position_application", "verify_position_raw_cue"}:
+        if action.workflow.task.intent.kind in {
+            "verify_position_application", "verify_position_raw_cue",
+            "merge_sequence302_authored_resources",
+        }:
             self._root_workflow_status.update({"state": "CANCELLED", "phase": "DONE", "action_id": action_id})
         self.progress = "Idle"
         self.events.emit("plan", self.snapshot())
@@ -2466,6 +2528,8 @@ class AgentCore:
             self._ensure_existing_position_merge_state_unchanged(action)
         elif execution_intent.kind == "merge_existing_cue_dynamic_program":
             self._ensure_existing_dynamic_merge_state_unchanged(action)
+        elif execution_intent.kind == "merge_sequence302_authored_resources":
+            self._ensure_sequence302_resource_state_unchanged(action)
         action.status = "APPROVED"
         self.progress = "Executing"
         self.events.emit("progress", {"stage": self.progress})
@@ -2483,6 +2547,8 @@ class AgentCore:
                 result = self._execute_existing_position_merge(action)
             elif intent_kind == "merge_existing_cue_dynamic_program":
                 result = self._execute_existing_dynamic_merge(action)
+            elif intent_kind == "merge_sequence302_authored_resources":
+                result = self._execute_sequence302_resource_merge(action)
             else:
                 commands = self.skills.approved_commands(action.workflow.task.skill_id, action.workflow)
                 results = self.runtime.execute_approved_commands(commands)
@@ -2519,7 +2585,7 @@ class AgentCore:
                 })
             elif intent_kind in {
                 "verify_position_application", "verify_position_raw_cue",
-                "verify_position_calibration",
+                "verify_position_calibration", "merge_sequence302_authored_resources",
             }:
                 self._root_workflow_status.update({"state": "EXECUTED", "phase": "DONE", "action_id": action_id})
             self.chat.append({"role": "assistant", "kind": "result", "text": action.result, "action_id": action_id})
@@ -2533,7 +2599,7 @@ class AgentCore:
                 )
             elif execution_intent.kind in {
                 "verify_position_application", "verify_position_raw_cue",
-                "verify_position_calibration",
+                "verify_position_calibration", "merge_sequence302_authored_resources",
             }:
                 self._root_workflow_status.update({"state": "FAILED", "phase": "DONE", "action_id": action_id})
             self.progress = "Idle"
@@ -2541,6 +2607,134 @@ class AgentCore:
             raise
         self.events.emit("execution", self.snapshot())
         return {"id": action.id, "status": action.status, "result": action.result}
+
+    def _ensure_sequence302_resource_state_unchanged(self, action: ActionRecord) -> None:
+        """Freshly reject any target/resource drift before the approved write."""
+        _skill_id, intent = self._effective_execution_context(action)
+        preview = intent.parameters.get("sequence302_resource_merge_preview")
+        if not isinstance(preview, dict):
+            raise Sequence302ResourceMergeError("SEQ302_APPROVED_PREVIEW_MISSING")
+        if self.sequence_export_provider is None:
+            raise Sequence302ResourceMergeError("SEQ302_SEQUENCE_EXPORT_UNAVAILABLE")
+        discovery = self.sequence_export_provider.export_and_discover(
+            self.runtime, 302, self.runtime.preferences.get("state_adapter"), retain_export=True,
+        )
+        effects = {
+            item["cue_number"]: ({"id": item["effect_id"]} if item.get("effect_id") else None)
+            for item in preview.get("cue_updates", [])
+        }
+        presets = {
+            item["cue_number"]: [{"attribute_names": ["PAN", "TILT"]}]
+            for item in preview.get("cue_updates", [])
+        }
+        protected = protected_content_snapshot(
+            discovery,
+            cue_effects=effects,
+            target_fixture_refs=preview.get("group", {}).get("exact_refs") or [],
+            cue_presets=presets,
+        )
+        if protected["sha256"] != preview.get("pre_protected_content_sha256"):
+            raise Sequence302ResourceMergeError("SEQ302_APPROVAL_TIME_CUE_DRIFT")
+        metadata = self._fresh_existing_cue_metadata(sequence_no=302, cue_start=1, cue_end=29)
+        if metadata != preview.get("target_sequence", {}).get("cue_metadata"):
+            raise Sequence302ResourceMergeError("SEQ302_APPROVAL_TIME_METADATA_DRIFT")
+        effect_rows = EffectProvider().parse(self.runtime.read_state("List Effect"))
+        occupied = {row.get("number") for row in effect_rows}
+        if occupied & {2500, 2501, 2502}:
+            raise Sequence302ResourceMergeError("SEQ302_APPROVAL_TIME_EFFECT_SLOT_DRIFT")
+        for resource in preview.get("position_presets_to_create", []):
+            reference = resource.get("reference")
+            direct = PresetProvider().parse(
+                self.runtime.read_state(f"List Preset {reference}"), "POSITION"
+            )
+            if any(row.get("reference") == reference for row in direct):
+                raise Sequence302ResourceMergeError("SEQ302_APPROVAL_TIME_PRESET_SLOT_DRIFT")
+        profile = self._fresh_position_raw_profile(group_id=1)
+        groups = [row for row in profile.get("groups", []) if row.get("group_id") == 1]
+        exact = groups[0].get("fixture_refs_in_selection_order") if len(groups) == 1 else None
+        if exact is None and len(groups) == 1:
+            exact = [str(value) for value in groups[0].get("fixture_ids_in_selection_order") or []]
+        if len(groups) != 1 or list(exact or []) != list(preview.get("group", {}).get("exact_refs") or []):
+            raise Sequence302ResourceMergeError("SEQ302_APPROVAL_TIME_GROUP_DRIFT")
+        self.skills.get("existing_cue.sequence302_resource_merge")
+
+    def _execute_sequence302_resource_merge(self, action: ActionRecord) -> str:
+        """Execute one approved transaction with resource gates and native readback."""
+        _skill_id, intent = self._effective_execution_context(action)
+        preview = intent.parameters.get("sequence302_resource_merge_preview")
+        if not isinstance(preview, dict):
+            raise Sequence302ResourceMergeError("SEQ302_APPROVED_PREVIEW_MISSING")
+        commands = self.skills.approved_commands(action.workflow.task.skill_id, action.workflow)
+        if not commands or commands[-1] != "ClearAll":
+            raise Sequence302ResourceMergeError("SEQ302_APPROVED_COMMAND_PLAN_INVALID")
+        post_effect_rows: list[dict[str, Any]] = []
+        try:
+            for command in commands[:-1]:
+                response = self.runtime.execute_approved_commands((command,))[0]
+                if ma2_response_has_error(response):
+                    raise Sequence302ResourceMergeError(
+                        f"SEQ302_MA_COMMAND_REJECTED: {command}: {response}"
+                    )
+                preset_match = re.fullmatch(r'Store Preset (2\.[1-9]\d*) "([A-Z0-9_]+)" /selective /nc', command)
+                if preset_match:
+                    reference, label = preset_match.groups()
+                    direct = PresetProvider().parse(
+                        self.runtime.read_state(f"List Preset {reference}"), "POSITION"
+                    )
+                    if not any(
+                        row.get("reference") == reference
+                        and row.get("preset_type") == "POSITION"
+                        and row.get("name") == label
+                        for row in direct
+                    ):
+                        raise Sequence302ResourceMergeError(
+                            f"SEQ302_CREATED_PRESET_IDENTITY_UNVERIFIED_{reference}"
+                        )
+                effect_match = re.fullmatch(r'Label Effect (250[0-2]) "([A-Z0-9_]+)" /nc', command)
+                if effect_match:
+                    effect_id, label = int(effect_match.group(1)), effect_match.group(2)
+                    pool = EffectProvider().parse(self.runtime.read_state(f"List Effect {effect_id}"))
+                    detail_raw = self.runtime.read_state(f"List Effect 1.{effect_id}.*")
+                    detail = EffectProvider.parse_template_detail(detail_raw)
+                    matching = [row for row in pool if row.get("number") == effect_id and row.get("name") == label]
+                    if len(matching) != 1 or detail.get("status") != "VERIFIED" or detail.get("kind") != "TEMPLATE" or not detail.get("qty_values") or not re.search(r"\bDIM\b", detail_raw, re.I):
+                        raise Sequence302ResourceMergeError(
+                            f"SEQ302_CREATED_EFFECT_CONTENT_UNVERIFIED_{effect_id}"
+                        )
+                    post_effect_rows.append({
+                        **matching[0], "attributes": ["Dim"], "template_detail": detail,
+                    })
+
+            if self.sequence_export_provider is None:
+                raise Sequence302ResourceMergeError("SEQ302_SEQUENCE_EXPORT_UNAVAILABLE")
+            discovery = self.sequence_export_provider.export_and_discover(
+                self.runtime, 302, self.runtime.preferences.get("state_adapter"), retain_export=True,
+            )
+            post_preset_rows = []
+            for resource in preview["position_presets_to_create"]:
+                post_preset_rows.extend(PresetProvider().parse(
+                    self.runtime.read_state(f"List Preset {resource['reference']}"), "POSITION"
+                ))
+            verification = verify_sequence302_resource_merge(
+                preview,
+                discovery,
+                post_preset_rows=post_preset_rows,
+                post_effect_rows=post_effect_rows,
+            )
+            self.runtime.log("sequence302_resource_merge_verified", {
+                "action_id": action.id, **verification,
+                "executor_allocation": False, "automatic_delete": False,
+            })
+            return (
+                "SEQUENCE302_RESOURCE_MERGE VERIFIED - 29 existing Cues; "
+                f"{verification['position_preset_count']} Position Presets; 3 template Effects; "
+                f"{verification['raw_position_values_verified']} PAN/TILT values; protected content unchanged."
+            )
+        finally:
+            try:
+                self.runtime.execute_approved_commands((commands[-1],))
+            except Exception as clear_exc:
+                self.runtime.log("sequence302_resource_merge_clear_failed", {"error": str(clear_exc)})
 
     def _execute_existing_dynamic_merge(self, action: ActionRecord) -> str:
         """Execute one approved existing-Cue Position+Effect merge and verify it."""

@@ -1,0 +1,23 @@
+{
+  "id": "existing_cue.sequence302_resource_merge",
+  "name": "Sequence 302 Resource Authoring Merge",
+  "version": "0.1.0",
+  "description": "Approval-gated Agent-owned Position Preset and reserved Effect authoring followed by exact existing-Cue merge.",
+  "intents": [
+    "merge_sequence302_authored_resources"
+  ],
+  "required_state": [
+    "groups",
+    "group_membership",
+    "fixtures",
+    "fixture_geometry",
+    "fixture_type_profiles",
+    "presets",
+    "effects",
+    "sequences",
+    "cues",
+    "executors"
+  ],
+  "safety": "MODIFY",
+  "enabled": true
+}

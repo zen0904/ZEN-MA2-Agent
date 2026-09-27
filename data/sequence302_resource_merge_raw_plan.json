@@ -1,0 +1,1022 @@
+{
+  "schema": "zen.sequence302_explicit_raw_plan.v0.1",
+  "target": {
+    "sequence": 302,
+    "cues": [
+      1,
+      29
+    ],
+    "group": 1,
+    "exact_refs": [
+      "101.1",
+      "102.1",
+      "103.1",
+      "104.1",
+      "105.1",
+      "106.1",
+      "107.1",
+      "108.1"
+    ]
+  },
+  "provenance": {
+    "source": "preview_only compiler fixture",
+    "content_authority": "EXPLICIT_RAW_PAN_TILT_AND_EFFECT_ID_PLAN_ONLY",
+    "native_identity_authority": false
+  },
+  "cues": [
+    {
+      "cue_number": 1,
+      "position_name": "CENTER",
+      "effect_id": null
+    },
+    {
+      "cue_number": 2,
+      "position_name": "LEFT",
+      "effect_id": 2500
+    },
+    {
+      "cue_number": 3,
+      "position_name": "RIGHT",
+      "effect_id": 2501
+    },
+    {
+      "cue_number": 4,
+      "position_name": "FRONT",
+      "effect_id": 2502
+    },
+    {
+      "cue_number": 5,
+      "position_name": "UPSTAGE",
+      "effect_id": 2501
+    },
+    {
+      "cue_number": 6,
+      "position_name": "NARROW_FAN",
+      "effect_id": 2502
+    },
+    {
+      "cue_number": 7,
+      "position_name": "WIDE_FAN",
+      "effect_id": 2502
+    },
+    {
+      "cue_number": 8,
+      "position_name": "CROSS",
+      "effect_id": 2500
+    },
+    {
+      "cue_number": 9,
+      "position_name": "ALTERNATE",
+      "effect_id": null
+    },
+    {
+      "cue_number": 10,
+      "position_name": "EXPLODE",
+      "effect_id": null
+    },
+    {
+      "cue_number": 11,
+      "position_name": "COLLAPSE",
+      "effect_id": null
+    },
+    {
+      "cue_number": 12,
+      "position_name": "CENTER",
+      "effect_id": null
+    },
+    {
+      "cue_number": 13,
+      "position_name": "LEFT",
+      "effect_id": 2500
+    },
+    {
+      "cue_number": 14,
+      "position_name": "RIGHT",
+      "effect_id": 2501
+    },
+    {
+      "cue_number": 15,
+      "position_name": "FRONT",
+      "effect_id": 2502
+    },
+    {
+      "cue_number": 16,
+      "position_name": "UPSTAGE",
+      "effect_id": 2501
+    },
+    {
+      "cue_number": 17,
+      "position_name": "NARROW_FAN",
+      "effect_id": 2502
+    },
+    {
+      "cue_number": 18,
+      "position_name": "WIDE_FAN",
+      "effect_id": 2502
+    },
+    {
+      "cue_number": 19,
+      "position_name": "CROSS",
+      "effect_id": 2500
+    },
+    {
+      "cue_number": 20,
+      "position_name": "ALTERNATE",
+      "effect_id": null
+    },
+    {
+      "cue_number": 21,
+      "position_name": "EXPLODE",
+      "effect_id": null
+    },
+    {
+      "cue_number": 22,
+      "position_name": "COLLAPSE",
+      "effect_id": null
+    },
+    {
+      "cue_number": 23,
+      "position_name": "CENTER",
+      "effect_id": null
+    },
+    {
+      "cue_number": 24,
+      "position_name": "LEFT",
+      "effect_id": 2500
+    },
+    {
+      "cue_number": 25,
+      "position_name": "RIGHT",
+      "effect_id": 2501
+    },
+    {
+      "cue_number": 26,
+      "position_name": "FRONT",
+      "effect_id": 2502
+    },
+    {
+      "cue_number": 27,
+      "position_name": "UPSTAGE",
+      "effect_id": 2501
+    },
+    {
+      "cue_number": 28,
+      "position_name": "NARROW_FAN",
+      "effect_id": 2502
+    },
+    {
+      "cue_number": 29,
+      "position_name": "WIDE_FAN",
+      "effect_id": 2502
+    }
+  ],
+  "patterns": [
+    {
+      "position_name": "CENTER",
+      "fixtures": [
+        {
+          "fixture_ref": "101.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": 0.0,
+          "pan": 20.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "102.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": 0.0,
+          "pan": 20.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "103.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": 0.0,
+          "pan": 20.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "104.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": 0.0,
+          "pan": 20.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "105.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": 0.0,
+          "pan": 20.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "106.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": 0.0,
+          "pan": 20.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "107.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": 0.0,
+          "pan": 20.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "108.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": 0.0,
+          "pan": 20.0,
+          "tilt": 30.0
+        }
+      ]
+    },
+    {
+      "position_name": "LEFT",
+      "fixtures": [
+        {
+          "fixture_ref": "101.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 9.0,
+          "delta_tilt": 0.0,
+          "pan": 29.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "102.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 9.0,
+          "delta_tilt": 0.0,
+          "pan": 29.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "103.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 9.0,
+          "delta_tilt": 0.0,
+          "pan": 29.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "104.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 9.0,
+          "delta_tilt": 0.0,
+          "pan": 29.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "105.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 9.0,
+          "delta_tilt": 0.0,
+          "pan": 29.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "106.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 9.0,
+          "delta_tilt": 0.0,
+          "pan": 29.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "107.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 9.0,
+          "delta_tilt": 0.0,
+          "pan": 29.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "108.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 9.0,
+          "delta_tilt": 0.0,
+          "pan": 29.0,
+          "tilt": 30.0
+        }
+      ]
+    },
+    {
+      "position_name": "RIGHT",
+      "fixtures": [
+        {
+          "fixture_ref": "101.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -9.0,
+          "delta_tilt": 0.0,
+          "pan": 11.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "102.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -9.0,
+          "delta_tilt": 0.0,
+          "pan": 11.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "103.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -9.0,
+          "delta_tilt": 0.0,
+          "pan": 11.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "104.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -9.0,
+          "delta_tilt": 0.0,
+          "pan": 11.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "105.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -9.0,
+          "delta_tilt": 0.0,
+          "pan": 11.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "106.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -9.0,
+          "delta_tilt": 0.0,
+          "pan": 11.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "107.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -9.0,
+          "delta_tilt": 0.0,
+          "pan": 11.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "108.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -9.0,
+          "delta_tilt": 0.0,
+          "pan": 11.0,
+          "tilt": 30.0
+        }
+      ]
+    },
+    {
+      "position_name": "FRONT",
+      "fixtures": [
+        {
+          "fixture_ref": "101.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": -7.5,
+          "pan": 20.0,
+          "tilt": 22.5
+        },
+        {
+          "fixture_ref": "102.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": -7.5,
+          "pan": 20.0,
+          "tilt": 22.5
+        },
+        {
+          "fixture_ref": "103.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": -7.5,
+          "pan": 20.0,
+          "tilt": 22.5
+        },
+        {
+          "fixture_ref": "104.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": -7.5,
+          "pan": 20.0,
+          "tilt": 22.5
+        },
+        {
+          "fixture_ref": "105.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": -7.5,
+          "pan": 20.0,
+          "tilt": 22.5
+        },
+        {
+          "fixture_ref": "106.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": -7.5,
+          "pan": 20.0,
+          "tilt": 22.5
+        },
+        {
+          "fixture_ref": "107.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": -7.5,
+          "pan": 20.0,
+          "tilt": 22.5
+        },
+        {
+          "fixture_ref": "108.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": -7.5,
+          "pan": 20.0,
+          "tilt": 22.5
+        }
+      ]
+    },
+    {
+      "position_name": "UPSTAGE",
+      "fixtures": [
+        {
+          "fixture_ref": "101.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": 7.5,
+          "pan": 20.0,
+          "tilt": 37.5
+        },
+        {
+          "fixture_ref": "102.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": 7.5,
+          "pan": 20.0,
+          "tilt": 37.5
+        },
+        {
+          "fixture_ref": "103.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": 7.5,
+          "pan": 20.0,
+          "tilt": 37.5
+        },
+        {
+          "fixture_ref": "104.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": 7.5,
+          "pan": 20.0,
+          "tilt": 37.5
+        },
+        {
+          "fixture_ref": "105.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": 7.5,
+          "pan": 20.0,
+          "tilt": 37.5
+        },
+        {
+          "fixture_ref": "106.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": 7.5,
+          "pan": 20.0,
+          "tilt": 37.5
+        },
+        {
+          "fixture_ref": "107.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": 7.5,
+          "pan": 20.0,
+          "tilt": 37.5
+        },
+        {
+          "fixture_ref": "108.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 0.0,
+          "delta_tilt": 7.5,
+          "pan": 20.0,
+          "tilt": 37.5
+        }
+      ]
+    },
+    {
+      "position_name": "NARROW_FAN",
+      "fixtures": [
+        {
+          "fixture_ref": "101.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -9.0,
+          "delta_tilt": 0.0,
+          "pan": 11.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "102.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -6.428571428571429,
+          "delta_tilt": 0.0,
+          "pan": 13.571428571428571,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "103.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -3.8571428571428568,
+          "delta_tilt": 0.0,
+          "pan": 16.142857142857142,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "104.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -1.2857142857142856,
+          "delta_tilt": 0.0,
+          "pan": 18.714285714285715,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "105.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 1.2857142857142856,
+          "delta_tilt": 0.0,
+          "pan": 21.285714285714285,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "106.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 3.8571428571428568,
+          "delta_tilt": 0.0,
+          "pan": 23.857142857142858,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "107.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 6.428571428571429,
+          "delta_tilt": 0.0,
+          "pan": 26.42857142857143,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "108.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 9.0,
+          "delta_tilt": 0.0,
+          "pan": 29.0,
+          "tilt": 30.0
+        }
+      ]
+    },
+    {
+      "position_name": "WIDE_FAN",
+      "fixtures": [
+        {
+          "fixture_ref": "101.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -18.0,
+          "delta_tilt": 0.0,
+          "pan": 2.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "102.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -12.857142857142858,
+          "delta_tilt": 0.0,
+          "pan": 7.142857142857142,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "103.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -7.7142857142857135,
+          "delta_tilt": 0.0,
+          "pan": 12.285714285714286,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "104.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -2.571428571428571,
+          "delta_tilt": 0.0,
+          "pan": 17.42857142857143,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "105.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 2.571428571428571,
+          "delta_tilt": 0.0,
+          "pan": 22.57142857142857,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "106.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 7.7142857142857135,
+          "delta_tilt": 0.0,
+          "pan": 27.714285714285715,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "107.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 12.857142857142858,
+          "delta_tilt": 0.0,
+          "pan": 32.85714285714286,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "108.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 18.0,
+          "delta_tilt": 0.0,
+          "pan": 38.0,
+          "tilt": 30.0
+        }
+      ]
+    },
+    {
+      "position_name": "CROSS",
+      "fixtures": [
+        {
+          "fixture_ref": "101.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 12.0,
+          "delta_tilt": 0.0,
+          "pan": 32.0,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "102.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 8.571428571428571,
+          "delta_tilt": 0.0,
+          "pan": 28.57142857142857,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "103.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 5.142857142857142,
+          "delta_tilt": 0.0,
+          "pan": 25.142857142857142,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "104.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 1.7142857142857142,
+          "delta_tilt": 0.0,
+          "pan": 21.714285714285715,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "105.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -1.7142857142857142,
+          "delta_tilt": 0.0,
+          "pan": 18.285714285714285,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "106.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -5.142857142857142,
+          "delta_tilt": 0.0,
+          "pan": 14.857142857142858,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "107.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -8.571428571428571,
+          "delta_tilt": 0.0,
+          "pan": 11.428571428571429,
+          "tilt": 30.0
+        },
+        {
+          "fixture_ref": "108.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -12.0,
+          "delta_tilt": 0.0,
+          "pan": 8.0,
+          "tilt": 30.0
+        }
+      ]
+    },
+    {
+      "position_name": "ALTERNATE",
+      "fixtures": [
+        {
+          "fixture_ref": "101.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -12.0,
+          "delta_tilt": -3.0,
+          "pan": 8.0,
+          "tilt": 27.0
+        },
+        {
+          "fixture_ref": "102.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 12.0,
+          "delta_tilt": 3.0,
+          "pan": 32.0,
+          "tilt": 33.0
+        },
+        {
+          "fixture_ref": "103.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -12.0,
+          "delta_tilt": -3.0,
+          "pan": 8.0,
+          "tilt": 27.0
+        },
+        {
+          "fixture_ref": "104.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 12.0,
+          "delta_tilt": 3.0,
+          "pan": 32.0,
+          "tilt": 33.0
+        },
+        {
+          "fixture_ref": "105.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -12.0,
+          "delta_tilt": -3.0,
+          "pan": 8.0,
+          "tilt": 27.0
+        },
+        {
+          "fixture_ref": "106.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 12.0,
+          "delta_tilt": 3.0,
+          "pan": 32.0,
+          "tilt": 33.0
+        },
+        {
+          "fixture_ref": "107.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -12.0,
+          "delta_tilt": -3.0,
+          "pan": 8.0,
+          "tilt": 27.0
+        },
+        {
+          "fixture_ref": "108.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 12.0,
+          "delta_tilt": 3.0,
+          "pan": 32.0,
+          "tilt": 33.0
+        }
+      ]
+    },
+    {
+      "position_name": "EXPLODE",
+      "fixtures": [
+        {
+          "fixture_ref": "101.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -18.0,
+          "delta_tilt": -6.0,
+          "pan": 2.0,
+          "tilt": 24.0
+        },
+        {
+          "fixture_ref": "102.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -12.857142857142858,
+          "delta_tilt": 6.0,
+          "pan": 7.142857142857142,
+          "tilt": 36.0
+        },
+        {
+          "fixture_ref": "103.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -7.7142857142857135,
+          "delta_tilt": -6.0,
+          "pan": 12.285714285714286,
+          "tilt": 24.0
+        },
+        {
+          "fixture_ref": "104.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -2.571428571428571,
+          "delta_tilt": 6.0,
+          "pan": 17.42857142857143,
+          "tilt": 36.0
+        },
+        {
+          "fixture_ref": "105.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 2.571428571428571,
+          "delta_tilt": -6.0,
+          "pan": 22.57142857142857,
+          "tilt": 24.0
+        },
+        {
+          "fixture_ref": "106.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 7.7142857142857135,
+          "delta_tilt": 6.0,
+          "pan": 27.714285714285715,
+          "tilt": 36.0
+        },
+        {
+          "fixture_ref": "107.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 12.857142857142858,
+          "delta_tilt": -6.0,
+          "pan": 32.85714285714286,
+          "tilt": 24.0
+        },
+        {
+          "fixture_ref": "108.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 18.0,
+          "delta_tilt": 6.0,
+          "pan": 38.0,
+          "tilt": 36.0
+        }
+      ]
+    },
+    {
+      "position_name": "COLLAPSE",
+      "fixtures": [
+        {
+          "fixture_ref": "101.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 9.0,
+          "delta_tilt": 3.0,
+          "pan": 29.0,
+          "tilt": 33.0
+        },
+        {
+          "fixture_ref": "102.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 6.428571428571429,
+          "delta_tilt": 3.0,
+          "pan": 26.42857142857143,
+          "tilt": 33.0
+        },
+        {
+          "fixture_ref": "103.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 3.8571428571428568,
+          "delta_tilt": 3.0,
+          "pan": 23.857142857142858,
+          "tilt": 33.0
+        },
+        {
+          "fixture_ref": "104.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": 1.2857142857142856,
+          "delta_tilt": 3.0,
+          "pan": 21.285714285714285,
+          "tilt": 33.0
+        },
+        {
+          "fixture_ref": "105.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -1.2857142857142856,
+          "delta_tilt": 3.0,
+          "pan": 18.714285714285715,
+          "tilt": 33.0
+        },
+        {
+          "fixture_ref": "106.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -3.8571428571428568,
+          "delta_tilt": 3.0,
+          "pan": 16.142857142857142,
+          "tilt": 33.0
+        },
+        {
+          "fixture_ref": "107.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -6.428571428571429,
+          "delta_tilt": 3.0,
+          "pan": 13.571428571428571,
+          "tilt": 33.0
+        },
+        {
+          "fixture_ref": "108.1",
+          "baseline_pan": 20.0,
+          "baseline_tilt": 30.0,
+          "delta_pan": -9.0,
+          "delta_tilt": 3.0,
+          "pan": 11.0,
+          "tilt": 33.0
+        }
+      ]
+    }
+  ]
+}

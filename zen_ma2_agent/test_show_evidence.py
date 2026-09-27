@@ -367,6 +367,10 @@ def test_show_palette_manifest(plan: Mapping[str, Any]) -> dict[str, str]:
     return result
 
 
+# This public helper keeps its established name, but it is not a pytest test.
+test_show_palette_manifest.__test__ = False
+
+
 def bounded_test_show_color_rows(
     plan: Mapping[str, Any],
     readbacks: Mapping[str, str],
