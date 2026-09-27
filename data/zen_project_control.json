@@ -5,12 +5,12 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001 is implemented offline: deterministic per-Cue Effect plus Position merges target only verified existing Agent-owned Sequence/Cues, preserve protected content by fingerprint, require fresh Sequence/Group/Effect/geometry/calibration evidence, reject Fixture 9999 and stale evidence, and perform zero MA2 writes. The offline 29-Cue contract Preview is non-approvable fixture evidence; the next gate is generation of a fresh native-evidence Preview inside the already authenticated Field Core."
+    "active_objective": "EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001 is offline-implemented and merged with the full fixture-capability artistic path. A 29-Cue offline contract fixture exists but is explicitly non-approvable; the separate read-only guest session could not recover the fresh Position binding, so no live Action was registered. The production route now carries Beam/Gobo/Prism/Zoom/Focus/Frost/Iris/Shutter-Strobe capability intent, fresh target-Group structured geometry and operator-verified PAN/TILT semantics into one Lighting Designer, while only verified resources compile to MA commands. Existing Sequence/Cue Effect and Position application is deterministic, preservation-verified and approval-gated. Windows suite is 924 tests / OK and MA2_WRITES=0. CURRENT_SHOW_SPATIAL_EVIDENCE remains partially open; Stage View pixels are supplemental and do not establish physical geometry truth. Next dynamic acceptance is a fresh native-evidence Preview inside the already authenticated Field Core; Action 8a5d699c36fa remains forbidden."
   },
   "last_closed_task": {
     "id": "EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001",
-    "status": "OFFLINE_IMPLEMENTATION_COMPLETE_LIVE_PREVIEW_BLOCKED_FRESH_EVIDENCE_MA2_WRITES_ZERO",
-    "result": "Added existing_cue.dynamic_program_merge with verified At Effect grammar, explicit bounded PAN/TILT, per-Cue protected-content fingerprints, unrelated Effect preservation/replacement gates, native post-write verifier, 13 direct regressions and a 29-Cue non-approvable offline Preview artifact. Full Windows suite passed 917 tests. Action 8a5d699c36fa remained rejected; Actions were not approved or executed."
+    "status": "OFFLINE_IMPLEMENTATION_COMPLETE_LIVE_NATIVE_PREVIEW_BLOCKED_MA2_WRITES_ZERO",
+    "result": "Merged the bounded existing-Cue Effect+Position compiler with full fixture capability intent, fresh structured spatial context, root routing, preservation verification and durable At Effect grammar evidence. The offline 29-Cue contract artifact remains non-approvable; no real Action was registered because the separate guest session lacked fresh Position-binding authority. Full Windows suite passes 924 tests. MA2_WRITES=0."
   },
   "next_acceptance_gate": {
     "id": "CURRENT_SHOW_SPATIAL_EVIDENCE",
@@ -478,8 +478,8 @@
     },
     {
       "id": "EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001",
-      "source": "EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001.md + zen_ma2_agent/existing_cue_dynamic_program_merge.py + tests/test_existing_cue_dynamic_program_merge.py",
-      "status": "OFFLINE_IMPLEMENTATION_COMPLETE_LIVE_PREVIEW_BLOCKED_FRESH_EVIDENCE",
+      "source": "EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001.md + existing_cue_dynamic_program_merge.py + offline preview artifact + capability/resource/compiler regressions",
+      "status": "OFFLINE_IMPLEMENTED_LIVE_NATIVE_PREVIEW_BLOCKED_FRESH_AUTHENTICATED_EVIDENCE",
       "outcomes": [
         "EXISTING_SEQUENCE_CUE_EFFECT_PLUS_POSITION_COMPOSITE_COMPILER_IMPLEMENTED",
         "NO_SEQUENCE_ALLOCATION_OR_REPLACEMENT_PATH",
@@ -493,10 +493,24 @@
         "STALE_SEQUENCE_EFFECT_GROUP_EVIDENCE_REJECTED",
         "NATIVE_POSTWRITE_EFFECT_POSITION_AND_PRESERVATION_VERIFIER_IMPLEMENTED",
         "OFFLINE_29_CUE_PREVIEW_ARTIFACT_NOT_APPROVABLE",
-        "WINDOWS_FULL_SUITE_917_TESTS_PASS",
-        "MA2_WRITES_ZERO"
+        "MA2_WRITES_ZERO",
+        "FULL_FIXTURE_CAPABILITY_INTENT_VOCABULARY_WIRED_TO_LIGHTING_DESIGNER",
+        "BEAM_GOBO_ROTATION_PRISM_ROTATION_IRIS_TECHNICAL_CLASSIFICATION_ADDED",
+        "TECHNICAL_CAPABILITY_SEPARATED_FROM_EXECUTION_AUTHORITY",
+        "UNVERIFIED_PRISM_ZOOM_FROST_AND_OTHER_FEATURES_NEVER_BECOME_RAW_MA_COMMANDS",
+        "EXPLICIT_PER_CUE_POSITION_PATTERN_AND_BOUNDED_SCALE_SUPPORTED",
+        "FRESH_TARGET_GROUP_GEOMETRY_AND_OPERATOR_PAN_TILT_SEMANTICS_INCLUDED_IN_DESIGN_CONTEXT",
+        "STAGE_VIEW_PIXELS_REMAIN_SUPPLEMENTAL_NON_AUTHORITATIVE",
+        "EXISTING_SEQUENCE_DYNAMIC_ROUTE_PRECEDES_GENERIC_BUILDER",
+        "EXISTING_CUE_POSITION_PLUS_VERIFIED_EFFECT_COMPOSITE_MERGE_IMPLEMENTED",
+        "NO_SEQUENCE_EFFECT_EXECUTOR_PRESET_GROUP_ALLOCATION_OR_CREATION_IN_COMPOSITE_PATH",
+        "APPROVAL_TIME_REVALIDATION_HAS_NO_SECOND_ARTISTIC_MODEL_CALL",
+        "PROTECTED_STATIC_DIMMER_COLOR_PRESET_LABEL_FADE_DELAY_SEQUENCE_EXECUTOR_CONTENT_FAILS_CLOSED_ON_DRIFT",
+        "AT_EFFECT_POOL_CALL_DURABLE_REAL_MACHINE_GRAMMAR_CAPABILITY_RECOVERED_FROM_CLOSED_NATIVE_READBACK_REPORT",
+        "CURRENT_EFFECT_OBJECT_IDENTITY_STILL_REQUIRES_FRESH_EVIDENCE",
+        "WINDOWS_FULL_SUITE_924_TESTS_PASS"
       ],
-      "limitations": "No real Action was registered because a separate read-only MA2 connection authenticated as guest and could not recover the verified Position binding. Fresh native Sequence 302, Group, Effect, geometry/capability and calibration evidence must be collected inside the already authenticated Field Core before an approvable Preview exists. The offline artifact uses deterministic regression-fixture labels/hashes and cannot be approved."
+      "limitations": "The committed 29-Cue preview artifact is an offline contract fixture and cannot be approved. A separate read-only MA2 connection authenticated as guest and could not recover the verified Position binding, so no real Action was registered. The merged implementation adds full fixture-capability intent and normal Core routing, but current-show Stage View semantic calibration remains partial and no live acceptance has occurred. Fresh native Sequence 302, Group, Effect, geometry/capability and calibration evidence must be collected inside the already authenticated Field Core. No live write is authorized by this result."
     }
   ],
   "backlog": [
@@ -685,6 +699,23 @@
       "why_it_matters": "Normalizes audio/song analysis into semantic sections and a Timecode skeleton; REAPER may be an adapter but is not a runtime dependency.",
       "blocks_current_milestone": false,
       "next_review_condition": "A bounded song-analysis case requires automated timeline generation after the M4 path is stable."
+    },
+    {
+      "id": "EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001",
+      "classification": "REQUIRED",
+      "milestone": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
+      "status": "OFFLINE_IMPLEMENTED_AWAITING_LIVE_PREVIEW",
+      "why_it_matters": "The full artistic workflow previously exposed fixture capabilities to evidence/resource layers but could not deterministically apply per-Cue dynamic Effect plus explicit Position intent to an existing Sequence. The new path closes that compiler gap without broadening raw MA authority.",
+      "blocks_current_milestone": true,
+      "dependencies": [
+        "current Sequence 302 native pre-export and exact Cue set",
+        "fresh Group 1 exact membership and FixtureType capability evidence",
+        "verified Position baseline/direction evidence for current Test Show",
+        "fresh strict-template or Agent-owned Effect identity evidence",
+        "REAL_MACHINE_CONTENT_VERIFIED AT_EFFECT_POOL_CALL grammar capability",
+        "explicit owner approval after exact Preview"
+      ],
+      "next_review_condition": "Deploy canonical code to the current field runtime and generate Preview only for Dynamic existing Sequence 302 Position Effect Group 1 Preset 2.13 Cues 1-29 Executor 2.8. Preview must show per-Cue Effect state variation, explicit Position pattern/range and preserved capability-intent audit with MA2_WRITES=0. Do not approve automatically."
     }
   ],
   "recent_foundation": {

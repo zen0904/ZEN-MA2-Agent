@@ -1,239 +1,154 @@
 # EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001
 
-Status: **OFFLINE IMPLEMENTATION COMPLETE — LIVE-EVIDENCE PREVIEW BLOCKED — MA2_WRITES=0**
+Date: 2026-09-27 (Taiwan)
 
-Action `8a5d699c36fa` is rejected as noncompliant. It was not approved or
-executed. Action `97d3a82f1220` was not replayed. Sequence 302, its Executor
-assignment, and Fixture 9999 were not modified.
+Status: `OFFLINE_IMPLEMENTED_AWAITING_LIVE_PREVIEW`
 
-## Capability gap closed
+## Goal
 
-The new bounded implementation is
-`zen_ma2_agent/existing_cue_dynamic_program_merge.py` with builtin Skill
-`existing_cue.dynamic_program_merge`.
+Close the implementation gap between the documented full artistic workflow and the actual deterministic existing-Cue compiler. The target workflow is:
 
-It composes two already proven boundaries without exposing a generic MA command
-interface:
+Current Show / FixtureType / Geometry / Preset / Effect evidence
+-> one Lighting Designer
+-> per-Cue artistic capability selection
+-> strict typed ShowPlan
+-> existing Sequence/Cue deterministic Position + Effect merge
+-> explicit owner approval
+-> native Sequence Export verification.
 
-1. verified existing-Cue Position merge using explicit PAN/TILT values; and
-2. verified Cue Effect grammar: `Group <verified group>` followed by
-   `At Effect <verified effect>`.
+This work does **not** make Prism/Gobo/Zoom/Frost/etc mandatory. It makes those capability families visible to the Designer with a strict boundary between technical availability and executable MA2 authority.
 
-Every write target is an existing Cue in an already verified ZEN-owned Sequence.
-The compiler has no Sequence allocator and cannot create a replacement Sequence,
-Effect, Group, Executor, Preset, fixture, Patch, or Address.
+## Capability vocabulary
 
-## Deterministic workflow
+The shared artistic vocabulary now includes:
 
-```text
-fresh native Sequence export
-+ fresh Group membership
-+ fresh List Effect and Agent-owned catalog evidence
-+ content-verified At Effect capability
-+ fresh geometry/capability limits
-+ verified Position baseline and direction semantics
-+ explicit artistic per-Cue plan
-+ Stage View/operator amplitude assessment
-    -> deterministic compile
-    -> preservation-diff Preview
-    -> explicit human approval (future live Action only)
-    -> existing-Cue /merge /cueonly
-    -> fresh native Sequence Export verification
-```
+- DIMMER
+- COLOR
+- POSITION / MOVEMENT
+- FOCUS
+- BEAM
+- GOBO / GOBO_ROTATION
+- PRISM / PRISM_ROTATION
+- ZOOM
+- FROST
+- IRIS
+- SHUTTER / STROBE
+- EFFECT
 
-No live Action is registered from stale, retained, fixture, or unbound visual
-evidence.
+FixtureType capability discovery now includes BEAM, GOBO_ROTATION, PRISM_ROTATION and IRIS in addition to the previously available families.
 
-## Supported artistic vocabulary
+A capability may be `SHOW_BOUND_VERIFIED` technically while still having `NO_VERIFIED_RESOURCE` for execution. In that state the Designer may reason about it through `capability_intent`, but the compiler generates **no raw Attribute command** and performs no silent substitution.
 
-Effect intent:
+## Cue-level artistic contract
 
-- `STATIC_LOOK`
-- `DIMMER_CHASE_SLOW`
-- `DIMMER_CHASE_MED`
-- `DIMMER_CHASE_FAST`
-- `ALTERNATE`
-- `PULSE`
-- `HIT`
-- `BUILD`
-- `RELEASE`
-- `BLACKOUT`
-- `RESET`
+Provider-facing Cue intent may now include:
 
-Dynamic intents must bind to an existing, freshly verified Effect. Static,
-release, blackout, and reset entries do not invent an Effect reference. The
-compiler does not claim that omitting a new Effect call clears a tracked Effect;
-that would require a separately verified release grammar.
+- `capability_intent[]`: Group + dimension + `USE|AVOID|OPTIONAL` + reason
+- `position_pattern`: `CENTER|LEFT|RIGHT|FRONT|UPSTAGE|NARROW_FAN|WIDE_FAN|CROSS|ALTERNATE|EXPLODE|COLLAPSE`
+- `position_scale`: bounded `0.5..2.5`
 
-Position pattern:
+The Position language remains relative raw/natural MA values. It does not claim physical degrees, exact stage targets, XYZ sign mapping, or high/low semantics.
 
-- `CENTER`
-- `LEFT` / `RIGHT`
-- `FRONT` / `UPSTAGE`
-- `NARROW_FAN` / `WIDE_FAN`
-- `CROSS`
-- `ALTERNATE`
-- `EXPLODE`
-- `COLLAPSE`
+## Current-show spatial evidence
 
-Current Test Show direction semantics are preserved:
+The dynamic path feeds the Lighting Designer only fresh bounded current-show spatial evidence:
 
-- PAN negative -> stage right
-- PAN positive -> stage left
-- TILT negative -> audience/front
-- TILT positive -> upstage/inward
+- exact target Group fixture refs
+- fresh structured stage geometry for those fixtures
+- current operator-verified PAN/TILT direction semantics
+- Position baseline and FixtureType limits
+- relative Position pattern semantics
 
-The known Group 1 baseline remains PAN `20`, TILT `30`. The compiler does not
-copy that baseline to another Group. A larger Position amplitude requires all
-three of:
+Stale committed Stage View calibration artifacts are not promoted into current truth. Stage View pixels remain supplemental visual observation, not structured geometry authority.
 
-1. readable Stage View evidence;
-2. operator assessment `PRIOR_VARIATION_TOO_SMALL`; and
-3. fixture-specific verified natural limits.
+## Existing-Cue composite merge
 
-The offline contract Preview uses scale `1.5`; a nominal +/-12 WIDE_FAN becomes
-+/-18 raw value, while every final value is still checked against fixture
-limits. This is a relative-shape proposal and does not claim physical targeting,
-world coordinates, audience safety, or high/low geometry.
+New skill: `existing_cue.dynamic_program_merge`
 
-## Per-Cue Preview contract
+New intent: `merge_existing_cue_dynamic_program`
 
-Every Cue row contains:
+Recognized explicit request form includes:
 
-- Cue number and fresh native label;
-- selected Effect intent and exact Effect ID, or no new Effect;
-- verified target Group;
-- Position pattern;
-- expected PAN and TILT ranges;
-- intended attribute families (`EFFECT`, `POSITION`);
-- exact fixture values and deltas; and
-- an individual protected-content fingerprint.
+`Dynamic existing Sequence 302 Position Effect Group 1 Preset 2.13 Cues 1-29 Executor 2.8`
 
-A 29-Cue Preview must cover exactly Cues 1-29. Empty Cue applications, an
-Effect-only pool creation action, or a Position request with no fixture values
-is noncompliant.
+This route is evaluated before the generic Show Builder, so it cannot silently allocate a replacement Sequence.
 
-## Preservation contract
+Bounded executable grammar per Cue:
 
-Allowed intended changes:
+1. `ClearAll`
+2. verified Fixture selection(s)
+3. `Attribute "Pan" At <verified bounded value>`
+4. `Attribute "Tilt" At <verified bounded value>`
+5. optional verified `Group <id>`
+6. optional verified `At Effect <id>`
+7. `Store Cue <n> Sequence <existing> /merge /cueonly /nc`
+8. final `ClearAll`
 
-- PAN/TILT and known Position-family companion rows;
-- explicitly selected Effect references on the verified target Group.
+The path cannot create or assign Sequence, Executor, Effect, Preset, Group, Patch, Address, Fixture identity/type, or Fixture 9999.
 
-Protected unless explicitly planned:
+## Effect authority
 
-- Cue labels;
-- Fade and Delay;
-- Color;
-- unrelated static Dimmer values;
-- unrelated Presets;
-- unrelated Effects;
-- Sequence identity; and
-- Executor assignment.
+The already closed real-machine proof `ZEN_CUE_EFFECT_APPLICATION_AT_EFFECT_001.md` established `AT_EFFECT_POOL_CALL` through native Cue-content readback with Sequence Export SHA-256:
 
-If a target Cue already contains an Effect, the planner must explicitly list
-all replaced Effect IDs. Otherwise compilation fails with
-`DYNAMIC_MERGE_UNRELATED_EFFECT_CONFLICT`. Post-write verification requires the
-planned Effect set exactly and rejects protected-content fingerprint drift.
+`2801690a2c512bd0fc5ba1930aef4cc2538090357e6b086519619beecaab4cbd`
 
-## Command boundary
+The durable grammar capability is now retained in `data/ZEN_CUE_EFFECT_APPLICATION_CAPABILITY.json`.
 
-Only these exact command families are allowed:
+This recovery **does not assert current Effect object identity**. Every Effect used by the dynamic path still requires fresh current-show object/label/template evidence through the resource map before it can become executable.
 
-```text
-ClearAll
-Group <positive integer>
-At Effect <positive integer>
-Fixture <verified exact refs>
-Attribute "Pan" At <bounded numeric value>
-Attribute "Tilt" At <bounded numeric value>
-Store Cue <existing cue> Sequence <existing sequence> /merge /cueonly /nc
-```
+## Preservation verifier
 
-There is no raw command string input and no `Sequence 303`, allocation, label,
-Assign, Delete, Patch, Address, Fixture identity/type, playback, or Executor
-command.
+The composite verifier distinguishes intended changes from protected content.
 
-Effect and Position are isolated into two deterministic Programmer/store phases
-for the same existing Cue, each using `/merge /cueonly`, so Effect application
-does not leak into Position selection and vice versa.
+Intended:
 
-## Verification
+- PAN/TILT and grandMA2 Position-family representation
+- explicitly approved Effect identity / Effect* metadata on target fixtures and Cues
 
-Fresh post-write Sequence Export must prove:
+Protected:
 
-- all approved PAN/TILT values per exact fixture;
-- the exact planned Effect identity per target fixture;
-- unrelated pre-existing Effect IDs remain, unless explicitly replaced;
-- Cue labels remain identical; and
-- the protected-content fingerprint is unchanged.
+- static Dimmer Value/Fade/Delay
+- Color
+- Preset references
+- unrelated Effect content
+- Cue labels
+- Cue Fade/Delay metadata
+- Sequence identity
+- Executor assignment
+- Show identity
 
-The verifier reports intended Position/Effect matches separately from protected
-content.
+Effect allowance does not hide static Dimmer drift. Regression proves that a `DIM Value 55 -> 56` change still fails closed even when an Effect was intentionally attached.
 
-## Regression coverage
+## Approval semantics
 
-`tests/test_existing_cue_dynamic_program_merge.py` covers:
+Preview may use one Lighting Designer call. Approval-time revalidation performs **no second artistic/model call**. It rescans current Show/resource/Sequence evidence, reconstructs the approved per-Cue Position/Effect intent deterministically, and rejects stale semantic drift before any MA2 write.
 
-1. existing Sequence 302 never allocates a new Sequence;
-2. Effect is attached to the requested existing Cue;
-3. different Cues use different Effects;
-4. Effect and Position coexist in one Cue workflow;
-5. unknown attribute drift fails closed;
-6. Fixture 9999 is rejected;
-7. stale Sequence, Effect, or Group evidence blocks;
-8. Effect creation without Cue application is noncompliant;
-9. Position requested without Position values is noncompliant;
-10. native verification separates intended changes from protected content;
-11. unrelated existing Effect replacement requires an explicit plan; and
-12. Stage View/operator scaling remains bounded by fixture limits.
+## Regression status
 
-Focused result: `41 tests / OK` across the new capability, existing Position
-merge, Cue Effect application, and builtin Skill discovery coverage.
+Windows authoritative suite:
 
-Authoritative Windows result: `917 tests / OK` using
-`python -m unittest discover -s tests -q`.
+`924 tests / OK`
 
-## Preview-only artifact
+Coverage includes:
 
-Files:
+- full fixture capability vocabulary
+- capability intent vs execution authority separation
+- no raw Prism/Zoom/Frost invention
+- existing Sequence path never allocates a replacement Sequence
+- different Cues may use different verified Effects
+- Position and Effect coexist in one existing-Cue merge
+- explicit Position intent required
+- Effect variation required for dynamic mode
+- static Dimmer/Color/unplanned Effect drift fails closed
+- Fixture 9999 protection
+- root routing bypasses generic Builder
+- fresh spatial context is target-Group bounded
+- durable real-machine Effect grammar capability cannot silently disappear
 
-- `projects/runs/EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001/preview_only.json`
-- `projects/runs/EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001/preview_only.md`
+## Current acceptance state
 
-The generated artifact demonstrates:
+`MA2_WRITES_DURING_IMPLEMENTATION=0`
 
-- 29 Cue applications;
-- three different verified-resource placeholders for slow/medium/fast dynamics;
-- per-Cue Effect/no-Effect choices;
-- per-Cue Position patterns and exact fixture values;
-- 484 allow-listed deterministic commands; and
-- `MA2_WRITES=0`.
+Action `8a5d699c36fa` remains noncompliant and must not be approved or executed. It represented Effect creation without existing-Cue application or Position.
 
-Its status is deliberately
-`OFFLINE_CONTRACT_FIXTURE_NOT_APPROVABLE`. Fixture Cue labels and evidence hashes
-are not current native Sequence 302 evidence and cannot be promoted to an
-Action.
-
-## Fresh live Preview blocker
-
-A separate read-only MA2 connection reached the console as guest rather than the
-already authenticated Field Core user, so fresh binding lookup failed with
-`POSITION_MERGE_VERIFIED_BASELINE_BINDING_UNAVAILABLE`. The implementation did
-not weaken that gate or reuse stale evidence.
-
-The next safe operation is read-only: run this compiler inside the already
-authenticated Field Core so it can collect the fresh native Sequence 302,
-Group, Effect, geometry, capability, and calibration evidence. Only then may it
-return a real Preview with current Cue labels. No live write follows without a
-new explicit human approval.
-
-## Safety outcome
-
-- `MA2_WRITES=0`
-- Sequence 302 modified: **NO**
-- Sequence 303 created: **NO**
-- Executor assignment changed: **NO**
-- Fixture 9999 touched: **NO**
-- Action `97d3a82f1220` replayed: **NO**
-- Action `8a5d699c36fa` approved/executed: **NO**
+The next safe acceptance step is **Preview only** through the new route against current Sequence 302. A valid Preview must show per-Cue Position variation plus verified existing Effect variation, preserve the full capability-intent audit, and report `MA2_WRITES=0`. No live write occurs until the owner separately approves that exact Preview.
