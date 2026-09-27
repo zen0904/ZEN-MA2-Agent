@@ -1,6 +1,6 @@
 # Sequence 302 Resource Authoring Merge 001
 
-Status: IMPLEMENTED, PREVIEW/APPROVAL REQUIRED
+Status: OFFLINE_HARDENED, FRESH PREVIEW/APPROVAL REQUIRED
 
 ## Scope
 
@@ -21,7 +21,7 @@ Names are identity checks only. Effect content is accepted only from fresh Effec
 
 `build_sequence302_resource_merge_preview()` is pure and sends no commands. `AgentCore.preview_sequence302_resource_merge()` validates the artifact and queues it through the normal `ActionRecord` Preview/Approval path. It does not approve or execute.
 
-At approval time, AgentCore re-exports Sequence 302, re-reads Cue metadata, Group membership, Position Preset targets, and Effect occupancy. Any drift rejects the approved Preview. Execution stops on the first rejected command or failed resource readback. Each Position Preset identity is read immediately after creation. Each Effect is read immediately after labeling and must show nonempty explicit `QTY=None` template evidence and `Dim` content before any Cue application is reached.
+At approval time, AgentCore re-exports Sequence 302, re-reads Cue metadata, the complete Sequence 302 Executor assignment identity, Group membership, Position Preset targets, and each reserved Effect 2500-2502 through direct pool plus Effect-line reads. Any drift rejects the approved Preview before a write. Execution stops on the first rejected command or failed resource readback. Each Position Preset identity is read immediately after creation. Each Effect is read immediately after labeling and must show nonempty explicit `QTY=None` template evidence and `Dim` content before any Cue application is reached.
 
 After the merge, one retained native Sequence Export verifies:
 
@@ -62,3 +62,16 @@ Authoritative Windows suite:
 ```powershell
 .venv\Scripts\python.exe -m pytest -q
 ```
+
+## Convergence hardening
+
+The mainline convergence pass added two approval-time fail-closed gates that were missing from the original implementation:
+
+- Executor ownership/assignment for Sequence 302 is re-read and must exactly match the approved Preview;
+- Effects 2500-2502 are each re-read directly (`List Effect <id>` plus `List Effect 1.<id>.*`) so a generic pool listing cannot hide newly occupied or populated content.
+
+The shared preservation verifier also now uses exact fixture/subfixture channel identities, verifies Effect attribute families, and protects Position-family changes on unrelated fixtures.
+
+Authoritative converged Windows suite: `954 tests / OK`.
+
+`MA2_WRITES_DURING_CONVERGENCE=0`.

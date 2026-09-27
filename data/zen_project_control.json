@@ -5,12 +5,12 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001 v0.2 is offline-implemented with full fixture-capability artistic intent and bounded existing-Preset execution. The production route now reads fresh Group/FixtureType/function/Preset/Effect/geometry evidence, lets one Lighting Designer choose capabilities from music, choreography, spatial context, fixture role, visual density and Cue contrast, and compiles only verified existing COLOR/FOCUS/BEAM/GOBO Presets, Effects and explicit Position into existing Cues. Prism/Gobo/Strobe and all other families remain optional; unsupported requested families stay intent-only and no raw values are guessed. Per-Cue Preview reports used, optional, intentionally unused and requested-unexecutable capabilities. Windows suite is 935 tests / OK; MA2_WRITES=0. The next gate remains a fresh native-evidence Preview inside the authenticated Field Core; Action 8a5d699c36fa remains forbidden."
+    "active_objective": "MAINLINE_DYNAMIC_RESOURCE_CONVERGENCE_001 is offline-complete. The latest mainline combines the v0.2 full fixture-capability artistic path with fail-closed existing-Cue hardening and Sequence 302 resource-authoring approval guards. Existing COLOR/FOCUS/BEAM/GOBO Presets, verified DIMMER_CHASE Effects and explicit Position can be represented on existing Cues only through verified route-scoped grammars. Existing Effect replacement/clear remains unverified and fails closed. Approval-time Sequence 302 revalidation now includes exact Executor assignment plus direct Effect 2500-2502 pool/line emptiness checks. Windows suite is 954 tests / OK; MA2_WRITES=0 during convergence. The next dynamic gate is deployment to the authenticated Field Core and a fresh native-evidence Preview only; Action 8a5d699c36fa and legacy Action 97d3a82f1220 remain forbidden."
   },
   "last_closed_task": {
-    "id": "EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001_V0_2",
-    "status": "OFFLINE_IMPLEMENTATION_COMPLETE_LIVE_NATIVE_PREVIEW_BLOCKED_MA2_WRITES_ZERO",
-    "result": "Extended the canonical integrated Dynamic Program path with Group-bound existing COLOR/FOCUS/BEAM/GOBO Preset execution, exact FixtureType attribute evidence, per-Cue full-capability Preview accounting and native Preset identity verification. Preset, Effect and Position phases remain isolated /merge /cueonly stores; no resource is created. Full Windows suite passes 935 tests. MA2_WRITES=0."
+    "id": "MAINLINE_DYNAMIC_RESOURCE_CONVERGENCE_001",
+    "status": "OFFLINE_CONVERGED_HARDENED_LIVE_NATIVE_PREVIEW_REQUIRED_MA2_WRITES_ZERO",
+    "result": "Unified current main fixture-capability/resource authoring work with existing-Cue safety hardening, exact subfixture preservation, Effect attribute-family gating, route-scoped provider execution, fail-closed existing-Effect mutation, Sequence302 Executor revalidation, and direct reserved-Effect approval-time emptiness checks. Full Windows suite passes 954 tests. MA2_WRITES=0 during convergence."
   },
   "next_acceptance_gate": {
     "id": "CURRENT_SHOW_SPATIAL_EVIDENCE",
@@ -522,6 +522,23 @@
         "WINDOWS_FULL_SUITE_935_TESTS_PASS"
       ],
       "limitations": "The committed 29-Cue preview artifact is an offline contract fixture and cannot be approved. A separate read-only MA2 connection authenticated as guest and could not recover the verified Position binding, so no real Action was registered. The merged implementation now carries full fixture-capability intent, fresh structured spatial context, explicit existing-Effect replacement authorization, separate verified Effect/Position Store grammars, and exact post-write Effect-set verification. Current-show Stage View semantic calibration remains partial and no live acceptance has occurred. Fresh native Sequence 302, Group, Effect, geometry/capability and calibration evidence must be collected inside the already authenticated Field Core. No live write is authorized by this result."
+    },
+    {
+      "id": "MAINLINE_DYNAMIC_RESOURCE_CONVERGENCE_001",
+      "source": "EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001.md; SEQUENCE302_RESOURCE_AUTHORING_MERGE_001.md",
+      "status": "CLOSED_OFFLINE_HARDENED_LIVE_PREVIEW_REQUIRED",
+      "outcomes": [
+        "V0_2_CAPABILITY_PATH_PRESERVED",
+        "EXACT_SUBFIXTURE_SCOPE_ENFORCED",
+        "EFFECT_ATTRIBUTE_FAMILY_GATED",
+        "EXISTING_EFFECT_REPLACEMENT_FAILS_CLOSED",
+        "ROUTE_SCOPED_PROVIDER_EXECUTION",
+        "SEQUENCE302_EXECUTOR_REVALIDATED_AT_APPROVAL",
+        "SEQUENCE302_RESERVED_EFFECT_SLOTS_DIRECTLY_REVALIDATED_AT_APPROVAL",
+        "WINDOWS_SUITE_954_PASS",
+        "MA2_WRITES_ZERO"
+      ],
+      "limitations": "No live Preview or live MA2 write was produced by convergence. CURRENT_SHOW_SPATIAL_EVIDENCE remains partial and any future Action still requires fresh native evidence plus explicit owner approval."
     }
   ],
   "backlog": [
@@ -715,8 +732,8 @@
       "id": "EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001",
       "classification": "REQUIRED",
       "milestone": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
-      "status": "OFFLINE_IMPLEMENTED_LIVE_NATIVE_PREVIEW_BLOCKED_FRESH_AUTHENTICATED_EVIDENCE",
-      "why_it_matters": "The full artistic workflow now considers every fresh verified fixture capability and can deterministically reuse verified existing Presets, Effects and Position on existing Cues without broadening raw MA authority. Live acceptance still requires fresh authenticated native evidence.",
+      "status": "OFFLINE_CONVERGED_HARDENED_LIVE_NATIVE_PREVIEW_REQUIRED_FRESH_AUTHENTICATED_EVIDENCE",
+      "why_it_matters": "The canonical path now combines full fixture-capability intent, verified existing Preset/Effect reuse, explicit Position and hardened exact-scope preservation without broadening raw MA authority. Existing Effect replacement/clear remains fail-closed. Live acceptance still requires fresh authenticated native evidence.",
       "blocks_current_milestone": true,
       "dependencies": [
         "current Sequence 302 native pre-export and exact Cue set",
@@ -725,11 +742,11 @@
         "fresh strict-template or Agent-owned Effect identity evidence",
         "fresh existing Effect-ID state per target Cue/fixture before the Designer call",
         "REAL_MACHINE_CONTENT_VERIFIED AT_EFFECT_POOL_CALL grammar capability",
-        "explicit replace_effect_ids authorization when an existing Effect is replaced",
         "explicit owner approval after exact live Preview",
-        "fresh Group-bound existing Preset identity/type/application and exact FixtureType attribute evidence"
+        "fresh Group-bound existing Preset identity/type/application and exact FixtureType attribute evidence",
+        "separate bounded real-machine proof before any existing Effect replacement or clear is allowed"
       ],
-      "next_review_condition": "Deploy canonical v0.2 code to the authenticated Field Core and generate Preview only for existing Sequence 302. Preview must show selected existing Presets/Effects, Position pattern/range, used/optional/intentionally-unused/requested-unexecutable capability families, preservation fingerprints and MA2_WRITES=0. Do not approve automatically."
+      "next_review_condition": "Deploy canonical converged main to the authenticated Field Core and generate Preview only for existing Sequence 302. Preview must show per-Cue selected existing Presets/Effects or preserved Effect state, Position pattern/range, used/optional/intentionally-unused/requested-unexecutable capability families, exact preservation fingerprints, and MA2_WRITES=0. Do not approve automatically."
     }
   ],
   "recent_foundation": {

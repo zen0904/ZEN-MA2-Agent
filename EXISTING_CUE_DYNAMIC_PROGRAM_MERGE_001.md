@@ -2,7 +2,7 @@
 
 Date: 2026-09-27 (Taiwan)
 
-Status: `OFFLINE_IMPLEMENTED_V0_2_AWAITING_LIVE_PREVIEW`
+Status: `OFFLINE_CONVERGED_V0_2_HARDENED_AWAITING_FRESH_LIVE_PREVIEW`
 
 ## Goal
 
@@ -144,7 +144,7 @@ Protected:
 
 Effect allowance does not hide static Dimmer drift. Regression proves that a `DIM Value 55 -> 56` change still fails closed even when an Effect was intentionally attached.
 
-Existing Effect state is captured from the native pre-export before the Lighting Designer call. If a Cue already contains an Effect and the Designer requests a different Effect, `replace_effect_ids` must explicitly name the complete existing Effect-ID set being authorized for replacement. This field is authorization metadata, not a Delete command. Post-write native verification requires the exact expected Effect-ID set on every target fixture; a retained old ID, missing new ID, or unrelated new Effect fails closed.
+Existing Effect state is captured from the native pre-export before the Lighting Designer call. Existing-Effect replacement/clear is **not** real-machine verified and therefore fails closed. If a target Cue already contains Effect data, this route may preserve it with `NO_NEW_EFFECT_CALL`, but it may not apply a different Effect until a separate replacement grammar is proven. `replace_effect_ids` is not executable authority. Post-write native verification still requires the exact expected Effect-ID set on every exact target fixture.
 
 ## Approval semantics
 
@@ -154,7 +154,7 @@ Preview may use one Lighting Designer call. Approval-time revalidation performs 
 
 Windows authoritative suite:
 
-`935 tests / OK`
+`954 tests / OK`
 
 Coverage includes:
 
@@ -168,7 +168,7 @@ Coverage includes:
 - existing Sequence path never allocates a replacement Sequence
 - different Cues may use different verified Effects
 - Position and Effect coexist as one Cue-level composite intent while using separate verified Store grammars
-- existing Effect replacement requires explicit `replace_effect_ids` authorization
+- existing Effect replacement/clear fails closed until a separate real-machine grammar is verified
 - post-write Effect-ID sets must match exactly on every target fixture
 - no-new-Effect Cues preserve their pre-existing Effect set
 - explicit Position intent required
@@ -178,6 +178,21 @@ Coverage includes:
 - root routing bypasses generic Builder
 - fresh spatial context is target-Group bounded
 - durable real-machine Effect grammar capability cannot silently disappear
+
+
+### Mainline convergence hardening
+
+The v0.2 full-capability path and the earlier safety hardening are now one code path. The merged implementation additionally enforces:
+
+- exact Cue ordering and duplicate-Cue rejection;
+- exact fixture/subfixture channel identity for Effect/Position preservation checks;
+- Effect kind -> attribute-family verification (`DIMMER_CHASE` may mutate Effect metadata only on `DIM`);
+- route-scoped provider resources and executable operations;
+- exact Preview schema;
+- unrelated-fixture Position-family drift remains protected; and
+- one verified Effect state plus `NO_NEW_EFFECT_CALL` may satisfy dynamic state variation without inventing another Effect.
+
+No MA2 writes occurred during convergence/hardening.
 
 ## Current acceptance state
 
