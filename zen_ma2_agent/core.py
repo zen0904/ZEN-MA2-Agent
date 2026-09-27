@@ -2113,7 +2113,9 @@ class AgentCore:
                     },
                     "group": {"id": group.get("id"), "name": group.get("name")},
                     "preview_text": dynamic_program_preview_text(preview),
-                    "protected_content_fingerprint": preview.get("protected_content_fingerprint"),
+                    "pre_protected_content_sha256": preview.get("pre_protected_content_sha256"),
+                    "protected_content_fingerprint": preview.get("pre_protected_content_sha256"),
+                    "command_plan_sha256": preview.get("command_plan_sha256"),
                 })
         return view
 
