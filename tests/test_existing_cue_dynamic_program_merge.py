@@ -379,6 +379,37 @@ class ExistingCueDynamicProgramMergeTests(unittest.TestCase):
         self.assertGreater(preview["cue_updates"][0]["expected_pan_range"][1] - preview["cue_updates"][0]["expected_pan_range"][0], 20)
         self.assertEqual(preview["ma2_writes"], 0)
 
+    def test_unavailable_requested_capability_remains_visible_without_compiling(self):
+        plan = artistic_plan()
+        plan["cues"][0]["capability_intent"].append({
+            "group": 1,
+            "dimension": "IRIS",
+            "use": "USE",
+            "reason": "requested artistic option but no verified implementation",
+            "technical_status": "NOT_PRESENT_IN_GROUP_FIXTURE_TYPES",
+            "execution_status": "NO_VERIFIED_RESOURCE",
+            "execution_authorized": False,
+        })
+        preview = build_dynamic(plan=plan, verified_capabilities={1: ["POSITION", "PRISM", "COLOR"]})
+        cue = preview["cue_updates"][0]
+        self.assertIn("IRIS", cue["requested_but_unexecutable_capabilities"])
+        self.assertNotIn("IRIS", cue["used_capability_families"])
+        self.assertNotIn("Iris", "\n".join(commands_from_dynamic_preview(preview)))
+
+    def test_executable_requested_capability_without_action_fails_closed(self):
+        plan = artistic_plan()
+        plan["cues"][0]["capability_intent"].append({
+            "group": 1,
+            "dimension": "GOBO",
+            "use": "USE",
+            "reason": "must be implemented",
+            "technical_status": "SHOW_BOUND_VERIFIED",
+            "execution_status": "VERIFIED_PRESET_RESOURCE",
+            "execution_authorized": True,
+        })
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "EXECUTABLE_CAPABILITY_USE_NOT_IMPLEMENTED"):
+            build_dynamic(plan=plan, verified_capabilities={1: ["POSITION", "PRISM", "COLOR", "GOBO"]})
+
     def test_command_plan_never_allocates_or_creates_resources(self):
         commands = commands_from_dynamic_preview(build_dynamic())
         joined = "\n".join(commands)

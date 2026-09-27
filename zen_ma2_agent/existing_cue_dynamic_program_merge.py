@@ -585,12 +585,26 @@ def build_existing_cue_dynamic_program_preview(
                 f"DYNAMIC_MERGE_CAPABILITY_INTENT_CONFLICT_CUE_{number}"
             )
         optional_capabilities = sorted(
-            family for family in available_capabilities - used_families
-            if str((intent_by_dimension.get(family) or {}).get("use") or "").upper() == "OPTIONAL"
+            family for family, intent in intent_by_dimension.items()
+            if family not in used_families
+            and str(intent.get("use") or "").upper() == "OPTIONAL"
         )
+        executable_but_unfulfilled = sorted(
+            family for family, intent in intent_by_dimension.items()
+            if family not in used_families
+            and str(intent.get("use") or "").upper() == "USE"
+            and bool(intent.get("execution_authorized"))
+        )
+        if executable_but_unfulfilled:
+            raise ExistingCueDynamicProgramMergeError(
+                f"DYNAMIC_MERGE_EXECUTABLE_CAPABILITY_USE_NOT_IMPLEMENTED_CUE_{number}:"
+                + ",".join(executable_but_unfulfilled)
+            )
         requested_unexecutable = sorted(
-            family for family in available_capabilities - used_families
-            if str((intent_by_dimension.get(family) or {}).get("use") or "").upper() == "USE"
+            family for family, intent in intent_by_dimension.items()
+            if family not in used_families
+            and str(intent.get("use") or "").upper() == "USE"
+            and not bool(intent.get("execution_authorized"))
         )
         intentionally_unused = sorted(
             available_capabilities - used_families

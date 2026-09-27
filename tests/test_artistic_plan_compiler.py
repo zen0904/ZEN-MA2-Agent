@@ -173,24 +173,30 @@ class ArtisticPlanCompilerTests(unittest.TestCase):
             "operation": "SET_DIMMER", "target": {"type": "group", "ref": 1}, "level": 80,
         }])
 
-    def test_capability_use_fails_closed_without_verified_technical_support(self):
+    def test_capability_use_without_verified_technical_support_is_preserved_but_not_authorized(self):
         provider_plan = {
             "cues": [{
                 "fade": 0,
                 "actions": [{"group": 1, "dimmer": 20}],
-                "capability_intent": [{"group": 1, "dimension": "PRISM", "use": "USE"}],
+                "capability_intent": [{"group": 1, "dimension": "IRIS", "use": "USE", "reason": "tighten hit"}],
             }]
         }
-        with self.assertRaisesRegex(ArtisticPlanCompileError, "PRISM technical capability"):
-            compile_artistic_cue_plan(
-                provider_plan,
-                song="SHEESH", target_executor="2.001", active_sequence_range=[1, 9999],
-                verified_group_ids=self.groups, verified_preset_refs=self.presets,
-                verified_preset_types=self.preset_types, verified_effect_ids=self.effects,
-                verified_capability_status={1: {
-                    "PRISM": {"technical_status": "NOT_PRESENT_IN_GROUP_FIXTURE_TYPES", "execution_status": "NO_VERIFIED_RESOURCE"}
-                }},
-            )
+        plan, _audit = compile_artistic_cue_plan(
+            provider_plan,
+            song="SHEESH", target_executor="2.001", active_sequence_range=[1, 9999],
+            verified_group_ids=self.groups, verified_preset_refs=self.presets,
+            verified_preset_types=self.preset_types, verified_effect_ids=self.effects,
+            verified_capability_status={1: {
+                "IRIS": {"technical_status": "NOT_PRESENT_IN_GROUP_FIXTURE_TYPES", "execution_status": "NO_VERIFIED_RESOURCE"}
+            }},
+        )
+        intent = plan["cues"][0]["capability_intent"][0]
+        self.assertEqual(intent["dimension"], "IRIS")
+        self.assertEqual(intent["technical_status"], "NOT_PRESENT_IN_GROUP_FIXTURE_TYPES")
+        self.assertFalse(intent["execution_authorized"])
+        self.assertEqual(plan["cues"][0]["actions"], [{
+            "operation": "SET_DIMMER", "target": {"type": "group", "ref": 1}, "level": 20,
+        }])
 
     def test_dimension_specific_preset_type_mismatch_fails_closed(self):
         provider_plan = {

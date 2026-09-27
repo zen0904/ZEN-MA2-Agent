@@ -335,10 +335,6 @@ def _compile_capability_intent(
             evidence = (verified_capability_status or {}).get(group, {}).get(dimension, {})
             technical_status = str(evidence.get("technical_status") or "UNKNOWN")
             execution_status = str(evidence.get("execution_status") or "NO_VERIFIED_RESOURCE")
-            if use in {"USE", "OPTIONAL"} and verified_capability_status is not None and technical_status != "SHOW_BOUND_VERIFIED":
-                raise ArtisticPlanCompileError(
-                    f"{dimension} technical capability is not SHOW_BOUND_VERIFIED for Group {group}."
-                )
             compiled.append({
                 "group": group,
                 "dimension": dimension,
