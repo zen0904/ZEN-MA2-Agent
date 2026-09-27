@@ -569,7 +569,7 @@ class AgentCore:
             })
         return rows
 
-    def _fresh_existing_position_merge_preview(
+    def _fresh_existing_position_merge_evidence(
         self,
         *,
         sequence_no: int,
@@ -578,7 +578,14 @@ class AgentCore:
         cue_start: int,
         cue_end: int,
         expected_executor: str | None,
-    ) -> tuple[dict[str, Any], dict[str, Any]]:
+    ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+        """Return one canonical native target export shared by all Preview layers.
+
+        grandMA2 may serialize semantically identical repeated exports with
+        different raw XML SHA-256 values. A single Preview therefore owns one
+        target Sequence preimage; Position and Dynamic Effect planning must not
+        independently re-export and compare raw hashes against each other.
+        """
         if self.sequence_export_provider is None:
             raise ExistingPositionMergeError("POSITION_MERGE_SEQUENCE_EXPORT_UNAVAILABLE")
         profile = self._fresh_position_poc_profile(
@@ -635,6 +642,23 @@ class AgentCore:
             cue_end=cue_end,
             executor_assignments=assignments,
             cue_metadata=cue_metadata,
+        )
+        return profile, preview, target_discovery
+
+    def _fresh_existing_position_merge_preview(
+        self,
+        *,
+        sequence_no: int,
+        group_id: int,
+        preset_ref: str,
+        cue_start: int,
+        cue_end: int,
+        expected_executor: str | None,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Compatibility wrapper for Position-only callers."""
+        profile, preview, _target_discovery = self._fresh_existing_position_merge_evidence(
+            sequence_no=sequence_no, group_id=group_id, preset_ref=preset_ref,
+            cue_start=cue_start, cue_end=cue_end, expected_executor=expected_executor,
         )
         return profile, preview
 
@@ -779,7 +803,9 @@ class AgentCore:
             raise ExistingCueDynamicProgramMergeError(
                 "DYNAMIC_MERGE_DESIGN_INTELLIGENCE_UNAVAILABLE"
             )
-        position_profile, position_preview = self._fresh_existing_position_merge_preview(**spec)
+        position_profile, position_preview, pre_discovery = (
+            self._fresh_existing_position_merge_evidence(**spec)
+        )
         profile = self._collect_lean_design_profile()
         resource_map, effect_application = self._normalize_dynamic_artistic_profile(
             profile, position_profile
@@ -789,17 +815,9 @@ class AgentCore:
 
         target = position_preview["target_sequence"]
         cue_labels = [str(row["cue_label"]) for row in position_preview["cue_updates"]]
-        if self.sequence_export_provider is None:
-            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_SEQUENCE_EXPORT_UNAVAILABLE")
-        # Export before the artistic call so the Designer sees the exact Effect
-        # state it would be authorizing a replacement against. This same native
-        # export becomes the protected-content preimage for the Preview.
-        pre_discovery = self.sequence_export_provider.export_and_discover(
-            self.runtime,
-            spec["sequence_no"],
-            self.runtime.preferences.get("state_adapter"),
-            retain_export=True,
-        )
+        # Reuse the exact native Sequence export that produced the Position
+        # Preview. This makes one Preview own one canonical preimage and avoids
+        # false raw-SHA drift across semantically identical repeated MA2 exports.
         existing_effect_ids = effect_ids_by_cue_ref(
             pre_discovery,
             cue_numbers=range(spec["cue_start"], spec["cue_end"] + 1),
@@ -954,24 +972,21 @@ class AgentCore:
             if len(assignments) == 1 and isinstance(assignments[0], Mapping) and assignments[0].get("location")
             else None
         )
-        position_profile, current_position = self._fresh_existing_position_merge_preview(
-            sequence_no=target.get("id"),
-            group_id=group.get("id"),
-            preset_ref=baseline.get("preset_reference"),
-            cue_start=target.get("cue_start"),
-            cue_end=target.get("cue_end"),
-            expected_executor=expected_executor,
+        position_profile, current_position, pre_discovery = (
+            self._fresh_existing_position_merge_evidence(
+                sequence_no=target.get("id"),
+                group_id=group.get("id"),
+                preset_ref=baseline.get("preset_reference"),
+                cue_start=target.get("cue_start"),
+                cue_end=target.get("cue_end"),
+                expected_executor=expected_executor,
+            )
         )
         profile = self._collect_lean_design_profile()
         resource_map, effect_application = self._normalize_dynamic_artistic_profile(
             profile, position_profile
         )
         verified_effects = self._verified_dynamic_effects(resource_map, int(group["id"]))
-        if self.sequence_export_provider is None:
-            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_SEQUENCE_EXPORT_UNAVAILABLE")
-        pre_discovery = self.sequence_export_provider.export_and_discover(
-            self.runtime, int(target["id"]), self.runtime.preferences.get("state_adapter"), retain_export=True
-        )
         current = build_existing_cue_dynamic_program_preview(
             position_preview=current_position,
             pre_discovery=pre_discovery,
