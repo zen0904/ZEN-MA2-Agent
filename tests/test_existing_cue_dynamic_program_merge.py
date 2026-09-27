@@ -214,6 +214,36 @@ class ExistingCueDynamicProgramMergeCoreTests(unittest.TestCase):
         self.assertNotIn("Sequence 303", action["preview_note"] )
 
 
+class ExistingCueDynamicIdentityNormalizationTests(unittest.TestCase):
+    def test_show_identity_is_compared_after_artistic_evidence_normalization(self):
+        core = object.__new__(AgentCore)
+        raw_profile = {"show_identity": {"kind": "SCANNED_SHOW_PROFILE_FINGERPRINT", "value": "before"}}
+        position_profile = {"show_identity": {"kind": "SCANNED_SHOW_PROFILE_FINGERPRINT", "value": "after"}}
+
+        def normalize(profile):
+            profile["show_identity"] = dict(position_profile["show_identity"])
+            return {"groups": []}, {"status": "REAL_MACHINE_CONTENT_VERIFIED"}
+
+        with patch.object(core, "_build_current_artistic_resource_map", side_effect=normalize) as builder:
+            resource_map, capability = core._normalize_dynamic_artistic_profile(
+                raw_profile, position_profile
+            )
+        builder.assert_called_once_with(raw_profile)
+        self.assertEqual(resource_map, {"groups": []})
+        self.assertEqual(capability["status"], "REAL_MACHINE_CONTENT_VERIFIED")
+
+    def test_real_identity_drift_still_fails_after_normalization(self):
+        core = object.__new__(AgentCore)
+        profile = {"show_identity": {"kind": "SCANNED_SHOW_PROFILE_FINGERPRINT", "value": "one"}}
+        position = {"show_identity": {"kind": "SCANNED_SHOW_PROFILE_FINGERPRINT", "value": "two"}}
+        with patch.object(
+            core, "_build_current_artistic_resource_map",
+            return_value=({"groups": []}, {"status": "REAL_MACHINE_CONTENT_VERIFIED"}),
+        ):
+            with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "SHOW_IDENTITY_DRIFT"):
+                core._normalize_dynamic_artistic_profile(profile, position)
+
+
 class ExistingCueDynamicProgramMergeRoutingTests(unittest.TestCase):
     def test_ascii_existing_dynamic_request_is_parsed_before_generic_design(self):
         parsed = AgentCore._parse_existing_dynamic_merge_request(

@@ -754,6 +754,24 @@ class AgentCore:
             "geometry_summary": geometry_rows,
         }
 
+    def _normalize_dynamic_artistic_profile(
+        self,
+        profile: dict[str, Any],
+        position_profile: Mapping[str, Any],
+    ) -> tuple[dict[str, Any], dict[str, Any] | None]:
+        """Normalize current-show artistic evidence before identity comparison.
+
+        `_build_current_artistic_resource_map` deliberately recovers bounded
+        verified Test Show evidence and may therefore recompute show_identity.
+        Comparing the raw profile before that normalization creates a false
+        drift against the Position path, which performs the same recovery
+        before returning its profile.
+        """
+        resource_map, effect_application = self._build_current_artistic_resource_map(profile)
+        if profile.get("show_identity") != position_profile.get("show_identity"):
+            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_SHOW_IDENTITY_DRIFT")
+        return resource_map, effect_application
+
     def _plan_existing_dynamic_merge_child(
         self, request: str, spec: dict[str, Any],
     ) -> WorkflowPlan:
@@ -763,9 +781,9 @@ class AgentCore:
             )
         position_profile, position_preview = self._fresh_existing_position_merge_preview(**spec)
         profile = self._collect_lean_design_profile()
-        if profile.get("show_identity") != position_profile.get("show_identity"):
-            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_SHOW_IDENTITY_DRIFT")
-        resource_map, effect_application = self._build_current_artistic_resource_map(profile)
+        resource_map, effect_application = self._normalize_dynamic_artistic_profile(
+            profile, position_profile
+        )
         if not effect_application:
             raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_EFFECT_APPLICATION_UNVERIFIED")
 
@@ -945,9 +963,9 @@ class AgentCore:
             expected_executor=expected_executor,
         )
         profile = self._collect_lean_design_profile()
-        if profile.get("show_identity") != position_profile.get("show_identity"):
-            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_SHOW_IDENTITY_DRIFT")
-        resource_map, effect_application = self._build_current_artistic_resource_map(profile)
+        resource_map, effect_application = self._normalize_dynamic_artistic_profile(
+            profile, position_profile
+        )
         verified_effects = self._verified_dynamic_effects(resource_map, int(group["id"]))
         if self.sequence_export_provider is None:
             raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_SEQUENCE_EXPORT_UNAVAILABLE")
