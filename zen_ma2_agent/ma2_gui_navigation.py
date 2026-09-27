@@ -72,10 +72,10 @@ class WindowsMA2ScreenNavigator:
         self.restore_foreground = restore_foreground
 
     def show_screen(self, screen: MA2Screen) -> NavigationDispatch:
-        if os.name != "nt":
-            raise MA2GuiNavigationError("MA2 GUI navigation is supported only on Windows.")
         if not isinstance(screen, MA2Screen):
             raise MA2GuiNavigationError("Only Screen 2, Screen 3, and Screen 4 are allowed.")
+        if os.name != "nt":
+            raise MA2GuiNavigationError("MA2 GUI navigation is supported only on Windows.")
 
         window = self.capture.locate()
         self._verify_window(window)
