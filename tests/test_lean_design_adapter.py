@@ -123,6 +123,8 @@ class LeanDesignAdapterTests(unittest.TestCase):
         normalized_prompt = " ".join(call["system"].split())
         self.assertIn("do not use a capability merely because the fixture has it", normalized_prompt)
         self.assertIn("DO NOT invent an action or raw Attribute value", call["system"])
+        self.assertIn("replace_effect_ids", call["system"])
+        self.assertIn("no release grammar is verified", call["system"])
         payload = json.loads(call["user"])
         self.assertEqual(payload["request"], "make this song dramatic")
         self.assertEqual(

@@ -67,6 +67,23 @@ class ArtisticPlanCompilerTests(unittest.TestCase):
         self.assertEqual(actions[3]["operation"], "CALL_EFFECT")
         self.assertEqual(actions[3]["effect_ref"], {"id": 3520})
 
+    def test_replace_effect_ids_are_preserved_as_artistic_authorization_metadata(self):
+        provider_plan = {
+            "cues": [{
+                "fade": 0,
+                "actions": [{"group": 1, "effect": 3520}],
+                "replace_effect_ids": [3600],
+            }]
+        }
+        plan, audit = self.compile(provider_plan)
+        self.assertEqual(plan["cues"][0]["replace_effect_ids"], [3600])
+        self.assertIn("cues[].replace_effect_ids", audit["provider_owned_fields"])
+        bad = {
+            "cues": [{"fade": 0, "actions": [{"group": 1, "effect": 3520}], "replace_effect_ids": [3600, 3600]}]
+        }
+        with self.assertRaisesRegex(ArtisticPlanCompileError, "must not contain duplicates"):
+            self.compile(bad)
+
     def test_capability_intent_is_preserved_without_inventing_commands(self):
         provider_plan = {
             "cues": [{

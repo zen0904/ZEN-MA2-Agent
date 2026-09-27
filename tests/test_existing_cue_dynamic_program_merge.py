@@ -14,6 +14,7 @@ from zen_ma2_agent.existing_cue_dynamic_program_merge import (
     ExistingCueDynamicProgramMergeError,
     build_existing_cue_dynamic_program_preview,
     commands_from_dynamic_preview,
+    effect_ids_by_cue_ref,
     protected_content_snapshot,
     verify_existing_cue_dynamic_program_merge,
 )
@@ -130,6 +131,21 @@ def post_from(pre, preview):
                 row(root, "TILT", fixture["tilt"], subfixture=sub or None),
             ])
         effect = preview["cue_effects"][str(number)]
+        replacements = set(
+            next(item for item in preview["cue_updates"] if item["cue_number"] == number).get("replace_effect_ids") or []
+        )
+        if effect is not None and replacements:
+            kept = []
+            for existing in rows:
+                raw_effect = existing.get("effect") if isinstance(existing, dict) else None
+                parts = raw_effect.get("no_components") if isinstance(raw_effect, dict) else None
+                effect_id = int(parts[-1]) if isinstance(parts, list) and parts and str(parts[-1]).isdigit() else None
+                channel = existing.get("channel") if isinstance(existing, dict) else None
+                fixture = str(channel.get("fixture_id")) if isinstance(channel, dict) else ""
+                if effect_id in replacements and fixture in {"101", "102"}:
+                    continue
+                kept.append(existing)
+            rows[:] = kept
         if effect is not None:
             rows.extend([effect_row(101, effect["id"]), effect_row(102, effect["id"])])
     return post
@@ -288,6 +304,11 @@ class ExistingCueDynamicProgramMergeTests(unittest.TestCase):
         self.assertNotIn("Prism", joined)
         self.assertNotIn("Zoom", joined)
         self.assertNotIn("Frost", joined)
+        cue1_stores = [i for i, command in enumerate(commands) if command == "Store Cue 1 Sequence 302 /merge /cueonly /nc"]
+        self.assertEqual(len(cue1_stores), 2)
+        between = commands[cue1_stores[0] + 1:cue1_stores[1]]
+        self.assertIn("ClearAll", between)
+        self.assertTrue(any(command.startswith("Fixture ") for command in between))
 
     def test_unverified_effect_or_application_capability_fails_closed(self):
         bad = effects()
@@ -353,6 +374,62 @@ class ExistingCueDynamicProgramMergeTests(unittest.TestCase):
         post["cues"][1]["parts"][0]["cue_data"].append(effect_row(101, 2502))
         with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "PROTECTED_CONTENT_CHANGED"):
             verify_existing_cue_dynamic_program_merge(preview, post)
+
+    def test_existing_effect_replacement_requires_explicit_complete_consent(self):
+        pre = target_discovery()
+        pre["cues"][0]["parts"][0]["cue_data"].extend([effect_row(101, 2500), effect_row(102, 2500)])
+        plan = artistic_plan()
+        plan["cues"][0]["actions"] = [{
+            "operation": "CALL_EFFECT",
+            "target": {"type": "group", "ref": 1},
+            "effect_ref": {"id": 2501},
+        }]
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "UNRELATED_EFFECT_CONFLICT"):
+            build_dynamic(pre=pre, pos=build_position(target=pre), plan=plan)
+        plan["cues"][0]["replace_effect_ids"] = [2500]
+        preview = build_dynamic(pre=pre, pos=build_position(target=pre), plan=plan)
+        self.assertEqual(preview["cue_updates"][0]["replace_effect_ids"], [2500])
+        self.assertEqual(
+            sorted({effect_id for ids in preview["pre_effect_ids_by_cue_ref"]["1"].values() for effect_id in ids}),
+            [2500],
+        )
+
+    def test_postwrite_effect_set_must_exactly_replace_authorized_old_id(self):
+        pre = target_discovery()
+        pre["cues"][0]["parts"][0]["cue_data"].extend([effect_row(101, 2500), effect_row(102, 2500)])
+        plan = artistic_plan()
+        plan["cues"][0]["actions"] = [{
+            "operation": "CALL_EFFECT",
+            "target": {"type": "group", "ref": 1},
+            "effect_ref": {"id": 2501},
+        }]
+        plan["cues"][0]["replace_effect_ids"] = [2500]
+        preview = build_dynamic(pre=pre, pos=build_position(target=pre), plan=plan)
+        good = post_from(pre, preview)
+        verified = verify_existing_cue_dynamic_program_merge(preview, good)
+        self.assertEqual(verified["status"], "VERIFIED")
+        self.assertEqual(verified["effect_set_checks"], 8)
+
+        bad = copy.deepcopy(good)
+        bad["cues"][0]["parts"][0]["cue_data"].append(effect_row(101, 2500))
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "EFFECT_SET_MISMATCH"):
+            verify_existing_cue_dynamic_program_merge(preview, bad)
+
+    def test_no_new_effect_call_preserves_preexisting_effect_set(self):
+        pre = target_discovery()
+        pre["cues"][1]["parts"][0]["cue_data"].extend([effect_row(101, 2502), effect_row(102, 2502)])
+        preview = build_dynamic(pre=pre, pos=build_position(target=pre))
+        self.assertIsNone(preview["cue_effects"]["2"] )
+        post = post_from(pre, preview)
+        verified = verify_existing_cue_dynamic_program_merge(preview, post)
+        self.assertEqual(verified["status"], "VERIFIED")
+        sets = effect_ids_by_cue_ref(
+            post, cue_numbers=[2], target_fixture_refs=preview["group"]["exact_refs"]
+        )
+        self.assertEqual(
+            sorted({effect_id for ids in sets["2"].values() for effect_id in ids}),
+            [2502],
+        )
 
     def test_effect_metadata_is_the_only_scrubbed_nonposition_family(self):
         pre = target_discovery()

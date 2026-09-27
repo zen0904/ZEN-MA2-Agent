@@ -286,6 +286,20 @@ def _position_intent(source_cue: Mapping[str, Any]) -> tuple[str | None, float |
         raise ArtisticPlanCompileError("Position scale must be within 0.5..2.5.")
     return pattern, scale
 
+
+def _replace_effect_ids(source_cue: Mapping[str, Any]) -> list[int]:
+    raw = source_cue.get("replace_effect_ids", [])
+    if not isinstance(raw, list):
+        raise ArtisticPlanCompileError("replace_effect_ids must be a list.")
+    result: list[int] = []
+    for value in raw:
+        if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+            raise ArtisticPlanCompileError("replace_effect_ids must contain positive Effect IDs.")
+        if value in result:
+            raise ArtisticPlanCompileError("replace_effect_ids must not contain duplicates.")
+        result.append(value)
+    return result
+
 def _compile_capability_intent(
     value: object,
     *,
@@ -434,6 +448,7 @@ def compile_artistic_cue_plan(
             for item in actions
         ]
         position_pattern, position_scale = _position_intent(source_cue)
+        replace_effect_ids = _replace_effect_ids(source_cue)
         capability_intent = _compile_capability_intent(
             source_cue.get("capability_intent"),
             verified_group_ids=verified_group_ids,
@@ -448,6 +463,8 @@ def compile_artistic_cue_plan(
         }
         if position_pattern is not None:
             compiled_cue["position_pattern"] = position_pattern
+        if replace_effect_ids:
+            compiled_cue["replace_effect_ids"] = replace_effect_ids
         if position_scale is not None:
             compiled_cue["position_scale"] = position_scale
         if capability_intent:
@@ -478,7 +495,7 @@ def compile_artistic_cue_plan(
         ],
         "provider_owned_fields": [
             "cues[].fade", "cues[].actions", "cues[].capability_intent",
-            "cues[].position_pattern", "cues[].position_scale",
+            "cues[].position_pattern", "cues[].position_scale", "cues[].replace_effect_ids",
         ],
         "supported_compact_dimensions": [
             "DIMMER",

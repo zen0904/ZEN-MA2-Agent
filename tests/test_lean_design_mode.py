@@ -141,6 +141,7 @@ class LeanDesignModeTests(unittest.TestCase):
         plan["cues"][3]["capability_intent"] = [
             {"group": 1, "dimension": "PRISM", "use": "OPTIONAL", "reason": "impact option"}
         ]
+        plan["cues"][3]["replace_effect_ids"] = [3520]
         delta = build_delta_revision_context(
             accepted_artistic_plan=plan,
             owner_revision_text="Cue 4 is too full before the drop.",
@@ -149,6 +150,7 @@ class LeanDesignModeTests(unittest.TestCase):
         context = delta["context"]
         cue4 = next(cue for cue in context["accepted_artistic_plan"]["cues"] if cue["cue_number"] == 4)
         self.assertEqual(cue4["capability_intent"][0]["dimension"], "PRISM")
+        self.assertEqual(cue4["replace_effect_ids"], [3520])
         self.assertEqual({row["group_id"] for row in context["relevant_groups"]}, {1, 2})
 
     def test_label_can_select_revision_region(self):

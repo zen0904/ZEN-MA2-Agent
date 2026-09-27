@@ -19,7 +19,7 @@ patch/address operations, Fixture identity changes, allocation decisions, or
 executor/sequence addresses.
 
 Output shape:
-{"cues":[{"label":"...", "fade":0, "actions":[...], "position_pattern":"WIDE_FAN", "position_scale":1.5, "capability_intent":[...]}]}
+{"cues":[{"label":"...", "fade":0, "actions":[...], "position_pattern":"WIDE_FAN", "position_scale":1.5, "replace_effect_ids":[], "capability_intent":[...]}]}
 
 `position_pattern` is optional and may be CENTER, LEFT, RIGHT, FRONT, UPSTAGE, NARROW_FAN,
 WIDE_FAN, CROSS, ALTERNATE, EXPLODE, or COLLAPSE. `position_scale` is optional 0.5..2.5
@@ -49,6 +49,10 @@ use the supplied existing Cue labels, emit an explicit position_pattern for ever
 only the executable action families allowed by that contract. Do not create or request new
 Sequences, Effects, Presets, Groups, or Executor assignments. Effect variation means attach
 verified existing Effects to the intended existing Cues, not merely create one Effect resource.
+If `existing_effect_ids_by_cue_ref` shows any Effect on a Cue where you request a new Effect,
+`replace_effect_ids` MUST explicitly list the complete set of existing Effect IDs you intend the
+new Effect call to replace. Omitting a new Effect call preserves existing Effect state; it does
+NOT mean clear/release because no release grammar is verified.
 Do not invent unavailable resources. Return JSON only, with no markdown.
 """
 

@@ -57,6 +57,12 @@ def validate_show_plan(plan: dict[str, Any]) -> dict[str, Any]:
                 isinstance(scale, bool) or not isinstance(scale, (int, float)) or not 0.5 <= float(scale) <= 2.5
             ):
                 raise ShowPlanSchemaError(f"Cue {index} has invalid position_scale.")
+            replace_effect_ids = cue.get("replace_effect_ids", [])
+            if not isinstance(replace_effect_ids, list) or any(
+                isinstance(value, bool) or not isinstance(value, int) or value < 1
+                for value in replace_effect_ids
+            ) or len(set(replace_effect_ids)) != len(replace_effect_ids):
+                raise ShowPlanSchemaError(f"Cue {index} replace_effect_ids must be unique positive integers.")
             capability_intent = cue.get("capability_intent", [])
             if not isinstance(capability_intent, list):
                 raise ShowPlanSchemaError(f"Cue {index} capability_intent must be a list.")

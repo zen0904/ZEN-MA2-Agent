@@ -13,7 +13,6 @@ import json
 import re
 from typing import Any, Mapping, Sequence
 
-from .cue_content_verifier import verify_cue_content
 from .cue_effect_application import cue_effect_capability_is_content_verified
 from .models import Intent
 from .position_existing_cue_merge import (
@@ -64,6 +63,69 @@ def _row_root_fixture(row: Mapping[str, Any]) -> str | None:
     if raw is None or not str(raw).isdigit():
         return None
     return str(int(raw))
+
+
+def _row_effect_id(row: Mapping[str, Any]) -> int | None:
+    effect = row.get("effect")
+    parts = effect.get("no_components") if isinstance(effect, Mapping) else None
+    if not isinstance(parts, list) or not parts:
+        return None
+    last = str(parts[-1])
+    return int(last) if last.isdigit() and int(last) > 0 else None
+
+
+def _row_exact_ref(row: Mapping[str, Any], exact_refs: set[str]) -> str | None:
+    channel = row.get("channel")
+    if not isinstance(channel, Mapping):
+        return None
+    fixture = channel.get("fixture_id")
+    if not str(fixture).isdigit():
+        return None
+    root = str(int(str(fixture)))
+    sub = channel.get("subfixture_id")
+    subref = None
+    if sub not in (None, "") and str(sub).isdigit():
+        subref = f"{root}.{int(str(sub))}"
+    if subref and subref in exact_refs:
+        return subref
+    if root in exact_refs:
+        return root
+    return None
+
+
+def effect_ids_by_cue_ref(
+    discovery: Mapping[str, Any],
+    *,
+    cue_numbers: Sequence[int],
+    target_fixture_refs: Sequence[str],
+) -> dict[str, dict[str, list[int]]]:
+    """Return exact stored Effect identities per Cue and target fixture ref."""
+    wanted = {int(value) for value in cue_numbers}
+    exact_refs = {str(ref) for ref in target_fixture_refs}
+    result: dict[str, dict[str, set[int]]] = {
+        str(number): {ref: set() for ref in exact_refs}
+        for number in sorted(wanted)
+    }
+    for cue in discovery.get("cues", []) if isinstance(discovery.get("cues"), list) else []:
+        if not isinstance(cue, Mapping):
+            continue
+        number = _cue_number(cue)
+        if number not in wanted:
+            continue
+        for part in cue.get("parts", []) if isinstance(cue.get("parts"), list) else []:
+            if not isinstance(part, Mapping):
+                continue
+            for row in part.get("cue_data", []) if isinstance(part.get("cue_data"), list) else []:
+                if not isinstance(row, Mapping):
+                    continue
+                ref = _row_exact_ref(row, exact_refs)
+                effect_id = _row_effect_id(row)
+                if ref is not None and effect_id is not None:
+                    result[str(number)][ref].add(effect_id)
+    return {
+        number: {ref: sorted(values) for ref, values in sorted(refs.items())}
+        for number, refs in sorted(result.items(), key=lambda item: int(item[0]))
+    }
 
 
 def _canonical_sha(value: object) -> str:
@@ -212,6 +274,7 @@ def build_existing_cue_dynamic_program_preview(
 
     effects = _effect_inventory(verified_effects_by_group, group_id)
     cue_effects: dict[int, dict[str, Any] | None] = {}
+    cue_replacements: dict[int, list[int]] = {}
     position_intent: dict[int, dict[str, Any]] = {}
     cue_intents: dict[int, list[dict[str, Any]]] = {}
     update_labels = {int(row["cue_number"]): str(row.get("cue_label") or "") for row in position_updates}
@@ -251,10 +314,39 @@ def build_existing_cue_dynamic_program_preview(
                 raise ExistingCueDynamicProgramMergeError(f"DYNAMIC_MERGE_MULTIPLE_EFFECTS_UNVERIFIED_CUE_{number}")
             found = {"id": effect_id, "label": effects[effect_id], "group": group_id}
         cue_effects[number] = found
+        replacements = cue.get("replace_effect_ids", [])
+        if not isinstance(replacements, list) or any(
+            isinstance(value, bool) or not isinstance(value, int) or value < 1
+            for value in replacements
+        ) or len(set(replacements)) != len(replacements):
+            raise ExistingCueDynamicProgramMergeError(
+                f"DYNAMIC_MERGE_EFFECT_REPLACEMENT_PLAN_INVALID_CUE_{number}"
+            )
+        cue_replacements[number] = list(replacements)
 
-    states = {None if value is None else value["id"] for value in cue_effects.values()}
-    if require_effect_variation and (all(value is None for value in cue_effects.values()) or len(states) < 2):
+    planned_effect_ids = {value["id"] for value in cue_effects.values() if value is not None}
+    if require_effect_variation and len(planned_effect_ids) < 2:
         raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_EFFECT_VARIATION_REQUIRED")
+
+    pre_effects = effect_ids_by_cue_ref(
+        pre_discovery, cue_numbers=wanted, target_fixture_refs=[str(ref) for ref in fixture_refs]
+    )
+    for number in wanted:
+        existing_ids = {
+            effect_id
+            for values in pre_effects[str(number)].values()
+            for effect_id in values
+        }
+        replacements = set(cue_replacements[number])
+        if cue_effects[number] is not None and existing_ids:
+            if replacements != existing_ids:
+                raise ExistingCueDynamicProgramMergeError(
+                    f"DYNAMIC_MERGE_UNRELATED_EFFECT_CONFLICT_CUE_{number}"
+                )
+        elif replacements:
+            raise ExistingCueDynamicProgramMergeError(
+                f"DYNAMIC_MERGE_EFFECT_REPLACEMENT_WITHOUT_EXISTING_EFFECT_CUE_{number}"
+            )
 
     try:
         positioned = retarget_position_preview(position_preview, position_intent)
@@ -286,6 +378,8 @@ def build_existing_cue_dynamic_program_preview(
                 max(float(row["tilt"]) for row in position["fixtures"]),
             ],
             "effect": deepcopy(effect),
+            "replace_effect_ids": deepcopy(cue_replacements[number]),
+            "pre_effect_ids_by_fixture": deepcopy(pre_effects[str(number)]),
             "capability_intent": intents,
             "used_capability_families": ["POSITION"] + (["EFFECT"] if effect else []),
             "intentionally_unused_capabilities": sorted({
@@ -303,6 +397,7 @@ def build_existing_cue_dynamic_program_preview(
         "position_preview": positioned,
         "cue_updates": cue_updates,
         "cue_effects": {str(key): deepcopy(value) for key, value in cue_effects.items()},
+        "pre_effect_ids_by_cue_ref": deepcopy(pre_effects),
         "pre_protected_content_sha256": protected["sha256"],
         "write_scope": {
             "existing_sequence_only": True,
@@ -331,8 +426,26 @@ def build_existing_cue_dynamic_program_preview(
     return result
 
 
-def _commands_for_update(sequence: int, group_id: int, position: Mapping[str, Any], effect: Mapping[str, Any] | None) -> list[str]:
-    commands = ["ClearAll"]
+def _commands_for_update(
+    sequence: int,
+    group_id: int,
+    position: Mapping[str, Any],
+    effect: Mapping[str, Any] | None,
+) -> list[str]:
+    """Compose already-verified Effect and Position store grammars sequentially."""
+    commands: list[str] = []
+    number = position["cue_number"]
+    if effect is not None:
+        commands.extend((
+            "ClearAll",
+            f"Group {group_id}",
+            f"At Effect {effect['id']}",
+            f"Store Cue {number} Sequence {sequence} /merge /cueonly /nc",
+        ))
+
+    # Clear the Effect programmer state before applying Position so the second
+    # Store contains only the independently verified PAN/TILT merge grammar.
+    commands.append("ClearAll")
     grouped: dict[tuple[str, str], list[str]] = {}
     fixtures = position.get("fixtures")
     if not isinstance(fixtures, list) or not fixtures:
@@ -345,10 +458,7 @@ def _commands_for_update(sequence: int, group_id: int, position: Mapping[str, An
         commands.append("Fixture " + " + ".join(refs))
         commands.append(f'Attribute "Pan" At {pan}')
         commands.append(f'Attribute "Tilt" At {tilt}')
-    if effect is not None:
-        commands.append(f"Group {group_id}")
-        commands.append(f"At Effect {effect['id']}")
-    commands.append(f"Store Cue {position['cue_number']} Sequence {sequence} /merge /cueonly /nc")
+    commands.append(f"Store Cue {number} Sequence {sequence} /merge /cueonly /nc")
     return commands
 
 
@@ -406,30 +516,40 @@ def verify_existing_cue_dynamic_program_merge(
     except ExistingPositionMergeError as exc:
         raise ExistingCueDynamicProgramMergeError(str(exc)) from exc
 
-    group_id = int(preview["group"]["id"])
-    member_roots = sorted({int(str(ref).split(".", 1)[0]) for ref in fixture_refs})
+    pre_effects = preview.get("pre_effect_ids_by_cue_ref")
+    if not isinstance(pre_effects, Mapping):
+        raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_PRE_EFFECT_EVIDENCE_MISSING")
+    post_effects = effect_ids_by_cue_ref(
+        post_discovery,
+        cue_numbers=sorted(effects),
+        target_fixture_refs=[str(ref) for ref in fixture_refs],
+    )
+    updates = {
+        int(item["cue_number"]): item
+        for item in preview.get("cue_updates", [])
+        if isinstance(item, Mapping) and isinstance(item.get("cue_number"), int)
+    }
     effect_matches = 0
+    effect_set_checks = 0
     for number, effect in effects.items():
-        if effect is None:
-            continue
-        expected = {
-            "cues": [{
-                "cue_number": number,
-                "label": next(
-                    str(item.get("cue_label") or "") for item in preview["cue_updates"]
-                    if item.get("cue_number") == number
-                ),
-                "actions": [{
-                    "operation": "CALL_EFFECT",
-                    "target": {"type": "group", "ref": group_id},
-                    "effect_ref": {"id": int(effect["id"])},
-                }],
-            }]
-        }
-        report = verify_cue_content(expected, post_discovery, {group_id: member_roots})
-        if report.get("status") != "VERIFIED":
-            raise ExistingCueDynamicProgramMergeError(f"DYNAMIC_MERGE_EFFECT_READBACK_MISMATCH_CUE_{number}")
-        effect_matches += len(member_roots)
+        update = updates.get(number)
+        if not isinstance(update, Mapping):
+            raise ExistingCueDynamicProgramMergeError(f"DYNAMIC_MERGE_CUE_UPDATE_MISSING_{number}")
+        replacements = set(update.get("replace_effect_ids") or [])
+        for ref in fixture_refs:
+            expected = set((pre_effects.get(str(number)) or {}).get(str(ref), []))
+            if effect is not None:
+                expected.difference_update(replacements)
+                expected.add(int(effect["id"]))
+            actual = set((post_effects.get(str(number)) or {}).get(str(ref), []))
+            if actual != expected:
+                raise ExistingCueDynamicProgramMergeError(
+                    f"DYNAMIC_MERGE_EFFECT_SET_MISMATCH_CUE_{number}_{ref}"
+                )
+            effect_set_checks += 1
+            if effect is not None:
+                effect_matches += 1
+
 
     return {
         "schema": VERIFY_SCHEMA,
@@ -438,6 +558,7 @@ def verify_existing_cue_dynamic_program_merge(
         "cue_count": len(preview.get("cue_updates") or []),
         "position_value_matches": position_report["position_value_matches"],
         "effect_fixture_matches": effect_matches,
+        "effect_set_checks": effect_set_checks,
         "protected_content": "UNCHANGED",
         "cue_labels": "UNCHANGED",
         "post_export_sha256": (post_discovery.get("xml_discovery") or {}).get("sha256"),
@@ -459,7 +580,11 @@ def preview_text(preview: Mapping[str, Any]) -> str:
     ]
     for cue in preview["cue_updates"]:
         effect = cue.get("effect")
-        effect_text = "none" if effect is None else f"{effect['id']} {effect['label']}"
+        if effect is None:
+            effect_text = "NO_NEW_EFFECT_CALL (preserve existing)"
+        else:
+            replacement = cue.get("replace_effect_ids") or []
+            effect_text = f"{effect['id']} {effect['label']} replace={replacement}"
         used = ",".join(cue.get("used_capability_families") or [])
         lines.append(
             f"- Cue {cue['cue_number']} {cue['cue_label']} | Position={cue['position_pattern']} "
@@ -570,6 +695,7 @@ __all__ = [
     "VERIFY_SCHEMA",
     "build_existing_cue_dynamic_program_preview",
     "commands_from_dynamic_preview",
+    "effect_ids_by_cue_ref",
     "protected_content_snapshot",
     "verify_existing_cue_dynamic_program_merge",
 ]

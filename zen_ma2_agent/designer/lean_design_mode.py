@@ -25,7 +25,7 @@ MULTI_AGENT_DEFAULT = False
 
 _MAX_TEXT = 4000
 _MAX_LIST = 128
-_CUE_KEYS = ("id", "cue_number", "label", "fade", "actions", "position_pattern", "position_scale", "capability_intent", "intent")
+_CUE_KEYS = ("id", "cue_number", "label", "fade", "actions", "position_pattern", "position_scale", "replace_effect_ids", "capability_intent", "intent")
 _GROUP_KEYS = ("group_id", "name")
 _PRESET_KEYS = ("reference", "preset_type", "name")
 _EFFECT_KEYS = ("effect_id", "name")

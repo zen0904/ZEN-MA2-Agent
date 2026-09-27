@@ -63,6 +63,7 @@ from .position_existing_cue_merge import (
 from .existing_cue_dynamic_program_merge import (
     ExistingCueDynamicProgramMergeError,
     build_existing_cue_dynamic_program_preview,
+    effect_ids_by_cue_ref,
     protected_content_snapshot,
     verify_existing_cue_dynamic_program_merge,
 )
@@ -770,6 +771,22 @@ class AgentCore:
 
         target = position_preview["target_sequence"]
         cue_labels = [str(row["cue_label"]) for row in position_preview["cue_updates"]]
+        if self.sequence_export_provider is None:
+            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_SEQUENCE_EXPORT_UNAVAILABLE")
+        # Export before the artistic call so the Designer sees the exact Effect
+        # state it would be authorizing a replacement against. This same native
+        # export becomes the protected-content preimage for the Preview.
+        pre_discovery = self.sequence_export_provider.export_and_discover(
+            self.runtime,
+            spec["sequence_no"],
+            self.runtime.preferences.get("state_adapter"),
+            retain_export=True,
+        )
+        existing_effect_ids = effect_ids_by_cue_ref(
+            pre_discovery,
+            cue_numbers=range(spec["cue_start"], spec["cue_end"] + 1),
+            target_fixture_refs=position_preview["group"]["exact_refs"],
+        )
         spatial_context = self._current_dynamic_spatial_context(
             position_profile, position_preview
         )
@@ -796,6 +813,14 @@ class AgentCore:
             "allowed_executable_operations": ["CALL_EFFECT"],
             "resource_creation_allowed": False,
             "sequence_allocation_allowed": False,
+            "existing_effect_ids_by_cue_ref": deepcopy(existing_effect_ids),
+            "effect_replacement_contract": {
+                "explicit_replace_effect_ids_required": True,
+                "replace_ids_are_authorization_not_delete_commands": True,
+                "release_or_clear_effect_grammar_verified": False,
+                "no_new_effect_call_means_preserve_existing_effect_state": True,
+                "postwrite_exact_effect_set_verification_required": True,
+            },
             "spatial_evidence_authority": {
                 "structured_current_show_geometry": True,
                 "operator_pan_tilt_direction_semantics": True,
@@ -816,14 +841,6 @@ class AgentCore:
             target_executor=spec.get("expected_executor") or "UNASSIGNED_EXISTING",
             cue_labels=cue_labels,
         )
-        if self.sequence_export_provider is None:
-            raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_SEQUENCE_EXPORT_UNAVAILABLE")
-        pre_discovery = self.sequence_export_provider.export_and_discover(
-            self.runtime,
-            spec["sequence_no"],
-            self.runtime.preferences.get("state_adapter"),
-            retain_export=True,
-        )
         verified_effects = self._verified_dynamic_effects(resource_map, spec["group_id"])
         preview = build_existing_cue_dynamic_program_preview(
             position_preview=position_preview,
@@ -841,6 +858,7 @@ class AgentCore:
                 "cue_end": spec["cue_end"],
                 "group": spec["group_id"],
                 "effect_ids": sorted(verified_effects),
+                "existing_effect_state": existing_effect_ids,
                 "command_count": preview["command_count"],
                 "designer_audit": audit,
                 "context_hash": compact["context_hash"],
@@ -867,6 +885,7 @@ class AgentCore:
             "position": AgentCore._position_merge_semantic_signature(dict(position)) if isinstance(position, Mapping) else None,
             "cue_updates": preview.get("cue_updates"),
             "cue_effects": preview.get("cue_effects"),
+            "pre_effect_ids_by_cue_ref": preview.get("pre_effect_ids_by_cue_ref"),
             "pre_protected_content_sha256": preview.get("pre_protected_content_sha256"),
             "write_scope": preview.get("write_scope"),
             "command_plan_sha256": preview.get("command_plan_sha256"),
@@ -894,6 +913,7 @@ class AgentCore:
                 "fade": 0,
                 "position_pattern": update.get("position_pattern"),
                 "position_scale": update.get("position_scale", 1.0),
+                "replace_effect_ids": deepcopy(update.get("replace_effect_ids") or []),
                 "capability_intent": deepcopy(update.get("capability_intent") or []),
                 "actions": actions,
             })
@@ -2477,6 +2497,7 @@ class AgentCore:
                     "cue_count": verification["cue_count"],
                     "position_value_matches": verification["position_value_matches"],
                     "effect_fixture_matches": verification["effect_fixture_matches"],
+                    "effect_set_checks": verification.get("effect_set_checks"),
                     "protected_content": verification["protected_content"],
                     "cue_fade_delay_metadata": "UNCHANGED",
                     "show_identity": "UNCHANGED",

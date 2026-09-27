@@ -73,16 +73,20 @@ Recognized explicit request form includes:
 
 This route is evaluated before the generic Show Builder, so it cannot silently allocate a replacement Sequence.
 
-Bounded executable grammar per Cue:
+Bounded executable grammar is deliberately split into already verified stores instead of inventing a new combined Programmer-store grammar. For a Cue with a new Effect call:
 
 1. `ClearAll`
-2. verified Fixture selection(s)
-3. `Attribute "Pan" At <verified bounded value>`
-4. `Attribute "Tilt" At <verified bounded value>`
-5. optional verified `Group <id>`
-6. optional verified `At Effect <id>`
-7. `Store Cue <n> Sequence <existing> /merge /cueonly /nc`
-8. final `ClearAll`
+2. verified `Group <id>`
+3. verified `At Effect <id>`
+4. `Store Cue <n> Sequence <existing> /merge /cueonly /nc`
+5. `ClearAll`
+6. verified Fixture selection(s)
+7. `Attribute "Pan" At <verified bounded value>`
+8. `Attribute "Tilt" At <verified bounded value>`
+9. `Store Cue <n> Sequence <existing> /merge /cueonly /nc`
+10. final `ClearAll`
+
+For a Cue with no new Effect call, the existing Effect state is preserved and only the Position store is generated. No unverified Effect-release/clear grammar is synthesized.
 
 The path cannot create or assign Sequence, Executor, Effect, Preset, Group, Patch, Address, Fixture identity/type, or Fixture 9999.
 
@@ -119,6 +123,8 @@ Protected:
 
 Effect allowance does not hide static Dimmer drift. Regression proves that a `DIM Value 55 -> 56` change still fails closed even when an Effect was intentionally attached.
 
+Existing Effect state is captured from the native pre-export before the Lighting Designer call. If a Cue already contains an Effect and the Designer requests a different Effect, `replace_effect_ids` must explicitly name the complete existing Effect-ID set being authorized for replacement. This field is authorization metadata, not a Delete command. Post-write native verification requires the exact expected Effect-ID set on every target fixture; a retained old ID, missing new ID, or unrelated new Effect fails closed.
+
 ## Approval semantics
 
 Preview may use one Lighting Designer call. Approval-time revalidation performs **no second artistic/model call**. It rescans current Show/resource/Sequence evidence, reconstructs the approved per-Cue Position/Effect intent deterministically, and rejects stale semantic drift before any MA2 write.
@@ -127,7 +133,7 @@ Preview may use one Lighting Designer call. Approval-time revalidation performs 
 
 Windows authoritative suite:
 
-`924 tests / OK`
+`928 tests / OK`
 
 Coverage includes:
 
@@ -136,7 +142,10 @@ Coverage includes:
 - no raw Prism/Zoom/Frost invention
 - existing Sequence path never allocates a replacement Sequence
 - different Cues may use different verified Effects
-- Position and Effect coexist in one existing-Cue merge
+- Position and Effect coexist as one Cue-level composite intent while using separate verified Store grammars
+- existing Effect replacement requires explicit `replace_effect_ids` authorization
+- post-write Effect-ID sets must match exactly on every target fixture
+- no-new-Effect Cues preserve their pre-existing Effect set
 - explicit Position intent required
 - Effect variation required for dynamic mode
 - static Dimmer/Color/unplanned Effect drift fails closed
@@ -151,4 +160,6 @@ Coverage includes:
 
 Action `8a5d699c36fa` remains noncompliant and must not be approved or executed. It represented Effect creation without existing-Cue application or Position.
 
-The next safe acceptance step is **Preview only** through the new route against current Sequence 302. A valid Preview must show per-Cue Position variation plus verified existing Effect variation, preserve the full capability-intent audit, and report `MA2_WRITES=0`. No live write occurs until the owner separately approves that exact Preview.
+The concurrent OC implementation's retained `projects/runs/EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001/preview_only.*` artifacts remain offline contract fixtures and are not approvable. A separate read-only guest MA2 session could not recover the fresh Position binding and therefore registered no live Action.
+
+The next safe acceptance step is **Preview only** through the new route inside the already authenticated current Field Core against Sequence 302. A valid Preview must show per-Cue Position variation plus verified existing Effect variation, preserve the full capability-intent audit, and report `MA2_WRITES=0`. No live write occurs until the owner separately approves that exact Preview.
