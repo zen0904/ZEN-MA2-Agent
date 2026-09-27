@@ -710,6 +710,59 @@ class AgentCore:
         return result
 
     @staticmethod
+    def _verified_dynamic_presets(
+        resource_map: Mapping[str, Any], group_id: int,
+    ) -> dict[str, dict[str, Any]]:
+        """Return only Group-bound existing Presets with exact attribute evidence."""
+        result: dict[str, dict[str, Any]] = {}
+        groups = resource_map.get("groups")
+        for group in groups if isinstance(groups, list) else []:
+            if not isinstance(group, Mapping) or group.get("group_id") != group_id:
+                continue
+            resources = group.get("preset_resources")
+            for preset in resources if isinstance(resources, list) else []:
+                if not isinstance(preset, Mapping):
+                    continue
+                reference = str(preset.get("reference") or "")
+                attributes = preset.get("attribute_names")
+                dimension = str(preset.get("dimension") or "").upper()
+                if (
+                    dimension not in {"COLOR", "FOCUS", "BEAM", "GOBO"}
+                    or not re.fullmatch(r"[1-9]\d*\.[1-9]\d*", reference)
+                    or not isinstance(attributes, list)
+                    or not attributes
+                    or not str(preset.get("name") or "").strip()
+                ):
+                    continue
+                result[reference] = {
+                    "name": str(preset["name"]).strip(),
+                    "dimension": dimension,
+                    "preset_type": str(preset.get("preset_type") or dimension).upper(),
+                    "attribute_names": [str(value).upper() for value in attributes],
+                }
+        return result
+
+    @staticmethod
+    def _verified_dynamic_capabilities(
+        resource_map: Mapping[str, Any], group_id: int,
+    ) -> list[str]:
+        groups = resource_map.get("groups")
+        for group in groups if isinstance(groups, list) else []:
+            if not isinstance(group, Mapping) or group.get("group_id") != group_id:
+                continue
+            dimensions = group.get("dimensions")
+            if not isinstance(dimensions, Mapping):
+                return []
+            return sorted(
+                str(dimension).upper()
+                for dimension, evidence in dimensions.items()
+                if isinstance(evidence, Mapping)
+                and isinstance(evidence.get("technical_capability"), Mapping)
+                and evidence["technical_capability"].get("status") == "SHOW_BOUND_VERIFIED"
+            )
+        return []
+
+    @staticmethod
     def _current_dynamic_spatial_context(
         profile: Mapping[str, Any],
         position_preview: Mapping[str, Any],
@@ -846,7 +899,13 @@ class AgentCore:
             "exact_cue_count": len(cue_labels),
             "requires_explicit_position_pattern_per_cue": True,
             "requires_effect_state_variation": True,
-            "allowed_executable_operations": ["CALL_EFFECT"],
+            "allowed_executable_operations": ["CALL_PRESET", "CALL_EFFECT"],
+            "preset_execution_contract": {
+                "existing_group_bound_resources_only": True,
+                "supported_dimensions": ["COLOR", "FOCUS", "BEAM", "GOBO"],
+                "raw_attribute_values_allowed": False,
+                "resource_creation_allowed": False,
+            },
             "resource_creation_allowed": False,
             "sequence_allocation_allowed": False,
             "existing_effect_ids_by_cue_ref": deepcopy(existing_effect_ids),
@@ -878,12 +937,16 @@ class AgentCore:
             cue_labels=cue_labels,
         )
         verified_effects = self._verified_dynamic_effects(resource_map, spec["group_id"])
+        verified_presets = self._verified_dynamic_presets(resource_map, spec["group_id"])
+        verified_capabilities = self._verified_dynamic_capabilities(resource_map, spec["group_id"])
         preview = build_existing_cue_dynamic_program_preview(
             position_preview=position_preview,
             pre_discovery=pre_discovery,
             artistic_plan=compiled,
             verified_effects_by_group={spec["group_id"]: verified_effects},
             effect_application_capability=effect_application,
+            verified_presets_by_group={spec["group_id"]: verified_presets},
+            verified_capabilities_by_group={spec["group_id"]: verified_capabilities},
         )
         self.runtime.log(
             "existing_cue_dynamic_program_preview",
@@ -894,6 +957,8 @@ class AgentCore:
                 "cue_end": spec["cue_end"],
                 "group": spec["group_id"],
                 "effect_ids": sorted(verified_effects),
+                "preset_refs": sorted(verified_presets),
+                "verified_capabilities": verified_capabilities,
                 "existing_effect_state": existing_effect_ids,
                 "command_count": preview["command_count"],
                 "designer_audit": audit,
@@ -921,6 +986,7 @@ class AgentCore:
             "position": AgentCore._position_merge_semantic_signature(dict(position)) if isinstance(position, Mapping) else None,
             "cue_updates": preview.get("cue_updates"),
             "cue_effects": preview.get("cue_effects"),
+            "cue_presets": preview.get("cue_presets"),
             "pre_effect_ids_by_cue_ref": preview.get("pre_effect_ids_by_cue_ref"),
             "pre_protected_content_sha256": preview.get("pre_protected_content_sha256"),
             "write_scope": preview.get("write_scope"),
@@ -931,11 +997,21 @@ class AgentCore:
     def _dynamic_plan_from_preview(preview: Mapping[str, Any]) -> dict[str, Any]:
         cues = []
         effects = preview.get("cue_effects") or {}
+        presets = preview.get("cue_presets") or {}
         group_id = (preview.get("group") or {}).get("id")
         for update in preview.get("cue_updates", []):
             number = update.get("cue_number")
             effect = effects.get(str(number)) if isinstance(effects, Mapping) else None
             actions = []
+            selected_presets = presets.get(str(number)) if isinstance(presets, Mapping) else None
+            for preset in selected_presets if isinstance(selected_presets, list) else []:
+                if isinstance(preset, Mapping):
+                    actions.append({
+                        "operation": "CALL_PRESET",
+                        "target": {"type": "group", "ref": group_id},
+                        "preset_ref": preset.get("reference"),
+                        "preset_type": preset.get("dimension"),
+                    })
             if isinstance(effect, Mapping):
                 actions.append({
                     "operation": "CALL_EFFECT",
@@ -987,12 +1063,16 @@ class AgentCore:
             profile, position_profile
         )
         verified_effects = self._verified_dynamic_effects(resource_map, int(group["id"]))
+        verified_presets = self._verified_dynamic_presets(resource_map, int(group["id"]))
+        verified_capabilities = self._verified_dynamic_capabilities(resource_map, int(group["id"]))
         current = build_existing_cue_dynamic_program_preview(
             position_preview=current_position,
             pre_discovery=pre_discovery,
             artistic_plan=self._dynamic_plan_from_preview(approved),
             verified_effects_by_group={int(group["id"]): verified_effects},
             effect_application_capability=effect_application,
+            verified_presets_by_group={int(group["id"]): verified_presets},
+            verified_capabilities_by_group={int(group["id"]): verified_capabilities},
         )
         if self._dynamic_merge_semantic_signature(current) != self._dynamic_merge_semantic_signature(approved):
             raise ExistingCueDynamicProgramMergeError("DYNAMIC_MERGE_STALE_APPROVED_PREVIEW")

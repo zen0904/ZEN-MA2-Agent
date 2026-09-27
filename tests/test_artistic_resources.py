@@ -54,6 +54,10 @@ class ArtisticResourceMapTests(unittest.TestCase):
                         "IRIS": {"status": "SHOW_BOUND_VERIFIED"},
                         "SHUTTER_STROBE": {"status": "SHOW_BOUND_VERIFIED"},
                     },
+                    "channels": [
+                        {"attribute": "COLORRGB1", "feature": "COLORRGB", "preset": "COLOR", "functions": []},
+                        {"attribute": "FOCUS", "feature": "FOCUS", "preset": "FOCUS", "functions": []},
+                    ],
                 }
             ],
         }
@@ -117,6 +121,7 @@ class ArtisticResourceMapTests(unittest.TestCase):
         self.assertEqual(group1["dimensions"]["COLOR"]["execution_status"], "VERIFIED_PRESET_RESOURCE")
         self.assertEqual(group2["dimensions"]["COLOR"]["execution_status"], "NO_VERIFIED_RESOURCE")
         self.assertEqual([item["reference"] for item in group1["preset_resources"]], ["4.101"])
+        self.assertEqual(group1["preset_resources"][0]["attribute_names"], ["COLORRGB1"])
         self.assertEqual(group2["preset_resources"], [])
         self.assertEqual(preset_applicability_from_map(result), {1: {"4.101"}, 2: set()})
 

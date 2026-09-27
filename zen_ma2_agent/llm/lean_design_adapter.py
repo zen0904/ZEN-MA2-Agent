@@ -46,7 +46,10 @@ color_preset, position_preset, focus_preset, beam_preset, gobo_preset, or effect
 Use only resources explicitly exposed in verified_resource_contract.
 If context contains `existing_cue_dynamic_merge_contract`, preserve its exact Cue count/order,
 use the supplied existing Cue labels, emit an explicit position_pattern for every Cue, and use
-only the executable action families allowed by that contract. Do not create or request new
+only the executable action families allowed by that contract. For each Cue, explicitly classify
+fresh verified capability families as USE, AVOID, or OPTIONAL in capability_intent, with a concise
+artistic reason; do not turn Prism, Gobo, Strobe, or any other family into a hard requirement.
+Do not create or request new
 Sequences, Effects, Presets, Groups, or Executor assignments. Effect variation means attach
 verified existing Effects to the intended existing Cues, not merely create one Effect resource.
 If `existing_effect_ids_by_cue_ref` shows any Effect on a Cue where you request a new Effect,

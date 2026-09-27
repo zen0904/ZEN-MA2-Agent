@@ -50,6 +50,27 @@ def effects():
     }}
 
 
+def capabilities():
+    return {1: ["DIMMER", "COLOR", "POSITION", "GOBO", "PRISM", "EFFECT"]}
+
+
+def presets():
+    return {1: {
+        "4.101": {
+            "name": "ZEN_COLOR_RED",
+            "dimension": "COLOR",
+            "preset_type": "COLOR",
+            "attribute_names": ["COLORRGB1"],
+        },
+        "3.201": {
+            "name": "ZEN_GOBO_BREAKUP",
+            "dimension": "GOBO",
+            "preset_type": "GOBO",
+            "attribute_names": ["GOBO1"],
+        },
+    }}
+
+
 def artistic_plan():
     patterns = ["EXPLODE", "CROSS", "UPSTAGE", "WIDE_FAN"]
     effect_ids = [2500, None, 2501, 2502]
@@ -99,7 +120,22 @@ def effect_row(fixture, effect_id):
     }
 
 
-def build_dynamic(*, pre=None, plan=None, pos=None, verified_effects=None, capability=None):
+def preset_row(fixture, attribute, reference):
+    pool, number = reference.split(".")
+    return {
+        "multipart_indexes": {"value": "0", "preset": "0"},
+        "channel": {
+            "fixture_id": str(fixture),
+            "subfixture_id": "1",
+            "attribute_name": attribute,
+        },
+        "raw_values": {},
+        "preset": {"no_components": ["1", pool, number]},
+        "effect": None,
+    }
+
+
+def build_dynamic(*, pre=None, plan=None, pos=None, verified_effects=None, verified_presets=None, verified_capabilities=None, capability=None):
     pre = pre or target_discovery()
     pos = pos or build_position(target=pre)
     return build_existing_cue_dynamic_program_preview(
@@ -108,6 +144,10 @@ def build_dynamic(*, pre=None, plan=None, pos=None, verified_effects=None, capab
         artistic_plan=plan or artistic_plan(),
         verified_effects_by_group=effects() if verified_effects is None else verified_effects,
         effect_application_capability=effect_capability() if capability is None else capability,
+        verified_presets_by_group={} if verified_presets is None else verified_presets,
+        verified_capabilities_by_group=(
+            capabilities() if verified_capabilities is None else verified_capabilities
+        ),
     )
 
 
@@ -148,6 +188,10 @@ def post_from(pre, preview):
             rows[:] = kept
         if effect is not None:
             rows.extend([effect_row(101, effect["id"]), effect_row(102, effect["id"])])
+        for preset in preview["cue_presets"][str(number)]:
+            for fixture in (101, 102):
+                for attribute in preset["attribute_names"]:
+                    rows.append(preset_row(fixture, attribute, preset["reference"]))
     return post
 
 
@@ -212,6 +256,18 @@ class ExistingCueDynamicProgramMergeCoreTests(unittest.TestCase):
         self.assertIn("Position=EXPLODE", action["preview_note"] )
         self.assertIn("Effect=2500", action["preview_note"] )
         self.assertNotIn("Sequence 303", action["preview_note"] )
+
+    def test_core_filters_dynamic_presets_without_exact_attribute_evidence(self):
+        resource_map = {"groups": [{
+            "group_id": 1,
+            "preset_resources": [
+                {"reference": "4.101", "name": "RED", "dimension": "COLOR", "attribute_names": ["COLORRGB1"]},
+                {"reference": "3.201", "name": "GOBO", "dimension": "GOBO", "attribute_names": []},
+                {"reference": "5.301", "name": "PRISM", "dimension": "PRISM", "attribute_names": ["PRISM1"]},
+            ],
+        }]}
+        result = AgentCore._verified_dynamic_presets(resource_map, 1)
+        self.assertEqual(set(result), {"4.101"})
 
 
 class ExistingCueDynamicIdentityNormalizationTests(unittest.TestCase):
@@ -318,6 +374,8 @@ class ExistingCueDynamicProgramMergeTests(unittest.TestCase):
         self.assertEqual(preview["cue_updates"][0]["effect"]["id"], 2500)
         self.assertIsNone(preview["cue_updates"][1]["effect"])
         self.assertFalse(preview["cue_updates"][0]["capability_intent"][0]["execution_authorized"])
+        self.assertIn("PRISM", preview["cue_updates"][0]["optional_capabilities"])
+        self.assertIn("COLOR", preview["cue_updates"][0]["intentionally_unused_capabilities"])
         self.assertGreater(preview["cue_updates"][0]["expected_pan_range"][1] - preview["cue_updates"][0]["expected_pan_range"][0], 20)
         self.assertEqual(preview["ma2_writes"], 0)
 
@@ -339,6 +397,63 @@ class ExistingCueDynamicProgramMergeTests(unittest.TestCase):
         between = commands[cue1_stores[0] + 1:cue1_stores[1]]
         self.assertIn("ClearAll", between)
         self.assertTrue(any(command.startswith("Fixture ") for command in between))
+
+    def test_verified_existing_presets_join_the_same_existing_cue_preview(self):
+        plan = artistic_plan()
+        plan["cues"][0]["actions"].insert(0, {
+            "operation": "CALL_PRESET",
+            "target": {"type": "group", "ref": 1},
+            "preset_ref": "4.101",
+            "preset_type": "COLOR",
+        })
+        plan["cues"][2]["actions"].insert(0, {
+            "operation": "CALL_PRESET",
+            "target": {"type": "group", "ref": 1},
+            "preset_ref": "3.201",
+            "preset_type": "GOBO",
+        })
+        preview = build_dynamic(plan=plan, verified_presets=presets())
+        cue1 = preview["cue_updates"][0]
+        cue3 = preview["cue_updates"][2]
+        self.assertEqual(cue1["selected_presets"][0]["reuse"], "EXISTING_VERIFIED_PRESET")
+        self.assertIn("COLOR", cue1["used_capability_families"])
+        self.assertEqual(cue3["beam_gobo_focus_changes"][0]["dimension"], "GOBO")
+        commands = commands_from_dynamic_preview(preview)
+        self.assertIn("At Preset 4.101", commands)
+        self.assertIn("At Preset 3.201", commands)
+        self.assertFalse(any(command.startswith("Store Preset") for command in commands))
+
+    def test_requested_preset_without_exact_resource_or_attribute_evidence_fails_closed(self):
+        plan = artistic_plan()
+        plan["cues"][0]["actions"].insert(0, {
+            "operation": "CALL_PRESET",
+            "target": {"type": "group", "ref": 1},
+            "preset_ref": "4.101",
+            "preset_type": "COLOR",
+        })
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "PRESET_NOT_VERIFIED"):
+            build_dynamic(plan=plan)
+        incomplete = presets()
+        incomplete[1]["4.101"]["attribute_names"] = []
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "PRESET_NOT_VERIFIED"):
+            build_dynamic(plan=plan, verified_presets=incomplete)
+
+    def test_native_postwrite_verifies_selected_preset_and_protected_content(self):
+        pre = target_discovery()
+        plan = artistic_plan()
+        plan["cues"][0]["actions"].insert(0, {
+            "operation": "CALL_PRESET",
+            "target": {"type": "group", "ref": 1},
+            "preset_ref": "4.101",
+            "preset_type": "COLOR",
+        })
+        preview = build_dynamic(pre=pre, plan=plan, verified_presets=presets())
+        report = verify_existing_cue_dynamic_program_merge(preview, post_from(pre, preview))
+        self.assertEqual(report["preset_fixture_matches"], 2)
+        drift = post_from(pre, preview)
+        drift["cues"][0]["parts"][0]["cue_data"].append(row("101", "GOBO1", 7))
+        with self.assertRaisesRegex(ExistingCueDynamicProgramMergeError, "PROTECTED_CONTENT_CHANGED"):
+            verify_existing_cue_dynamic_program_merge(preview, drift)
 
     def test_unverified_effect_or_application_capability_fails_closed(self):
         bad = effects()

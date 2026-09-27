@@ -1,8 +1,8 @@
 {
   "id": "existing_cue.dynamic_program_merge",
   "name": "Existing Cue Dynamic Program Merge",
-  "version": "0.1.0",
-  "description": "Merge verified per-Cue Position and Effect intent into an existing Agent-owned Sequence without allocating replacement Show objects.",
+  "version": "0.2.0",
+  "description": "Merge artistically selected verified Preset, Effect, and Position intent into existing Agent-owned Cues from fresh full-fixture capability evidence without allocating replacement Show objects.",
   "intents": ["merge_existing_cue_dynamic_program"],
   "required_state": ["fixtures", "groups", "group_membership", "fixture_type_profiles", "presets", "effects", "sequences", "executors"],
   "safety": "MODIFY",

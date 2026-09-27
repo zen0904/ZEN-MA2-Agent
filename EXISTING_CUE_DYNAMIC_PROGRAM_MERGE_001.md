@@ -2,7 +2,7 @@
 
 Date: 2026-09-27 (Taiwan)
 
-Status: `OFFLINE_IMPLEMENTED_AWAITING_LIVE_PREVIEW`
+Status: `OFFLINE_IMPLEMENTED_V0_2_AWAITING_LIVE_PREVIEW`
 
 ## Goal
 
@@ -12,7 +12,7 @@ Current Show / FixtureType / Geometry / Preset / Effect evidence
 -> one Lighting Designer
 -> per-Cue artistic capability selection
 -> strict typed ShowPlan
--> existing Sequence/Cue deterministic Position + Effect merge
+-> existing Sequence/Cue deterministic Preset + Effect + Position merge
 -> explicit owner approval
 -> native Sequence Export verification.
 
@@ -39,6 +39,17 @@ FixtureType capability discovery now includes BEAM, GOBO_ROTATION, PRISM_ROTATIO
 
 A capability may be `SHOW_BOUND_VERIFIED` technically while still having `NO_VERIFIED_RESOURCE` for execution. In that state the Designer may reason about it through `capability_intent`, but the compiler generates **no raw Attribute command** and performs no silent substitution.
 
+### v0.2 full-fixture execution boundary
+
+The Dynamic Program path now also executes existing Group-bound Presets for the already typed ShowPlan families `COLOR`, `FOCUS`, `BEAM`, and `GOBO` when all of the following are fresh and verified:
+
+- exact current-Show Preset identity/type/label;
+- exact Group application binding;
+- every selected fixture's current FixtureType/function profile; and
+- a non-empty common affected-attribute set for that Preset family.
+
+The planner still treats Prism, Gobo, Strobe, and every other family as optional artistic tools. A technical capability without a verified executable resource remains Preview intent only. It never becomes a guessed `Attribute` command. Existing Presets and Effects are reused; this workflow cannot create either.
+
 ## Cue-level artistic contract
 
 Provider-facing Cue intent may now include:
@@ -48,6 +59,8 @@ Provider-facing Cue intent may now include:
 - `position_scale`: bounded `0.5..2.5`
 
 The Position language remains relative raw/natural MA values. It does not claim physical degrees, exact stage targets, XYZ sign mapping, or high/low semantics.
+
+Every per-Cue Preview row now reports used capability families, selected existing Presets, selected Effect, Position pattern/range, Beam/Gobo/Focus changes, intentionally unused available capabilities with reasons, optional capabilities, and requested-but-unexecutable capability intent. This makes full-fixture consideration auditable without making any feature mandatory.
 
 ## Current-show spatial evidence
 
@@ -73,7 +86,14 @@ Recognized explicit request form includes:
 
 This route is evaluated before the generic Show Builder, so it cannot silently allocate a replacement Sequence.
 
-Bounded executable grammar is deliberately split into already verified stores instead of inventing a new combined Programmer-store grammar. For a Cue with a new Effect call:
+Bounded executable grammar is deliberately split into already verified stores instead of inventing a new combined Programmer-store grammar. A selected existing Preset uses its own isolated phase:
+
+1. `ClearAll`
+2. verified `Group <id>`
+3. verified `At Preset <type.id>`
+4. `Store Cue <n> Sequence <existing> /merge /cueonly /nc`
+
+For a Cue with a new Effect call:
 
 1. `ClearAll`
 2. verified `Group <id>`
@@ -86,7 +106,7 @@ Bounded executable grammar is deliberately split into already verified stores in
 9. `Store Cue <n> Sequence <existing> /merge /cueonly /nc`
 10. final `ClearAll`
 
-For a Cue with no new Effect call, the existing Effect state is preserved and only the Position store is generated. No unverified Effect-release/clear grammar is synthesized.
+For a Cue with no new Effect call, the existing Effect state is preserved. Only artistically selected verified Preset phases and the explicit Position phase are generated. No unverified Effect-release/clear grammar is synthesized.
 
 The path cannot create or assign Sequence, Executor, Effect, Preset, Group, Patch, Address, Fixture identity/type, or Fixture 9999.
 
@@ -108,12 +128,13 @@ Intended:
 
 - PAN/TILT and grandMA2 Position-family representation
 - explicitly approved Effect identity / Effect* metadata on target fixtures and Cues
+- exact attribute families proven for explicitly selected existing Presets
 
 Protected:
 
 - static Dimmer Value/Fade/Delay
-- Color
-- Preset references
+- unplanned Color/Focus/Beam/Gobo families
+- unrelated Preset references
 - unrelated Effect content
 - Cue labels
 - Cue Fade/Delay metadata
@@ -133,13 +154,17 @@ Preview may use one Lighting Designer call. Approval-time revalidation performs 
 
 Windows authoritative suite:
 
-`928 tests / OK`
+`935 tests / OK`
 
 Coverage includes:
 
 - full fixture capability vocabulary
 - capability intent vs execution authority separation
 - no raw Prism/Zoom/Frost invention
+- existing verified COLOR/FOCUS/BEAM/GOBO Preset reuse in existing Cues
+- missing Preset identity or exact FixtureType attribute evidence fails closed
+- native Preset identity verification per target fixture
+- per-Cue used, optional, intentionally unused, and requested-unexecutable capability reporting
 - existing Sequence path never allocates a replacement Sequence
 - different Cues may use different verified Effects
 - Position and Effect coexist as one Cue-level composite intent while using separate verified Store grammars
@@ -162,4 +187,4 @@ Action `8a5d699c36fa` remains noncompliant and must not be approved or executed.
 
 The concurrent OC implementation's retained `projects/runs/EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001/preview_only.*` artifacts remain offline contract fixtures and are not approvable. A separate read-only guest MA2 session could not recover the fresh Position binding and therefore registered no live Action.
 
-The next safe acceptance step is **Preview only** through the new route inside the already authenticated current Field Core against Sequence 302. A valid Preview must show per-Cue Position variation plus verified existing Effect variation, preserve the full capability-intent audit, and report `MA2_WRITES=0`. No live write occurs until the owner separately approves that exact Preview.
+The next safe acceptance step is **Preview only** through the new route inside the already authenticated current Field Core against Sequence 302. A valid Preview must show per-Cue artistically selected existing Presets and Effects, Position variation, used/optional/intentionally-unused/requested-unexecutable capability families, preserve the full capability-intent audit, and report `MA2_WRITES=0`. No live write occurs until the owner separately approves that exact Preview.

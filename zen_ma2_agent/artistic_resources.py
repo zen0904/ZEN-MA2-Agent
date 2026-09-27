@@ -105,6 +105,38 @@ def _technical_dimension_status(
     return {"status": status, "evidence": evidence}
 
 
+def _dimension_attribute_names(
+    dimension: str,
+    fixture_type_labels: Sequence[str],
+    profiles: Mapping[str, Mapping[str, Any]],
+) -> list[str]:
+    """Return attributes evidenced for one Preset family on every Group type."""
+    per_type: list[set[str]] = []
+    wanted = str(dimension).upper()
+    for label in fixture_type_labels:
+        profile = profiles.get(label)
+        if not isinstance(profile, Mapping) or profile.get("status") != "SHOW_BOUND_VERIFIED":
+            return []
+        attributes: set[str] = set()
+        for channel in profile.get("channels", []) if isinstance(profile.get("channels"), list) else []:
+            if not isinstance(channel, Mapping):
+                continue
+            candidates = [channel, *(channel.get("functions") or [])]
+            matched = any(
+                isinstance(item, Mapping)
+                and (
+                    str(item.get("preset") or "").upper() == wanted
+                    or str(item.get("feature") or "").upper().startswith(wanted)
+                )
+                for item in candidates
+            )
+            attribute = channel.get("attribute")
+            if matched and isinstance(attribute, str) and attribute:
+                attributes.add(attribute.upper())
+        per_type.append(attributes)
+    return sorted(set.intersection(*per_type)) if per_type and all(per_type) else []
+
+
 def _preset_inventory(profile: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
     result: dict[str, Mapping[str, Any]] = {}
     rows = profile.get("presets")
@@ -441,8 +473,11 @@ def build_artistic_resource_map(
                 "technical_capability": technical,
             }
 
-        presets = bound_presets.get(group_id, [])
+        presets = [deepcopy(item) for item in bound_presets.get(group_id, [])]
         for preset in presets:
+            preset["attribute_names"] = _dimension_attribute_names(
+                preset["dimension"], type_labels, profiles
+            )
             dimensions[preset["dimension"]]["execution_status"] = "VERIFIED_PRESET_RESOURCE"
         effects = list(bound_effects.get(group_id, []))
         exact_selection_accepts_root_capability = _root_capability_applies_to_exact_selection(profile, group)
