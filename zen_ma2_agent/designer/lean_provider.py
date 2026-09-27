@@ -6,6 +6,7 @@ from copy import deepcopy
 from typing import Any, Mapping, Protocol
 
 from .artistic_plan import ArtisticPlanCompileError, compile_artistic_cue_plan
+from ..artistic_capabilities import PRESET_BACKED_DIMENSIONS
 from ..artistic_resources import (
     SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL,
     SHOW_BOUND_VERIFIED_FIXTURE_TYPE_CAPABILITY,
@@ -55,12 +56,62 @@ def invoke_primary_design(
     return parse_artistic_json(raw)
 
 
-def build_provider_resource_contract(resource_map: Mapping[str, Any]) -> dict[str, Any]:
-    """Compact song-agnostic contract containing only executable resources."""
-    return {
-        "group_resources": model_resource_contract(resource_map),
+def build_provider_resource_contract(
+    resource_map: Mapping[str, Any],
+    *,
+    allowed_executable_operations: set[str] | frozenset[str] | None = None,
+) -> dict[str, Any]:
+    """Compact contract containing only resources executable in the caller route.
+
+    The authoritative resource map may know more than one write route can safely
+    execute. Route projection therefore removes implementation resources that
+    are not legal for that route instead of asking the model to ignore tempting
+    but unusable objects. Technical capability remains visible separately in the
+    compact artistic resource map / capability summary.
+    """
+    groups = model_resource_contract(resource_map)
+    allowed = None if allowed_executable_operations is None else {str(value).upper() for value in allowed_executable_operations}
+    if allowed is not None:
+        for group in groups:
+            if "CALL_PRESET" not in allowed:
+                group["presets"] = []
+            if "CALL_EFFECT" not in allowed:
+                group["effects"] = []
+            dimensions = group.get("dimensions")
+            if isinstance(dimensions, dict):
+                for dimension, evidence in dimensions.items():
+                    if not isinstance(evidence, dict):
+                        continue
+                    original = str(evidence.get("execution_status") or "NO_VERIFIED_RESOURCE")
+                    executable_here = (
+                        (
+                            dimension == "EFFECT"
+                            and "CALL_EFFECT" in allowed
+                            and original == "VERIFIED_EFFECT_RESOURCE"
+                        )
+                        or (
+                            dimension == "DIMMER"
+                            and "SET_DIMMER" in allowed
+                            and original in {
+                                SHOW_BOUND_VERIFIED_DIRECT_GROUP_LEVEL,
+                                SHOW_BOUND_VERIFIED_FIXTURE_TYPE_CAPABILITY,
+                            }
+                        )
+                        or (
+                            dimension in PRESET_BACKED_DIMENSIONS
+                            and "CALL_PRESET" in allowed
+                            and original == "VERIFIED_PRESET_RESOURCE"
+                        )
+                    )
+                    evidence["resource_execution_status"] = original
+                    evidence["route_execution_status"] = "EXECUTABLE" if executable_here else "INTENT_ONLY"
+    result = {
+        "group_resources": groups,
         "resource_rules": dict(resource_map.get("rules") or {}),
     }
+    if allowed is not None:
+        result["allowed_executable_operations"] = sorted(allowed)
+    return result
 
 
 def parse_artistic_json(value: Mapping[str, Any] | str) -> dict[str, Any]:
@@ -178,6 +229,7 @@ def compile_lean_artistic_intent(
     active_sequence_range: tuple[int, int] = (1, 9999),
     target_executor: str = "2.001",
     cue_labels: list[str] | tuple[str, ...] | None = None,
+    allowed_executable_operations: set[str] | frozenset[str] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     if not isinstance(request, str) or not request.strip() or len(request) > 2048:
         raise ArtisticPlanCompileError("Lean design request must be a non-empty bounded string.")
@@ -221,6 +273,16 @@ def compile_lean_artistic_intent(
         verified_capability_status=capability_status_from_map(resource_map),
         cue_labels=cue_labels,
     )
+    if allowed_executable_operations is not None:
+        allowed = {str(value).upper() for value in allowed_executable_operations}
+        for cue in plan.get("cues", []):
+            for action in cue.get("actions", []):
+                operation = str(action.get("operation") or "").upper()
+                if operation not in allowed:
+                    raise ArtisticPlanCompileError(
+                        f"Artistic operation {operation or '<empty>'} is not executable in the current route."
+                    )
+        audit["allowed_executable_operations"] = sorted(allowed)
     return attach_verified_effect_identity_labels(plan, resource_map), audit
 
 

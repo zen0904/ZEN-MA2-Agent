@@ -220,8 +220,14 @@ the ordinary Designer sees a Group/Position Preset pair only after exact native
 Cue-content evidence is recorded in
 `zen.position_preset_application_binding.v0.1`. FixtureType POSITION capability
 and Position-pool inventory alone do not establish applicability. The current
-PoC is Preview-only; see `docs/POSITION_APPLICATION_EVIDENCE_POC_001.md`.
+Test Show has real-machine content verification for exact Group 1 / Preset
+`2.13 ZEN_POSITION_CAL_P13`; that binding remains executable only while current
+Show identity, exact Group membership, Preset identity/type/label, and retained
+evidence all still match. See `docs/POSITION_APPLICATION_EVIDENCE_POC_001.md`.
 
-The separate Raw Position Cue PoC can prove that explicit Pan/Tilt programmer
-values reach native CueData, but that transport proof does not create a
-Group/Position Preset binding or expose Position to the ordinary Designer.
+The separate Raw Position Cue proof establishes that explicit Pan/Tilt
+programmer values can reach native CueData, but that transport proof alone does
+not create a Group/Position Preset binding. The existing-Cue dynamic route may
+reuse the separately verified calibration baseline for bounded relative
+Position patterns while preserving the same fail-closed identity checks. It
+does not infer physical aim, XYZ sign mapping, high/low, or performer zones.

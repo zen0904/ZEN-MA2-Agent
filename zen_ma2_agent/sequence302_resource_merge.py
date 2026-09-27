@@ -92,6 +92,9 @@ def _require_target(position_preview: Mapping[str, Any], pre_discovery: Mapping[
         raise Sequence302ResourceMergeError("SEQ302_EXACT_SEQUENCE_AND_CUE_RANGE_REQUIRED")
     if group.get("id") != TARGET_GROUP or tuple(group.get("exact_refs") or ()) != TARGET_REFS:
         raise Sequence302ResourceMergeError("SEQ302_EXACT_GROUP_IDENTITY_REQUIRED")
+    cue_channel_refs = group.get("cue_channel_refs")
+    if not isinstance(cue_channel_refs, Mapping) or set(map(str, cue_channel_refs)) != set(TARGET_REFS):
+        raise Sequence302ResourceMergeError("SEQ302_CHANNEL_IDENTITY_REQUIRED")
     if "9999" in {str(ref).split(".", 1)[0] for ref in group.get("exact_refs") or ()}:
         raise Sequence302ResourceMergeError("PROTECTED_FIXTURE_9999")
     if pre_discovery.get("status") != "VERIFIED" or pre_discovery.get("sequence_no") != TARGET_SEQUENCE:
@@ -242,7 +245,11 @@ def build_sequence302_resource_merge_preview(
             raise Sequence302ResourceMergeError(f"SEQ302_CUE_LABEL_DRIFT_{cue['cue_number']}")
 
     # No existing target-Group Effect may be silently replaced or accumulated.
-    existing = effect_ids_by_cue_ref(pre_discovery, cue_numbers=TARGET_CUES, target_fixture_refs=TARGET_REFS)
+    cue_channel_refs = {str(key): str(value) for key, value in position_preview["group"]["cue_channel_refs"].items()}
+    existing = effect_ids_by_cue_ref(
+        pre_discovery, cue_numbers=TARGET_CUES, target_fixture_refs=TARGET_REFS,
+        cue_channel_refs=cue_channel_refs,
+    )
     if any(ids for refs in existing.values() for ids in refs.values()):
         raise Sequence302ResourceMergeError("SEQ302_EXISTING_TARGET_EFFECT_CONTENT_CONFLICT")
 
@@ -255,9 +262,10 @@ def build_sequence302_resource_merge_preview(
 
     protected = protected_content_snapshot(
         pre_discovery,
-        cue_effects={number: ({"id": next(item["effect_id"] for item in cue_updates if item["cue_number"] == number)} if next(item["effect_id"] for item in cue_updates if item["cue_number"] == number) else None) for number in TARGET_CUES},
+        cue_effects={number: ({"id": next(item["effect_id"] for item in cue_updates if item["cue_number"] == number), "kind": "DIMMER_CHASE"} if next(item["effect_id"] for item in cue_updates if item["cue_number"] == number) else None) for number in TARGET_CUES},
         target_fixture_refs=TARGET_REFS,
         cue_presets={number: [{"attribute_names": ["PAN", "TILT"]}] for number in TARGET_CUES},
+        cue_channel_refs=cue_channel_refs,
     )
     commands: list[str] = []
     for resource in presets:
@@ -329,8 +337,15 @@ def verify_sequence302_resource_merge(
             raise Sequence302ResourceMergeError(f"SEQ302_EFFECT_DIM_ATTRIBUTE_UNVERIFIED_{spec.effect_id}")
 
     expected_effects = {item["cue_number"]: item["effect_id"] for item in preview["cue_updates"]}
-    actual_effects = effect_ids_by_cue_ref(post_discovery, cue_numbers=TARGET_CUES, target_fixture_refs=TARGET_REFS)
-    actual_presets = preset_refs_by_cue_ref(post_discovery, cue_numbers=TARGET_CUES, target_fixture_refs=TARGET_REFS)
+    cue_channel_refs = {str(key): str(value) for key, value in preview["group"]["cue_channel_refs"].items()}
+    actual_effects = effect_ids_by_cue_ref(
+        post_discovery, cue_numbers=TARGET_CUES, target_fixture_refs=TARGET_REFS,
+        cue_channel_refs=cue_channel_refs,
+    )
+    actual_presets = preset_refs_by_cue_ref(
+        post_discovery, cue_numbers=TARGET_CUES, target_fixture_refs=TARGET_REFS,
+        cue_channel_refs=cue_channel_refs,
+    )
     expected_raw = {(item["cue_number"], row["fixture_ref"], attr): str(value) for item in preview["cue_updates"] for row in item["fixtures"] for attr, value in (("PAN", row["pan"]), ("TILT", row["tilt"]))}
     observed_raw: dict[tuple[int, str, str], str] = {}
     for cue in post_discovery.get("cues", []):
@@ -363,9 +378,10 @@ def verify_sequence302_resource_merge(
                 raise Sequence302ResourceMergeError(f"SEQ302_EFFECT_APPLICATION_MISMATCH_{number}_{ref}")
     protected = protected_content_snapshot(
         post_discovery,
-        cue_effects={item["cue_number"]: ({"id": item["effect_id"]} if item["effect_id"] else None) for item in preview["cue_updates"]},
+        cue_effects={item["cue_number"]: ({"id": item["effect_id"], "kind": "DIMMER_CHASE"} if item["effect_id"] else None) for item in preview["cue_updates"]},
         target_fixture_refs=TARGET_REFS,
         cue_presets={item["cue_number"]: [{"attribute_names": ["PAN", "TILT"]}] for item in preview["cue_updates"]},
+        cue_channel_refs=cue_channel_refs,
     )
     if protected["sha256"] != preview.get("pre_protected_content_sha256"):
         raise Sequence302ResourceMergeError("SEQ302_PROTECTED_CONTENT_CHANGED")

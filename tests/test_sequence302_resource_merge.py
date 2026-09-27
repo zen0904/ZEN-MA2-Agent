@@ -105,7 +105,10 @@ def position_preview():
             ],
             "executor_assignments": [{"page": 2, "executor": 8, "location": "2.8", "label": "ZEN_SEQ302"}],
         },
-        "group": {"id": 1, "name": "HYBRID", "exact_refs": list(TARGET_REFS)},
+        "group": {
+            "id": 1, "name": "HYBRID", "exact_refs": list(TARGET_REFS),
+            "cue_channel_refs": {ref: ref for ref in TARGET_REFS},
+        },
     }
 
 

@@ -305,6 +305,54 @@ class LeanRootProviderTests(unittest.TestCase):
             {"id": 7, "label": "FX_EXACT"},
         )
 
+    def test_route_scoped_contract_hides_resources_the_route_cannot_execute(self):
+        mapped = resource_map()
+        mapped["groups"][0]["preset_resources"] = [{
+            "dimension": "COLOR", "reference": "4.101", "name": "RED"
+        }]
+        mapped["groups"][0]["dimensions"]["COLOR"] = {
+            "execution_status": "VERIFIED_PRESET_RESOURCE"
+        }
+        mapped["groups"][0]["dimensions"]["EFFECT"] = {
+            "execution_status": "VERIFIED_EFFECT_RESOURCE"
+        }
+        mapped["groups"][0]["dimensions"]["PRISM"] = {
+            "execution_status": "NO_VERIFIED_RESOURCE",
+            "technical_capability": {"status": "SHOW_BOUND_VERIFIED"},
+        }
+        mapped["groups"][0]["effect_resources"] = [{
+            "effect_id": 7, "name": "FX", "kind": "DIMMER_CHASE",
+            "application_status": "REAL_MACHINE_CONTENT_VERIFIED",
+        }]
+        contract = build_provider_resource_contract(
+            mapped, allowed_executable_operations=frozenset({"CALL_EFFECT"})
+        )
+        group = contract["group_resources"][0]
+        self.assertEqual(group["presets"], [])
+        self.assertEqual([item["effect_id"] for item in group["effects"]], [7])
+        self.assertEqual(contract["allowed_executable_operations"], ["CALL_EFFECT"])
+        self.assertEqual(group["dimensions"]["COLOR"]["resource_execution_status"], "VERIFIED_PRESET_RESOURCE")
+        self.assertEqual(group["dimensions"]["COLOR"]["route_execution_status"], "INTENT_ONLY")
+        self.assertEqual(group["dimensions"]["EFFECT"]["route_execution_status"], "EXECUTABLE")
+        self.assertEqual(group["dimensions"]["PRISM"]["resource_execution_status"], "NO_VERIFIED_RESOURCE")
+        self.assertEqual(group["dimensions"]["PRISM"]["route_execution_status"], "INTENT_ONLY")
+
+    def test_route_scoped_compiler_rejects_otherwise_verified_but_disallowed_action(self):
+        mapped = resource_map()
+        mapped["groups"][0]["preset_resources"] = [{
+            "dimension": "COLOR", "reference": "4.101", "name": "RED"
+        }]
+        mapped["groups"][0]["dimensions"]["COLOR"] = {
+            "execution_status": "VERIFIED_PRESET_RESOURCE"
+        }
+        with self.assertRaisesRegex(ArtisticPlanCompileError, "not executable in the current route"):
+            compile_lean_artistic_intent(
+                {"cues": [{"fade": 0, "actions": [{"group": 1, "color_preset": "4.101"}]}]},
+                request="x",
+                resource_map=mapped,
+                allowed_executable_operations=frozenset({"CALL_EFFECT"}),
+            )
+
     def test_unverified_effect_is_not_exposed_to_provider_contract(self):
         mapped = resource_map()
         mapped["groups"][0]["effect_resources"] = [{
