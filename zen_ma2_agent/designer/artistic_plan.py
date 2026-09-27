@@ -432,8 +432,13 @@ def compile_artistic_cue_plan(
         if not isinstance(source_cue, dict):
             raise ArtisticPlanCompileError(f"Cue {index} must be an object.")
         actions = source_cue.get("actions")
-        if not isinstance(actions, list) or not actions:
-            raise ArtisticPlanCompileError(f"Cue {index} must contain at least one artistic action.")
+        if not isinstance(actions, list):
+            raise ArtisticPlanCompileError(f"Cue {index} actions must be a list.")
+        position_pattern, position_scale = _position_intent(source_cue)
+        if not actions and position_pattern is None:
+            raise ArtisticPlanCompileError(
+                f"Cue {index} must contain an artistic action or explicit Position pattern."
+            )
         compiled_actions = [
             _compile_action(
                 item,
@@ -447,7 +452,6 @@ def compile_artistic_cue_plan(
             )
             for item in actions
         ]
-        position_pattern, position_scale = _position_intent(source_cue)
         replace_effect_ids = _replace_effect_ids(source_cue)
         capability_intent = _compile_capability_intent(
             source_cue.get("capability_intent"),

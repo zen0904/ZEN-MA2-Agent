@@ -67,6 +67,26 @@ class ArtisticPlanCompilerTests(unittest.TestCase):
         self.assertEqual(actions[3]["operation"], "CALL_EFFECT")
         self.assertEqual(actions[3]["effect_ref"], {"id": 3520})
 
+    def test_position_only_cue_is_valid_but_truly_empty_cue_still_fails(self):
+        provider_plan = {
+            "cues": [{
+                "fade": 0,
+                "actions": [],
+                "position_pattern": "WIDE_FAN",
+                "position_scale": 1.5,
+            }]
+        }
+        plan, _audit = self.compile(provider_plan)
+        self.assertEqual(plan["cues"][0]["actions"], [])
+        self.assertEqual(plan["cues"][0]["position_pattern"], "WIDE_FAN")
+        self.assertEqual(plan["cues"][0]["position_scale"], 1.5)
+
+        empty = {"cues": [{"fade": 0, "actions": []}]}
+        with self.assertRaisesRegex(
+            ArtisticPlanCompileError, "artistic action or explicit Position pattern"
+        ):
+            self.compile(empty)
+
     def test_replace_effect_ids_are_preserved_as_artistic_authorization_metadata(self):
         provider_plan = {
             "cues": [{
