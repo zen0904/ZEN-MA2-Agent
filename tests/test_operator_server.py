@@ -103,6 +103,23 @@ class OperatorServerTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["status"], "NOT_IMPLEMENTED")
 
+    def test_stage_visual_tool_uses_bounded_provider(self):
+        client = TestClient(
+            create_operator_app(
+                self._provider(),
+                stage_visual_provider=lambda: {
+                    "schema": "zen.ma2_stage_view_navigation.v0.1",
+                    "status": "BLOCKED",
+                    "write_authority": "NONE",
+                    "ma2_show_writes": 0,
+                },
+            )
+        )
+        response = client.post("/zen/v0.1/tools/zen.ma.stage.visual", json={})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["result"]["write_authority"], "NONE")
+        self.assertEqual(response.json()["result"]["ma2_show_writes"], 0)
+
     def test_unknown_tool_is_not_exposed(self):
         client = TestClient(create_operator_app(self._provider()))
         response = client.post("/zen/v0.1/tools/zen.shell", json={})

@@ -17,6 +17,7 @@ The plugin exposes typed ZEN capabilities and returns structured semantic data. 
 - `zen_status`
 - `zen_ma_status`
 - `zen_ma_visual`
+- `zen_ma_stage_visual`
 - `zen_design_request`
 - `zen_preview`
 - `zen_approve`
@@ -27,6 +28,11 @@ The plugin exposes typed ZEN capabilities and returns structured semantic data. 
 `zen_ma_visual` is read-only. It asks ZEN to capture the current grandMA2 onPC
 window and return bounded pixel-grounded observations; the vision model receives
 no MA tools or write authority.
+
+`zen_ma_stage_visual` first searches existing native Screen 2..6 windows with
+background capture, then uses only a fail-closed fixed Screen 2/3/4 navigation
+fallback when enabled. It accepts no coordinates, keys, text, MA commands,
+playback, Preview, or Approval input and reports `MA2_SHOW_WRITES=0`.
 
 Default development endpoint: `http://127.0.0.1:8876`.
 

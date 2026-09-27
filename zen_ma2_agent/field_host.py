@@ -10,6 +10,7 @@ from .host_metrics import HostMetricsProvider
 from .llm.lean_design_adapter import load_portable_lean_design_intelligence
 from .llm.openclaw_infer_adapter import load_openclaw_infer_design_intelligence
 from .ma2_visual_observation import load_ma2_visual_observation_service
+from .ma2_gui_navigation import load_ma2_stage_view_navigation_service
 from .ma_bridge.server import (
     DEFAULT_BRIDGE_HOST,
     DEFAULT_BRIDGE_PORT,
@@ -119,6 +120,12 @@ class FieldHost:
             self.visual_observation_service = load_ma2_visual_observation_service()
         except (OSError, ValueError):
             self.visual_observation_service = None
+        try:
+            self.stage_view_navigation_service = load_ma2_stage_view_navigation_service(
+                self.visual_observation_service
+            )
+        except (OSError, ValueError):
+            self.stage_view_navigation_service = None
         self.bridge = BridgeServer(
             BridgeDispatcher(status_payload_provider=self._bridge_status_payload),
             host=self.config.bridge_host,
@@ -153,6 +160,11 @@ class FieldHost:
             visual_observation_provider=(
                 self.visual_observation_service.observe
                 if self.visual_observation_service is not None
+                else None
+            ),
+            stage_visual_provider=(
+                self.stage_view_navigation_service.navigate_and_observe
+                if self.stage_view_navigation_service is not None
                 else None
             ),
             design_request_handler=design_handler,

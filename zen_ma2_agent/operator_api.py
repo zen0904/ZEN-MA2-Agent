@@ -197,6 +197,7 @@ StatusProvider = Callable[[], OperatorStatusSnapshot]
 WatchdogProvider = Callable[[], Mapping[str, Any]]
 HostStatusProvider = Callable[[], Mapping[str, Any]]
 VisualObservationProvider = Callable[[], Mapping[str, Any]]
+StageVisualProvider = Callable[[], Mapping[str, Any]]
 DesignRequestHandler = Callable[[str], Mapping[str, Any]]
 PreviewHandler = Callable[[Optional[str]], Mapping[str, Any]]
 ApproveHandler = Callable[[str, bool], Mapping[str, Any]]
@@ -223,6 +224,7 @@ class OpenClawOperatorAdapter:
             "zen.ma.visual",
         }
     )
+    NAVIGATION_TOOLS = frozenset({"zen.ma.stage.visual"})
     RESERVED_TOOLS = frozenset(
         {
             "zen.design.request",
@@ -233,7 +235,7 @@ class OpenClawOperatorAdapter:
             "zen.approve",
         }
     )
-    ALLOWED_TOOLS = READ_ONLY_TOOLS | RESERVED_TOOLS
+    ALLOWED_TOOLS = READ_ONLY_TOOLS | NAVIGATION_TOOLS | RESERVED_TOOLS
 
     def __init__(
         self,
@@ -241,6 +243,7 @@ class OpenClawOperatorAdapter:
         watchdog_provider: Optional[WatchdogProvider] = None,
         host_status_provider: Optional[HostStatusProvider] = None,
         visual_observation_provider: Optional[VisualObservationProvider] = None,
+        stage_visual_provider: Optional[StageVisualProvider] = None,
         design_request_handler: Optional[DesignRequestHandler] = None,
         preview_handler: Optional[PreviewHandler] = None,
         approve_handler: Optional[ApproveHandler] = None,
@@ -252,6 +255,7 @@ class OpenClawOperatorAdapter:
         self._watchdog_provider = watchdog_provider
         self._host_status_provider = host_status_provider
         self._visual_observation_provider = visual_observation_provider
+        self._stage_visual_provider = stage_visual_provider
         self._design_request_handler = design_request_handler
         self._preview_handler = preview_handler
         self._approve_handler = approve_handler
@@ -395,6 +399,17 @@ class OpenClawOperatorAdapter:
                 tool_name,
                 "SUCCESS",
                 dict(self._visual_observation_provider()),
+                None,
+                request_id,
+            )
+
+        if tool_name == "zen.ma.stage.visual":
+            if self._stage_visual_provider is None:
+                return self._result(tool_name, "NOT_IMPLEMENTED", None, None, request_id)
+            return self._result(
+                tool_name,
+                "SUCCESS",
+                dict(self._stage_visual_provider()),
                 None,
                 request_id,
             )

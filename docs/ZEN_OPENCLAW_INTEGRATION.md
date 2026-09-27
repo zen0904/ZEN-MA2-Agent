@@ -118,6 +118,7 @@ zen.artifact.latest
 zen.watchdog.status
 zen.host.status
 zen.ma.visual
+zen.ma.stage.visual
 ```
 
 Implemented typed planning/approval tools:
@@ -143,6 +144,14 @@ visible pixels. ZEN wraps those notes as `VISUAL_OBSERVATION` with
 it cannot switch screens, click MA2, send Telnet, approve a Preview, or mutate
 the Show. If Stage/3D is not visibly present, `stage_view_visible` must remain
 false.
+
+`zen.ma.stage.visual` is an opt-in, navigation-only Visual Evidence path. It
+first enumerates and background-captures existing native MA2 `Screen 2` through
+`Screen 6` windows. Vision only verifies the pixels; it receives no tools or MA
+authority. If no existing window contains Stage/3D View, the bounded fallback
+can address only the compiled Screen 2/3/4 buttons after exact HWND, class,
+geometry, foreground, and ownership checks. The interface accepts no arbitrary
+coordinate, key, text, MA command, playback, Preview, or Approval input.
 
 ## Security boundary
 
@@ -208,7 +217,7 @@ Development integration is now verified locally on the operator Windows machine:
 - the development Gateway listens on loopback `127.0.0.1:18789`;
 - ZEN Operator API listens on loopback `127.0.0.1:8876`;
 - `zen-ma2` v0.1.0 loads as a native OpenClaw tool plugin;
-- the Gateway tool catalog contains all nine bounded `zen_*` tools;
+- the Gateway tool catalog contains the bounded `zen_*` tools;
 - an OpenClaw agent successfully invoked `zen_status` end-to-end;
 - `zen_ma_visual` is registered as the ninth bounded tool and has passed a real
   OpenClaw-agent end-to-end call through ZEN Field Core;
@@ -217,6 +226,10 @@ Development integration is now verified locally on the operator Windows machine:
 - the real visual E2E captured the current `grandMA2 onPC` window in the
   background and GPT-5.6 Sol correctly returned `capture_readable=true`,
   `stage_view_visible=false`, bounded UI observations, and `ma2_writes=0`;
+- the bounded Stage Visual prototype enumerated native MA2 windows, captured
+  existing `Screen 6` with `PRINTWINDOW_RENDERFULLCONTENT`, and returned
+  `stage_view_visible=true`, `write_authority=NONE`, and `ma2_show_writes=0`
+  without replaying or approving any MA Action;
 - when no configured portable Lean provider exists, FieldHost can use an
   isolated OpenClaw SDK completion as the one-shot Designer fallback. That
   completion receives no tools and still returns through ZEN validation,

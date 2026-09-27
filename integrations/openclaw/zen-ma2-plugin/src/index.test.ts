@@ -8,6 +8,7 @@ describe("zen-ma2", () => {
       "zen_status",
       "zen_ma_status",
       "zen_ma_visual",
+      "zen_ma_stage_visual",
       "zen_design_request",
       "zen_preview",
       "zen_position_preview",

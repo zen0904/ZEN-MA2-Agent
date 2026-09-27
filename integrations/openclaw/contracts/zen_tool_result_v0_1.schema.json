@@ -18,6 +18,7 @@
         "zen.watchdog.status",
         "zen.host.status",
         "zen.ma.visual",
+        "zen.ma.stage.visual",
         "zen.design.request",
         "zen.position.preview",
         "zen.position.raw.preview",

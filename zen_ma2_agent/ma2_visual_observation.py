@@ -376,9 +376,47 @@ class MA2VisualObservationService:
         self.evidence_dir.mkdir(parents=True, exist_ok=True)
 
     def observe(self) -> dict[str, Any]:
+        return self._observe_capture(
+            self.capture,
+            image_name="latest_ma2_window.png",
+            json_name="latest_ma2_visual_observation.json",
+        )
+
+    def observe_title(self, title: str) -> dict[str, Any]:
+        """Capture one exact existing MA2 native top-level window by title.
+
+        This is still read-only: it does not focus, activate, click, or send
+        keyboard input. It exists so Screen 2..6 windows can be inspected via
+        PrintWindow even while covered or outside the visible desktop area.
+        """
+
+        if not isinstance(title, str) or title not in {
+            "grandMA2 onPC",
+            "Screen 2",
+            "Screen 3",
+            "Screen 4",
+            "Screen 5",
+            "Screen 6",
+        }:
+            raise MA2VisualObservationError("Unsupported MA2 native window title.")
+        slug = title.lower().replace(" ", "_")
+        capture = self.capture if title == self.capture.title else WindowsMA2WindowCapture(title=title)
+        return self._observe_capture(
+            capture,
+            image_name=f"latest_ma2_{slug}.png",
+            json_name=f"latest_ma2_visual_observation_{slug}.json",
+        )
+
+    def _observe_capture(
+        self,
+        capture_provider: WindowsMA2WindowCapture,
+        *,
+        image_name: str,
+        json_name: str,
+    ) -> dict[str, Any]:
         captured_at = datetime.now(timezone.utc).isoformat()
-        image_path = self.evidence_dir / "latest_ma2_window.png"
-        capture = self.capture.capture(image_path)
+        image_path = self.evidence_dir / image_name
+        capture = capture_provider.capture(image_path)
         vision = self.vision.observe(capture.image_path)
 
         evidence = {
@@ -420,7 +458,7 @@ class MA2VisualObservationService:
             "limitations": list(vision["limitations"]),
             "ma2_writes": 0,
         }
-        latest_json = self.evidence_dir / "latest_ma2_visual_observation.json"
+        latest_json = self.evidence_dir / json_name
         temp_json = latest_json.with_name(latest_json.name + ".tmp")
         temp_json.write_text(
             json.dumps(evidence, ensure_ascii=False, indent=2, sort_keys=True),

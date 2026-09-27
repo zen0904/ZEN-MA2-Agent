@@ -159,6 +159,26 @@ class OperatorApiTests(unittest.TestCase):
         self.assertEqual(result["status"], "NOT_IMPLEMENTED")
         self.assertIsNone(result["result"])
 
+    def test_ma_stage_visual_tool_uses_navigation_only_provider(self):
+        adapter = OpenClawOperatorAdapter(
+            self._snapshot,
+            stage_visual_provider=lambda: {
+                "schema": "zen.ma2_stage_view_navigation.v0.1",
+                "status": "BLOCKED",
+                "write_authority": "NONE",
+                "ma2_show_writes": 0,
+            },
+        )
+        result = adapter.invoke("zen.ma.stage.visual")
+        self.assertEqual(result["status"], "SUCCESS")
+        self.assertEqual(result["result"]["write_authority"], "NONE")
+        self.assertEqual(result["result"]["ma2_show_writes"], 0)
+
+    def test_ma_stage_visual_tool_is_not_implemented_without_provider(self):
+        result = OpenClawOperatorAdapter(self._snapshot).invoke("zen.ma.stage.visual")
+        self.assertEqual(result["status"], "NOT_IMPLEMENTED")
+        self.assertIsNone(result["result"])
+
     def test_mutating_tools_are_reserved_but_not_implemented(self):
         adapter = OpenClawOperatorAdapter(self._snapshot)
         for name in ("zen.design.request", "zen.preview", "zen.approve"):

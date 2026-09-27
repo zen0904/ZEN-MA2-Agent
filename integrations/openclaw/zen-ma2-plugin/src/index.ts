@@ -93,6 +93,15 @@ export default defineToolPlugin({
         invokeZen("zen.ma.visual", {}, config, context.signal),
     }),
     tool({
+      name: "zen_ma_stage_visual",
+      label: "ZEN MA Stage Visual",
+      description:
+        "Navigate only among the fixed grandMA2 onPC Screen 2/3/4 controls, then capture and verify whether Stage/3D View is visible. No MA command, programming, playback, approval, or Show-write authority.",
+      parameters: Type.Object({}, { additionalProperties: false }),
+      execute: async (_params, config, context) =>
+        invokeZen("zen.ma.stage.visual", {}, config, context.signal),
+    }),
+    tool({
       name: "zen_design_request",
       label: "ZEN Design Request",
       description:
