@@ -22,7 +22,10 @@ from .state.providers import AdapterResponseError, AdapterUnsupported, CueProvid
 from .state.store import StateStore
 from .telnet_client import ConnectionState, MA2TelnetClient
 from .workflow import WorkflowPlan
-from .show_program import ROOT_PHASES, ROOT_CHILD_CONTEXT_KEY, MAX_CHILD_CONTEXT_BYTES, compose_show_program_child, set_show_program_state
+from .show_program import (
+    ROOT_PHASES, ROOT_CHILD_CONTEXT_KEY, MAX_CHILD_CONTEXT_BYTES,
+    child_parameters_sha256, compose_show_program_child, set_show_program_state,
+)
 from .effect_builder import EffectBuildError, EffectTargetAmbiguous, resolve_effect_spec
 from .allocation import AllocationError, first_free_from_front
 from .effect_resources import EffectCatalog, EffectRequirement, EffectRequirementError, EffectResourceResolver, apply_effect_references, show_identity
@@ -65,6 +68,7 @@ from .existing_cue_dynamic_program_merge import (
     build_existing_cue_dynamic_program_preview,
     effect_ids_by_cue_ref,
     protected_content_snapshot,
+    preview_text as dynamic_program_preview_text,
     verify_existing_cue_dynamic_program_merge,
 )
 from .sequence302_resource_merge import (
@@ -91,6 +95,8 @@ class ActionRecord:
     workflow: WorkflowPlan
     status: str = "PENDING_APPROVAL"
     result: str | None = None
+    execution_skill_id: str | None = None
+    execution_intent: Intent | None = None
 
     @property
     def plan(self) -> dict[str, Any]:
@@ -1838,7 +1844,7 @@ class AgentCore:
                 "context_hash": compact["context_hash"],
             },
         )
-        return compose_show_program_child(root, child)
+        return child
 
     def _plan_routed_intent(self, intent: Intent) -> WorkflowPlan:
         """Plan one already-routed intent through the existing safe child planners."""
@@ -1900,7 +1906,11 @@ class AgentCore:
             action_id = uuid.uuid4().hex[:12]
             if self._active_action_id and self.actions.get(self._active_action_id):
                 self.actions[self._active_action_id].status = "CANCELLED"
-            record = ActionRecord(action_id, workflow)
+            record = ActionRecord(
+                action_id, workflow,
+                execution_skill_id=child.task.skill_id,
+                execution_intent=child.task.intent,
+            )
             self.actions[action_id] = record
             self._active_action_id = action_id
             self._root_workflow_status.update(
@@ -1911,7 +1921,7 @@ class AgentCore:
             return {
                 "type": ResponseType.ACTION_PLAN.value,
                 "message": workflow.preview_note,
-                "action": {"id": action_id, "status": record.status, **record.plan},
+                "action": self._public_action_view(record),
             }
 
         explicit_position_merge = self._parse_existing_position_merge_request(request)
@@ -1947,7 +1957,11 @@ class AgentCore:
             action_id = uuid.uuid4().hex[:12]
             if self._active_action_id and self.actions.get(self._active_action_id):
                 self.actions[self._active_action_id].status = "CANCELLED"
-            record = ActionRecord(action_id, workflow)
+            record = ActionRecord(
+                action_id, workflow,
+                execution_skill_id=child.task.skill_id,
+                execution_intent=child.task.intent,
+            )
             self.actions[action_id] = record
             self._active_action_id = action_id
             self._root_workflow_status.update(
@@ -1958,17 +1972,19 @@ class AgentCore:
             return {
                 "type": ResponseType.ACTION_PLAN.value,
                 "message": workflow.preview_note,
-                "action": {"id": action_id, "status": record.status, **record.plan},
+                "action": self._public_action_view(record),
             }
 
         route = self.router.route(request, self.skills)
+        execution_child: WorkflowPlan | None = None
 
         if route.response_type is ResponseType.NEEDS_CLARIFICATION:
             if self.design_intelligence_provider is None:
                 workflow = set_show_program_state(root, "NEEDS_INTELLIGENCE", "The request needs bounded design intelligence before a child workflow can be selected.", phase="UNDERSTAND")
             else:
                 try:
-                    workflow = self._plan_lean_design_child(root, request)
+                    execution_child = self._plan_lean_design_child(root, request)
+                    workflow = compose_show_program_child(root, execution_child)
                 except (FirstSongBuildError, SkillError, ArtisticPlanCompileError, LeanDesignProviderError, ValueError) as exc:
                     workflow = set_show_program_state(root, "NEEDS_RESEARCH", str(exc) or "Lean design could not be safely compiled.", phase="RESEARCH_IF_NEEDED")
         elif route.response_type is ResponseType.NOT_IMPLEMENTED:
@@ -1988,8 +2004,8 @@ class AgentCore:
         else:
             assert route.intent is not None
             try:
-                child = self._plan_routed_intent(route.intent)
-                workflow = compose_show_program_child(root, child)
+                execution_child = self._plan_routed_intent(route.intent)
+                workflow = compose_show_program_child(root, execution_child)
             except (EffectTargetAmbiguous, GeometryCloneAmbiguous) as exc:
                 workflow = set_show_program_state(root, "NEEDS_INPUT", str(exc), phase="RESOLVE")
             except (SkillError, ConnectionError, EffectBuildError, GeometryCloneError, TimecodeOffsetError, GeometryTestEnvironmentError, ValueError) as exc:
@@ -2018,7 +2034,13 @@ class AgentCore:
         action_id = uuid.uuid4().hex[:12]
         if self._active_action_id and self.actions.get(self._active_action_id):
             self.actions[self._active_action_id].status = "CANCELLED"
-        record = ActionRecord(action_id, workflow)
+        if execution_child is None:
+            raise ValueError("Executable show.program workflow is missing its child execution plan.")
+        record = ActionRecord(
+            action_id, workflow,
+            execution_skill_id=execution_child.task.skill_id,
+            execution_intent=execution_child.task.intent,
+        )
         self.actions[action_id] = record
         self._active_action_id = action_id
         self._root_workflow_status.update(
@@ -2029,27 +2051,95 @@ class AgentCore:
         return {
             "type": ResponseType.ACTION_PLAN.value,
             "message": workflow.preview_note,
-            "action": {"id": action_id, "status": record.status, **record.plan},
+            "action": self._public_action_view(record),
         }
+
+    def _public_action_view(self, record: ActionRecord) -> dict[str, Any]:
+        """Return a review-safe Action view without duplicating oversized child payloads."""
+        workflow = record.workflow
+        context = workflow.continuation_context or {}
+        child_context = context.get(ROOT_CHILD_CONTEXT_KEY) if isinstance(context, dict) else None
+        is_referenced_child = (
+            workflow.task.skill_id == "show.program"
+            and isinstance(child_context, dict)
+            and "parameters_sha256" in child_context
+        )
+        if not is_referenced_child:
+            return {"id": record.id, "status": record.status, **record.plan}
+
+        skill_id, intent = self._effective_execution_context(record)
+        view: dict[str, Any] = {
+            "id": record.id,
+            "status": record.status,
+            "task": {
+                "id": workflow.task.id,
+                "title": workflow.task.title,
+                "skill_id": workflow.task.skill_id,
+            },
+            "skill_graph": [
+                {"id": node.id, "skill_id": node.skill_id, "title": node.title, "parent_id": node.parent_id}
+                for node in workflow.skill_graph
+            ],
+            "safety": workflow.safety,
+            "preview_note": workflow.preview_note,
+            "approval_gates": list(workflow.approval_gates),
+            "verification_strategy": workflow.verification_strategy,
+            "rollback_strategy": workflow.rollback_strategy,
+            "executable": workflow.executable,
+            "current_phase": workflow.current_phase,
+            "root_state": workflow.root_state,
+            "command_count": len(workflow.commands),
+            "child_execution": {
+                "skill_id": skill_id,
+                "intent_kind": intent.kind,
+                "parameters_sha256": child_context.get("parameters_sha256"),
+            },
+        }
+        if intent.kind == "merge_existing_cue_dynamic_program":
+            preview = intent.parameters.get("dynamic_merge_preview")
+            if isinstance(preview, Mapping):
+                target = preview.get("target_sequence") or {}
+                group = preview.get("group") or {}
+                view.update({
+                    "action_id": record.id,
+                    "preview_id": preview.get("preview_id"),
+                    "phase": "PREVIEW" if record.status == "PENDING_APPROVAL" else record.status,
+                    "target_sequence": {
+                        "id": target.get("id"),
+                        "label": target.get("label"),
+                        "cue_start": target.get("cue_start"),
+                        "cue_end": target.get("cue_end"),
+                        "executor_assignments": target.get("executor_assignments"),
+                    },
+                    "group": {"id": group.get("id"), "name": group.get("name")},
+                    "preview_text": dynamic_program_preview_text(preview),
+                    "protected_content_fingerprint": preview.get("protected_content_fingerprint"),
+                })
+        return view
 
     def preview_action(self, action_id: str | None = None) -> dict[str, Any]:
         selected = action_id or self._active_action_id
         if not selected or selected not in self.actions:
             return {"status": "NO_PREVIEW", "action": None}
         record = self.actions[selected]
-        action = {"id": record.id, **record.plan}
-        if record.workflow.task.intent.kind == "merge_existing_cue_dynamic_program":
-            preview = record.workflow.task.intent.parameters["dynamic_merge_preview"]
+        action = self._public_action_view(record)
+        workflow = record.workflow
+        if workflow.task.skill_id == "show.program":
+            _skill_id, effective_intent = self._effective_execution_context(record)
+        else:
+            effective_intent = workflow.task.intent
+        if effective_intent.kind == "merge_existing_cue_dynamic_program":
+            preview = effective_intent.parameters["dynamic_merge_preview"]
             action.update({"action_id": record.id, "preview_id": preview["preview_id"],
                            "phase": "PREVIEW" if record.status == "PENDING_APPROVAL" else record.status})
-        elif record.workflow.task.intent.kind == "merge_sequence302_authored_resources":
-            preview = record.workflow.task.intent.parameters["sequence302_resource_merge_preview"]
+        elif effective_intent.kind == "merge_sequence302_authored_resources":
+            preview = effective_intent.parameters["sequence302_resource_merge_preview"]
             action.update({"action_id": record.id, "preview_id": preview["preview_id"],
                            "phase": "PREVIEW" if record.status == "PENDING_APPROVAL" else record.status})
-        elif record.workflow.task.intent.kind in {"verify_position_application", "verify_position_raw_cue"}:
-            key = ("position_preview" if record.workflow.task.intent.kind == "verify_position_application"
+        elif effective_intent.kind in {"verify_position_application", "verify_position_raw_cue"}:
+            key = ("position_preview" if effective_intent.kind == "verify_position_application"
                    else "position_raw_preview")
-            preview = record.workflow.task.intent.parameters[key]
+            preview = effective_intent.parameters[key]
             action.update({"action_id": record.id, "preview_id": preview["preview_id"],
                            "phase": "PREVIEW" if record.status == "PENDING_APPROVAL" else record.status})
         return {"status": record.status, "action": action}
@@ -2505,32 +2595,61 @@ class AgentCore:
         if not isinstance(context, dict):
             raise ValueError("Executable show.program workflow has no continuation context.")
         child = context.get(ROOT_CHILD_CONTEXT_KEY)
-        if not isinstance(child, dict) or set(child) != {"skill_id", "intent_kind", "parameters", "source_text"}:
+        if not isinstance(child, dict):
             raise ValueError("Executable show.program workflow has invalid child execution context.")
-        skill_id = child.get("skill_id")
-        intent_kind = child.get("intent_kind")
-        parameters = child.get("parameters")
-        source_text = child.get("source_text")
+
+        inline_keys = {"skill_id", "intent_kind", "parameters", "source_text"}
+        ref_keys = {"skill_id", "intent_kind", "parameters_sha256", "source_text"}
+        keys = set(child)
+        if keys == inline_keys:
+            skill_id = child.get("skill_id")
+            intent_kind = child.get("intent_kind")
+            parameters = child.get("parameters")
+            source_text = child.get("source_text")
+            if not isinstance(parameters, dict):
+                raise ValueError("show.program child intent parameters are invalid.")
+            try:
+                encoded = json.dumps(
+                    child, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+                ).encode("utf-8")
+            except (TypeError, ValueError) as exc:
+                raise ValueError("show.program child execution context is not JSON-safe.") from exc
+            if len(encoded) > MAX_CHILD_CONTEXT_BYTES:
+                raise ValueError("show.program child execution context is too large.")
+            resolved = Intent(str(intent_kind), dict(parameters), str(source_text))
+        elif keys == ref_keys:
+            skill_id = child.get("skill_id")
+            intent_kind = child.get("intent_kind")
+            source_text = child.get("source_text")
+            expected_hash = child.get("parameters_sha256")
+            stored = action.execution_intent
+            if (
+                action.execution_skill_id != skill_id
+                or not isinstance(stored, Intent)
+                or stored.kind != intent_kind
+                or stored.source_text != source_text
+                or not isinstance(expected_hash, str)
+                or len(expected_hash) != 64
+            ):
+                raise ValueError("show.program child execution reference does not match its ActionRecord.")
+            if child_parameters_sha256(stored.parameters) != expected_hash:
+                raise ValueError("show.program child execution reference hash mismatch.")
+            resolved = Intent(stored.kind, dict(stored.parameters), stored.source_text)
+        else:
+            raise ValueError("Executable show.program workflow has invalid child execution context.")
+
         if not isinstance(skill_id, str) or not skill_id or len(skill_id) > 128:
             raise ValueError("show.program child skill id is invalid.")
         if not isinstance(intent_kind, str) or not intent_kind or len(intent_kind) > 128:
             raise ValueError("show.program child intent kind is invalid.")
-        if not isinstance(parameters, dict):
-            raise ValueError("show.program child intent parameters are invalid.")
         if not isinstance(source_text, str) or len(source_text) > 2048:
             raise ValueError("show.program child source text is invalid.")
-        try:
-            encoded = json.dumps(child, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
-        except (TypeError, ValueError) as exc:
-            raise ValueError("show.program child execution context is not JSON-safe.") from exc
-        if len(encoded) > MAX_CHILD_CONTEXT_BYTES:
-            raise ValueError("show.program child execution context is too large.")
         if not any(node.skill_id == skill_id and node.skill_id != "show.program" for node in workflow.skill_graph):
             raise ValueError("show.program child execution context does not match its Skill graph.")
         capability = self.skills.get(skill_id)
         if intent_kind not in capability.intents:
             raise ValueError("show.program child execution context does not match the child Skill intent.")
-        return skill_id, Intent(intent_kind, dict(parameters), source_text)
+        return skill_id, resolved
 
     def approve_action(self, action_id: str, *, danger_confirmed: bool = False) -> dict[str, Any]:
         action = self.actions.get(action_id)

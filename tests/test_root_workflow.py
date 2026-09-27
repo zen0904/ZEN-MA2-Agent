@@ -13,8 +13,9 @@ from zen_ma2_agent.operator_api import (
     build_operator_status,
 )
 from zen_ma2_agent.runtime import AgentRuntime
-from zen_ma2_agent.core import AgentCore
+from zen_ma2_agent.core import ActionRecord, AgentCore
 from zen_ma2_agent.models import Intent
+from zen_ma2_agent.show_program import ROOT_CHILD_CONTEXT_KEY, compose_show_program_child
 from zen_ma2_agent.telnet_client import ConnectionState
 
 
@@ -87,6 +88,68 @@ class RootWorkflowTests(unittest.TestCase):
         self.assertEqual((child["skill_id"], child["intent_kind"]), ("sequence.go", "go_sequence"))
         self.assertEqual(child["parameters"], {"sequence": 5})
         self.assertLess(len(json.dumps(child).encode("utf-8")), 64 * 1024)
+
+    def test_large_child_uses_bounded_hash_reference_and_resolves_from_action_record(self):
+        root = self.core.skills.plan_intent(
+            Intent("program_show", {"request": "Go Sequence 5"}, "Go Sequence 5"),
+            self.core.state,
+            self.core.runtime.preferences,
+        )
+        child = self.core._plan_routed_intent(Intent("go_sequence", {"sequence": 5}, "Go Sequence 5"))
+        large_intent = Intent(
+            "go_sequence",
+            {"sequence": 5, "review_evidence": "x" * (70 * 1024)},
+            "Go Sequence 5",
+        )
+        child = replace(child, task=replace(child.task, intent=large_intent))
+        workflow = compose_show_program_child(root, child)
+        child_ref = workflow.continuation_context[ROOT_CHILD_CONTEXT_KEY]
+        self.assertEqual(set(child_ref), {"skill_id", "intent_kind", "parameters_sha256", "source_text"})
+        self.assertNotIn("parameters", child_ref)
+        self.assertEqual(len(child_ref["parameters_sha256"]), 64)
+
+        record = ActionRecord(
+            "largechild001", workflow,
+            execution_skill_id=child.task.skill_id, execution_intent=large_intent,
+        )
+        skill_id, resolved = self.core._effective_execution_context(record)
+        self.assertEqual(skill_id, "sequence.go")
+        self.assertEqual(resolved.parameters, large_intent.parameters)
+
+        public = self.core._public_action_view(record)
+        self.assertEqual(public["child_execution"]["parameters_sha256"], child_ref["parameters_sha256"])
+        self.assertEqual(public["command_count"], 1)
+        self.assertNotIn("steps", public)
+        self.assertNotIn("review_evidence", json.dumps(public))
+        self.assertLess(len(json.dumps(public).encode("utf-8")), 64 * 1024)
+
+    def test_large_child_reference_tamper_or_missing_action_payload_fails_closed(self):
+        root = self.core.skills.plan_intent(
+            Intent("program_show", {"request": "Go Sequence 5"}, "Go Sequence 5"),
+            self.core.state,
+            self.core.runtime.preferences,
+        )
+        child = self.core._plan_routed_intent(Intent("go_sequence", {"sequence": 5}, "Go Sequence 5"))
+        large_intent = Intent(
+            "go_sequence", {"sequence": 5, "review_evidence": "y" * (70 * 1024)}, "Go Sequence 5"
+        )
+        child = replace(child, task=replace(child.task, intent=large_intent))
+        workflow = compose_show_program_child(root, child)
+        record = ActionRecord(
+            "largechild002", workflow,
+            execution_skill_id=child.task.skill_id, execution_intent=large_intent,
+        )
+        context = dict(workflow.continuation_context)
+        tampered = dict(context[ROOT_CHILD_CONTEXT_KEY])
+        tampered["parameters_sha256"] = "0" * 64
+        context[ROOT_CHILD_CONTEXT_KEY] = tampered
+        record.workflow = replace(workflow, continuation_context=context)
+        with self.assertRaisesRegex(ValueError, "hash mismatch"):
+            self.core._effective_execution_context(record)
+
+        missing = ActionRecord("largechild003", workflow)
+        with self.assertRaisesRegex(ValueError, "does not match its ActionRecord"):
+            self.core._effective_execution_context(missing)
 
     def test_effective_execution_context_uses_child_not_root(self):
         result = self.core.program_show_request("Go Sequence 5")

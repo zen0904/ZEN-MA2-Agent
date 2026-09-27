@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import replace
 from typing import Any
@@ -27,8 +28,27 @@ ROOT_PHASES = (
 
 ROOT_CHILD_CONTEXT_KEY = "child_execution"
 MAX_CHILD_CONTEXT_BYTES = 64 * 1024
+MAX_STORED_CHILD_PARAMETERS_BYTES = 2 * 1024 * 1024
 MAX_CONTEXT_TEXT = 2048
 MAX_CONTEXT_ID = 128
+
+
+def _encoded_child_parameters(parameters: object) -> bytes:
+    if not isinstance(parameters, dict):
+        raise ValueError("show.program child intent parameters must be an object.")
+    try:
+        encoded = json.dumps(
+            parameters, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
+    except (TypeError, ValueError) as exc:
+        raise ValueError("show.program child intent parameters must be JSON-safe.") from exc
+    if len(encoded) > MAX_STORED_CHILD_PARAMETERS_BYTES:
+        raise ValueError("show.program child intent parameters are too large.")
+    return encoded
+
+
+def child_parameters_sha256(parameters: object) -> str:
+    return hashlib.sha256(_encoded_child_parameters(parameters)).hexdigest()
 
 
 def _bounded_child_execution_context(child: WorkflowPlan) -> dict[str, Any]:
@@ -40,21 +60,28 @@ def _bounded_child_execution_context(child: WorkflowPlan) -> dict[str, Any]:
         raise ValueError("show.program child intent kind is invalid.")
     if not isinstance(intent.source_text, str) or len(intent.source_text) > MAX_CONTEXT_TEXT:
         raise ValueError("show.program child source text is invalid.")
-    if not isinstance(intent.parameters, dict):
-        raise ValueError("show.program child intent parameters must be an object.")
-    payload = {
+    parameters_encoded = _encoded_child_parameters(intent.parameters)
+    inline = {
         "skill_id": skill_id,
         "intent_kind": intent.kind,
         "parameters": intent.parameters,
         "source_text": intent.source_text,
     }
-    try:
-        encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    except (TypeError, ValueError) as exc:
-        raise ValueError("show.program child execution context must be JSON-safe.") from exc
-    if len(encoded) > MAX_CHILD_CONTEXT_BYTES:
-        raise ValueError("show.program child execution context is too large.")
-    return payload
+    encoded_inline = json.dumps(
+        inline, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    if len(encoded_inline) <= MAX_CHILD_CONTEXT_BYTES:
+        return inline
+    # Large child payloads stay in the in-memory ActionRecord. The root workflow
+    # keeps only a bounded, tamper-evident reference so Preview composition does
+    # not duplicate a large deterministic plan. This does not persist authority
+    # across process restarts: the ActionRecord disappears with the process.
+    return {
+        "skill_id": skill_id,
+        "intent_kind": intent.kind,
+        "parameters_sha256": hashlib.sha256(parameters_encoded).hexdigest(),
+        "source_text": intent.source_text,
+    }
 
 
 def compose_show_program_child(root: WorkflowPlan, child: WorkflowPlan) -> WorkflowPlan:
