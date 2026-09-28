@@ -66,3 +66,14 @@ Chat is a compact operator surface; canonical continuity lives in committed repo
 Do not paste long raw logs or repeat full handoffs into chat when exact IDs/paths suffice.
 A continuation must reconstruct from those authoritative records and then continue from
 the recorded next acceptance gate without asking the owner to restate prior work.
+
+## Structural code memory
+
+For substantial codebase exploration, use Codebase Memory MCP when it is available,
+following `docs/CODEBASE_MEMORY_MCP.md`. Prefer it for architecture, dependency,
+call-chain, impact, and coverage-oriented discovery before broad file-by-file reading.
+
+CBM is advisory development infrastructure only. Its graph/index never overrides the
+committed repository, current source/tests, project control state, ZEN contracts,
+native MA2 evidence, or deterministic Builder/readback authority. An index miss is not
+proof of absence. CBM availability must never block normal repository work.
