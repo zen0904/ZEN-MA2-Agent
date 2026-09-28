@@ -238,3 +238,108 @@ Pipeline Stabilization / Closure work is reviewed.
 The first implementation slice remains Semantic Position Binding. A richer
 shared Production Model is research/backlog work and must not preempt that
 slice.
+
+## Product direction update — Show Agent Controller
+
+Owner direction, 2026-09-28:
+
+The long-term product should no longer be understood as only a grandMA2
+programming assistant. The broader product direction is a **Show Agent
+Controller**: a virtualized production control plane inspired by the way a
+large K-pop / touring production coordinates the whole Show across departments.
+
+Instead of replacing the real department systems, ZEN virtualizes the
+coordination/intelligence layer: it understands the Show, shared world,
+timeline, performer/blocking context and production intent, then delegates
+bounded technical execution to department-specific verified adapters.
+
+This is an intelligence and control layer that can understand the whole Show
+and coordinate shared production context while preserving strict,
+department-specific execution authority.
+
+A useful conceptual split is:
+
+```text
+Show Agent Controller
+        ↓
+Shared Production World / Timeline / Intent
+        ↓
+Department Intelligence / Mapping
+        ↓
+Verified Department Adapters
+        ↓
+Physical systems
+```
+
+For the current implementation:
+
+```text
+Show Agent Controller
+        ↓
+Lighting Intelligence
+        ↓
+ZEN MA2 Adapter
+        ↓
+grandMA2 deterministic execution
+```
+
+The existing ZEN MA2 Agent work therefore becomes the first mature
+department-specific execution adapter, not discarded prototype work.
+
+The intended analogy is a large K-pop / touring production system moved into a
+virtual Agent-control layer. Today, creative direction, show calling,
+programming, system departments, rehearsal feedback and technical control are
+distributed across people and specialist systems. ZEN should model that
+coordination layer virtually while leaving physical execution in the systems
+that already do it well.
+
+This does **not** mean one unconstrained Agent directly drives every device.
+The Show Agent Controller acts more like a virtual production brain / team:
+
+global Show understanding and coordination
+        ↓
+bounded department intent
+        ↓
+department-specific authority / mapping
+        ↓
+deterministic adapters
+        ↓
+console / media server / audio / show-control systems
+
+Long-term candidate domains may include:
+
+- Lighting;
+- Audio;
+- Video / media server;
+- Stage / scenic state;
+- performer zones / blocking;
+- timeline / trigger / timecode;
+- production geometry;
+- rehearsal/update state;
+- show-wide observations and operator intent.
+
+This direction does **not** authorize implementing all departments now.
+The current development rule remains:
+
+1. preserve the proven MA2 execution core;
+2. build Shared Production / Spatial abstractions above it;
+3. add new department adapters only as bounded, independently verifiable
+   capabilities;
+4. never let a global Agent bypass a department's deterministic write and
+   verification boundary.
+
+The architecture should therefore avoid naming shared entities as
+lighting-exclusive when they are truly production-wide, while keeping MA2
+objects and write grammar inside the Lighting/MA adapter.
+
+### Progress interpretation
+
+Two progress measures should be kept separate:
+
+- MA2 execution-core maturity: approximately 90–95% of the originally intended
+  core architecture is now in place.
+- Broader Show Agent Controller vision: approximately 30–40% at the current
+  design/implementation stage.
+
+These are planning estimates, not release metrics. The apparent drop is caused
+by an expanded product boundary, not regression of the completed MA2 work.

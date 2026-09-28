@@ -46,11 +46,18 @@ from .designer import FirstSongDesigner
 from .designer.lean_design_mode import assemble_compact_design_context
 from .designer.lean_provider import LeanDesignIntelligence, LeanDesignProviderError, build_provider_resource_contract, compile_lean_artistic_intent, invoke_primary_design
 from .designer.artistic_plan import ArtisticPlanCompileError
-from .artistic_resources import build_artistic_resource_map
+from .artistic_resources import (
+    build_artistic_resource_map,
+    semantic_position_applicability_from_map,
+)
 from .position_application_evidence import (
     PositionApplicationBindingStore, PositionEvidenceError, build_position_poc_preview,
 )
-from .spatial_semantics import SemanticPositionBindingStore
+from .spatial_semantics import (
+    SemanticPositionBindingError,
+    SemanticPositionBindingStore,
+    build_semantic_position_binding,
+)
 from .position_raw_cue_poc import (
     build_position_raw_cue_preview, verify_raw_position_cue_content,
 )
@@ -1778,12 +1785,11 @@ class AgentCore:
         )
         return evidence
 
-    def _build_current_artistic_resource_map(
+    def _verified_current_position_application_bindings(
         self, profile: dict[str, Any],
-    ) -> tuple[dict[str, Any], dict[str, Any] | None]:
-        """Build the same current-Show resource contract for all design paths."""
-        effect_application = self.cue_effect_application_capability.load_verified()
-        preset_bindings, dimmer_bindings = self._recover_bounded_test_show_evidence(profile)
+    ) -> list[dict[str, Any]]:
+        """Return Position bindings that also pass a fresh direct Preset identity read."""
+        verified: list[dict[str, Any]] = []
         for binding in self.position_application_bindings.load_verified(profile):
             reference = binding["reference"]
             try:
@@ -1798,7 +1804,22 @@ class AgentCore:
                 and current[0].get("preset_type") == "POSITION"
                 and current[0].get("name") == binding["preset_label"]
             ):
-                preset_bindings.append(binding)
+                verified.append(deepcopy(binding))
+        verified.sort(
+            key=lambda item: (
+                int(item.get("group_id") or 0),
+                str(item.get("reference") or ""),
+            )
+        )
+        return verified
+
+    def _build_current_artistic_resource_map(
+        self, profile: dict[str, Any],
+    ) -> tuple[dict[str, Any], dict[str, Any] | None]:
+        """Build the same current-Show resource contract for all design paths."""
+        effect_application = self.cue_effect_application_capability.load_verified()
+        preset_bindings, dimmer_bindings = self._recover_bounded_test_show_evidence(profile)
+        preset_bindings.extend(self._verified_current_position_application_bindings(profile))
         self._recover_bounded_template_effect_inventory(profile)
         resource_map = build_artistic_resource_map(
             profile,
@@ -1809,6 +1830,168 @@ class AgentCore:
             semantic_position_bindings=self.semantic_position_bindings.load_verified(profile),
         )
         return resource_map, effect_application
+
+    def list_semantic_position_bindings(self) -> dict[str, Any]:
+        """List fresh semantic-binding candidates without MA mutation."""
+        profile = self._collect_lean_design_profile()
+        applications = self._verified_current_position_application_bindings(profile)
+        application_keys = {
+            (item.get("group_id"), item.get("reference"))
+            for item in applications
+        }
+        semantic = [
+            item for item in self.semantic_position_bindings.load_verified(profile)
+            if (
+                item.get("group_id"),
+                (item.get("position_preset") or {}).get("reference")
+                if isinstance(item.get("position_preset"), Mapping)
+                else None,
+            )
+            in application_keys
+        ]
+        targets_by_application: dict[tuple[int, str], list[str]] = {}
+        for item in semantic:
+            preset = item.get("position_preset")
+            if not isinstance(preset, Mapping):
+                continue
+            key = (item.get("group_id"), preset.get("reference"))
+            if not isinstance(key[0], int) or not isinstance(key[1], str):
+                continue
+            targets_by_application.setdefault((key[0], key[1]), []).append(
+                str(item.get("semantic_target"))
+            )
+        candidates = [
+            {
+                "group_id": item["group_id"],
+                "group_name": item["group_name"],
+                "exact_refs": list(item["fixture_refs"]),
+                "preset_ref": item["reference"],
+                "preset_label": item["preset_label"],
+                "semantic_targets": sorted(
+                    targets_by_application.get((item["group_id"], item["reference"]), [])
+                ),
+            }
+            for item in applications
+        ]
+        bindings = [
+            {
+                "group_id": item["group_id"],
+                "group_name": item["group_name"],
+                "semantic_target": item["semantic_target"],
+                "target_kind": item["target_kind"],
+                "resolution_mode": item["resolution_mode"],
+                "preset_ref": item["position_preset"]["reference"],
+                "preset_label": item["position_preset"]["label"],
+            }
+            for item in semantic
+        ]
+        bindings.sort(key=lambda item: (item["group_id"], item["semantic_target"]))
+        return {
+            "schema": "zen.semantic_position_binding_candidates.v0.1",
+            "status": "READY" if candidates else "NO_VERIFIED_POSITION_APPLICATION_BINDINGS",
+            "show_identity": deepcopy(profile.get("show_identity")),
+            "candidates": candidates,
+            "bindings": bindings,
+            "write_authority": "ZEN_LOCAL_SEMANTIC_CATALOG_ONLY",
+            "ma2_writes": 0,
+        }
+
+    def bind_semantic_position_target(
+        self,
+        *,
+        expected_show_fingerprint: str,
+        group_id: int,
+        expected_group_name: str,
+        expected_exact_refs: list[str],
+        preset_ref: str,
+        expected_preset_label: str,
+        semantic_target: str,
+    ) -> dict[str, Any]:
+        """Record one explicit semantic mapping; never writes MA2."""
+        if (
+            not isinstance(expected_show_fingerprint, str)
+            or len(expected_show_fingerprint) != 64
+            or isinstance(group_id, bool)
+            or not isinstance(group_id, int)
+            or group_id < 1
+            or not isinstance(expected_group_name, str)
+            or not expected_group_name
+            or not isinstance(expected_exact_refs, list)
+            or not expected_exact_refs
+            or any(not isinstance(ref, str) or not ref for ref in expected_exact_refs)
+            or len(expected_exact_refs) != len(set(expected_exact_refs))
+            or not isinstance(preset_ref, str)
+            or not preset_ref
+            or not isinstance(expected_preset_label, str)
+            or not expected_preset_label
+            or not isinstance(semantic_target, str)
+            or not semantic_target.strip()
+        ):
+            raise SemanticPositionBindingError("SEMANTIC_POSITION_BIND_REQUEST_INVALID")
+
+        profile = self._collect_lean_design_profile()
+        identity = profile.get("show_identity")
+        current_fingerprint = (
+            identity.get("value") if isinstance(identity, Mapping) else None
+        )
+        if current_fingerprint != expected_show_fingerprint:
+            raise SemanticPositionBindingError("SEMANTIC_POSITION_SHOW_IDENTITY_DRIFT")
+
+        applications = self._verified_current_position_application_bindings(profile)
+        matches = [
+            item for item in applications
+            if item.get("group_id") == group_id and item.get("reference") == preset_ref
+        ]
+        if len(matches) != 1:
+            raise SemanticPositionBindingError("SEMANTIC_POSITION_APPLICATION_NOT_CURRENT")
+        application = matches[0]
+        if (
+            application.get("group_name") != expected_group_name
+            or application.get("fixture_refs") != expected_exact_refs
+            or application.get("preset_label") != expected_preset_label
+        ):
+            raise SemanticPositionBindingError("SEMANTIC_POSITION_EXPECTED_IDENTITY_DRIFT")
+
+        candidate = build_semantic_position_binding(
+            profile, application, semantic_target=semantic_target
+        )
+        current_semantic = [
+            item for item in self.semantic_position_bindings.load_verified(profile)
+            if not (
+                item.get("group_id") == candidate["group_id"]
+                and item.get("semantic_target") == candidate["semantic_target"]
+            )
+        ]
+        proposed = [*current_semantic, candidate]
+        preview_map = build_artistic_resource_map(
+            profile,
+            preset_bindings=applications,
+            semantic_position_bindings=proposed,
+        )
+        exposed = semantic_position_applicability_from_map(preview_map)
+        if exposed.get(group_id, {}).get(candidate["semantic_target"]) != preset_ref:
+            raise SemanticPositionBindingError("SEMANTIC_POSITION_RESOURCE_EXPOSURE_FAILED")
+
+        stored = self.semantic_position_bindings.record_verified(
+            profile, application, semantic_target=candidate["semantic_target"]
+        )
+        return {
+            "schema": "zen.semantic_position_binding_write.v0.1",
+            "status": "RECORDED",
+            "show_identity": deepcopy(profile.get("show_identity")),
+            "binding": {
+                "group_id": stored["group_id"],
+                "group_name": stored["group_name"],
+                "semantic_target": stored["semantic_target"],
+                "target_kind": stored["target_kind"],
+                "resolution_mode": stored["resolution_mode"],
+                "preset_ref": stored["position_preset"]["reference"],
+                "preset_label": stored["position_preset"]["label"],
+            },
+            "resource_exposed": True,
+            "local_state_write": "ZEN_SEMANTIC_POSITION_BINDINGS_ONLY",
+            "ma2_writes": 0,
+        }
 
     def _plan_lean_design_child(self, root: WorkflowPlan, request: str) -> WorkflowPlan:
         """Run one injected artistic call, compile it, then reuse show.builder."""

@@ -197,6 +197,55 @@ export default defineToolPlugin({
         }, config, context.signal),
     }),
     tool({
+      name: "zen_position_semantic_bindings",
+      label: "ZEN Semantic Position Bindings",
+      description:
+        "List fresh verified Position application candidates and current semantic Position mappings. Read-only; no MA2 writes.",
+      parameters: Type.Object({}, { additionalProperties: false }),
+      execute: async (_params, config, context) =>
+        invokeZen("zen.position.semantic.bindings", {}, config, context.signal),
+    }),
+    tool({
+      name: "zen_position_semantic_bind",
+      label: "ZEN Semantic Position Bind",
+      description:
+        "Explicitly bind one semantic POINT target to one fresh verified Position Preset application. Writes only ZEN local semantic metadata; never writes MA2.",
+      parameters: Type.Object({
+        expectedShowFingerprint: Type.String({ minLength: 64, maxLength: 64 }),
+        groupId: Type.Integer({ minimum: 1 }),
+        expectedGroupName: Type.String({ minLength: 1, maxLength: 256 }),
+        expectedExactRefs: Type.Array(
+          Type.String({ minLength: 1, maxLength: 32 }),
+          { minItems: 1, maxItems: 128, uniqueItems: true },
+        ),
+        presetRef: Type.String({ minLength: 1, maxLength: 32 }),
+        expectedPresetLabel: Type.String({ minLength: 1, maxLength: 256 }),
+        semanticTarget: Type.String({
+          minLength: 1,
+          maxLength: 128,
+          description: "Explicit semantic POINT target, for example MAIN_STAGE.CENTER.",
+        }),
+      }, { additionalProperties: false }),
+      execute: async ({
+        expectedShowFingerprint,
+        groupId,
+        expectedGroupName,
+        expectedExactRefs,
+        presetRef,
+        expectedPresetLabel,
+        semanticTarget,
+      }, config, context) =>
+        invokeZen("zen.position.semantic.bind", {
+          expected_show_fingerprint: expectedShowFingerprint,
+          group_id: groupId,
+          expected_group_name: expectedGroupName,
+          expected_exact_refs: expectedExactRefs,
+          preset_ref: presetRef,
+          expected_preset_label: expectedPresetLabel,
+          semantic_target: semanticTarget,
+        }, config, context.signal),
+    }),
+    tool({
       name: "zen_approve",
       label: "ZEN Approve",
       description:

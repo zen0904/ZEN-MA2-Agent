@@ -19,6 +19,11 @@ The plugin exposes typed ZEN capabilities and returns structured semantic data. 
 - `zen_ma_visual`
 - `zen_ma_stage_visual`
 - `zen_design_request`
+- `zen_position_preview`
+- `zen_position_raw_preview`
+- `zen_position_calibration_preview`
+- `zen_position_semantic_bindings`
+- `zen_position_semantic_bind`
 - `zen_preview`
 - `zen_approve`
 - `zen_worker_status`
@@ -46,3 +51,12 @@ npm test
 ```
 
 The plugin is version-pinned to OpenClaw 2026.9.4 while the plugin API is experimental.
+
+`zen_position_semantic_bindings` is read-only. It returns only Position
+application bindings that still pass current Show identity and fresh direct
+Position Preset identity checks.
+
+`zen_position_semantic_bind` changes only ZEN's local semantic binding catalog.
+It requires the exact Show fingerprint, Group identity/exact refs and Position
+Preset identity returned by the fresh list tool. It has no MA2 command or Show
+write authority.

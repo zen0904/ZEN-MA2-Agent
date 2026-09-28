@@ -5,27 +5,27 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "SPATIAL_SYSTEM_VNEXT / SEMANTIC_POSITION_BINDING_OPERATOR_CAPTURE_001. The Semantic Position Binding typed contract, durable local store, resource-map exposure, provider contract, deterministic compiler resolution and normal lean-root wiring are offline verified. Current first-slice support is POINT + REUSE only and resolves to the existing verified CALL_PRESET Position grammar. No new Builder/MA transport grammar was added. The next bounded task is a no-MA-write operator capture surface for explicitly assigning semantic targets to existing verified Position application bindings."
+    "active_objective": "SPATIAL_SYSTEM_VNEXT / SEMANTIC_POSITION_BINDING_LIVE_OPERATOR_ACCEPTANCE_001. The semantic Position binding foundation and bounded operator/OpenClaw capture surface are offline verified. The current system can list fresh Position application candidates and record an explicit POINT+REUSE semantic target into ZEN local state with exact Show, Group and Preset identity checks and MA2_WRITES=0. The next gate is live read-only deployment verification plus human-authored semantic mapping on the current Show; no semantic target may be guessed from Preset labels."
   },
   "last_closed_task": {
-    "id": "SEMANTIC_POSITION_BINDING_CONTRACT_001",
+    "id": "SEMANTIC_POSITION_BINDING_OPERATOR_CAPTURE_001",
     "status": "CLOSED_SUCCESS_OFFLINE_VERIFIED",
-    "result": "Implemented zen.semantic_position_binding.v0.1 with stale-safe verification against existing real-machine Position application evidence, durable semantic binding storage, Artistic Resource Map and provider-contract exposure, deterministic position_target -> CALL_PRESET resolution, and normal AgentCore root wiring. Windows full suite passes 973 tests; git diff --check PASS; MA2_WRITES=0."
+    "result": "Added zen.position.semantic.bindings and zen.position.semantic.bind across AgentCore, Operator API, FieldHost and OpenClaw plugin. The list tool is read-only; the bind tool writes only data/ZEN_SEMANTIC_POSITION_BINDINGS.json after exact current Show/Group/Preset identity revalidation and confirms the binding is exposable through the normal Artistic Resource Map. Python full suite: 977 tests / OK. OpenClaw TypeScript build PASS and Vitest 2/2 PASS. git diff --check PASS. MA2_WRITES=0."
   },
   "next_acceptance_gate": {
-    "id": "SEMANTIC_POSITION_BINDING_OPERATOR_CAPTURE_001",
+    "id": "SEMANTIC_POSITION_BINDING_LIVE_OPERATOR_ACCEPTANCE_001",
     "classification": "REQUIRED",
     "status": "READY",
-    "why_it_matters": "The semantic contract now exists, but operators need a bounded way to assign a semantic target to an already verified Position application binding without editing JSON or causing an MA write.",
+    "why_it_matters": "The operator capture surface is implemented, but the deployed runtime still needs to prove the new typed tool is reachable against the current live Show without causing MA mutation. Actual semantic naming remains a human decision.",
     "blocks_current_milestone": true,
     "dependencies": [
-      "zen.semantic_position_binding.v0.1 offline verified",
-      "existing verified Position application binding catalog",
-      "current Show/fingerprint validation",
-      "no automatic semantic inference from Preset labels",
-      "no MA mutation while creating or inspecting semantic bindings"
+      "commit and deploy the offline-verified semantic operator surface",
+      "Field API remains localhost-first and MA remains READY",
+      "zen.position.semantic.bindings returns current verified candidates with MA2_WRITES=0",
+      "human explicitly chooses semantic target names before zen.position.semantic.bind is used",
+      "no automatic Preset-label-to-semantic inference"
     ],
-    "next_review_condition": "Implement and test the smallest operator/API surface that lists current verified Position application bindings and records an explicit semantic POINT target into the local semantic binding catalog. The new binding must appear in a subsequent read-only resource map and remain absent when Show/Preset/Group evidence drifts."
+    "next_review_condition": "Deploy the committed runtime, perform the read-only semantic binding inventory call, and verify current Show identity/candidates. Stop before recording a semantic mapping unless the operator explicitly names the target to assign."
   },
   "human_review_decisions": [
     {
@@ -611,6 +611,26 @@
         "MA2_WRITES_ZERO"
       ],
       "limitations": "No operator capture surface exists yet. No semantic target is inferred from Preset names. DERIVE, SPECIAL, vector targets, new Position Preset authoring and live MA write behavior remain outside this proof."
+    },
+    {
+      "id": "SEMANTIC_POSITION_BINDING_OPERATOR_CAPTURE_001",
+      "source": "zen_ma2_agent/core.py; zen_ma2_agent/operator_api.py; zen_ma2_agent/operator_server.py; zen_ma2_agent/field_host.py; integrations/openclaw/zen-ma2-plugin; tests/test_operator_api.py; tests/test_operator_server.py; tests/test_position_application_evidence.py",
+      "status": "CLOSED_SUCCESS_OFFLINE_VERIFIED",
+      "outcomes": [
+        "SEMANTIC_BINDING_CANDIDATE_LIST_TOOL_IMPLEMENTED",
+        "SEMANTIC_BINDING_LOCAL_RECORD_TOOL_IMPLEMENTED",
+        "EXACT_SHOW_GROUP_PRESET_IDENTITY_REQUIRED",
+        "NO_AUTOMATIC_SEMANTIC_INFERENCE",
+        "LOCAL_CATALOG_WRITE_ONLY",
+        "NORMAL_RESOURCE_MAP_EXPOSURE_VERIFIED",
+        "OPENCLAW_TYPED_TOOLS_ADDED",
+        "PYTHON_FULL_SUITE_977_PASS",
+        "OPENCLAW_TYPESCRIPT_BUILD_PASS",
+        "OPENCLAW_VITEST_2_OF_2_PASS",
+        "GIT_DIFF_CHECK_PASS",
+        "MA2_WRITES_ZERO"
+      ],
+      "limitations": "No semantic mapping has been chosen for the live Show by this task. Live runtime deployment/read-only acceptance remains next. POINT+REUSE only; DERIVE, SPECIAL and vector targets remain deferred."
     }
   ],
   "backlog": [
@@ -825,7 +845,7 @@
       "id": "SEMANTIC_POSITION_BINDING",
       "classification": "HIGH_LEVERAGE",
       "milestone": "SPATIAL_SYSTEM_VNEXT",
-      "status": "OFFLINE_FOUNDATION_VERIFIED",
+      "status": "OPERATOR_CAPTURE_OFFLINE_VERIFIED",
       "why_it_matters": "Replaces provider-facing raw PAN/TILT dependence with semantic spatial targets resolved to verified, editable Position Preset references or bounded derived solutions.",
       "blocks_current_milestone": false,
       "dependencies": [
@@ -834,7 +854,7 @@
         "stage-centric target vocabulary",
         "stale-evidence invalidation and Preview-only first integration"
       ],
-      "next_review_condition": "Implement the no-MA-write operator capture surface, then prove an explicit semantic target can be recorded and consumed by the normal read-only root path without guessing or stale reuse."
+      "next_review_condition": "Deploy and verify the read-only candidate inventory on the current Show. Then wait for explicit operator semantic naming before recording live mappings."
     },
     {
       "id": "SPATIAL_SETUP_WIZARD",
@@ -1052,16 +1072,20 @@
       "docs/ZEN_SPATIAL_SETUP_UX.md",
       "docs/ZEN_PRODUCTION_WORKFLOW_MODEL.md"
     ],
-    "boundary": "Do not start Blender, a full Production Model, Audio/Video integration, a complete Spatial UI, or a whole-Show Position rewrite before Core Pipeline Closure review and normal triage."
+    "boundary": "Do not start Blender, a full Production Model, Audio/Video integration, a complete Spatial UI, or a whole-Show Position rewrite before Core Pipeline Closure review and normal triage.",
+    "umbrella_product": "SHOW_AGENT_CONTROLLER",
+    "current_department_adapter": "LIGHTING_GRANDMA2"
   },
   "runtime_checkpoint": {
     "date": "2026-09-28",
-    "source": "SEMANTIC_POSITION_BINDING_CONTRACT_001 offline verification",
-    "canonical_code_head_before_slice": "966d4c1ae1aabf675294d640d6b347edc3c6307b",
-    "latest_reported_full_suite": "973 tests / OK",
+    "source": "SEMANTIC_POSITION_BINDING_OPERATOR_CAPTURE_001 offline verification",
+    "canonical_code_head_before_slice": "f18550e",
+    "latest_reported_full_suite": "977 tests / OK",
+    "openclaw_plugin_build": "PASS",
+    "openclaw_plugin_tests": "2 / 2 PASS",
     "git_diff_check": "PASS",
     "ma2_writes": 0,
-    "note": "This checkpoint is code/documentation-only. No MA Preview, Approval or console mutation occurred."
+    "note": "No MA Preview, Approval or console mutation occurred. npm install was used only to restore local dev dependencies for plugin validation; no package lockfile was introduced."
   },
   "core_pipeline_stabilization": {
     "id": "CORE_PIPELINE_STABILIZATION_001",
@@ -1101,5 +1125,26 @@
       "blocks_spatial_vnext_start": false,
       "review_condition": "Multiple real songs, rigs, venues and operator-change cases are available."
     }
-  ]
+  ],
+  "product_direction": {
+    "id": "SHOW_AGENT_CONTROLLER",
+    "title": "ZEN Show Agent Controller",
+    "status": "LONG_TERM_DIRECTION_CAPTURED",
+    "owner_decision_date": "2026-09-28",
+    "current_mature_adapter": "LIGHTING_GRANDMA2",
+    "principle": "The product is evolving from a grandMA2-only Agent into a show-wide intelligence/control layer. Shared Production data sits above department-specific verified adapters. Global reasoning must never bypass department deterministic execution and verification boundaries.",
+    "progress_interpretation": {
+      "ma2_execution_core": "APPROX_90_95_PERCENT_OF_ORIGINAL_CORE_ARCHITECTURE",
+      "show_agent_controller": "APPROX_30_40_PERCENT_OF_EXPANDED_VISION",
+      "note": "Planning estimates only; expanded scope does not invalidate completed MA2 work."
+    },
+    "concept": "Virtualize the coordination layer of a large K-pop/touring production into an Agent Control Plane: shared Show understanding above independently verified department adapters.",
+    "not_a_replacement_for": [
+      "grandMA2 / lighting console execution authority",
+      "audio console / DSP execution authority",
+      "video/media-server execution authority",
+      "stage/automation safety systems"
+    ],
+    "virtualization_model": "Virtualize the coordination/control layer of a large K-pop/touring production: shared Show understanding and cross-domain orchestration above independently verified Lighting/Audio/Video/Stage/Timeline adapters. Do not create one unconstrained Agent with direct authority over every physical system."
+  }
 }

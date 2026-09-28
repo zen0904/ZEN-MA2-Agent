@@ -2,7 +2,10 @@ import copy
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
+from zen_ma2_agent.core import AgentCore
+from zen_ma2_agent.runtime import AgentRuntime
 from zen_ma2_agent.artistic_resources import (
     build_artistic_resource_map, model_resource_contract, preset_applicability_from_map,
     semantic_position_applicability_from_map,
@@ -291,6 +294,76 @@ class PositionApplicationEvidenceTests(unittest.TestCase):
             changed = copy.deepcopy(self.profile)
             changed["groups"][0]["fixture_refs_in_selection_order"] = ["101", "701.1"]
             self.assertEqual(store.load_verified(changed), [])
+
+    def test_operator_semantic_binding_roundtrip_is_local_only(self):
+        application = self.binding()
+        with tempfile.TemporaryDirectory() as directory:
+            core = AgentCore(AgentRuntime(Path(directory)))
+            with patch.object(
+                core, "_collect_lean_design_profile", return_value=self.profile
+            ), patch.object(
+                core,
+                "_verified_current_position_application_bindings",
+                return_value=[application],
+            ):
+                listed = core.list_semantic_position_bindings()
+                self.assertEqual(listed["status"], "READY")
+                self.assertEqual(listed["ma2_writes"], 0)
+                self.assertEqual(listed["candidates"][0]["preset_ref"], "2.1")
+                self.assertEqual(listed["candidates"][0]["semantic_targets"], [])
+
+                bound = core.bind_semantic_position_target(
+                    expected_show_fingerprint=self.profile["show_identity"]["value"],
+                    group_id=1,
+                    expected_group_name="TEST_MOVING",
+                    expected_exact_refs=["101", "102"],
+                    preset_ref="2.1",
+                    expected_preset_label="HOME",
+                    semantic_target="main_stage.center",
+                )
+                self.assertEqual(bound["status"], "RECORDED")
+                self.assertTrue(bound["resource_exposed"])
+                self.assertEqual(bound["ma2_writes"], 0)
+                self.assertEqual(
+                    bound["binding"]["semantic_target"],
+                    "MAIN_STAGE.CENTER",
+                )
+
+                listed = core.list_semantic_position_bindings()
+                self.assertEqual(
+                    listed["bindings"][0]["semantic_target"],
+                    "MAIN_STAGE.CENTER",
+                )
+                self.assertEqual(
+                    listed["candidates"][0]["semantic_targets"],
+                    ["MAIN_STAGE.CENTER"],
+                )
+
+    def test_operator_semantic_bind_rejects_stale_expected_identity(self):
+        application = self.binding()
+        with tempfile.TemporaryDirectory() as directory:
+            core = AgentCore(AgentRuntime(Path(directory)))
+            with patch.object(
+                core, "_collect_lean_design_profile", return_value=self.profile
+            ), patch.object(
+                core,
+                "_verified_current_position_application_bindings",
+                return_value=[application],
+            ):
+                with self.assertRaisesRegex(
+                    SemanticPositionBindingError,
+                    "SEMANTIC_POSITION_SHOW_IDENTITY_DRIFT",
+                ):
+                    core.bind_semantic_position_target(
+                        expected_show_fingerprint="f" * 64,
+                        group_id=1,
+                        expected_group_name="TEST_MOVING",
+                        expected_exact_refs=["101", "102"],
+                        preset_ref="2.1",
+                        expected_preset_label="HOME",
+                        semantic_target="MAIN_STAGE.CENTER",
+                    )
+                self.assertFalse(core.semantic_position_bindings.has_candidates())
 
     def test_binding_store_records_only_after_exact_readback_and_rejects_drift(self):
         with tempfile.TemporaryDirectory() as directory:

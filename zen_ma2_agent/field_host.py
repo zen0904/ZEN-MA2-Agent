@@ -175,6 +175,12 @@ class FieldHost:
             position_calibration_preview_handler=getattr(
                 self.core, "preview_position_calibration", None
             ),
+            semantic_position_bindings_handler=getattr(
+                self.core, "list_semantic_position_bindings", None
+            ),
+            semantic_position_bind_handler=getattr(
+                self.core, "bind_semantic_position_target", None
+            ),
         )
         self._stop = threading.Event()
         self._ma_thread: threading.Thread | None = None

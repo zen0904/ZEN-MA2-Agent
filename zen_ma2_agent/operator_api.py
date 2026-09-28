@@ -204,6 +204,8 @@ ApproveHandler = Callable[[str, bool], Mapping[str, Any]]
 PositionPreviewHandler = Callable[..., Mapping[str, Any]]
 RawPositionPreviewHandler = Callable[..., Mapping[str, Any]]
 PositionCalibrationPreviewHandler = Callable[..., Mapping[str, Any]]
+SemanticPositionBindingsHandler = Callable[[], Mapping[str, Any]]
+SemanticPositionBindHandler = Callable[..., Mapping[str, Any]]
 
 
 class UnknownOpenClawTool(ValueError):
@@ -222,6 +224,7 @@ class OpenClawOperatorAdapter:
             "zen.watchdog.status",
             "zen.host.status",
             "zen.ma.visual",
+            "zen.position.semantic.bindings",
         }
     )
     NAVIGATION_TOOLS = frozenset({"zen.ma.stage.visual"})
@@ -231,6 +234,7 @@ class OpenClawOperatorAdapter:
             "zen.position.preview",
             "zen.position.raw.preview",
             "zen.position.calibration.preview",
+            "zen.position.semantic.bind",
             "zen.preview",
             "zen.approve",
         }
@@ -250,6 +254,8 @@ class OpenClawOperatorAdapter:
         position_preview_handler: Optional[PositionPreviewHandler] = None,
         raw_position_preview_handler: Optional[RawPositionPreviewHandler] = None,
         position_calibration_preview_handler: Optional[PositionCalibrationPreviewHandler] = None,
+        semantic_position_bindings_handler: Optional[SemanticPositionBindingsHandler] = None,
+        semantic_position_bind_handler: Optional[SemanticPositionBindHandler] = None,
     ):
         self._status_provider = status_provider
         self._watchdog_provider = watchdog_provider
@@ -262,6 +268,8 @@ class OpenClawOperatorAdapter:
         self._position_preview_handler = position_preview_handler
         self._raw_position_preview_handler = raw_position_preview_handler
         self._position_calibration_preview_handler = position_calibration_preview_handler
+        self._semantic_position_bindings_handler = semantic_position_bindings_handler
+        self._semantic_position_bind_handler = semantic_position_bind_handler
 
     def invoke(
         self,
@@ -337,6 +345,75 @@ class OpenClawOperatorAdapter:
                     or any(not isinstance(ref, str) for ref in safe_payload["expected_exact_refs"])):
                 return self._rejected(tool_name, "INVALID_ARGUMENTS", "Position calibration identities have invalid types.", request_id)
             return self._result(tool_name, "SUCCESS", dict(self._position_calibration_preview_handler(**safe_payload)), None, request_id)
+        if tool_name == "zen.position.semantic.bindings":
+            if self._semantic_position_bindings_handler is None:
+                return self._result(tool_name, "NOT_IMPLEMENTED", None, None, request_id)
+            if safe_payload:
+                return self._rejected(
+                    tool_name,
+                    "UNEXPECTED_ARGUMENT",
+                    "Semantic Position binding inventory accepts no arguments.",
+                    request_id,
+                )
+            return self._result(
+                tool_name,
+                "SUCCESS",
+                dict(self._semantic_position_bindings_handler()),
+                None,
+                request_id,
+            )
+        if tool_name == "zen.position.semantic.bind":
+            if self._semantic_position_bind_handler is None:
+                return self._result(tool_name, "NOT_IMPLEMENTED", None, None, request_id)
+            required = {
+                "expected_show_fingerprint",
+                "group_id",
+                "expected_group_name",
+                "expected_exact_refs",
+                "preset_ref",
+                "expected_preset_label",
+                "semantic_target",
+            }
+            if set(safe_payload) != required:
+                return self._rejected(
+                    tool_name,
+                    "INVALID_ARGUMENTS",
+                    "Exact Show, Group, Position Preset and semantic target identities are required.",
+                    request_id,
+                )
+            refs = safe_payload.get("expected_exact_refs")
+            if (
+                not isinstance(safe_payload.get("expected_show_fingerprint"), str)
+                or len(safe_payload["expected_show_fingerprint"]) != 64
+                or not isinstance(safe_payload.get("group_id"), int)
+                or isinstance(safe_payload.get("group_id"), bool)
+                or safe_payload["group_id"] < 1
+                or not isinstance(safe_payload.get("expected_group_name"), str)
+                or not 1 <= len(safe_payload["expected_group_name"]) <= 256
+                or not isinstance(refs, list)
+                or not 1 <= len(refs) <= 128
+                or any(not isinstance(ref, str) or not 1 <= len(ref) <= 32 for ref in refs)
+                or len(refs) != len(set(refs))
+                or not isinstance(safe_payload.get("preset_ref"), str)
+                or not 1 <= len(safe_payload["preset_ref"]) <= 32
+                or not isinstance(safe_payload.get("expected_preset_label"), str)
+                or not 1 <= len(safe_payload["expected_preset_label"]) <= 256
+                or not isinstance(safe_payload.get("semantic_target"), str)
+                or not 1 <= len(safe_payload["semantic_target"]) <= 128
+            ):
+                return self._rejected(
+                    tool_name,
+                    "INVALID_ARGUMENTS",
+                    "Semantic Position binding identities have invalid types or bounds.",
+                    request_id,
+                )
+            return self._result(
+                tool_name,
+                "SUCCESS",
+                dict(self._semantic_position_bind_handler(**safe_payload)),
+                None,
+                request_id,
+            )
         if tool_name == "zen.preview":
             if self._preview_handler is None:
                 return self._result(tool_name, "NOT_IMPLEMENTED", None, None, request_id)

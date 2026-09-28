@@ -179,6 +179,59 @@ class OperatorApiTests(unittest.TestCase):
         self.assertEqual(result["status"], "NOT_IMPLEMENTED")
         self.assertIsNone(result["result"])
 
+    def test_semantic_position_tools_are_bounded_and_typed(self):
+        bind_calls = []
+
+        def bind_handler(**kwargs):
+            bind_calls.append(kwargs)
+            return {
+                "schema": "zen.semantic_position_binding_write.v0.1",
+                "status": "RECORDED",
+                "ma2_writes": 0,
+            }
+
+        adapter = OpenClawOperatorAdapter(
+            self._snapshot,
+            semantic_position_bindings_handler=lambda: {
+                "schema": "zen.semantic_position_binding_candidates.v0.1",
+                "status": "READY",
+                "candidates": [],
+                "bindings": [],
+                "ma2_writes": 0,
+            },
+            semantic_position_bind_handler=bind_handler,
+        )
+        listed = adapter.invoke("zen.position.semantic.bindings")
+        self.assertEqual(listed["status"], "SUCCESS")
+        self.assertEqual(listed["result"]["ma2_writes"], 0)
+
+        payload = {
+            "expected_show_fingerprint": "a" * 64,
+            "group_id": 1,
+            "expected_group_name": "MOVING",
+            "expected_exact_refs": ["101.1", "102.1"],
+            "preset_ref": "2.13",
+            "expected_preset_label": "ZEN_POSITION_CAL_P13",
+            "semantic_target": "MAIN_STAGE.CENTER",
+        }
+        bound = adapter.invoke("zen.position.semantic.bind", payload)
+        self.assertEqual(bound["status"], "SUCCESS")
+        self.assertEqual(bound["result"]["ma2_writes"], 0)
+        self.assertEqual(bind_calls, [payload])
+
+        rejected = adapter.invoke(
+            "zen.position.semantic.bind",
+            {**payload, "expected_exact_refs": ["101.1", "101.1"]},
+        )
+        self.assertEqual(rejected["status"], "REJECTED")
+        self.assertEqual(rejected["error"]["code"], "INVALID_ARGUMENTS")
+
+        rejected = adapter.invoke(
+            "zen.position.semantic.bindings",
+            {"unexpected": True},
+        )
+        self.assertEqual(rejected["status"], "REJECTED")
+
     def test_mutating_tools_are_reserved_but_not_implemented(self):
         adapter = OpenClawOperatorAdapter(self._snapshot)
         for name in ("zen.design.request", "zen.preview", "zen.approve"):

@@ -120,6 +120,55 @@ class OperatorServerTests(unittest.TestCase):
         self.assertEqual(response.json()["result"]["write_authority"], "NONE")
         self.assertEqual(response.json()["result"]["ma2_show_writes"], 0)
 
+    def test_semantic_position_tools_use_optional_handlers(self):
+        calls = []
+
+        def bind_handler(**kwargs):
+            calls.append(kwargs)
+            return {
+                "schema": "zen.semantic_position_binding_write.v0.1",
+                "status": "RECORDED",
+                "ma2_writes": 0,
+            }
+
+        client = TestClient(
+            create_operator_app(
+                self._provider(),
+                semantic_position_bindings_handler=lambda: {
+                    "schema": "zen.semantic_position_binding_candidates.v0.1",
+                    "status": "READY",
+                    "candidates": [],
+                    "bindings": [],
+                    "ma2_writes": 0,
+                },
+                semantic_position_bind_handler=bind_handler,
+            )
+        )
+        listed = client.post(
+            "/zen/v0.1/tools/zen.position.semantic.bindings",
+            json={"arguments": {}},
+        )
+        self.assertEqual(listed.status_code, 200)
+        self.assertEqual(listed.json()["status"], "SUCCESS")
+        self.assertEqual(listed.json()["result"]["ma2_writes"], 0)
+
+        payload = {
+            "expected_show_fingerprint": "a" * 64,
+            "group_id": 1,
+            "expected_group_name": "MOVING",
+            "expected_exact_refs": ["101.1"],
+            "preset_ref": "2.13",
+            "expected_preset_label": "P13",
+            "semantic_target": "MAIN_STAGE.CENTER",
+        }
+        bound = client.post(
+            "/zen/v0.1/tools/zen.position.semantic.bind",
+            json={"arguments": payload},
+        )
+        self.assertEqual(bound.status_code, 200)
+        self.assertEqual(bound.json()["status"], "SUCCESS")
+        self.assertEqual(calls, [payload])
+
     def test_unknown_tool_is_not_exposed(self):
         client = TestClient(create_operator_app(self._provider()))
         response = client.post("/zen/v0.1/tools/zen.shell", json={})

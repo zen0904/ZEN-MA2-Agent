@@ -5,9 +5,17 @@
   "description": "Bounded result envelope for OpenClaw-facing ZEN tools. Unimplemented operations must report NOT_IMPLEMENTED rather than synthetic success.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "tool", "status", "result", "error"],
+  "required": [
+    "schema",
+    "tool",
+    "status",
+    "result",
+    "error"
+  ],
   "properties": {
-    "schema": {"const": "zen.tool_result.v0.1"},
+    "schema": {
+      "const": "zen.tool_result.v0.1"
+    },
     "tool": {
       "type": "string",
       "enum": [
@@ -23,31 +31,64 @@
         "zen.position.preview",
         "zen.position.raw.preview",
         "zen.position.calibration.preview",
+        "zen.position.semantic.bindings",
+        "zen.position.semantic.bind",
         "zen.preview",
         "zen.approve"
       ]
     },
     "status": {
       "type": "string",
-      "enum": ["SUCCESS", "NOT_IMPLEMENTED", "REJECTED", "FAILED"]
+      "enum": [
+        "SUCCESS",
+        "NOT_IMPLEMENTED",
+        "REJECTED",
+        "FAILED"
+      ]
     },
     "result": {
-      "type": ["object", "array", "string", "number", "boolean", "null"]
+      "type": [
+        "object",
+        "array",
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
     },
     "error": {
       "oneOf": [
-        {"type": "null"},
+        {
+          "type": "null"
+        },
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["code", "message"],
+          "required": [
+            "code",
+            "message"
+          ],
           "properties": {
-            "code": {"type": "string", "minLength": 1, "maxLength": 128},
-            "message": {"type": "string", "minLength": 1, "maxLength": 512}
+            "code": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
           }
         }
       ]
     },
-    "request_id": {"type": ["string", "null"], "maxLength": 128}
+    "request_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 128
+    }
   }
 }
