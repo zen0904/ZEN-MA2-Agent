@@ -1,0 +1,371 @@
+# ZEN Spatial System vNext
+
+Status: DESIGN CAPTURED / NOT YET IMPLEMENTING
+
+## Purpose
+
+Spatial System vNext upgrades Position from raw console values or a small fixed
+Preset list into a semantic, calibratable, show-bound spatial layer.
+
+The central rule is:
+
+> Incomplete data must reduce spatial confidence, not make ZEN unusable.
+
+Small and medium shows must remain workable with limited venue information.
+Large productions may provide a much richer model, but the richer model is an
+optional precision source rather than a mandatory operating requirement.
+
+This document defines product direction only. It does not authorize MA writes,
+Patch/Address changes, Fixture identity/type changes, or a broad Position
+rewrite.
+
+## Architecture boundary
+
+The intended path is:
+
+```text
+OC / Lighting Designer artistic intent
+        ↓
+Semantic Spatial Target
+        ↓
+ZEN Spatial Resolver
+        ↓
+show-bound target / calibration / resource binding
+        ↓
+Position Preset reference or deterministic derived solution
+        ↓
+typed ShowPlan
+        ↓
+existing Preview / Approval / Builder / native readback boundary
+```
+
+OC remains free to reason in human spatial language such as "open the outside",
+"bring the floor fixtures inward", "keep negative space", "converge on the
+singer", or "build a tunnel". ZEN owns the conversion from that intent into a
+verified current-Show spatial implementation. The MA boundary remains
+deterministic and fail-closed.
+
+## Data completeness levels
+
+### BASIC
+
+Minimum useful information:
+
+- stage direction;
+- approximate main-stage dimensions;
+- fixture inventory;
+- limited calibration;
+- current MA state.
+
+ZEN may work at BASIC level, but spatial confidence must remain lower and
+unsupported physical claims stay UNKNOWN.
+
+### STANDARD
+
+Typical formal-event information:
+
+- stage dimensions;
+- fixture XYZ;
+- basic rotation/orientation;
+- five to nine calibration targets where useful;
+- floor/aerial direction information;
+- named Stage Surfaces.
+
+### FULL / PREVIS
+
+Large-production information may include:
+
+- complete 3D scene;
+- Main Stage, Runway, B Stage, Risers, Platforms;
+- Set, Truss, LED/scenic surfaces;
+- fixture XYZ and rotation;
+- Performer Zones;
+- Target Maps;
+- Blender / glTF / MVR-derived geometry.
+
+FULL data increases precision. It is not a prerequisite for ordinary operation.
+
+## Spatial source modes
+
+ZEN should support four source modes without changing the operator-facing
+artistic contract.
+
+### AUTO_ZEN
+
+When no usable 3D scene exists, ZEN creates a stage frame, basic fixture layout,
+audience direction and bounded target map from operator-supplied dimensions and
+known Show evidence.
+
+### IMPORT_MA
+
+When grandMA Stage View / MA 3D geometry is available through a verified reader,
+ZEN imports that geometry as evidence. Visual pixels alone do not become exact
+machine geometry.
+
+### HYBRID
+
+Imported geometry may be corrected or extended by operator input. Later scene
+changes produce a Spatial Diff so only affected fixtures, targets or
+calibration regions are invalidated.
+
+### BLENDER
+
+For complex productions, Blender may provide a richer world model. This is a
+future adapter, not a dependency of Spatial vNext's first implementation slice.
+
+## Stage coordinate system
+
+The semantic world is stage-centric.
+
+Recommended canonical orientation:
+
+```text
++X = Stage Left
+-X = Stage Right
++Y = Upstage
+-Y = Downstage / Audience direction
++Z = Up
+Origin = Stage Center
+```
+
+Audience direction must have a reliable anchor. AUTO_ZEN knows the anchor from
+setup. Imported external geometry that lacks orientation metadata should ask
+the operator once rather than guess.
+
+Exact mapping from any external scene or MA coordinate representation into this
+world remains evidence-bound. A naming convention does not prove coordinate
+semantics.
+
+## Stage Surfaces
+
+Spatial reasoning is not limited to one 3x3 main-stage grid.
+
+The shared world may contain:
+
+- MAIN_STAGE
+- RUNWAY
+- B_STAGE
+- RISER
+- PLATFORM
+- future named surfaces justified by the production.
+
+Each Surface may own its own target map and local bounds while remaining in one
+shared stage coordinate system.
+
+## Point targets
+
+A basic Main Stage should normally support at least:
+
+- CENTER
+- STAGE_LEFT
+- STAGE_RIGHT
+- UPSTAGE
+- DOWNSTAGE
+
+A more detailed target map may expose:
+
+```text
+USL / USC / USR
+CSL / CENTER / CSR
+DSL / DSC / DSR
+```
+
+The grid is an anchor set, not a closed vocabulary. The artistic layer may ask
+for intermediate or relational targets.
+
+## World-vector targets
+
+Floor and aerial fixtures often need a direction rather than a point on the
+deck. ZEN therefore needs explicit world-vector targets in addition to point
+targets.
+
+Examples:
+
+- VERTICAL_UP
+- INWARD_15
+- INWARD_30
+- OUTWARD_15
+- OUTWARD_30
+- CROSS
+- FAN
+- PARALLEL
+- UPSTAGE_VECTOR
+- DOWNSTAGE_VECTOR
+
+A Point Target means "aim at this world position". A Vector Target means "send
+the beam in this world direction". They must not be conflated.
+
+## Fixture mount context
+
+Possible mount classifications include:
+
+- OVERHEAD
+- SIDE_TRUSS
+- FLOOR
+- UPSTAGE_FLOOR
+- STAGE_EDGE
+- TOWER
+- OUTER_TRUSS
+- SET_PIECE
+
+Mount type supplies reachability and natural-orientation context. It is not an
+artistic role assignment and must never become a rule such as "floor fixture
+always does aerial".
+
+## Calibration model
+
+Calibration is not the artistic Position design itself. It is the correction
+layer between a virtual target and the real rig.
+
+Useful operating modes:
+
+- 3-point quick calibration;
+- 5-point general calibration;
+- 9-point higher-precision calibration.
+
+The intended long-term model is adaptive calibration. ZEN should evaluate
+residual error and request additional evidence only in the region where the
+model is weak. The operator should not be forced to redo nine points every time
+one part of a rig changes.
+
+## Semantic Position resources
+
+Position Presets become Spatial Anchors / Calibration Resources, not the
+provider's complete artistic vocabulary.
+
+Examples of stable semantic anchors:
+
+- MAIN.C
+- MAIN.SL
+- MAIN.SR
+- MAIN.US
+- MAIN.DS
+- MAIN.USL
+- MAIN.USR
+- MAIN.DSL
+- MAIN.DSR
+- AIR.UP
+- AIR.IN
+- AIR.OUT
+- AIR.CROSS
+
+The artistic layer may still request relational intent such as "CENTER slightly
+downstage", "outer fixtures wider", or "rear row higher". ZEN resolves that
+intent against the current Show.
+
+## Resolution modes
+
+### REUSE
+
+Use an existing verified semantic target / Position Preset binding.
+
+### DERIVE
+
+Interpolate or otherwise derive a deterministic spatial solution from known
+anchors when the requested target falls between them. Example: a target one
+third of the way from CENTER toward DOWNSTAGE.
+
+DERIVE must remain bounded by known geometry/calibration and expose confidence;
+it may not invent physical semantics.
+
+### SPECIAL
+
+Create or use a song-specific Position resource only when the requested look is
+genuinely special and should remain a named reusable object, for example:
+
+`SHEESH.CHORUS_AERIAL_CONVERGE`
+
+The system must not create a new Position Preset for every Cue.
+
+## Selective Position Presets
+
+One semantic Position Preset may contain different PAN/TILT values for different
+fixtures while representing one common world target.
+
+For example, `MAIN_STAGE.CENTER` may contain unique values for Fixture 101,
+102, 201 and 501, all aimed at the same semantic location.
+
+This is the desired native-console bridge because it preserves normal MA
+editability and lets onsite focus correction propagate through Preset links.
+
+## Onsite correction model
+
+The desired operational flow is:
+
+```text
+OC intent
+→ semantic target
+→ ZEN binding
+→ Position Preset reference
+→ Cue
+```
+
+If `MAIN_STAGE.CENTER` is physically too far upstage onsite, the operator fixes
+the calibration / linked Position Preset. Cues that preserve the native
+reference follow the correction, and future ZEN designs use the corrected
+binding.
+
+This is preferred over embedding raw PAN/TILT into every Cue.
+
+## Spatial Diff
+
+When geometry changes, ZEN should compare old and new world state and mark only
+affected resources.
+
+Examples:
+
+- Runway length changed;
+- B Stage moved;
+- Outer Truss moved.
+
+Expected result:
+
+```text
+Spatial Diff
+→ affected fixtures / targets / calibration regions
+→ RECALIBRATION_REQUIRED only where necessary
+```
+
+A geometry change is not permission to rebuild the entire Show.
+
+## Shared-production boundary
+
+Stage Geometry, Stage Surfaces, Performer Zones, Timeline anchors and Video
+Surfaces are not inherently lighting-only concepts. The data architecture
+should avoid baking "lighting" into these shared world entities.
+
+This is an architectural allowance, not authorization to implement an AV
+Production OS now.
+
+## First implementation slice
+
+The first Spatial vNext implementation slice, after the current Core Pipeline
+Closure review, is:
+
+```text
+SEMANTIC POSITION BINDING
+
+OC Artistic Intent
+→ Semantic Spatial Target
+→ ZEN Target Binding
+→ Position Preset Reference
+→ Cue
+```
+
+The first slice should prefer existing verified Position Preset links and
+calibration evidence. It must keep the current Preview / explicit Approval /
+native readback boundary and must not broaden MA write authority.
+
+## Explicitly deferred
+
+Do not start these merely because this document records them:
+
+- full Blender pipeline;
+- full Production Model;
+- Audio integration;
+- Video integration;
+- complete graphical Spatial UI;
+- whole-Show Position rewrite;
+- arbitrary automatic Position Preset creation.
+
+They remain captured future work until normal triage promotes a bounded task.
