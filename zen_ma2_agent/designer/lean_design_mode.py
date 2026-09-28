@@ -29,7 +29,10 @@ _CUE_KEYS = ("id", "cue_number", "label", "fade", "actions", "position_pattern",
 _GROUP_KEYS = ("group_id", "name")
 _PRESET_KEYS = ("reference", "preset_type", "name")
 _EFFECT_KEYS = ("effect_id", "name")
-_RESOURCE_GROUP_KEYS = ("group_id", "name", "dimensions", "preset_resources", "effect_resources")
+_RESOURCE_GROUP_KEYS = (
+    "group_id", "name", "dimensions", "preset_resources",
+    "semantic_position_targets", "effect_resources",
+)
 _CAPABILITY_KEYS = (
     "fixture_type_identity",
     "show_fingerprint",
@@ -187,7 +190,7 @@ def _compact_resource_map(value: object, *, group_ids: set[int] | None = None) -
         if group_ids is not None and group_id not in group_ids:
             continue
         compact = _pick_mapping(item, _RESOURCE_GROUP_KEYS)
-        for key in ("preset_resources", "effect_resources"):
+        for key in ("preset_resources", "semantic_position_targets", "effect_resources"):
             if isinstance(compact.get(key), list):
                 compact[key] = _bounded_list(compact[key])
         groups.append(compact)

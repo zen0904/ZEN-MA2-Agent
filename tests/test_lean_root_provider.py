@@ -131,6 +131,21 @@ class LeanRootProviderTests(unittest.TestCase):
         self.assertEqual(action["status"], "PENDING_APPROVAL")
         self.assertEqual(build_map.call_args.kwargs["preset_bindings"], preset_bindings)
         self.assertEqual(build_map.call_args.kwargs["dimmer_bindings"], dimmer_bindings)
+        self.assertEqual(build_map.call_args.kwargs["semantic_position_bindings"], [])
+
+    def test_root_lean_path_threads_verified_semantic_position_bindings(self):
+        provider = FakeDesignProvider()
+        core = AgentCore(AgentRuntime(Path(".")), design_intelligence_provider=provider)
+        seed_native_state(core)
+        semantic = {"schema": "zen.semantic_position_binding.v0.1", "semantic_target": "MAIN_STAGE.CENTER"}
+        with patch.object(core, "_recover_bounded_test_show_evidence", return_value=([], [])), \
+             patch.object(core, "_recover_bounded_template_effect_inventory", return_value=[]), \
+             patch.object(core.position_application_bindings, "load_verified", return_value=[]), \
+             patch.object(core.semantic_position_bindings, "load_verified", return_value=[semantic]), \
+             patch("zen_ma2_agent.core.build_artistic_resource_map", return_value=resource_map()) as build_map:
+            action = core.program_show_request("design/program this song")["action"]
+        self.assertEqual(action["status"], "PENDING_APPROVAL")
+        self.assertEqual(build_map.call_args.kwargs["semantic_position_bindings"], [semantic])
 
     def test_root_lean_path_threads_only_direct_readback_matching_position_binding(self):
         provider = FakeDesignProvider()
@@ -271,6 +286,47 @@ class LeanRootProviderTests(unittest.TestCase):
             resource_map=mapped,
         )
         self.assertEqual(plan["cues"][0]["actions"][0]["preset_ref"], "4.101")
+
+    def test_lean_compiler_uses_semantic_position_target_without_new_ma_grammar(self):
+        mapped = resource_map()
+        mapped["groups"][0]["preset_resources"] = [{
+            "dimension": "POSITION", "reference": "2.1", "name": "CENTER"
+        }]
+        mapped["groups"][0]["semantic_position_targets"] = [{
+            "semantic_target": "MAIN_STAGE.CENTER",
+            "target_kind": "POINT",
+            "resolution_mode": "REUSE",
+            "reference": "2.1",
+            "name": "CENTER",
+        }]
+        mapped["groups"][0]["dimensions"]["POSITION"] = {
+            "execution_status": "VERIFIED_PRESET_RESOURCE"
+        }
+        contract = build_provider_resource_contract(mapped)
+        self.assertEqual(
+            contract["group_resources"][0]["position_targets"][0]["semantic_target"],
+            "MAIN_STAGE.CENTER",
+        )
+        plan, _ = compile_lean_artistic_intent(
+            {"cues": [{"fade": 0, "actions": [
+                {"group": 1, "position_target": "MAIN_STAGE.CENTER"}
+            ]}]},
+            request="x",
+            resource_map=mapped,
+        )
+        action = plan["cues"][0]["actions"][0]
+        self.assertEqual(action["operation"], "CALL_PRESET")
+        self.assertEqual(action["preset_ref"], "2.1")
+        self.assertEqual(action["semantic_target"], "MAIN_STAGE.CENTER")
+
+        with self.assertRaisesRegex(ArtisticPlanCompileError, "not verified for Group 1"):
+            compile_lean_artistic_intent(
+                {"cues": [{"fade": 0, "actions": [
+                    {"group": 1, "position_target": "MAIN_STAGE.DSL"}
+                ]}]},
+                request="x",
+                resource_map=mapped,
+            )
 
     def test_effect_gate_requires_content_verification_and_preserves_exact_label(self):
         raw_plan = {

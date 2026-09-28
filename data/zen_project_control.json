@@ -5,27 +5,27 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "SPATIAL_SYSTEM_VNEXT / SEMANTIC_POSITION_BINDING_001. CORE_PIPELINE_STABILIZATION_001 is CLOSED_SUCCESS. M4 remains active for professional native-console capability coverage, but no unresolved core-chain blocker prevents the first bounded Spatial vNext slice. Existing Effect replacement/clear remains UNVERIFIED_FAIL_CLOSED. Spatial implementation must preserve the current Preview / explicit human Approval / native Sequence Export verification boundary."
+    "active_objective": "SPATIAL_SYSTEM_VNEXT / SEMANTIC_POSITION_BINDING_OPERATOR_CAPTURE_001. The Semantic Position Binding typed contract, durable local store, resource-map exposure, provider contract, deterministic compiler resolution and normal lean-root wiring are offline verified. Current first-slice support is POINT + REUSE only and resolves to the existing verified CALL_PRESET Position grammar. No new Builder/MA transport grammar was added. The next bounded task is a no-MA-write operator capture surface for explicitly assigning semantic targets to existing verified Position application bindings."
   },
   "last_closed_task": {
-    "id": "EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001",
-    "status": "REAL_MACHINE_POSTWRITE_FORENSIC_VERIFIED_CLOSED",
-    "result": "Owner continuity evidence dated 2026-09-28 records real MA2 execution of Action 9d69eca230c8 / Preview 860dad28753fc35c against Sequence 302, Cues 1-29, Executor 2.8. Native post-write forensic verification reports Position 464/464 PASS, Effect 232/232 PASS, Color Preset 200/200 PASS, Cue metadata 29/29 PASS, unchanged Sequence 302 identity and Executor assignment, unchanged Show identity, MA remaining READY, Fixture 9999 untouched, and no Patch/Address/Fixture identity/type mutation. Historical false-negative Action state must not be repaired by replaying the MA write."
+    "id": "SEMANTIC_POSITION_BINDING_CONTRACT_001",
+    "status": "CLOSED_SUCCESS_OFFLINE_VERIFIED",
+    "result": "Implemented zen.semantic_position_binding.v0.1 with stale-safe verification against existing real-machine Position application evidence, durable semantic binding storage, Artistic Resource Map and provider-contract exposure, deterministic position_target -> CALL_PRESET resolution, and normal AgentCore root wiring. Windows full suite passes 973 tests; git diff --check PASS; MA2_WRITES=0."
   },
   "next_acceptance_gate": {
-    "id": "SEMANTIC_POSITION_BINDING_CONTRACT_001",
+    "id": "SEMANTIC_POSITION_BINDING_OPERATOR_CAPTURE_001",
     "classification": "REQUIRED",
     "status": "READY",
-    "why_it_matters": "The next improvement is to replace raw PAN/TILT as the normal artistic Position representation with semantic spatial targets bound to verified, editable Position Preset resources while preserving current safety and Show-bound evidence rules.",
+    "why_it_matters": "The semantic contract now exists, but operators need a bounded way to assign a semantic target to an already verified Position application binding without editing JSON or causing an MA write.",
     "blocks_current_milestone": true,
     "dependencies": [
-      "docs/ZEN_SPATIAL_SYSTEM_VNEXT.md",
-      "docs/ZEN_SPATIAL_SETUP_UX.md",
-      "current verified Position application binding model",
-      "existing Preview / Approval / Builder / native readback boundary",
-      "no assumption that BASIC spatial data has FULL/PREVIS precision"
+      "zen.semantic_position_binding.v0.1 offline verified",
+      "existing verified Position application binding catalog",
+      "current Show/fingerprint validation",
+      "no automatic semantic inference from Preset labels",
+      "no MA mutation while creating or inspecting semantic bindings"
     ],
-    "next_review_condition": "Define and verify the smallest typed Semantic Target -> Target Binding -> Position Preset Reference contract, stale-evidence behavior and regression tests before any live MA Preview or write is attempted."
+    "next_review_condition": "Implement and test the smallest operator/API surface that lists current verified Position application bindings and records an explicit semantic POINT target into the local semantic binding catalog. The new binding must appear in a subsequent read-only resource map and remain absent when Show/Preset/Group evidence drifts."
   },
   "human_review_decisions": [
     {
@@ -591,6 +591,26 @@
         "NO_MA2_WRITE_PERFORMED_BY_CLOSURE_REVIEW"
       ],
       "limitations": "This closes core pipeline stabilization only. It is not evidence of full production handover across songs/rigs/venues and does not verify every MA2 mechanism."
+    },
+    {
+      "id": "SEMANTIC_POSITION_BINDING_CONTRACT_001",
+      "source": "zen_ma2_agent/spatial_semantics.py; zen_ma2_agent/artistic_resources.py; zen_ma2_agent/designer/artistic_plan.py; zen_ma2_agent/designer/lean_provider.py; zen_ma2_agent/core.py; tests/test_position_application_evidence.py; tests/test_lean_root_provider.py",
+      "status": "CLOSED_SUCCESS_OFFLINE_VERIFIED",
+      "outcomes": [
+        "SEMANTIC_POSITION_BINDING_SCHEMA_V0_1",
+        "POINT_TARGET_SUPPORTED",
+        "REUSE_RESOLUTION_SUPPORTED",
+        "UNDERLYING_POSITION_APPLICATION_PROOF_REQUIRED",
+        "SEMANTIC_BINDING_STORE_STALE_SAFE",
+        "ARTISTIC_RESOURCE_MAP_EXPOSES_ONLY_DOUBLE_VERIFIED_TARGETS",
+        "PROVIDER_POSITION_TARGET_COMPILES_TO_EXISTING_CALL_PRESET",
+        "NORMAL_LEAN_ROOT_LOADS_VERIFIED_SEMANTIC_BINDINGS",
+        "NO_NEW_MA_GRAMMAR",
+        "WINDOWS_FULL_SUITE_973_PASS",
+        "GIT_DIFF_CHECK_PASS",
+        "MA2_WRITES_ZERO"
+      ],
+      "limitations": "No operator capture surface exists yet. No semantic target is inferred from Preset names. DERIVE, SPECIAL, vector targets, new Position Preset authoring and live MA write behavior remain outside this proof."
     }
   ],
   "backlog": [
@@ -805,7 +825,7 @@
       "id": "SEMANTIC_POSITION_BINDING",
       "classification": "HIGH_LEVERAGE",
       "milestone": "SPATIAL_SYSTEM_VNEXT",
-      "status": "READY",
+      "status": "OFFLINE_FOUNDATION_VERIFIED",
       "why_it_matters": "Replaces provider-facing raw PAN/TILT dependence with semantic spatial targets resolved to verified, editable Position Preset references or bounded derived solutions.",
       "blocks_current_milestone": false,
       "dependencies": [
@@ -814,7 +834,7 @@
         "stage-centric target vocabulary",
         "stale-evidence invalidation and Preview-only first integration"
       ],
-      "next_review_condition": "Define the typed contract, stale-evidence behavior and offline regression acceptance for Semantic Target -> verified Position binding -> Cue. Keep first slice Preview-only and MA2_WRITES=0."
+      "next_review_condition": "Implement the no-MA-write operator capture surface, then prove an explicit semantic target can be recorded and consumed by the normal read-only root path without guessing or stale reuse."
     },
     {
       "id": "SPATIAL_SETUP_WIZARD",
@@ -823,7 +843,7 @@
       "status": "CAPTURED",
       "why_it_matters": "Provides a practical small-show-to-large-show setup path without requiring operators to edit backend JSON.",
       "blocks_current_milestone": false,
-      "next_review_condition": "Promote only after Semantic Position Binding establishes the minimum data contract required by setup UX."
+      "next_review_condition": "Do not start full wizard work. First implement only the minimal semantic Position binding capture/inspection surface."
     },
     {
       "id": "ADAPTIVE_CALIBRATION_MODEL",
@@ -1025,7 +1045,7 @@
   "next_major": {
     "id": "SPATIAL_SYSTEM_VNEXT",
     "title": "Spatial System vNext",
-    "status": "READY_FOR_FIRST_SLICE",
+    "status": "IMPLEMENTING_FIRST_SLICE",
     "first_implementation_slice": "SEMANTIC_POSITION_BINDING",
     "design_docs": [
       "docs/ZEN_SPATIAL_SYSTEM_VNEXT.md",
@@ -1036,11 +1056,12 @@
   },
   "runtime_checkpoint": {
     "date": "2026-09-28",
-    "source": "Owner continuity handoff",
-    "canonical_code_head_before_docs_capture": "529572d2e598c47df584ed8ec312c87525bac02c",
-    "runtime_commit_before_docs_capture": "529572d2e598c47df584ed8ec312c87525bac02c",
-    "latest_reported_full_suite": "966 tests / OK",
-    "note": "The 966-test result predates this documentation/control-only capture. No code path was changed by the capture and the suite was not rerun here."
+    "source": "SEMANTIC_POSITION_BINDING_CONTRACT_001 offline verification",
+    "canonical_code_head_before_slice": "966d4c1ae1aabf675294d640d6b347edc3c6307b",
+    "latest_reported_full_suite": "973 tests / OK",
+    "git_diff_check": "PASS",
+    "ma2_writes": 0,
+    "note": "This checkpoint is code/documentation-only. No MA Preview, Approval or console mutation occurred."
   },
   "core_pipeline_stabilization": {
     "id": "CORE_PIPELINE_STABILIZATION_001",

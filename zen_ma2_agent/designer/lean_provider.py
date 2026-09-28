@@ -14,6 +14,7 @@ from ..artistic_resources import (
     effect_applicability_from_map,
     model_resource_contract,
     preset_applicability_from_map,
+    semantic_position_applicability_from_map,
 )
 
 
@@ -85,11 +86,14 @@ def build_provider_resource_contract(
         for group in groups:
             if "CALL_PRESET" not in allowed:
                 group["presets"] = []
+                group["position_targets"] = []
             elif allowed_preset_dimensions is not None:
                 group["presets"] = [
                     preset for preset in group.get("presets", [])
                     if str(preset.get("dimension") or "").upper() in allowed_preset_dimensions
                 ]
+                if "POSITION" not in allowed_preset_dimensions:
+                    group["position_targets"] = []
             if "CALL_EFFECT" not in allowed:
                 group["effects"] = []
             dimensions = group.get("dimensions")
@@ -287,6 +291,7 @@ def compile_lean_artistic_intent(
             effect_id for ids in effect_applicability.values() for effect_id in ids
         },
         verified_preset_applicability=preset_applicability_from_map(resource_map),
+        verified_semantic_position_bindings=semantic_position_applicability_from_map(resource_map),
         verified_effect_applicability=effect_applicability,
         verified_dimmer_applicability=dimmer_applicability,
         verified_capability_status=capability_status_from_map(resource_map),

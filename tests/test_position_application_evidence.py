@@ -5,8 +5,13 @@ from pathlib import Path
 
 from zen_ma2_agent.artistic_resources import (
     build_artistic_resource_map, model_resource_contract, preset_applicability_from_map,
+    semantic_position_applicability_from_map,
 )
 from zen_ma2_agent.designer.artistic_plan import ArtisticPlanCompileError, compile_artistic_cue_plan
+from zen_ma2_agent.spatial_semantics import (
+    SemanticPositionBindingError, SemanticPositionBindingStore,
+    build_semantic_position_binding, semantic_position_binding_matches_profile,
+)
 from zen_ma2_agent.position_application_evidence import (
     PositionApplicationBindingStore, PositionEvidenceError, build_position_poc_preview,
     derive_position_application_binding, position_binding_matches_profile,
@@ -103,10 +108,98 @@ class PositionApplicationEvidenceTests(unittest.TestCase):
             with self.assertRaisesRegex(ArtisticPlanCompileError, "not verified applicable"):
                 self.compile(resource_map, group=group, preset=preset)
 
+    def test_semantic_position_binding_resolves_to_verified_native_preset(self):
+        application = self.binding()
+        semantic = build_semantic_position_binding(
+            self.profile, application, semantic_target="main_stage.center"
+        )
+        self.assertTrue(semantic_position_binding_matches_profile(self.profile, semantic))
+        resource_map = build_artistic_resource_map(
+            self.profile,
+            preset_bindings=[application],
+            semantic_position_bindings=[semantic],
+        )
+        contract = model_resource_contract(resource_map)[0]
+        self.assertEqual(contract["position_targets"], [{
+            "semantic_target": "MAIN_STAGE.CENTER",
+            "target_kind": "POINT",
+            "resolution_mode": "REUSE",
+            "reference": "2.1",
+            "name": "HOME",
+        }])
+
+        plan, audit = compile_artistic_cue_plan(
+            {"cues": [{"fade": 0, "actions": [
+                {"group": 1, "position_target": "main_stage.center"}
+            ]}]},
+            song="TEST", target_executor="2.001", active_sequence_range=[1, 999],
+            verified_group_ids={1, 2}, verified_preset_refs={"2.1", "2.2"},
+            verified_preset_types={"2.1": "POSITION", "2.2": "POSITION"},
+            verified_preset_applicability=preset_applicability_from_map(resource_map),
+            verified_semantic_position_bindings=semantic_position_applicability_from_map(resource_map),
+        )
+        action = plan["cues"][0]["actions"][0]
+        self.assertEqual(action["operation"], "CALL_PRESET")
+        self.assertEqual(action["preset_ref"], "2.1")
+        self.assertEqual(action["preset_type"], "POSITION")
+        self.assertEqual(action["semantic_target"], "MAIN_STAGE.CENTER")
+        self.assertEqual(action["position_resolution_mode"], "REUSE")
+        self.assertIn("POSITION_TARGET", audit["supported_compact_dimensions"])
+        self.assertNotIn("Pan", str(action))
+        self.assertNotIn("Tilt", str(action))
+
     def test_wrong_show_identity_rejects_binding(self):
         profile = copy.deepcopy(self.profile)
         profile["show_identity"]["value"] = "c" * 64
         self.assertFalse(position_binding_matches_profile(profile, self.binding()))
+
+    def test_semantic_position_binding_fails_closed_when_native_proof_drifts(self):
+        application = self.binding()
+        semantic = build_semantic_position_binding(
+            self.profile, application, semantic_target="MAIN_STAGE.CENTER"
+        )
+        changed = copy.deepcopy(self.profile)
+        changed["presets"][0]["name"] = "RENAMED"
+        self.assertFalse(semantic_position_binding_matches_profile(changed, semantic))
+        resource_map = build_artistic_resource_map(
+            changed,
+            preset_bindings=[application],
+            semantic_position_bindings=[semantic],
+        )
+        self.assertEqual(model_resource_contract(resource_map)[0]["position_targets"], [])
+
+    def test_semantic_position_target_requires_verified_application_binding(self):
+        invalid = {**self.binding(), "reference": "2.2"}
+        with self.assertRaisesRegex(
+            SemanticPositionBindingError, "POSITION_APPLICATION_BINDING_UNVERIFIED"
+        ):
+            build_semantic_position_binding(
+                self.profile, invalid, semantic_target="MAIN_STAGE.CENTER"
+            )
+
+    def test_unknown_semantic_position_target_does_not_fall_back_to_any_preset(self):
+        application = self.binding()
+        semantic = build_semantic_position_binding(
+            self.profile, application, semantic_target="MAIN_STAGE.CENTER"
+        )
+        resource_map = build_artistic_resource_map(
+            self.profile,
+            preset_bindings=[application],
+            semantic_position_bindings=[semantic],
+        )
+        with self.assertRaisesRegex(
+            ArtisticPlanCompileError, "Semantic Position target MAIN_STAGE.DSL is not verified"
+        ):
+            compile_artistic_cue_plan(
+                {"cues": [{"fade": 0, "actions": [
+                    {"group": 1, "position_target": "MAIN_STAGE.DSL"}
+                ]}]},
+                song="TEST", target_executor="2.001", active_sequence_range=[1, 999],
+                verified_group_ids={1, 2}, verified_preset_refs={"2.1", "2.2"},
+                verified_preset_types={"2.1": "POSITION", "2.2": "POSITION"},
+                verified_preset_applicability=preset_applicability_from_map(resource_map),
+                verified_semantic_position_bindings=semantic_position_applicability_from_map(resource_map),
+            )
 
     def test_exact_membership_drift_rejects_binding(self):
         profile = copy.deepcopy(self.profile)
@@ -184,6 +277,20 @@ class PositionApplicationEvidenceTests(unittest.TestCase):
         profile["resources"]["presets"]["status"] = "STALE"
         with self.assertRaisesRegex(PositionEvidenceError, "FRESH_READ_ONLY_STATE_REQUIRED"):
             build_position_poc_preview(profile, group_id=1, preset_ref="2.1")
+
+    def test_semantic_binding_store_persists_only_current_verified_mapping(self):
+        application = self.binding()
+        with tempfile.TemporaryDirectory() as directory:
+            store = SemanticPositionBindingStore(Path(directory))
+            self.assertEqual(store.load_verified(self.profile), [])
+            stored = store.record_verified(
+                self.profile, application, semantic_target="MAIN_STAGE.CENTER"
+            )
+            self.assertTrue(store.has_candidates())
+            self.assertEqual(store.load_verified(self.profile), [stored])
+            changed = copy.deepcopy(self.profile)
+            changed["groups"][0]["fixture_refs_in_selection_order"] = ["101", "701.1"]
+            self.assertEqual(store.load_verified(changed), [])
 
     def test_binding_store_records_only_after_exact_readback_and_rejects_drift(self):
         with tempfile.TemporaryDirectory() as directory:

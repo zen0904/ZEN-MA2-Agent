@@ -40,9 +40,13 @@ Never use `group_id`, a Group name/string, `target`, or `operation` in compact a
 Examples:
 {"group":1,"dimmer":50}
 {"group":1,"color_preset":"4.101"}
+{"group":1,"position_target":"MAIN_STAGE.CENTER"}
 {"group":1,"effect":2500}
 Each action must contain exactly one artistic value such as dimmer, preset,
-color_preset, position_preset, focus_preset, beam_preset, gobo_preset, or effect.
+color_preset, position_preset, position_target, focus_preset, beam_preset, gobo_preset, or effect.
+When a Group exposes position_targets in verified_resource_contract, prefer an exact
+position_target semantic name over a raw Position Preset number. ZEN resolves that target
+only to its already verified current-Show Position Preset binding. Do not invent targets.
 Use only resources explicitly exposed in verified_resource_contract.
 If context contains `existing_cue_dynamic_merge_contract`, preserve its exact Cue count/order,
 use the supplied existing Cue labels, emit an explicit position_pattern for every Cue, and use

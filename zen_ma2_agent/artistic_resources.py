@@ -15,6 +15,7 @@ from typing import Any, Iterable, Mapping, Sequence
 
 from .cue_effect_application import cue_effect_capability_is_content_verified
 from .position_application_evidence import position_binding_matches_profile
+from .spatial_semantics import semantic_position_resources_for_profile
 from .artistic_capabilities import (
     ARTISTIC_DIMENSIONS,
     PRESET_BACKED_DIMENSIONS,
@@ -410,6 +411,7 @@ def build_artistic_resource_map(
     dimmer_bindings: Iterable[Mapping[str, Any]] = (),
     effect_catalog_entries: Iterable[Mapping[str, Any]] = (),
     effect_application_capability: Mapping[str, Any] | None = None,
+    semantic_position_bindings: Iterable[Mapping[str, Any]] = (),
 ) -> dict[str, Any]:
     """Return a model-safe Group x capability x resource map.
 
@@ -426,6 +428,9 @@ def build_artistic_resource_map(
     profiles = _profile_lookup(profile)
     bound_presets = _verified_preset_bindings(profile=profile, bindings=preset_bindings)
     bound_dimmers = _verified_dimmer_bindings(profile=profile, bindings=dimmer_bindings)
+    bound_semantic_positions = semantic_position_resources_for_profile(
+        profile, semantic_position_bindings
+    )
     bound_effects = _verified_effect_bindings(
         profile=profile,
         catalog_entries=effect_catalog_entries,
@@ -479,6 +484,13 @@ def build_artistic_resource_map(
                 preset["dimension"], type_labels, profiles
             )
             dimensions[preset["dimension"]]["execution_status"] = "VERIFIED_PRESET_RESOURCE"
+        verified_position_refs = {
+            item["reference"] for item in presets if item.get("dimension") == "POSITION"
+        }
+        semantic_positions = [
+            deepcopy(item) for item in bound_semantic_positions.get(group_id, [])
+            if item.get("reference") in verified_position_refs
+        ]
         effects = list(bound_effects.get(group_id, []))
         exact_selection_accepts_root_capability = _root_capability_applies_to_exact_selection(profile, group)
         if (
@@ -529,6 +541,7 @@ def build_artistic_resource_map(
             "fixture_types": type_labels,
             "dimensions": dimensions,
             "preset_resources": presets,
+            "semantic_position_targets": semantic_positions,
             "effect_resources": effects,
         })
 
@@ -570,6 +583,7 @@ def build_artistic_resource_map(
             "group_name_implies_capability": False,
             "preset_type_implies_group_applicability": False,
             "effect_id_implies_artistic_verification": False,
+            "semantic_target_implies_position_applicability": False,
             "unsupported_dimensions_are_substituted": False,
         },
     }
@@ -586,6 +600,25 @@ def preset_applicability_from_map(resource_map: Mapping[str, Any]) -> dict[int, 
             if isinstance(item, Mapping) and item.get("reference")
         }
         result[group["group_id"]] = refs
+    return result
+
+
+def semantic_position_applicability_from_map(
+    resource_map: Mapping[str, Any],
+) -> dict[int, dict[str, str]]:
+    result: dict[int, dict[str, str]] = {}
+    for group in resource_map.get("groups", []) if isinstance(resource_map.get("groups"), list) else []:
+        if not isinstance(group, Mapping) or not isinstance(group.get("group_id"), int):
+            continue
+        rows: dict[str, str] = {}
+        for item in group.get("semantic_position_targets", []) or []:
+            if not isinstance(item, Mapping):
+                continue
+            target = item.get("semantic_target")
+            reference = item.get("reference")
+            if isinstance(target, str) and isinstance(reference, str) and target and reference:
+                rows[target] = reference
+        result[group["group_id"]] = rows
     return result
 
 
@@ -650,6 +683,17 @@ def model_resource_contract(resource_map: Mapping[str, Any]) -> list[dict[str, A
             for item in (group.get("preset_resources") or [])
             if isinstance(item, Mapping)
         ]
+        executable_position_targets = [
+            {
+                "semantic_target": item.get("semantic_target"),
+                "target_kind": item.get("target_kind"),
+                "resolution_mode": item.get("resolution_mode"),
+                "reference": item.get("reference"),
+                "name": item.get("name"),
+            }
+            for item in (group.get("semantic_position_targets") or [])
+            if isinstance(item, Mapping)
+        ]
         executable_effects = [
             {
                 "effect_id": item.get("effect_id"),
@@ -665,6 +709,7 @@ def model_resource_contract(resource_map: Mapping[str, Any]) -> list[dict[str, A
             "name": group.get("name"),
             "dimensions": deepcopy(group.get("dimensions") or {}),
             "presets": executable_presets,
+            "position_targets": executable_position_targets,
             "effects": executable_effects,
         })
     return rows

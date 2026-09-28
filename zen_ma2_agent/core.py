@@ -50,6 +50,7 @@ from .artistic_resources import build_artistic_resource_map
 from .position_application_evidence import (
     PositionApplicationBindingStore, PositionEvidenceError, build_position_poc_preview,
 )
+from .spatial_semantics import SemanticPositionBindingStore
 from .position_raw_cue_poc import (
     build_position_raw_cue_preview, verify_raw_position_cue_content,
 )
@@ -147,6 +148,7 @@ class AgentCore:
         self.effect_resources = EffectResourceResolver(self.effect_catalog)
         self.cue_effect_application_capability = CueEffectApplicationCapability(self.runtime.root)
         self.position_application_bindings = PositionApplicationBindingStore(self.runtime.root)
+        self.semantic_position_bindings = SemanticPositionBindingStore(self.runtime.root)
         self.last_diagnostics: DiagnosticReport | None = None
         self.last_chat_routing: dict[str, Any] | None = None
         self._isolated_geometry_test_loaded = False
@@ -1633,7 +1635,10 @@ class AgentCore:
                 ("executors", {}),
             ):
                 self.refresh_state(resource, **kwargs)
-            if self.position_application_bindings.has_candidates():
+            if (
+                self.position_application_bindings.has_candidates()
+                or self.semantic_position_bindings.has_candidates()
+            ):
                 # Exact parent/subfixture applicability needs geometry identity.
                 # Ordinary shows without Position evidence avoid this extra scan.
                 self.refresh_state("fixture_geometry")
@@ -1801,6 +1806,7 @@ class AgentCore:
             dimmer_bindings=dimmer_bindings,
             effect_catalog_entries=self.effect_catalog.load().get("entries", []),
             effect_application_capability=effect_application,
+            semantic_position_bindings=self.semantic_position_bindings.load_verified(profile),
         )
         return resource_map, effect_application
 

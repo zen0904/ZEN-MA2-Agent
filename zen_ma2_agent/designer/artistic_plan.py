@@ -16,6 +16,10 @@ import re
 from typing import Any, Iterable, Mapping
 
 from .schema import ShowPlanSchemaError, validate_show_plan
+from ..spatial_semantics import (
+    SemanticPositionBindingError,
+    normalize_semantic_position_target,
+)
 from ..artistic_capabilities import (
     ARTISTIC_DIMENSIONS,
     CAPABILITY_INTENT_USES,
@@ -42,6 +46,7 @@ _COMPACT_ACTION_KEYS = {
     "preset",
     "effect",
     *_PRESET_DIMENSION_KEYS.keys(),
+    "position_target",
 }
 
 
@@ -177,6 +182,7 @@ def _compile_action(
     verified_preset_types: Mapping[str, str],
     verified_effect_ids: set[int],
     verified_preset_applicability: Mapping[int, set[str]] | None,
+    verified_semantic_position_bindings: Mapping[int, Mapping[str, str]] | None,
     verified_effect_applicability: Mapping[int, set[int]] | None,
     verified_dimmer_applicability: Mapping[int, Any] | None,
 ) -> dict[str, object]:
@@ -227,7 +233,7 @@ def _compile_action(
     if len(present) != 1:
         raise ArtisticPlanCompileError(
             "Compact artistic action must contain exactly one artistic value "
-            "from dimmer, preset, effect, color_preset, position_preset, "
+            "from dimmer, preset, effect, color_preset, position_preset, position_target, "
             "focus_preset, beam_preset, or gobo_preset."
         )
     key = present[0]
@@ -250,6 +256,25 @@ def _compile_action(
             "target": {"type": "group", "ref": group},
             "effect_ref": {"id": effect_id},
         }
+    if key == "position_target":
+        try:
+            semantic_target = normalize_semantic_position_target(action.get(key))
+        except SemanticPositionBindingError as exc:
+            raise ArtisticPlanCompileError(str(exc)) from exc
+        reference = (verified_semantic_position_bindings or {}).get(group, {}).get(semantic_target)
+        if not reference:
+            raise ArtisticPlanCompileError(
+                f"Semantic Position target {semantic_target} is not verified for Group {group}."
+            )
+        compiled = _preset_action(
+            group=group, value=reference, verified_preset_refs=verified_preset_refs,
+            verified_preset_types=verified_preset_types,
+            verified_preset_applicability=verified_preset_applicability,
+            required_type="POSITION",
+        )
+        compiled["semantic_target"] = semantic_target
+        compiled["position_resolution_mode"] = "REUSE"
+        return compiled
     if key == "preset":
         return _preset_action(
             group=group,
@@ -384,6 +409,7 @@ def compile_artistic_cue_plan(
     verified_preset_types: Mapping[str, str] | None = None,
     verified_effect_ids: set[int] | None = None,
     verified_preset_applicability: Mapping[int, Iterable[str]] | None = None,
+    verified_semantic_position_bindings: Mapping[int, Mapping[str, str]] | None = None,
     verified_effect_applicability: Mapping[int, Iterable[int]] | None = None,
     verified_dimmer_applicability: Mapping[int, Any] | None = None,
     verified_capability_status: Mapping[int, Mapping[str, Mapping[str, str]]] | None = None,
@@ -422,6 +448,14 @@ def compile_artistic_cue_plan(
         if verified_preset_applicability is not None
         else None
     )
+    semantic_position_bindings = {
+        int(group): {
+            normalize_semantic_position_target(target): str(reference)
+            for target, reference in targets.items()
+        }
+        for group, targets in (verified_semantic_position_bindings or {}).items()
+        if isinstance(group, int) and not isinstance(group, bool) and isinstance(targets, Mapping)
+    }
     effect_applicability = (
         {
             int(group): {int(effect_id) for effect_id in effect_ids_for_group}
@@ -451,6 +485,7 @@ def compile_artistic_cue_plan(
                 verified_preset_types=preset_types,
                 verified_effect_ids=effect_ids,
                 verified_preset_applicability=preset_applicability,
+                verified_semantic_position_bindings=semantic_position_bindings,
                 verified_effect_applicability=effect_applicability,
                 verified_dimmer_applicability=verified_dimmer_applicability,
             )
@@ -510,6 +545,7 @@ def compile_artistic_cue_plan(
             "PRESET",
             "COLOR_PRESET",
             "POSITION_PRESET",
+            "POSITION_TARGET",
             "FOCUS_PRESET",
             "BEAM_PRESET",
             "GOBO_PRESET",

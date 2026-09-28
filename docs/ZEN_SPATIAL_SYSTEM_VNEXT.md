@@ -369,3 +369,50 @@ Do not start these merely because this document records them:
 - arbitrary automatic Position Preset creation.
 
 They remain captured future work until normal triage promotes a bounded task.
+
+## Implementation status — Semantic Position Binding foundation (2026-09-28)
+
+The first bounded Spatial vNext implementation foundation is now offline-verified.
+
+Implemented:
+
+- `zen.semantic_position_binding.v0.1` maps one semantic POINT target to one
+  already content-verified Position Preset application binding.
+- The semantic layer cannot create Position applicability. It delegates that
+  truth to the existing `zen.position_preset_application_binding.v0.1`
+  real-machine evidence and fails closed when that proof drifts.
+- Current first-slice resolution mode is `REUSE` only.
+- Current first-slice target kind is `POINT` only.
+- Semantic bindings are persisted in
+  `data/ZEN_SEMANTIC_POSITION_BINDINGS.json` through a local evidence store.
+- The Artistic Resource Map exposes semantic targets only when both the native
+  Position application proof and semantic binding remain current.
+- The provider contract may use
+  `{"group": 1, "position_target": "MAIN_STAGE.CENTER"}`.
+- The deterministic compiler resolves that semantic target back into the
+  existing typed `CALL_PRESET` action with the verified Position Preset.
+- No new Builder grammar or MA transport grammar was introduced.
+- AgentCore loads verified semantic bindings into the normal lean root resource
+  map. With no semantic binding catalog, current behavior is unchanged.
+
+Verification:
+
+- Windows full suite: 973 tests / OK.
+- `git diff --check`: PASS.
+- MA2 writes: 0.
+- No Preview or Approval was created by this implementation task.
+
+Not implemented by this foundation:
+
+- automatic semantic guessing from Preset labels;
+- DERIVE or SPECIAL resolution;
+- world-vector targets;
+- creation of new Position Presets;
+- live MA writes;
+- full Spatial Setup UI.
+
+The next bounded gate is an operator-facing, no-MA-write capture surface that
+can inspect a verified Position application binding and explicitly assign a
+semantic target such as `MAIN_STAGE.CENTER`. The resulting local binding must
+remain show-bound, provenance-bearing and stale-safe before it may appear in a
+future Preview.
