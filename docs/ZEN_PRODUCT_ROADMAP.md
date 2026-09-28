@@ -82,7 +82,7 @@ DEFAULT_DESIGN_MODE:
   -> STRICT INTERNAL SHOW PLAN
   -> DETERMINISTIC MA2 BUILDER
   -> READBACK
-DEFAULT_PROVIDER_CONTRACT: ARTISTIC_CUES_V0_1
+DEFAULT_PROVIDER_CONTRACT: ARTISTIC_CUES_V0_2
 STRICT_INTERNAL_SCHEMA_AUTHORITY: ZEN
 LEGACY_MULTI_AGENT_DEFAULT: NO
 PAID_PROVIDER_ALLOWED: NO
@@ -107,9 +107,24 @@ provider calls and zero MA2 writes. Exact referenced Color Presets and the three
 verified Dimmer Chase Effects passed fresh identity/existence readback. See
 `ZEN_FULL_ARTISTIC_PATH_RUNTIME_RESUME_001.md`.
 
-The next M4 evidence gap is Cue-content readback. Metadata PASS is not evidence
-that the actual stored Dimmer/Preset/Effect content of each Cue can be read and
-matched to the canonical ShowPlan.
+The earlier Cue-content readback gap is now closed for the current core path.
+Native Sequence Export has been used as post-write authority for real MA2
+content verification, including the owner-reported Sequence 302 forensic
+acceptance recorded in `docs/CORE_PIPELINE_STABILIZATION_CLOSURE_001.md`.
+
+As of 2026-09-28, `CORE_PIPELINE_STABILIZATION` is closed while M4 itself
+remains active. Remaining M4 work is capability- and case-specific rather than
+a broken core chain. Existing Effect replacement/clear is still unverified and
+fails closed. Tracking/Cue Only/Block/Unblock, MAtricks, Speed Masters and
+similar native mechanisms should be verified when a real Show requires them,
+not exercised as synthetic checklist items.
+
+The next major design track is Spatial System vNext. Its first bounded slice is
+Semantic Position Binding: artistic semantic target -> show-bound target
+binding -> native Position Preset reference -> Cue, while preserving the
+existing Preview / explicit Approval / native readback contract. Blender, a
+full Production Model, Audio/Video integration and a complete Spatial UI remain
+deferred.
 
 Song-specific constraints belong at the calling task boundary. The generic
 Artistic Plan Compiler must remain song-agnostic: it may normalize
