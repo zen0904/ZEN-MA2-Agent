@@ -71,3 +71,15 @@ clarifying question if it hits a Rule 3 decision it should not make alone.
 If an unattended session reaches a point that requires an interactive-tier
 decision, it should stop and record that in its final commit message or a
 short note, not guess.
+
+## Rule 5: use structural code memory as an accelerator, not an authority
+
+When Codebase Memory MCP is installed on the active development machine, Codex and
+Claude Code should use it for substantial architecture/dependency/call-chain/impact
+exploration before resorting to broad recursive file reading. The full integration and
+authority rules are in `docs/CODEBASE_MEMORY_MCP.md`.
+
+CBM does not change Rule 2: git commit remains the handoff. It does not change Rule 3:
+risk-tiered decisions still require the owner where specified. It does not grant any
+MA2 write authority, and its indexed graph must be verified against current source,
+tests, git state, and native evidence when a conclusion affects behavior or safety.
