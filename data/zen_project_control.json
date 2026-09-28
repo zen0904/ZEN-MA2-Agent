@@ -998,3 +998,166 @@
     ],
     "artistic_resource_map": {
       "schema": "zen.artistic_resource_map.v0.1",
+      "authoritative_for_model_resource_selection": true,
+      "rules": [
+        "Group name does not imply capability.",
+        "Preset type does not imply Group applicability.",
+        "Effect existence/ID does not imply artistic verification.",
+        "Only Group-bound executable Preset/Effect resources may be offered to the designer.",
+        "Unknown or unsupported dimensions remain explicit and are never semantically substituted."
+      ]
+    },
+    "resource_recovery": {
+      "test_show_color": "ONLY_OBSERVED_BUILD_001_GROUP_PRESET_PAIRS_WITH_CURRENT_SEQUENCE_AND_PRESET_IDENTITY_MATCH",
+      "effect_without_catalog": "ONLY_EXACT_FX_DIM_CHASE_SLOW_MED_FAST_WITH_NATIVE_TEMPLATE_KIND + SHOW_BOUND_DIMMER + REAL_MACHINE_EFFECT_POOL_CALL",
+      "arbitrary_name_recovery": false,
+      "semantic_expansion": false,
+      "selective_effect_same_label_reusable_across_groups": false,
+      "test_show_resource_restore": "BOUNDED_RESOURCES_ONLY: COLOR_PRESETS_4.101_4.113 + THREE_NATIVE_TEMPLATE_DIMMER_CHASE_EFFECTS; NO_GEOMETRY_OR_SEQUENCE_WRITE",
+      "color_inventory_discovery": "LIST_PRESET_ALL_MAY_OMIT_TEST_COLORS; ONLY_BOUNDED_DIRECT_4.101_4.113_EXACT_LABEL_READBACK_MAY_AUGMENT_PROFILE",
+      "resource_only_executor_policy": "EXECUTOR_ASSIGNMENT_NOT_REQUIRED_AND_NOT_MODIFIED; current live Executor 2.002 -> Sequence 2 may remain untouched",
+      "preflight_failure_cleanup": "NO_CLEARALL_IF_NO_WRITE_STARTED",
+      "effect_template_kind_evidence": "EXPLICIT_EFFECT_LINE_QTY_ONLY: QTY_NONE=TEMPLATE; POSITIVE_NUMERIC_QTY=SELECTIVE; ABSENT_ZERO_MIXED=UNKNOWN",
+      "generic_list_effect_kind_authority": false,
+      "effect_template_qty_table_format": "grandMA2_3.9: QTY header + Effectline <n> <QTY_VALUE> data column",
+      "test_show_dimmer": "BUILD_001_OBSERVED_SET_DIMMER + CURRENT_SEQUENCE_901_IDENTITY + EXACT_CURRENT_GROUP_MEMBER_SET; selection order may differ and is context, not capability identity",
+      "normal_lean_root_path": "RECOVERS_BOUNDED_TEST_SHOW_COLOR_DIMMER_AND_RESERVED_TEMPLATE_EFFECT_EVIDENCE_BEFORE_PROVIDER_RESOURCE_CONTRACT",
+      "position_application": "UNVERIFIED_NO_CURRENT_GROUP_PRESET_BINDING"
+    },
+    "repeated_song_label_policy": "BASE_LABEL_FIRST; ON_COLLISION_USE_SEQUENCE_SCOPED_AGENT_LABEL; IF_STILL_COLLIDING_APPEND_NEXT_UNIQUE_SUFFIX; DO_NOT_RECALL_PROVIDER",
+    "allocation_policy": {
+      "default": "FIRST_FREE_FROM_FRONT",
+      "rule": "Scan fresh inventory, start at the front of the relevant pool, skip occupied/protected/foreign slots, use the first safe free slot.",
+      "applies_to": [
+        "SEQUENCE",
+        "EXECUTOR",
+        "EFFECT",
+        "TEST_SHOW_COLOR_PRESET",
+        "ISOLATED_TEST_GROUP",
+        "ISOLATED_TEST_TIMECODE"
+      ],
+      "high_numeric_reserve_as_safety": false
+    },
+    "operational_self_heal": {
+      "principle": "LIMIT_DANGEROUS_OUTCOMES_NOT_PROBLEM_SOLVING",
+      "ordinary_collisions": "AUTO_ADVANCE_OR_RENAME_WITHOUT_HUMAN_PROMPT",
+      "canonical_retry": "FREEZE_COMPILE_PASS_CANONICAL_SHOWPLAN_AND_RESUME_BUILDER",
+      "backend_failure_provider_recall": false,
+      "exact_duplicate_verified_resource": "REUSE_LOWEST_SAFE_VERIFIED_ID",
+      "artistic_resource_mismatch": "AT_MOST_ONE_BOUNDED_DESIGNER_DELTA_WHEN_TRULY_ARTISTIC",
+      "hard_stop_only_for": [
+        "PATCH_OR_ADDRESS_WRITE",
+        "FIXTURE_ID_OR_TYPE_WRITE",
+        "FIXTURE_9999",
+        "FOREIGN_OR_PRODUCTION_OBJECT_OVERWRITE",
+        "ARBITRARY_RAW_MA2_TELNET_OR_LUA",
+        "UNAUTHORIZED_DESTRUCTIVE_DELETE",
+        "PAID_PROVIDER"
+      ],
+      "last_regression": {
+        "head": "bcb19de6771b5f0ab18a1a20843e58d5289d7e30",
+        "github_actions_run": 35826992692,
+        "ubuntu": "PASS",
+        "windows": "PASS"
+      }
+    }
+  },
+  "next_major": {
+    "id": "SPATIAL_SYSTEM_VNEXT",
+    "title": "Spatial System vNext",
+    "status": "IMPLEMENTING_FIRST_SLICE",
+    "first_implementation_slice": "SEMANTIC_POSITION_BINDING",
+    "design_docs": [
+      "docs/ZEN_SPATIAL_SYSTEM_VNEXT.md",
+      "docs/ZEN_SPATIAL_SETUP_UX.md",
+      "docs/ZEN_PRODUCTION_WORKFLOW_MODEL.md"
+    ],
+    "boundary": "Do not start Blender, a full Production Model, Audio/Video integration, a complete Spatial UI, or a whole-Show Position rewrite before Core Pipeline Closure review and normal triage.",
+    "umbrella_product": "SHOW_AGENT_CONTROLLER",
+    "current_department_adapter": "LIGHTING_GRANDMA2"
+  },
+  "runtime_checkpoint": {
+    "date": "2026-09-28",
+    "source": "SEMANTIC_POSITION_BINDING_OPERATOR_CAPTURE_001 offline verification",
+    "canonical_code_head_before_slice": "f18550e",
+    "latest_reported_full_suite": "977 tests / OK",
+    "openclaw_plugin_build": "PASS",
+    "openclaw_plugin_tests": "2 / 2 PASS",
+    "git_diff_check": "PASS",
+    "ma2_writes": 0,
+    "note": "No MA Preview, Approval or console mutation occurred. npm install was used only to restore local dev dependencies for plugin validation; no package lockfile was introduced."
+  },
+  "core_pipeline_stabilization": {
+    "id": "CORE_PIPELINE_STABILIZATION_001",
+    "status": "CLOSED_SUCCESS",
+    "closed_date": "2026-09-28",
+    "evidence": "docs/CORE_PIPELINE_STABILIZATION_CLOSURE_001.md",
+    "boundary": "Core end-to-end architecture is closed as stable for the proven Test Show path. This does not close M4 Professional MA2 Implementation as a whole."
+  },
+  "m4_remaining_capability_gaps": [
+    {
+      "id": "EXISTING_EFFECT_REPLACEMENT_CLEAR",
+      "status": "UNVERIFIED_FAIL_CLOSED",
+      "blocks_spatial_vnext_start": false,
+      "review_condition": "A real case requires replacing or clearing an Effect already stored in an existing Cue."
+    },
+    {
+      "id": "TRACKING_CUE_ONLY_BLOCK_UNBLOCK",
+      "status": "CASE_DRIVEN_VERIFICATION_PENDING",
+      "blocks_spatial_vnext_start": false,
+      "review_condition": "A real Show requires one of these native semantics for correct maintainable programming."
+    },
+    {
+      "id": "MATRICKS_SPEED_MASTER_NATIVE_COMPOSITION",
+      "status": "CASE_DRIVEN_VERIFICATION_PENDING",
+      "blocks_spatial_vnext_start": false,
+      "review_condition": "A real artistic/programming case benefits from these native mechanisms."
+    },
+    {
+      "id": "FOCUS_EXECUTE_OPERATOR_HANDOVER",
+      "status": "M5",
+      "blocks_spatial_vnext_start": false,
+      "review_condition": "M4 reaches rehearsal-ready scope."
+    },
+    {
+      "id": "MULTI_CASE_PRODUCTION_VALIDATION",
+      "status": "M6",
+      "blocks_spatial_vnext_start": false,
+      "review_condition": "Multiple real songs, rigs, venues and operator-change cases are available."
+    }
+  ],
+  "product_direction": {
+    "id": "SHOW_AGENT_CONTROLLER",
+    "title": "ZEN Show Agent Controller",
+    "status": "LONG_TERM_DIRECTION_CAPTURED",
+    "owner_decision_date": "2026-09-28",
+    "current_mature_adapter": "LIGHTING_GRANDMA2",
+    "principle": "The product is evolving from a grandMA2-only Agent into a show-wide intelligence/control layer. Shared Production data sits above department-specific verified adapters. Global reasoning must never bypass department deterministic execution and verification boundaries.",
+    "progress_interpretation": {
+      "ma2_execution_core": "APPROX_90_95_PERCENT_OF_ORIGINAL_CORE_ARCHITECTURE",
+      "show_agent_controller": "APPROX_30_40_PERCENT_OF_EXPANDED_VISION",
+      "note": "Planning estimates only; expanded scope does not invalidate completed MA2 work."
+    },
+    "concept": "Virtualize the coordination layer of a large K-pop/touring production into an Agent Control Plane: shared Show understanding above independently verified department adapters.",
+    "not_a_replacement_for": [
+      "grandMA2 / lighting console execution authority",
+      "audio console / DSP execution authority",
+      "video/media-server execution authority",
+      "stage/automation safety systems"
+    ],
+    "virtualization_model": "Virtualize the coordination/control layer of a large K-pop/touring production: shared Show understanding and cross-domain orchestration above independently verified Lighting/Audio/Video/Stage/Timeline adapters. Do not create one unconstrained Agent with direct authority over every physical system.",
+    "current_control_plane_host": {
+      "host": "zen-agent-server",
+      "hardware": "Macmini6,2 (2012 Mac mini)",
+      "os": "Ubuntu 24.04.5 LTS",
+      "validated_on": "2026-09-28",
+      "role": "HOME_PORTABLE_SHOW_AGENT_CONTROLLER",
+      "service": "zen-show-controller.service",
+      "operator_api": "127.0.0.1:8876",
+      "ma_bridge": "127.0.0.1:8877",
+      "authority": "CONTROL_PLANE_ONLY_MA2_WRITES_0",
+      "production_field_host_status": "NOT_GRANTED"
+    },
+    "control_plane_authority_boundary": "Control-plane hosting, code intelligence, state/cache, remote administration and loopback orchestration do not imply production MA execution authority. Preview/Approval/verified department adapters remain mandatory."
+  }
+}
