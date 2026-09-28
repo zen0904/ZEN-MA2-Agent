@@ -15,17 +15,18 @@
   "next_acceptance_gate": {
     "id": "SEMANTIC_POSITION_BINDING_LIVE_OPERATOR_ACCEPTANCE_001",
     "classification": "REQUIRED",
-    "status": "READY",
-    "why_it_matters": "The operator capture surface is implemented, but the deployed runtime still needs to prove the new typed tool is reachable against the current live Show without causing MA mutation. Actual semantic naming remains a human decision.",
+    "status": "BLOCKED_RUNTIME_VOLUME_ABSENT",
+    "why_it_matters": "The semantic operator surface is implemented, but the live Windows Field Core currently runs from the E:\\ZEN_MA2_AGENT runtime volume and that volume is absent. The still-running 8876 process remains MA READY, so it must not be restarted merely to close this gate. A committed C-drive fallback runtime self-checks with MA2_WRITES=0 but a parallel temporary instance cannot establish a second MA session while the live Field Core is active.",
     "blocks_current_milestone": true,
     "dependencies": [
-      "commit and deploy the offline-verified semantic operator surface",
-      "Field API remains localhost-first and MA remains READY",
-      "zen.position.semantic.bindings returns current verified candidates with MA2_WRITES=0",
-      "human explicitly chooses semantic target names before zen.position.semantic.bind is used",
+      "restore the E:\\ZEN_MA2_AGENT runtime volume OR explicitly authorize a controlled cutover from the live 8876 process to the validated C-drive fallback runtime",
+      "preserve the currently healthy live 8876 MA READY session until a replacement runtime is proven ready",
+      "after cutover, verify the deployed runtime exposes zen.position.semantic.bindings",
+      "perform fresh read-only Show discovery with MA READY and MA2_WRITES=0",
+      "human explicitly chooses semantic target names before any semantic binding mutation",
       "no automatic Preset-label-to-semantic inference"
     ],
-    "next_review_condition": "Deploy the committed runtime, perform the read-only semantic binding inventory call, and verify current Show identity/candidates. Stop before recording a semantic mapping unless the operator explicitly names the target to assign."
+    "next_review_condition": "When the primary E runtime volume is restored or a controlled Field Core cutover is explicitly authorized, bring up exactly one live MA session, verify MA READY, call zen.position.semantic.bindings read-only, and stop before recording any semantic mapping unless the operator explicitly names the target."
   },
   "human_review_decisions": [
     {
@@ -653,6 +654,26 @@
         "MA2_WRITES_ZERO"
       ],
       "limitations": "This acceptance proves typed remote planning/Preview delegation only. It does not authorize or expose cross-host zen.approve, semantic binding mutation, raw MA commands, shell access, generic HTTP proxying or any MA2 write. Human approval remains outside the cross-host surface and any future execution still requires the normal fresh ZEN approval path on an explicitly authorized local execution surface."
+    },
+    {
+      "id": "SEMANTIC_POSITION_BINDING_LIVE_OPERATOR_ACCEPTANCE_ATTEMPT_001",
+      "source": "Windows live runtime inspection 2026-09-29; temporary C-drive Field Core on 127.0.0.1:9876/9877",
+      "status": "BLOCKED_RUNTIME_VOLUME_ABSENT_NO_LIVE_WRITE",
+      "outcomes": [
+        "LIVE_8876_FIELD_CORE_ONLINE_MA_READY",
+        "LIVE_8876_RUNTIME_ORIGIN_E_DRIVE",
+        "E_RUNTIME_VOLUME_CURRENTLY_ABSENT",
+        "C_DRIVE_SEMANTIC_RUNTIME_COMMIT_8CC9EA6_AVAILABLE",
+        "C_DRIVE_SELF_CHECK_PASS_MA2_WRITES_ZERO",
+        "TEMP_OPERATOR_9876_AND_BRIDGE_9877_STARTED_LOOPBACK_ONLY",
+        "TEMP_BRIDGE_ONLINE_MA_CONNECTION_DISCONNECTED",
+        "SEMANTIC_BINDINGS_TOOL_REACHED_AND_REJECTED_WITH_READ_ONLY_SHOW_DISCOVERY_REQUIRED",
+        "TEMP_RUNTIME_STOPPED",
+        "ORIGINAL_8876_REMAINED_MA_READY",
+        "WINDOWS_START_SCRIPT_HARDENED_TO_SELECT_C_FALLBACK_BEFORE_TOUCHING_EXISTING_8876",
+        "MA2_WRITES_ZERO"
+      ],
+      "limitations": "No live semantic binding inventory was accepted because the temporary fallback runtime did not have an MA READY session. The active MA READY Field Core was intentionally not restarted because its original E-drive runtime volume is absent. This result is a fail-closed blocker record, not semantic mapping evidence and not authorization to restart or write MA."
     }
   ],
   "backlog": [
