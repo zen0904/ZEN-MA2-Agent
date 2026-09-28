@@ -3,28 +3,28 @@
   "source_of_truth": "REPOSITORY_COMMITTED_STATE",
   "current_milestone": {
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
-    "title": "Professional MA2 Implementation",
-    "status": "ACTIVE",
-    "active_objective": "MAINLINE_DYNAMIC_RESOURCE_CONVERGENCE_001 is offline-complete. The latest mainline combines the v0.2 full fixture-capability artistic path with fail-closed existing-Cue hardening and Sequence 302 resource-authoring approval guards. Existing COLOR/FOCUS/BEAM/GOBO Presets, verified DIMMER_CHASE Effects and explicit Position can be represented on existing Cues only through verified route-scoped grammars. Existing Effect replacement/clear remains unverified and fails closed. Approval-time Sequence 302 revalidation now includes exact Executor assignment plus direct Effect 2500-2502 pool/line emptiness checks. Windows suite is 954 tests / OK; MA2_WRITES=0 during convergence. The next dynamic gate is deployment to the authenticated Field Core and a fresh native-evidence Preview only; Action 8a5d699c36fa and legacy Action 97d3a82f1220 remain forbidden."
+    "title": "Professional MA2 Implementation / Core Pipeline Stabilization Closure",
+    "status": "ACTIVE_CLOSURE",
+    "active_objective": "CORE_PIPELINE_STABILIZATION_CLOSURE_001. The core path from provider/OC reasoning through fresh MA evidence, capability/resource mapping, deterministic compile, Preview, explicit human Approval, MA2 write, native export, post-write verification and durable handoff has now been exercised on real Sequence 302. Owner continuity evidence dated 2026-09-28 records Action 9d69eca230c8 / Preview 860dad28753fc35c as successfully written and forensically verified without replay. Existing Effect replacement/clear remains UNVERIFIED and fail-closed. The immediate task is documentation/control-state closure review only; do not start Spatial vNext implementation or perform new MA writes until the remaining M4 closure criteria are explicitly reviewed."
   },
   "last_closed_task": {
-    "id": "MAINLINE_DYNAMIC_RESOURCE_CONVERGENCE_001",
-    "status": "OFFLINE_CONVERGED_HARDENED_LIVE_NATIVE_PREVIEW_REQUIRED_MA2_WRITES_ZERO",
-    "result": "Unified current main fixture-capability/resource authoring work with existing-Cue safety hardening, exact subfixture preservation, Effect attribute-family gating, route-scoped provider execution, fail-closed existing-Effect mutation, Sequence302 Executor revalidation, and direct reserved-Effect approval-time emptiness checks. Full Windows suite passes 954 tests. MA2_WRITES=0 during convergence."
+    "id": "EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001",
+    "status": "REAL_MACHINE_POSTWRITE_FORENSIC_VERIFIED_CLOSED",
+    "result": "Owner continuity evidence dated 2026-09-28 records real MA2 execution of Action 9d69eca230c8 / Preview 860dad28753fc35c against Sequence 302, Cues 1-29, Executor 2.8. Native post-write forensic verification reports Position 464/464 PASS, Effect 232/232 PASS, Color Preset 200/200 PASS, Cue metadata 29/29 PASS, unchanged Sequence 302 identity and Executor assignment, unchanged Show identity, MA remaining READY, Fixture 9999 untouched, and no Patch/Address/Fixture identity/type mutation. Historical false-negative Action state must not be repaired by replaying the MA write."
   },
   "next_acceptance_gate": {
-    "id": "CURRENT_SHOW_SPATIAL_EVIDENCE",
-    "classification": "ACTIVE_PARTIAL_EVIDENCE",
-    "status": "STAGE_VIEW_CAPTURE_AVAILABLE_SEMANTIC_CALIBRATION_STILL_REQUIRED",
-    "why_it_matters": "The missing human-visible Stage View image is now available from the current MA2 process, but visual pixels alone do not prove exact physical geometry, XYZ sign mapping, performer zones or fixture capability profiles.",
+    "id": "CORE_PIPELINE_CLOSURE_REVIEW_001",
+    "classification": "REQUIRED",
+    "status": "READY_FOR_REVIEW",
+    "why_it_matters": "The real-machine Seq302 dynamic write path is now evidenced as successful, so the next truthful step is to review what, if anything, remains to close the current Core Pipeline Stabilization milestone before promoting Spatial System vNext from design capture into implementation.",
     "blocks_current_milestone": true,
     "dependencies": [
-      "live Screen 6 Stage View capture bound to the current running grandMA2 process",
-      "operator/venue orientation evidence for any physical semantic claim",
-      "fingerprint-bound structured geometry and capability evidence",
-      "Vision observations remain non-authoritative and zero-write"
+      "review current M4 roadmap acceptance criteria against the latest committed code and Seq302 forensic evidence",
+      "preserve existing fail-closed boundaries, especially unverified existing Effect replacement/clear",
+      "confirm no remaining core blocker requires another MA write",
+      "keep Spatial vNext documents as design/backlog only until closure review completes"
     ],
-    "next_review_condition": "Bind the captured Stage View evidence to the current Show/fingerprint and collect only the missing operator/venue semantics needed for a bounded spatial revision. No automatic repair, Position merge replay or MA2 writeback follows."
+    "next_review_condition": "Perform a read-only closure audit of the current core milestone. If no remaining blocker invalidates closure, record the milestone closure decision and then promote only SEMANTIC_POSITION_BINDING as the first bounded Spatial vNext implementation slice."
   },
   "human_review_decisions": [
     {
@@ -80,6 +80,21 @@
         "ROTATIONS_EQUAL_TO_SCANNED_GEOMETRY_64_OF_64"
       ],
       "limitations": "The completed SHEESH_CURRENT_SHOW_REDESIGN_001 run and its six role artifacts remain unchanged. The old status=COMPLETE describes technical execution only; the owner rejected the design and it is not writeback-approved."
+    },
+    {
+      "id": "SPATIAL_SYSTEM_VNEXT_DIRECTION_001",
+      "source": "Owner continuity handoff 2026-09-28",
+      "status": "APPROVED_FOR_DESIGN_CAPTURE_ONLY",
+      "outcomes": [
+        "CAPTURE_SPATIAL_PRODUCTION_AND_UX_DIRECTION_IN_GIT_BEFORE_IMPLEMENTATION",
+        "KEEP_INCOMPLETE_DATA_USABLE_WITH_LOWER_SPATIAL_CONFIDENCE",
+        "KEEP_OC_ARTISTIC_REASONING_FLEXIBLE_AND_MA_EXECUTION_DETERMINISTIC",
+        "USE_STAGE_CENTRIC_SEMANTIC_TARGETS_AND_PRESET_LINKED_POSITION_ARCHITECTURE",
+        "FIRST_FUTURE_IMPLEMENTATION_SLICE_IS_SEMANTIC_POSITION_BINDING",
+        "BLENDER_FULL_PRODUCTION_MODEL_AUDIO_VIDEO_AND_FULL_UI_REMAIN_DEFERRED",
+        "NO_NEW_MA_WRITE_FOR_THIS_CAPTURE_TASK"
+      ],
+      "limitations": "This approval captures design direction and backlog only. It does not authorize Spatial vNext implementation, a new live Preview, a live MA write, Patch/Address/Fixture identity/type changes, or replay of any historical Action."
     }
   ],
   "evidence_results": [
@@ -539,6 +554,27 @@
         "MA2_WRITES_ZERO"
       ],
       "limitations": "No live Preview or live MA2 write was produced by convergence. CURRENT_SHOW_SPATIAL_EVIDENCE remains partial and any future Action still requires fresh native evidence plus explicit owner approval."
+    },
+    {
+      "id": "SEQ302_DYNAMIC_PROGRAM_POSTWRITE_FORENSIC_001",
+      "source": "Owner continuity handoff 2026-09-28; Action 9d69eca230c8; Preview 860dad28753fc35c",
+      "status": "CLOSED_SUCCESS_OWNER_REPORTED_NATIVE_FORENSIC_VERIFICATION",
+      "outcomes": [
+        "SEQUENCE_302_CUES_1_29_WRITTEN",
+        "EXECUTOR_2_8_REMAINS_ASSIGNED_TO_SEQUENCE_302",
+        "POSITION_464_OF_464_PASS",
+        "EFFECT_232_OF_232_PASS",
+        "COLOR_PRESET_200_OF_200_PASS",
+        "CUE_METADATA_29_OF_29_PASS",
+        "SEQUENCE_IDENTITY_UNCHANGED",
+        "SHOW_IDENTITY_PRE_EQUALS_POST",
+        "MA_REMAINED_READY",
+        "FIXTURE_9999_UNTOUCHED",
+        "PATCH_ADDRESS_FIXTURE_IDENTITY_FIXTURE_TYPE_UNTOUCHED",
+        "NO_DELETE_OR_ROLLBACK",
+        "DO_NOT_REPLAY_ACTION"
+      ],
+      "limitations": "This record canonicalizes the owner-provided continuity evidence into repository control state. The historical ActionRecord may still show FAILED because an older verifier produced a false negative. Do not change that historical state by replaying the write. Position in this test used raw PAN/TILT and is not the final Spatial Position architecture. Existing Effect replacement/clear remains unverified."
     }
   ],
   "backlog": [
@@ -708,16 +744,17 @@
     },
     {
       "id": "STAGE_SEMANTIC_MODEL",
-      "classification": "HIGH_LEVERAGE_FUTURE",
-      "milestone": "M3_SHOW_RIG_ADAPTATION",
-      "status": "RECORDED_NON_BLOCKING",
-      "why_it_matters": "Lets artistic intent target verified stage zones while deterministic geometry resolves implementation instead of asking an LLM to guess Pan/Tilt.",
+      "classification": "HIGH_LEVERAGE",
+      "milestone": "SPATIAL_SYSTEM_VNEXT",
+      "status": "DESIGNING",
+      "why_it_matters": "Maps verified stage/world evidence into semantic Stage Surfaces, point targets and world-vector targets so the artistic layer can reason spatially without guessing PAN/TILT.",
       "blocks_current_milestone": false,
       "dependencies": [
-        "verified current-Show geometry",
-        "venue/stage coordinate mapping"
+        "stage-centric coordinate frame",
+        "audience-direction anchor",
+        "verified or explicitly partial geometry/calibration provenance"
       ],
-      "next_review_condition": "Show-bound coordinate semantics are independently established for a real case."
+      "next_review_condition": "Converge with SEMANTIC_POSITION_BINDING after Core Pipeline Closure; do not launch as a separate full-scene project."
     },
     {
       "id": "SONG_STRUCTURE_TIMELINE",
@@ -732,9 +769,9 @@
       "id": "EXISTING_CUE_DYNAMIC_PROGRAM_MERGE_001",
       "classification": "REQUIRED",
       "milestone": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
-      "status": "OFFLINE_CONVERGED_HARDENED_LIVE_NATIVE_PREVIEW_REQUIRED_FRESH_AUTHENTICATED_EVIDENCE",
-      "why_it_matters": "The canonical path now combines full fixture-capability intent, verified existing Preset/Effect reuse, explicit Position and hardened exact-scope preservation without broadening raw MA authority. Existing Effect replacement/clear remains fail-closed. Live acceptance still requires fresh authenticated native evidence.",
-      "blocks_current_milestone": true,
+      "status": "REAL_MACHINE_POSTWRITE_FORENSIC_VERIFIED_CLOSED",
+      "why_it_matters": "The canonical existing-Cue dynamic path has now crossed Preview/Approval/write/native-export verification on Sequence 302 with owner-reported full forensic PASS. It remains a closed core capability unless a relevant Builder/verifier/MA2-version change invalidates the evidence.",
+      "blocks_current_milestone": false,
       "dependencies": [
         "current Sequence 302 native pre-export and exact Cue set",
         "fresh Group 1 exact membership and FixtureType capability evidence",
@@ -746,7 +783,76 @@
         "fresh Group-bound existing Preset identity/type/application and exact FixtureType attribute evidence",
         "separate bounded real-machine proof before any existing Effect replacement or clear is allowed"
       ],
-      "next_review_condition": "Deploy canonical converged main to the authenticated Field Core and generate Preview only for existing Sequence 302. Preview must show per-Cue selected existing Presets/Effects or preserved Effect state, Position pattern/range, used/optional/intentionally-unused/requested-unexecutable capability families, exact preservation fingerprints, and MA2_WRITES=0. Do not approve automatically."
+      "next_review_condition": "Reopen only for a relevant implementation/version change, or for a separately bounded grammar such as existing Effect replacement/clear that is still unverified."
+    },
+    {
+      "id": "SEMANTIC_POSITION_BINDING",
+      "classification": "HIGH_LEVERAGE",
+      "milestone": "SPATIAL_SYSTEM_VNEXT",
+      "status": "DESIGNING",
+      "why_it_matters": "Replaces provider-facing raw PAN/TILT dependence with semantic spatial targets resolved to verified, editable Position Preset references or bounded derived solutions.",
+      "blocks_current_milestone": false,
+      "dependencies": [
+        "Core Pipeline Closure review",
+        "verified current-Show Position resource/binding evidence",
+        "stage-centric target vocabulary",
+        "stale-evidence invalidation and Preview-only first integration"
+      ],
+      "next_review_condition": "After Core Pipeline Closure, define the smallest typed Semantic Target -> Target Binding -> Position Preset Reference contract and acceptance tests. No broad UI or Blender work."
+    },
+    {
+      "id": "SPATIAL_SETUP_WIZARD",
+      "classification": "HIGH_LEVERAGE",
+      "milestone": "SPATIAL_SYSTEM_VNEXT",
+      "status": "CAPTURED",
+      "why_it_matters": "Provides a practical small-show-to-large-show setup path without requiring operators to edit backend JSON.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "Promote only after Semantic Position Binding establishes the minimum data contract required by setup UX."
+    },
+    {
+      "id": "ADAPTIVE_CALIBRATION_MODEL",
+      "classification": "HIGH_LEVERAGE",
+      "milestone": "SPATIAL_SYSTEM_VNEXT",
+      "status": "CAPTURED",
+      "why_it_matters": "Lets ZEN request calibration evidence only where residual spatial error is high instead of forcing a fixed full recalibration.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "Define only after the semantic target/binding model exposes measurable residuals and stale-region invalidation."
+    },
+    {
+      "id": "PRESET_LINKED_POSITION_PROGRAMMING",
+      "classification": "HIGH_LEVERAGE",
+      "milestone": "SPATIAL_SYSTEM_VNEXT",
+      "status": "CAPTURED",
+      "why_it_matters": "Preserves native MA editability so onsite Position corrections can propagate through linked Cues instead of embedding raw PAN/TILT everywhere.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "Fold into Semantic Position Binding implementation rather than starting as a separate broad rewrite."
+    },
+    {
+      "id": "FULL_PRODUCTION_MODEL",
+      "classification": "RESEARCH_UNKNOWN",
+      "milestone": "FUTURE",
+      "status": "CAPTURED",
+      "why_it_matters": "Stage Geometry, Surfaces, Performer Zones, Timeline and Video Surfaces may become shared production data, but ZEN MA2 Agent should not become a general AV Production OS prematurely.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "Revisit only after Spatial vNext proves a useful lighting-specific shared-world boundary."
+    },
+    {
+      "id": "BLENDER_GLTF_MVR_PIPELINE",
+      "classification": "RESEARCH_UNKNOWN",
+      "milestone": "FUTURE",
+      "status": "CAPTURED",
+      "why_it_matters": "Large productions may benefit from rich scene interchange with hierarchy, transforms and metadata; glTF/GLB is a candidate and MVR requires separate evaluation.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "Revisit after Semantic Position Binding and basic Spatial Setup are verified. Do not make it a prerequisite for small/medium shows."
+    },
+    {
+      "id": "CROSS_DEPARTMENT_SHOW_MODEL",
+      "classification": "RESEARCH_UNKNOWN",
+      "milestone": "FUTURE",
+      "status": "CAPTURED",
+      "why_it_matters": "Shared production facts should not be encoded as lighting-exclusive data if future Audio/Video/Stage consumers may need them.",
+      "blocks_current_milestone": false,
+      "next_review_condition": "Keep as data-architecture guidance only until an actual cross-department use case exists."
     }
   ],
   "recent_foundation": {
@@ -773,7 +879,23 @@
     "fixture_9999": "UNTOUCHED",
     "zen_style_profile": "DEFERRED",
     "real_venue_validation": "WAIT_FOR_REAL_CASE",
-    "ma3_builder": "NOT_STARTED"
+    "ma3_builder": "NOT_STARTED",
+    "existing_effect_replacement": "UNVERIFIED_FAIL_CLOSED",
+    "raw_llm_to_ma": "PROHIBITED",
+    "ma_write_requires": "PREVIEW_PLUS_EXPLICIT_HUMAN_APPROVAL",
+    "postwrite_authority": "NATIVE_MA_SEQUENCE_EXPORT",
+    "forbidden_replay_actions": [
+      "9d69eca230c8",
+      "8a5d699c36fa",
+      "a9dd416ef92b",
+      "97d3a82f1220",
+      "c9190103c3b5",
+      "a15f0b9ac6a1",
+      "6e6dee7bec24",
+      "1b9505bf89cb",
+      "57e27e342393",
+      "2e1428886779"
+    ]
   },
   "design_mode_policy": {
     "default": "LEAN_SINGLE_DESIGNER",
@@ -883,5 +1005,25 @@
         "windows": "PASS"
       }
     }
+  },
+  "next_major": {
+    "id": "SPATIAL_SYSTEM_VNEXT",
+    "title": "Spatial System vNext",
+    "status": "DESIGN_CAPTURED_NOT_IMPLEMENTING",
+    "first_implementation_slice": "SEMANTIC_POSITION_BINDING",
+    "design_docs": [
+      "docs/ZEN_SPATIAL_SYSTEM_VNEXT.md",
+      "docs/ZEN_SPATIAL_SETUP_UX.md",
+      "docs/ZEN_PRODUCTION_WORKFLOW_MODEL.md"
+    ],
+    "boundary": "Do not start Blender, a full Production Model, Audio/Video integration, a complete Spatial UI, or a whole-Show Position rewrite before Core Pipeline Closure review and normal triage."
+  },
+  "runtime_checkpoint": {
+    "date": "2026-09-28",
+    "source": "Owner continuity handoff",
+    "canonical_code_head_before_docs_capture": "529572d2e598c47df584ed8ec312c87525bac02c",
+    "runtime_commit_before_docs_capture": "529572d2e598c47df584ed8ec312c87525bac02c",
+    "latest_reported_full_suite": "966 tests / OK",
+    "note": "The 966-test result predates this documentation/control-only capture. No code path was changed by the capture and the suite was not rerun here."
   }
 }
