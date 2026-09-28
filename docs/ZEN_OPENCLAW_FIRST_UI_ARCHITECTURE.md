@@ -58,43 +58,38 @@ An OpenClaw crash or UI failure must not directly disable:
 
 OpenClaw is an adapter and operator surface, not the authority that writes directly to MA2.
 
-## Intended topology
+## Current validated topology
 
 ```text
-Operator-visible Windows machine
-└─ OpenClaw Windows Hub
-   ↕
-Headless OpenClaw Gateway host
-└─ ZEN OpenClaw integration adapter
-   ↕
-ZEN Field Node API / control plane
-   ├─ MA Bridge
-   ├─ Watchdog
-   ├─ Safety
-   ├─ Resolver
-   ├─ Builder
-   ├─ Worker Router
-   ├─ Artifact Store
-   └─ Show State
-        ↕
- authenticated private network later
-        ↕
-Primary AI Workers (headless)
+Operator clients
+├─ iPhone / mobile OpenClaw client
+└─ Windows Tray / CLI as remote clients
+          ↕ Tailscale HTTPS
+Mac mini `zen-agent-server`
+├─ OpenClaw Gateway 2026.9.4
+├─ ZEN OpenClaw integration adapter
+├─ ZEN Show Agent Controller
+├─ CBM / state / cache / recovery
+└─ loopback ZEN control surfaces
+          ↕ typed private adapter links
+Windows `DESKTOP-AA2GR39`
+├─ LIGHTING_GRANDMA2 adapter / Field Core
+├─ grandMA2 onPC
+├─ native export / GUI / Stage View evidence
+└─ deterministic MA verification
+          ↕
+Primary AI Workers when available
 ```
 
-The Windows machine the operator watches should use the native Hub as the
-human-facing surface. It is not required to host the standalone OpenClaw CLI or
-Gateway. Gateway placement is a separate deployment decision.
+The 2012 Mac mini is now the validated Home/Portable OpenClaw Gateway + Show
+Agent Controller host. This supersedes the earlier Windows-Hub/headless-Gateway
+placement proposal. The Windows machine is no longer a Gateway host; it remains
+the MA-local lighting adapter and may run only remote OpenClaw clients.
 
-Field hardware is intentionally not fixed to one machine.
-
-Current Gateway / Field Host candidates include only hosts the operator
-actually intends to use and that can be verified against the Field Core
-requirements. The 2012 Mac mini is explicitly excluded from current
-consideration. The operator-visible Windows machine remains Hub-only. Worker A
-is explicitly permitted as a co-host candidate for Gateway + ZEN Field Core +
-Worker runtime, but D2.6 is blocked until that physical machine returns and
-real OS/network/service verification can be performed.
+Field hardware is still intentionally not fixed to one machine. Selecting the
+Mini as the control-plane/OpenClaw host does not promote it to production MA
+write authority. The department adapter beside grandMA2 retains execution and
+verification authority, and heavy AI Workers remain non-authoritative compute.
 
 Primary AI compute is provided by two dedicated Worker hosts. Known hardware
 currently includes one 16 GB / GTX 1650 4 GB system and another 16 GB system
@@ -224,22 +219,21 @@ Small purpose-built views remain acceptable if OpenClaw genuinely cannot express
 
 ## Integration strategy
 
-The preferred sequence is:
+The current validated sequence is:
 
-1. Install the native OpenClaw Windows Hub on the operator-visible Windows machine.
-2. Select and prepare the headless Gateway / Field Host separately.
-3. Record the exact OpenClaw/Gateway version on the host that actually runs the Gateway.
-4. Validate Hub-to-Gateway and plugin capabilities for that exact tested version.
-5. Pin the tested version for production compatibility.
-6. Build a thin `integrations/openclaw/` adapter/plugin on the Gateway side.
-7. Connect it to the stable versioned ZEN local API.
-8. Render real ZEN status through the Windows Hub.
-9. Add safe typed actions gradually.
-10. Keep MA2 writes disabled until the independent Safety/Resolver/Builder path is verified.
+1. Host OpenClaw Gateway on `zen-agent-server` with the official OpenClaw service.
+2. Keep the Gateway loopback-bound and publish its operator endpoint with managed Tailscale Serve.
+3. Keep ZEN Controller full Operator API on Mini loopback only.
+4. Install `zen-ma2` on the Mini and route controller tools to local ZEN.
+5. Route MA-local tools through Mini loopback `18878` to the Windows typed lighting facade.
+6. Keep grandMA2 execution, native exports and visual evidence on Windows.
+7. Use Windows/iPhone OpenClaw surfaces as remote clients of the Mini Gateway.
+8. Add safe typed department tools gradually; never add generic shell/raw MA transport.
+9. Preserve explicit human Preview/Approval and post-write verification semantics.
+10. Keep `MA2_WRITES=0` for integration acceptance until a separately approved production write test.
 
-Do not install a standalone CLI on the operator Windows machine solely to
-satisfy a version-check step. Version verification belongs to the component
-that actually hosts the Gateway/runtime.
+The earlier Windows-hosted Gateway remains historical development evidence, not
+the current deployment topology.
 
 ## Versioning rule
 
@@ -260,24 +254,29 @@ As of this decision:
 
 ```text
 OPENCLAW_FIRST_UI=IMPLEMENTED
-OPENCLAW_WINDOWS_HUB=VERIFIED_2026.9.4
-OPENCLAW_DEV_GATEWAY=WINDOWS_LOOPBACK_127.0.0.1_18789
-OPENCLAW_PRODUCTION_GATEWAY_HOST=STILL_SEPARATE_DEPLOYMENT_DECISION
+OPENCLAW_GATEWAY_HOST=ZEN_AGENT_SERVER
+OPENCLAW_GATEWAY_VERSION=2026.9.4
+OPENCLAW_GATEWAY_LOOPBACK=127.0.0.1_18789
+OPENCLAW_GATEWAY_REMOTE_SURFACE=TAILSCALE_SERVE_HTTPS
+WINDOWS_OPENCLAW_GATEWAY=RETIRED
 ZEN_OPENCLAW_PLUGIN=IMPLEMENTED_V0.1.0
-ZEN_OPERATOR_API=127.0.0.1_8876
+ZEN_CONTROLLER_API=127.0.0.1_8876_LOOPBACK_ONLY
+ZEN_LIGHTING_OPERATOR_PROXY=127.0.0.1_18878
+WINDOWS_LIGHTING_TYPED_FACADE=TAILSCALE_18878
 ZEN_NATIVE_SURFACE_ADAPTATION=ENABLED_BY_TYPED_TOOL_CONTRACTS
 OPENCLAW_TO_ZEN_STATUS_E2E=PASS
-OPENCLAW_TO_ZEN_MA_VISUAL_E2E=PASS
+OPENCLAW_TO_REMOTE_ZEN_MA_STATUS_E2E=PASS
 MA2_BACKGROUND_WINDOW_CAPTURE=PRINTWINDOW_VERIFIED
-VISION_OBSERVATION_AUTHORITY=READ_ONLY_NO_TOOLS_NO_MA_WRITES
 MA2_HEADLESS_AUTO_CONNECT=READY_VERIFIED
 FULL_CUSTOM_ZEN_FRONTEND=NOT_PLANNED
 RAW_OPENCLAW_TO_MA_COMMAND_AUTHORITY=NO
+MA2_WRITES=0
 ```
 
-The current Windows development host has now passed local plugin loading,
-Field Core/MA status, and read-only MA-window visual E2E verification. Production
-Gateway placement remains a separate deployment decision.
+The earlier Windows-local OpenClaw verification remains valid historical
+evidence for the plugin and MA-local adapter. Gateway authority/state has since
+migrated to the Mini without moving grandMA2 execution authority away from the
+Windows lighting adapter.
 
 ## Non-goals of this decision
 

@@ -1,0 +1,21 @@
+[Unit]
+Description=ZEN Mini loopback proxy to Windows lighting operator facade
+After=network-online.target tailscaled.service
+Wants=network-online.target tailscaled.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/zen/ZEN-MA2-Agent
+ExecStart=/opt/zen/venv/bin/python /opt/zen/ZEN-MA2-Agent/deploy/ubuntu/lighting-operator-proxy.py --listen-host 127.0.0.1 --listen-port 18878 --peer desktop-aa2gr39 --peer-port 18878
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/zen-agent
+
+[Install]
+WantedBy=multi-user.target

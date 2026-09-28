@@ -6,39 +6,40 @@ This document records a possible next-stage deployment model for ZEN MA2 Agent. 
 
 ## 1. Core idea
 
-The operator-facing Windows machine is the visible control surface and uses the
-OpenClaw Windows Hub. The ZEN Field/Gateway runtime may live on a separate
-headless host. Heavier AI compute remains on one or more headless Primary AI
-Workers.
+**Deployment update 2026-09-28:** the earlier Windows-Hub/headless-Gateway
+proposal below has now converged on a validated host split. The Mac mini
+`zen-agent-server` hosts OpenClaw Gateway + ZEN Show Agent Controller. The
+Windows machine remains the MA-local `LIGHTING_GRANDMA2` adapter/evidence host
+and may act only as a remote OpenClaw client. Heavier AI compute remains on one
+or more headless Primary AI Workers.
 
 ```text
-Venue / field
+Operator clients
+- iPhone / mobile OpenClaw
+- Windows Tray / CLI remote client
+        ↕ Tailscale HTTPS
 
- Operator Windows machine
- - OpenClaw Windows Hub
- - visible UI only
+Mac mini `zen-agent-server`
+- OpenClaw Gateway
+- ZEN Show Agent Controller
+- request router / show-state cache
+- knowledge / artifact cache
+- logs / telemetry / recovery
+        ↕ typed private adapter links
+
+Windows `DESKTOP-AA2GR39`
+- LIGHTING_GRANDMA2 Field Core
+- MA Bridge / Safety / Resolver / Builder
+- grandMA2 onPC
+- native evidence / deterministic verification
         ↕
- Headless Gateway / ZEN Field Node
- selected host / hardware TBD
- - OpenClaw Gateway
- - MA Bridge
- - Watchdog
- - Safety
- - Resolver / Builder
- - request router
- - show-state cache
- - knowledge / artifact cache
- - logs / telemetry
-    ↕
- Internet / private overlay network
-    ↕
-Home
+Home / remote compute
 
- AI Worker A
- DDR3 PC / 16 GB RAM / GTX 1650 4 GB
+AI Worker A
+DDR3 PC / 16 GB RAM / GTX 1650 4 GB
 
- AI Worker B
- DDR3 PC / 16 GB RAM / second older GPU (exact model TBD)
+AI Worker B
+DDR3 PC / 16 GB RAM / second older GPU (exact model TBD)
 ```
 
 The two Worker hosts are the primary heavy-compute tier for ZEN AI inference.
@@ -55,9 +56,10 @@ The Field Node role is not assigned permanently to one chassis.
 
 Current decision:
 
-- the operator-visible Windows machine is Hub-only and is not the Gateway / Field Host;
-- the 2012 Mac mini (`zen-agent-server`) is now validated as the Home/Portable **Show Agent Controller control-plane host**;
-- that control-plane selection does not by itself make the Mac mini the production Gateway / Field Host and does not grant MA write authority;
+- the 2012 Mac mini (`zen-agent-server`) is validated as the Home/Portable **OpenClaw Gateway + Show Agent Controller control-plane host**;
+- the operator-visible Windows machine is the MA-local lighting adapter/evidence host and no longer hosts OpenClaw Gateway;
+- Windows Tray/CLI may remain remote clients of the Mini Gateway;
+- that control-plane selection does not by itself make the Mac mini the production MA execution host and does not grant direct MA write authority;
 - Worker A/B remain primary AI compute;
 - Worker A is explicitly allowed to co-host OpenClaw Gateway + ZEN Field Core +
   Worker runtime if real host checks pass;
@@ -153,11 +155,11 @@ The Field Node should host components that must remain available beside the cons
 - optional local Web/API used from phone, tablet, or laptop
 
 The Field Node must not require a graphical desktop. Headless Ubuntu managed by
-systemd and SSH is one valid target; the current Mac may also host the role
-when appropriate. The operator-visible Windows machine is expected to use the
-OpenClaw Windows Hub rather than serving as the required CLI/Gateway host.
-OpenClaw remains the primary operator surface, so core logic must not depend on
-a local desktop GUI.
+systemd and SSH is the validated control-plane pattern on the current Mini.
+OpenClaw Gateway also runs headlessly there using its official systemd-user
+service. The operator-visible Windows machine remains a remote client and
+lighting adapter host. OpenClaw remains the primary operator surface, so core
+logic must not depend on a local desktop GUI.
 
 ## 5. What belongs on Home AI Workers
 
@@ -482,4 +484,3 @@ Home compute accelerates ZEN.
 Home compute is never required for field safety/core operation.
 ```
 
-No implementation should begin solely because this file exists. Future work should first confirm the second GPU, remote-network constraints, desired offline behavior, and whether this distributed model still offers enough practical benefit compared with a single stronger portable inference machine.

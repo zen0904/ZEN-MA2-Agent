@@ -10,13 +10,14 @@ host for the ZEN Show Agent Controller control plane.
 
 This role includes:
 
-- loopback Operator API;
+- OpenClaw Gateway 2026.9.4 as the primary operator hub/runtime;
+- loopback ZEN Operator API;
 - loopback MA Bridge process boundary;
 - show/controller state and cache;
 - Codebase Memory MCP structural code intelligence;
 - remote administration / recovery;
 - logs, health and lifecycle checkpoints;
-- future show-wide orchestration that remains above department adapters.
+- show-wide orchestration above independently verified department adapters.
 
 This role explicitly does **not** grant production MA execution authority.
 During integration, `MA2_WRITES=0` remains required.
@@ -55,26 +56,48 @@ Production LAN used by show hardware.
 
 ## Runtime
 
-Installed host service:
+Installed host services include:
 
 ```text
 zen-show-controller.service
+zen-controller-readonly-facade.service
+zen-lighting-operator-proxy.service
+OpenClaw official systemd-user gateway service
 ```
 
-Validated endpoints:
+Validated local endpoints:
 
 ```text
-Operator API  127.0.0.1:8876
-MA Bridge     127.0.0.1:8877
+OpenClaw Gateway            127.0.0.1:18789
+ZEN Controller Operator API 127.0.0.1:8876
+MA Bridge boundary          127.0.0.1:8877
+Controller read-only facade 127.0.0.1:18876
+Lighting operator proxy     127.0.0.1:18878
 ```
 
-The controller Operator API remains loopback-only. Tailscale Serve publishes
-its TCP 8876 only inside the authenticated tailnet. The Windows lighting host
-does **not** publish its full Operator API; instead it publishes a dedicated
-read-only facade on tailnet TCP 18877. That facade allows only health and raw
-operator-status GETs, denies mutation methods, and lets the controller project
-a typed `LIGHTING_GRANDMA2` department status without exposing either full
-Operator API to the public Internet.
+The full ZEN Controller Operator API remains loopback-only and is **not**
+published directly through Tailscale. The bounded controller facade on `18876`
+is the tailnet-visible ZEN status surface.
+
+OpenClaw Gateway is the primary operator runtime on the Mini. It is installed
+with OpenClaw's official systemd-user service, with root linger enabled so the
+Gateway survives logout. The Gateway remains loopback-bound and OpenClaw owns a
+Tailscale Serve HTTPS endpoint at `wss://zen-agent-server.tail3e0394.ts.net`.
+
+The Windows lighting host keeps grandMA2-local execution and evidence. It
+publishes two separate Tailscale-only adapter surfaces:
+
+- `18877`: read-only health/operator-status facade used by
+  `zen.department.status`;
+- `18878`: typed ZEN operator facade, allowlisted to the Mini's Tailscale client
+  address and reached from Mini loopback `127.0.0.1:18878` through
+  `zen-lighting-operator-proxy.service`.
+
+The typed operator facade exposes only named ZEN tools. It does not provide a
+generic HTTP proxy, remote shell, credential forwarding, or raw MA command
+surface. `zen.approve` may cross this typed path only as the existing explicit
+human approval transition for a ZEN action; it does not bypass Safety,
+Preview, Builder, protected-object policy, or native post-write verification.
 
 Acceptance evidence on 2026-09-28:
 

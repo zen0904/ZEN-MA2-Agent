@@ -2,11 +2,12 @@
 
 Status: **WINDOWS LIGHTING ADAPTER VALIDATED / GENERIC WORKER DEPLOYMENT PREPARED**
 
-The operator-visible Windows machine (`DESKTOP-AA2GR39`) currently hosts the
-OpenClaw Hub plus the MA-local `LIGHTING_GRANDMA2` adapter/Field Core. It is not
-the Show Agent Controller. Keeping the lighting adapter beside grandMA2 onPC is
-intentional because native exports, filesystem evidence, GUI/Stage View capture,
-and deterministic MA verification are local to that Windows host.
+The operator-visible Windows machine (`DESKTOP-AA2GR39`) hosts the MA-local
+`LIGHTING_GRANDMA2` adapter/Field Core. OpenClaw Gateway has migrated to the
+Mac mini Show Agent Controller; Windows Tray/CLI may remain only as remote
+clients. Keeping the lighting adapter beside grandMA2 onPC is intentional
+because native exports, filesystem evidence, GUI/Stage View capture, and
+deterministic MA verification are local to that Windows host.
 
 ## Reuse-first rule
 
@@ -80,39 +81,43 @@ The facade is a visibility boundary only. It does not create cross-host
 `zen.approve`, shell, raw MA command, credential-forwarding, or generic HTTP
 proxy authority.
 
-## Controller loopback proxy for OpenClaw
+## Mini-facing typed operator facade
 
-`mini-controller-proxy.py` gives the Windows OpenClaw plugin a loopback-only
-path to the Mini controller facade while preserving the plugin's loopback URL
-policy. The validated Windows task runs:
+`lighting-operator-facade.py` is the bounded operator surface used by the Mini-hosted
+OpenClaw `zen-ma2` plugin. On the validated host it binds the Windows Tailscale
+address on TCP `18878` and accepts only the Mini Tailscale client address.
 
-```text
-python mini-controller-proxy.py --listen-port 18876
-```
-
-The script resolves the Tailscale peer named `zen-agent-server` and connects to
-peer port `18876`. Therefore the validated path is:
+The facade allows only the named ZEN tool routes required by the plugin. It does
+not forward arbitrary paths, shell commands, credentials, or raw MA commands.
+The validated path is:
 
 ```text
-OpenClaw zen_department_status
-→ Windows 127.0.0.1:18876
-→ mini-controller-proxy.py
-→ Tailscale peer zen-agent-server:18876
-→ Mini controller read-only facade
-→ Mini Controller 127.0.0.1:8876
+Mini OpenClaw zen_* tool
+→ Mini 127.0.0.1:18878
+→ zen-lighting-operator-proxy.service
+→ Tailscale
+→ Windows :18878 lighting-operator-facade.py
+→ Windows ZEN 127.0.0.1:8876
+→ grandMA2 onPC 127.0.0.1:30000
 ```
 
-Do not point this proxy at Mini port `8876`; that would bypass the controller
-read-only facade. MA-local tools continue to use Windows `127.0.0.1:8876`.
+`zen.approve` remains an explicit human authority transition for an existing
+ZEN action id. Allowing that typed tool across the facade does not grant raw MA
+write authority or bypass Safety, Preview, Builder, protected-object policy, or
+native verification.
 
-Validated Task Scheduler entries on `DESKTOP-AA2GR39`:
+`mini-controller-proxy.py` and the former `ZEN Mini Controller Proxy` scheduled
+task are retained only as rollback/history from the earlier Windows-hosted
+OpenClaw phase. They are not part of the current Mini-hosted OpenClaw topology.
+
+Validated Task Scheduler roles on `DESKTOP-AA2GR39` now are:
 
 - `ZEN Field Core`
 - `ZEN Lighting ReadOnly Facade`
-- `ZEN Mini Controller Proxy`
+- `ZEN Lighting Operator Facade`
 
-All three use logon triggers on the current test host. Production service
-semantics remain a separate acceptance decision.
+The former `OpenClaw Gateway` scheduled task has been retired after full Gateway
+state migration to the Mini.
 
 ## Manual Worker smoke
 

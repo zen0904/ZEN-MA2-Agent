@@ -1151,7 +1151,7 @@
       "hardware": "Macmini6,2 (2012 Mac mini)",
       "os": "Ubuntu 24.04.5 LTS",
       "validated_on": "2026-09-28",
-      "role": "HOME_PORTABLE_SHOW_AGENT_CONTROLLER",
+      "role": "HOME_PORTABLE_OPENCLAW_GATEWAY_SHOW_AGENT_CONTROLLER",
       "service": "zen-show-controller.service",
       "operator_api": "127.0.0.1:8876",
       "ma_bridge": "127.0.0.1:8877",
@@ -1167,12 +1167,29 @@
       "private_overlay": {
         "provider": "TAILSCALE",
         "controller_ip": "100.122.169.17",
-        "operator_api_transport": "TAILNET_ONLY_TCP_SERVE_8876_TO_LOOPBACK"
+        "openclaw_transport": "MANAGED_HTTPS_SERVE_TO_LOOPBACK_18789",
+        "controller_readonly_transport": "TAILNET_ONLY_TCP_18876_TO_LOOPBACK",
+        "full_controller_operator_api_tailnet_exposed": false,
+        "lighting_status_transport": "100.67.178.35:18877",
+        "lighting_operator_transport": "100.67.178.35:18878"
+      },
+      "openclaw_gateway": {
+        "status": "VALIDATED_ACTIVE",
+        "version": "2026.9.4",
+        "node_version": "24.18.1",
+        "service": "official systemd-user openclaw-gateway.service",
+        "bind": "127.0.0.1:18789",
+        "remote_surface": "wss://zen-agent-server.tail3e0394.ts.net",
+        "transport": "MANAGED_TAILSCALE_SERVE_HTTPS",
+        "state_authority": "MINI_CANONICAL",
+        "windows_gateway_status": "RETIRED",
+        "windows_client_role": "REMOTE_CLIENT_ONLY",
+        "full_windows_state_cold_archive": "PRESENT_ON_MINI_HOST_LOCAL_BACKUP"
       }
     },
     "control_plane_authority_boundary": "Control-plane hosting, code intelligence, state/cache, remote administration and loopback orchestration do not imply production MA execution authority. Preview/Approval/verified department adapters remain mandatory.",
     "department_federation": {
-      "status": "READ_ONLY_LIGHTING_ADAPTER_VALIDATED",
+      "status": "LIGHTING_ADAPTER_STATUS_AND_TYPED_OPERATOR_VALIDATED",
       "validated_on": "2026-09-28",
       "tool": "zen.department.status",
       "schema": "zen.department_adapter_status.v0.1",
@@ -1180,31 +1197,34 @@
         "adapter_id": "LIGHTING_GRANDMA2",
         "department": "LIGHTING",
         "host": "DESKTOP-AA2GR39",
-        "transport": "TAILSCALE_PRIVATE_HTTP",
-        "remote_operator_ip": "100.67.178.35:18877",
+        "transport": "TAILSCALE_PRIVATE_TYPED_ADAPTER",
+        "remote_operator_ip": "100.67.178.35:18878",
         "ma_state_at_acceptance": "READY",
-        "authority": "REMOTE_READ_ONLY",
+        "authority": "MA_LOCAL_EXECUTION_WITH_REMOTE_TYPED_ZEN_CONTROL",
         "ma2_writes": 0,
-        "surface": "READ_ONLY_STATUS_FACADE",
+        "surface": "READ_ONLY_18877_PLUS_TYPED_OPERATOR_18878",
         "full_operator_api_tailnet_exposed": false
       },
       "prohibited_paths": [
         "generic HTTP proxy",
         "remote shell",
         "raw MA command forwarding",
-        "cross-host zen.approve forwarding before a separate authority contract",
-        "credential forwarding"
+        "credential forwarding",
+        "bypass of ZEN Safety/Preview/Approval/Builder/native verification"
       ],
       "transport_boundary": {
         "windows_loopback_full_operator": "127.0.0.1:8876",
         "windows_loopback_readonly_facade": "127.0.0.1:18877",
-        "tailnet_published_surface": "100.67.178.35:18877",
-        "allowed_remote_methods": [
-          "GET /healthz",
-          "GET /zen/v0.1/status"
+        "windows_tailnet_readonly_surface": "100.67.178.35:18877",
+        "mini_loopback_typed_operator_proxy": "127.0.0.1:18878",
+        "windows_tailnet_typed_operator_surface": "100.67.178.35:18878",
+        "typed_operator_client_allowlist": [
+          "100.122.169.17"
         ],
-        "mutation_methods": "HTTP_405",
-        "unknown_paths": "HTTP_404"
+        "typed_operator_policy": "NAMED_ZEN_TOOLS_ONLY",
+        "approval_policy": "zen.approve may cross only as the explicit human approval transition for an existing ZEN action id",
+        "raw_ma_commands": "PROHIBITED",
+        "generic_http_proxy": "PROHIBITED"
       }
     }
   }

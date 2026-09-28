@@ -11,8 +11,8 @@ physical machines return.
 
 ## Current deployment direction
 
-- Operator-visible Windows machine: OpenClaw Windows Hub only.
-- Validated Home/Portable Show Agent Controller host: 2012 Mac mini (`zen-agent-server`) running Ubuntu 24.04.5. It hosts the loopback-only ZEN control plane, code intelligence, cache/state and remote administration.
+- Validated Home/Portable Show Agent Controller host: 2012 Mac mini (`zen-agent-server`) running Ubuntu 24.04.5. It hosts OpenClaw Gateway 2026.9.4, the loopback-only ZEN control plane, code intelligence, cache/state and remote administration.
+- Operator-visible Windows remains the MA-local `LIGHTING_GRANDMA2` adapter host. Its OpenClaw Gateway role is retired; Windows Tray/CLI may remain only as remote clients of the Mini Gateway.
 - This Mac mini selection does **not** grant production Field Host or MA write authority. `MA2_WRITES=0` remains required during integration.
 - Preferred next production Gateway / Field Host candidate to verify remains Worker A.
 - Worker A may physically co-host OpenClaw Gateway + ZEN Field Core + Worker
@@ -59,6 +59,7 @@ Primary templates:
 
 - `zen-show-controller.service` — loopback-only Show Agent Controller control-plane service for a validated headless controller host. It reuses the existing FieldHost runtime without granting production MA authority.
 - `zen-controller-readonly-facade.service` — optional loopback-only facade for authenticated private transport. It exposes health/status GET plus `zen.department.status` POST only; it does not expose preview/approval/write tools.
+- `zen-lighting-operator-proxy.service` — loopback-only proxy from Mini `127.0.0.1:18878` to the Windows lighting host's Tailscale-restricted typed operator facade on `18878`. This keeps the OpenClaw plugin's local-URL policy while preserving Windows-local MA execution.
 - `zen-field-core.service` — normal ZEN FieldHost process. It owns Operator
   API, MA Bridge, Watchdog, Host Metrics and Worker Registry.
 - `zen-worker.service` — Worker HTTP control plane.
