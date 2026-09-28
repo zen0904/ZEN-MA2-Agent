@@ -11,9 +11,12 @@ LISTEN_HOST = "127.0.0.1"
 LISTEN_PORT = 18876
 UPSTREAM = "http://127.0.0.1:8876"
 ALLOWED_GETS = frozenset({"/healthz", "/zen/v0.1/status"})
-ALLOWED_POSTS = frozenset({"/zen/v0.1/tools/zen.department.status"})
+ALLOWED_POSTS = frozenset({
+    "/zen/v0.1/tools/zen.department.status",
+    "/zen/v0.1/tools/zen.department.preview",
+})
 MAX_REQUEST_BODY = 8192
-MAX_RESPONSE_BODY = 65536
+MAX_RESPONSE_BODY = 3 * 1024 * 1024
 
 log_dir = Path("/var/log/zen-agent")
 log_dir.mkdir(parents=True, exist_ok=True)
@@ -57,7 +60,8 @@ class Handler(BaseHTTPRequestHandler):
             headers=headers,
         )
         try:
-            with urlopen(req, timeout=3.0) as response:
+            timeout = 30.0 if self.path.endswith("/zen.department.preview") else 3.0
+            with urlopen(req, timeout=timeout) as response:
                 raw = response.read(MAX_RESPONSE_BODY + 1)
                 if len(raw) > MAX_RESPONSE_BODY:
                     raise ValueError("upstream body too large")

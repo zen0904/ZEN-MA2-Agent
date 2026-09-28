@@ -101,10 +101,10 @@ Mini OpenClaw zen_* tool
 → grandMA2 onPC 127.0.0.1:30000
 ```
 
-`zen.approve` remains an explicit human authority transition for an existing
-ZEN action id. Allowing that typed tool across the facade does not grant raw MA
-write authority or bypass Safety, Preview, Builder, protected-object policy, or
-native verification.
+The typed facade is Preview-only for cross-host control. It allows the bounded
+read/plan/Preview tool set required by the Mini Controller, but it does not
+expose `zen.approve` or `zen.position.semantic.bind`. Human approval and any MA
+write transition remain outside this cross-host surface.
 
 `mini-controller-proxy.py` and the former `ZEN Mini Controller Proxy` scheduled
 task are retained only as rollback/history from the earlier Windows-hosted

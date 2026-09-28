@@ -93,11 +93,11 @@ publishes two separate Tailscale-only adapter surfaces:
   address and reached from Mini loopback `127.0.0.1:18878` through
   `zen-lighting-operator-proxy.service`.
 
-The typed operator facade exposes only named ZEN tools. It does not provide a
-generic HTTP proxy, remote shell, credential forwarding, or raw MA command
-surface. `zen.approve` may cross this typed path only as the existing explicit
-human approval transition for a ZEN action; it does not bypass Safety,
-Preview, Builder, protected-object policy, or native post-write verification.
+The typed operator facade exposes only named read/plan/Preview ZEN tools. It
+does not provide a generic HTTP proxy, remote shell, credential forwarding, raw
+MA command surface, cross-host `zen.approve`, or cross-host semantic-binding
+mutation. Preview delegation remains `REMOTE_PREVIEW_ONLY`, reports
+`ma2_writes = 0`, and cannot authorize execution.
 
 Acceptance evidence on 2026-09-28:
 
@@ -130,12 +130,13 @@ ideas are approved for later **ZEN-native** adaptation. The upstream Hermes / Wi
 
 The controller may register a department-local ZEN Operator API with
 `--department-adapter ADAPTER_ID=BASE_URL`. The current validated adapter is
-`LIGHTING_GRANDMA2` on the Windows host over the authenticated Tailscale
-network. Federation is intentionally narrow: only the fixed remote
-`/zen/v0.1/status` contract is read and projected into
-`zen.department.status`. There is no generic HTTP proxy, no credential
-forwarding, no remote shell, and no cross-host `zen.approve` or raw MA command
-path. The projected result always declares `ma2_writes = 0`.
+`LIGHTING_GRANDMA2`, reached through Mini loopback `127.0.0.1:18878` and the
+authenticated Tailscale path to Windows. Federation is intentionally narrow:
+`zen.department.status` projects the fixed status contract, while
+`zen.department.preview` delegates only the fixed Preview allowlist. There is
+no generic HTTP proxy, credential forwarding, remote shell, cross-host
+`zen.approve`, cross-host `zen.position.semantic.bind`, or raw MA command path.
+Delegated Preview declares `REMOTE_PREVIEW_ONLY` and `ma2_writes = 0`.
 
 ## Production authority gate
 

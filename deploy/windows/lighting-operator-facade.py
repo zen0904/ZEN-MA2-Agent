@@ -28,8 +28,6 @@ ALLOWED_TOOLS = frozenset({
     "zen.position.raw.preview",
     "zen.position.calibration.preview",
     "zen.position.semantic.bindings",
-    "zen.position.semantic.bind",
-    "zen.approve",
     "zen.worker.status",
     "zen.watchdog.status",
     "zen.host.status",

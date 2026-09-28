@@ -153,8 +153,11 @@ zen.artifact.latest
 zen.ma.visual
 zen.design.request
 zen.preview
-zen.approve
 ```
+
+The current Mini-hosted surface intentionally omits `zen.approve` and
+`zen.position.semantic.bind`. Cross-host OpenClaw control is read/plan/Preview
+only; approval/write authority remains outside the Mini plugin surface.
 
 Only operations backed by real ZEN functionality may report success.
 

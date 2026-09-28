@@ -207,6 +207,7 @@ PositionCalibrationPreviewHandler = Callable[..., Mapping[str, Any]]
 SemanticPositionBindingsHandler = Callable[[], Mapping[str, Any]]
 SemanticPositionBindHandler = Callable[..., Mapping[str, Any]]
 DepartmentStatusProvider = Callable[[], Mapping[str, Any]]
+DepartmentPreviewHandler = Callable[[str, str, Mapping[str, Any]], Mapping[str, Any]]
 
 
 class UnknownOpenClawTool(ValueError):
@@ -239,6 +240,7 @@ class OpenClawOperatorAdapter:
             "zen.position.semantic.bind",
             "zen.preview",
             "zen.approve",
+            "zen.department.preview",
         }
     )
     ALLOWED_TOOLS = READ_ONLY_TOOLS | NAVIGATION_TOOLS | RESERVED_TOOLS
@@ -259,6 +261,7 @@ class OpenClawOperatorAdapter:
         semantic_position_bindings_handler: Optional[SemanticPositionBindingsHandler] = None,
         semantic_position_bind_handler: Optional[SemanticPositionBindHandler] = None,
         department_status_provider: Optional[DepartmentStatusProvider] = None,
+        department_preview_handler: Optional[DepartmentPreviewHandler] = None,
     ):
         self._status_provider = status_provider
         self._watchdog_provider = watchdog_provider
@@ -274,6 +277,7 @@ class OpenClawOperatorAdapter:
         self._semantic_position_bindings_handler = semantic_position_bindings_handler
         self._semantic_position_bind_handler = semantic_position_bind_handler
         self._department_status_provider = department_status_provider
+        self._department_preview_handler = department_preview_handler
 
     def invoke(
         self,
@@ -439,6 +443,39 @@ class OpenClawOperatorAdapter:
             if not isinstance(danger, bool):
                 return self._rejected(tool_name, "INVALID_DANGER_CONFIRMED", "danger_confirmed must be boolean.", request_id)
             return self._result(tool_name, "SUCCESS", dict(self._approve_handler(action_id, danger)), None, request_id)
+        if tool_name == "zen.department.preview":
+            if self._department_preview_handler is None:
+                return self._result(tool_name, "NOT_IMPLEMENTED", None, None, request_id)
+            if set(safe_payload) != {"adapter_id", "tool_name", "arguments"}:
+                return self._rejected(
+                    tool_name,
+                    "INVALID_ARGUMENTS",
+                    "adapter_id, tool_name and arguments are required.",
+                    request_id,
+                )
+            adapter_id = safe_payload.get("adapter_id")
+            remote_tool = safe_payload.get("tool_name")
+            arguments = safe_payload.get("arguments")
+            if (
+                not isinstance(adapter_id, str)
+                or not 1 <= len(adapter_id) <= 128
+                or not isinstance(remote_tool, str)
+                or not 1 <= len(remote_tool) <= 128
+                or not isinstance(arguments, Mapping)
+            ):
+                return self._rejected(
+                    tool_name,
+                    "INVALID_ARGUMENTS",
+                    "Department preview delegation arguments have invalid types or bounds.",
+                    request_id,
+                )
+            return self._result(
+                tool_name,
+                "SUCCESS",
+                dict(self._department_preview_handler(adapter_id, remote_tool, dict(arguments))),
+                None,
+                request_id,
+            )
         if safe_payload:
             return self._result(
                 tool_name,

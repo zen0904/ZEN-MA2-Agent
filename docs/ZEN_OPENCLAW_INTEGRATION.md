@@ -121,17 +121,22 @@ zen.ma.visual
 zen.ma.stage.visual
 ```
 
-Implemented typed planning/approval tools:
+Implemented typed planning/Preview tools:
 
 ```text
 zen.design.request
 zen.preview
-zen.approve
+zen.position.preview
+zen.position.raw.preview
+zen.position.calibration.preview
 ```
 
-These remain bounded by the ZEN Core path. OpenClaw may request planning, render
-a Preview and relay explicit human approval, but it cannot bypass ZEN safety or
-submit arbitrary MA commands.
+On the Mini-hosted OpenClaw deployment these tools are wrapped by
+`zen.department.preview` and delegated through the Controller to the Windows
+`LIGHTING_GRANDMA2` adapter. The cross-host authority is
+`REMOTE_PREVIEW_ONLY` with `ma2_writes = 0`. `zen.approve` and
+`zen.position.semantic.bind` are intentionally not exposed by the Mini
+OpenClaw plugin and are not accepted by the Windows typed facade.
 
 There is no OpenClaw-facing generic shell, arbitrary filesystem operation, raw
 MA command endpoint, raw Telnet endpoint, or unrestricted proxy.
@@ -233,8 +238,9 @@ Current deployment is verified on the Mac mini Show Agent Controller host:
   discovery, compound FixtureType evidence, Designer, typed compiler, safe
   allocation and Builder validation into a real `PENDING_APPROVAL` Preview:
   20 Cues, unused Sequence 302, allocated Executor 2.8, and zero MA writes;
-- Preview success does not authorize execution. `zen.approve` remains a separate
-  explicit human authority transition and was not invoked in this verification;
+- Preview success does not authorize execution. The Mini OpenClaw plugin does
+  not expose `zen.approve`; cross-host approval remains prohibited and no MA
+  mutation was invoked in this verification;
 - the earlier Windows-local Gateway remains historical development evidence only;
   Gateway state, agents, workspace, credentials and the active `zen-ma2` plugin
   have migrated to the Mini, while Windows keeps the MA-local adapter role;

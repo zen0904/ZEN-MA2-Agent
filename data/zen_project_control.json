@@ -631,6 +631,28 @@
         "MA2_WRITES_ZERO"
       ],
       "limitations": "No semantic mapping has been chosen for the live Show by this task. Live runtime deployment/read-only acceptance remains next. POINT+REUSE only; DERIVE, SPECIAL and vector targets remain deferred."
+    },
+    {
+      "id": "SHOW_CONTROLLER_TYPED_PREVIEW_DELEGATION_001",
+      "source": "Mini Show Agent Controller live acceptance 2026-09-29; zen_ma2_agent/department_adapters.py; Operator API; OpenClaw zen-ma2 plugin; Windows lighting-operator-facade.py",
+      "status": "CLOSED_SUCCESS_LIVE_PREVIEW_ONLY",
+      "outcomes": [
+        "MINI_CONTROLLER_ZEN_DEPARTMENT_PREVIEW_LIVE",
+        "LIGHTING_GRANDMA2_ADAPTER_ONLINE_MA_READY",
+        "REMOTE_PREVIEW_ONLY_AUTHORITY",
+        "ZEN_PREVIEW_DELEGATES_THROUGH_CONTROLLER",
+        "WINDOWS_TYPED_FACADE_PREVIEW_ALLOWLIST_ONLY",
+        "CROSS_HOST_ZEN_APPROVE_NOT_EXPOSED",
+        "CROSS_HOST_SEMANTIC_BIND_MUTATION_NOT_EXPOSED",
+        "OPENCLAW_ZEN_APPROVE_TOOL_NOT_EXPOSED_ON_MINI",
+        "OPENCLAW_ZEN_POSITION_SEMANTIC_BIND_TOOL_NOT_EXPOSED_ON_MINI",
+        "PYTHON_FULL_SUITE_986_PASS",
+        "OPENCLAW_PLUGIN_VITEST_5_OF_5_PASS",
+        "OPENCLAW_PLUGIN_TYPESCRIPT_BUILD_PASS",
+        "PLUGIN_PREVIEW_DELEGATION_LIVE_E2E_PASS",
+        "MA2_WRITES_ZERO"
+      ],
+      "limitations": "This acceptance proves typed remote planning/Preview delegation only. It does not authorize or expose cross-host zen.approve, semantic binding mutation, raw MA commands, shell access, generic HTTP proxying or any MA2 write. Human approval remains outside the cross-host surface and any future execution still requires the normal fresh ZEN approval path on an explicitly authorized local execution surface."
     }
   ],
   "backlog": [
@@ -1170,8 +1192,9 @@
         "openclaw_transport": "MANAGED_HTTPS_SERVE_TO_LOOPBACK_18789",
         "controller_readonly_transport": "TAILNET_ONLY_TCP_18876_TO_LOOPBACK",
         "full_controller_operator_api_tailnet_exposed": false,
-        "lighting_status_transport": "100.67.178.35:18877",
-        "lighting_operator_transport": "100.67.178.35:18878"
+        "lighting_status_transport": "LEGACY_READ_ONLY_18877_RETAINED_NOT_PRIMARY_CONTROLLER_ADAPTER",
+        "lighting_operator_transport": "100.67.178.35:18878",
+        "lighting_controller_adapter": "127.0.0.1:18878 -> Tailscale -> 100.67.178.35:18878"
       },
       "openclaw_gateway": {
         "status": "VALIDATED_ACTIVE",
@@ -1189,10 +1212,8 @@
     },
     "control_plane_authority_boundary": "Control-plane hosting, code intelligence, state/cache, remote administration and loopback orchestration do not imply production MA execution authority. Preview/Approval/verified department adapters remain mandatory.",
     "department_federation": {
-      "status": "LIGHTING_ADAPTER_STATUS_AND_TYPED_OPERATOR_VALIDATED",
-      "validated_on": "2026-09-28",
-      "tool": "zen.department.status",
-      "schema": "zen.department_adapter_status.v0.1",
+      "status": "LIGHTING_ADAPTER_STATUS_AND_TYPED_PREVIEW_VALIDATED",
+      "validated_on": "2026-09-29",
       "current_adapter": {
         "adapter_id": "LIGHTING_GRANDMA2",
         "department": "LIGHTING",
@@ -1200,9 +1221,9 @@
         "transport": "TAILSCALE_PRIVATE_TYPED_ADAPTER",
         "remote_operator_ip": "100.67.178.35:18878",
         "ma_state_at_acceptance": "READY",
-        "authority": "MA_LOCAL_EXECUTION_WITH_REMOTE_TYPED_ZEN_CONTROL",
+        "authority": "MA_LOCAL_EXECUTION_WITH_REMOTE_TYPED_PREVIEW_ONLY",
         "ma2_writes": 0,
-        "surface": "READ_ONLY_18877_PLUS_TYPED_OPERATOR_18878",
+        "surface": "READ_ONLY_STATUS_PLUS_TYPED_PREVIEW_18878",
         "full_operator_api_tailnet_exposed": false
       },
       "prohibited_paths": [
@@ -1221,11 +1242,45 @@
         "typed_operator_client_allowlist": [
           "100.122.169.17"
         ],
-        "typed_operator_policy": "NAMED_ZEN_TOOLS_ONLY",
-        "approval_policy": "zen.approve may cross only as the explicit human approval transition for an existing ZEN action id",
+        "typed_operator_policy": "NAMED_READ_PLAN_PREVIEW_ZEN_TOOLS_ONLY",
+        "approval_policy": "CROSS_HOST_ZEN_APPROVE_PROHIBITED",
         "raw_ma_commands": "PROHIBITED",
-        "generic_http_proxy": "PROHIBITED"
+        "generic_http_proxy": "PROHIBITED",
+        "semantic_bind_policy": "CROSS_HOST_ZEN_POSITION_SEMANTIC_BIND_PROHIBITED",
+        "preview_policy": "ZEN_DEPARTMENT_PREVIEW_FIXED_ALLOWLIST_REMOTE_PREVIEW_ONLY_MA2_WRITES_0"
+      },
+      "tools": [
+        "zen.department.status",
+        "zen.department.preview"
+      ],
+      "schemas": {
+        "status": "zen.department_adapter_status.v0.1",
+        "preview": "zen.department_preview.v0.1"
       }
     }
-  }
+  },
+  "verified_stages": [
+    {
+      "id": "OPENCLAW_TYPED_PREVIEW_DELEGATION_001",
+      "source": "zen_ma2_agent/department_adapters.py; zen_ma2_agent/operator_api.py; deploy/ubuntu/controller-readonly-facade.py; deploy/windows/lighting-operator-facade.py; integrations/openclaw/zen-ma2-plugin",
+      "status": "CLOSED_SUCCESS_LIVE_PREVIEW_ONLY_E2E",
+      "outcomes": [
+        "CONTROLLER_ZEN_DEPARTMENT_PREVIEW_IMPLEMENTED",
+        "LIGHTING_GRANDMA2_CONTROLLER_ADAPTER_USES_MINI_LOOPBACK_18878",
+        "WINDOWS_TYPED_FACADE_PREVIEW_ONLY",
+        "CROSS_HOST_ZEN_APPROVE_PROHIBITED",
+        "CROSS_HOST_SEMANTIC_BIND_PROHIBITED",
+        "OPENCLAW_ZEN_PREVIEW_DELEGATES_THROUGH_CONTROLLER",
+        "OPENCLAW_PLUGIN_MUTATING_TOOLS_REMOVED",
+        "LIVE_REMOTE_ZEN_PREVIEW_SUCCESS_NO_PREVIEW_STATE",
+        "REMOTE_APPROVE_CONTROLLER_REJECTED",
+        "REMOTE_APPROVE_WINDOWS_HTTP_405",
+        "PYTHON_FULL_SUITE_986_PASS",
+        "OPENCLAW_VITEST_5_OF_5_PASS",
+        "OPENCLAW_TYPESCRIPT_BUILD_PASS",
+        "MA2_WRITES_ZERO"
+      ],
+      "limitations": "This proves cross-host read/plan/Preview delegation only. Human approval, semantic-binding mutation, arbitrary HTTP forwarding, shell access and raw MA commands remain outside the Mini-to-Windows surface. A successful Preview does not authorize execution."
+    }
+  ]
 }

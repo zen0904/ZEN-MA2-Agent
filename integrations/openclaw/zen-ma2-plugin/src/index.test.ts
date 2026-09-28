@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import entry, { baseUrlForTool, endpointForTool } from "./index.js";
+import entry, { baseUrlForTool, endpointForTool, requestForTool } from "./index.js";
 import { getToolPluginMetadata } from "openclaw/plugin-sdk/tool-plugin";
 
 describe("zen-ma2", () => {
@@ -15,8 +15,6 @@ describe("zen-ma2", () => {
       "zen_position_raw_preview",
       "zen_position_calibration_preview",
       "zen_position_semantic_bindings",
-      "zen_position_semantic_bind",
-      "zen_approve",
       "zen_department_status",
       "zen_worker_status",
       "zen_watchdog_status",
@@ -32,6 +30,29 @@ describe("zen-ma2", () => {
     expect(() =>
       baseUrlForTool("zen.department.status", { controllerBaseUrl: "http://100.122.169.17:18876" }),
     ).toThrow(/loopback/);
+  });
+
+  it("wraps preview tools in typed controller delegation", () => {
+    expect(endpointForTool("zen.preview")).toBe("controller");
+    expect(endpointForTool("zen.position.preview")).toBe("controller");
+    expect(requestForTool("zen.preview", { action_id: "a1" })).toEqual({
+      requestTool: "zen.department.preview",
+      arguments: {
+        adapter_id: "LIGHTING_GRANDMA2",
+        tool_name: "zen.preview",
+        arguments: { action_id: "a1" },
+      },
+    });
+    expect(requestForTool("zen.ma.status", {})).toEqual({
+      requestTool: "zen.ma.status",
+      arguments: {},
+    });
+  });
+
+  it("does not expose remote approval or semantic binding tools", () => {
+    const names = getToolPluginMetadata(entry)?.tools.map((tool) => tool.name) ?? [];
+    expect(names).not.toContain("zen_approve");
+    expect(names).not.toContain("zen_position_semantic_bind");
   });
 
   it("does not expose raw shell or raw MA command tools", () => {

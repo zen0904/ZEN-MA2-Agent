@@ -247,6 +247,43 @@ class OperatorApiTests(unittest.TestCase):
         self.assertEqual(result["result"]["ma2_writes"], 0)
         self.assertTrue(result["result"]["read_only_federation"])
 
+    def test_department_preview_tool_uses_bounded_delegation_handler(self):
+        calls = []
+
+        def preview_handler(adapter_id, tool_name, arguments):
+            calls.append((adapter_id, tool_name, arguments))
+            return {
+                "schema": "zen.department_preview.v0.1",
+                "adapter_id": adapter_id,
+                "authority": "REMOTE_PREVIEW_ONLY",
+                "ma2_writes": 0,
+                "remote_tool": tool_name,
+                "delegation_status": "REJECTED",
+                "remote_result": None,
+                "error": {"code": "TOOL_NOT_ALLOWED", "message": "preview only"},
+            }
+
+        adapter = OpenClawOperatorAdapter(
+            self._snapshot,
+            department_preview_handler=preview_handler,
+        )
+        payload = {
+            "adapter_id": "LIGHTING_GRANDMA2",
+            "tool_name": "zen.approve",
+            "arguments": {"action_id": "a1", "danger_confirmed": False},
+        }
+        result = adapter.invoke("zen.department.preview", payload)
+
+        self.assertEqual(result["status"], "SUCCESS")
+        self.assertEqual(result["result"]["authority"], "REMOTE_PREVIEW_ONLY")
+        self.assertEqual(result["result"]["ma2_writes"], 0)
+        self.assertEqual(result["result"]["delegation_status"], "REJECTED")
+        self.assertEqual(calls, [(
+            "LIGHTING_GRANDMA2",
+            "zen.approve",
+            {"action_id": "a1", "danger_confirmed": False},
+        )])
+
     def test_mutating_tools_are_reserved_but_not_implemented(self):
         adapter = OpenClawOperatorAdapter(self._snapshot)
         for name in ("zen.design.request", "zen.preview", "zen.approve"):

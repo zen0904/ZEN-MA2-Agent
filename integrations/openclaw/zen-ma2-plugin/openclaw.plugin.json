@@ -12,7 +12,7 @@
       },
       "controllerBaseUrl": {
         "type": "string",
-        "description": "Show Agent Controller read-only facade. Default is loopback 127.0.0.1:18876."
+        "description": "Show Agent Controller bounded facade for status and preview-only delegation. Default is loopback 127.0.0.1:18876."
       }
     },
     "additionalProperties": false
@@ -32,8 +32,6 @@
       "zen_position_raw_preview",
       "zen_position_calibration_preview",
       "zen_position_semantic_bindings",
-      "zen_position_semantic_bind",
-      "zen_approve",
       "zen_department_status",
       "zen_worker_status",
       "zen_watchdog_status",

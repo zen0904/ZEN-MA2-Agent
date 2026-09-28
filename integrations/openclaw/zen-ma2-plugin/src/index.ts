@@ -3,6 +3,14 @@ import { defineToolPlugin } from "openclaw/plugin-sdk/tool-plugin";
 
 const DEFAULT_OPERATOR_BASE_URL = "http://127.0.0.1:8876";
 const DEFAULT_CONTROLLER_BASE_URL = "http://127.0.0.1:18876";
+const DEFAULT_LIGHTING_ADAPTER_ID = "LIGHTING_GRANDMA2";
+const DEPARTMENT_PREVIEW_TOOL_NAMES = new Set([
+  "zen.design.request",
+  "zen.preview",
+  "zen.position.preview",
+  "zen.position.raw.preview",
+  "zen.position.calibration.preview",
+]);
 
 export type ZenPluginConfig = {
   operatorBaseUrl?: string;
@@ -12,7 +20,9 @@ export type ZenPluginConfig = {
 type ZenEndpoint = "operator" | "controller";
 
 export function endpointForTool(toolName: string): ZenEndpoint {
-  return toolName === "zen.department.status" ? "controller" : "operator";
+  return toolName === "zen.department.status" || DEPARTMENT_PREVIEW_TOOL_NAMES.has(toolName)
+    ? "controller"
+    : "operator";
 }
 
 const ConfigSchema = Type.Object(
@@ -24,7 +34,7 @@ const ConfigSchema = Type.Object(
     ),
     controllerBaseUrl: Type.Optional(
       Type.String({
-        description: "Show Agent Controller read-only facade. Default is loopback 127.0.0.1:18876.",
+        description: "Show Agent Controller bounded facade for status and preview-only delegation. Default is loopback 127.0.0.1:18876.",
       }),
     ),
   },
@@ -69,6 +79,89 @@ export function baseUrlForTool(toolName: string, config: ZenPluginConfig): strin
     : operatorBaseUrl(config);
 }
 
+type ZenToolResult = {
+  schema: "zen.tool_result.v0.1";
+  tool: string;
+  status: "SUCCESS" | "NOT_IMPLEMENTED" | "REJECTED" | "FAILED";
+  result: unknown;
+  error: unknown;
+  request_id?: string | null;
+};
+
+function isZenToolResult(value: unknown): value is ZenToolResult {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const record = value as Record<string, unknown>;
+  return (
+    record.schema === "zen.tool_result.v0.1" &&
+    typeof record.tool === "string" &&
+    ["SUCCESS", "NOT_IMPLEMENTED", "REJECTED", "FAILED"].includes(String(record.status)) &&
+    Object.prototype.hasOwnProperty.call(record, "result") &&
+    Object.prototype.hasOwnProperty.call(record, "error")
+  );
+}
+
+export function requestForTool(
+  toolName: string,
+  args: Record<string, unknown>,
+): { requestTool: string; arguments: Record<string, unknown> } {
+  if (!DEPARTMENT_PREVIEW_TOOL_NAMES.has(toolName)) {
+    return { requestTool: toolName, arguments: args };
+  }
+  return {
+    requestTool: "zen.department.preview",
+    arguments: {
+      adapter_id: DEFAULT_LIGHTING_ADAPTER_ID,
+      tool_name: toolName,
+      arguments: args,
+    },
+  };
+}
+
+function unwrapDepartmentPreview(
+  originalToolName: string,
+  payload: unknown,
+): unknown {
+  if (!DEPARTMENT_PREVIEW_TOOL_NAMES.has(originalToolName)) return payload;
+  if (!isZenToolResult(payload) || payload.tool !== "zen.department.preview") {
+    throw new Error("ZEN Controller returned an invalid department preview envelope.");
+  }
+  if (payload.status !== "SUCCESS") return payload;
+  if (!payload.result || typeof payload.result !== "object" || Array.isArray(payload.result)) {
+    throw new Error("ZEN Controller department preview result is invalid.");
+  }
+  const delegation = payload.result as Record<string, unknown>;
+  if (
+    delegation.schema !== "zen.department_preview.v0.1" ||
+    delegation.authority !== "REMOTE_PREVIEW_ONLY" ||
+    delegation.ma2_writes !== 0 ||
+    delegation.remote_tool !== originalToolName
+  ) {
+    throw new Error("ZEN Controller department preview contract mismatch.");
+  }
+  if (delegation.delegation_status !== "SUCCESS") {
+    const rejected = delegation.delegation_status === "REJECTED";
+    return {
+      schema: "zen.tool_result.v0.1",
+      tool: originalToolName,
+      status: rejected ? "REJECTED" : "FAILED",
+      result: null,
+      error:
+        delegation.error && typeof delegation.error === "object"
+          ? delegation.error
+          : {
+              code: rejected ? "DEPARTMENT_PREVIEW_REJECTED" : "DEPARTMENT_PREVIEW_FAILED",
+              message: "ZEN Controller did not complete preview delegation.",
+            },
+      request_id: payload.request_id ?? null,
+    } satisfies ZenToolResult;
+  }
+  const remoteResult = delegation.remote_result;
+  if (!isZenToolResult(remoteResult) || remoteResult.tool !== originalToolName) {
+    throw new Error("ZEN Controller returned an invalid remote preview result.");
+  }
+  return remoteResult;
+}
+
 async function invokeZen(
   toolName: string,
   args: Record<string, unknown>,
@@ -76,12 +169,13 @@ async function invokeZen(
   signal?: AbortSignal,
 ): Promise<unknown> {
   const root = baseUrlForTool(toolName, config);
+  const request = requestForTool(toolName, args);
   const response = await fetch(
-    `${root}/zen/v0.1/tools/${encodeURIComponent(toolName)}`,
+    `${root}/zen/v0.1/tools/${encodeURIComponent(request.requestTool)}`,
     {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ arguments: args }),
+      body: JSON.stringify({ arguments: request.arguments }),
       signal,
     },
   );
@@ -95,7 +189,7 @@ async function invokeZen(
   if (!response.ok) {
     throw new Error(`ZEN Operator API HTTP ${response.status}: ${JSON.stringify(payload)}`);
   }
-  return payload;
+  return unwrapDepartmentPreview(toolName, payload);
 }
 
 export default defineToolPlugin({
@@ -242,71 +336,6 @@ export default defineToolPlugin({
       parameters: Type.Object({}, { additionalProperties: false }),
       execute: async (_params, config, context) =>
         invokeZen("zen.position.semantic.bindings", {}, config, context.signal),
-    }),
-    tool({
-      name: "zen_position_semantic_bind",
-      label: "ZEN Semantic Position Bind",
-      description:
-        "Explicitly bind one semantic POINT target to one fresh verified Position Preset application. Writes only ZEN local semantic metadata; never writes MA2.",
-      parameters: Type.Object({
-        expectedShowFingerprint: Type.String({ minLength: 64, maxLength: 64 }),
-        groupId: Type.Integer({ minimum: 1 }),
-        expectedGroupName: Type.String({ minLength: 1, maxLength: 256 }),
-        expectedExactRefs: Type.Array(
-          Type.String({ minLength: 1, maxLength: 32 }),
-          { minItems: 1, maxItems: 128, uniqueItems: true },
-        ),
-        presetRef: Type.String({ minLength: 1, maxLength: 32 }),
-        expectedPresetLabel: Type.String({ minLength: 1, maxLength: 256 }),
-        semanticTarget: Type.String({
-          minLength: 1,
-          maxLength: 128,
-          description: "Explicit semantic POINT target, for example MAIN_STAGE.CENTER.",
-        }),
-      }, { additionalProperties: false }),
-      execute: async ({
-        expectedShowFingerprint,
-        groupId,
-        expectedGroupName,
-        expectedExactRefs,
-        presetRef,
-        expectedPresetLabel,
-        semanticTarget,
-      }, config, context) =>
-        invokeZen("zen.position.semantic.bind", {
-          expected_show_fingerprint: expectedShowFingerprint,
-          group_id: groupId,
-          expected_group_name: expectedGroupName,
-          expected_exact_refs: expectedExactRefs,
-          preset_ref: presetRef,
-          expected_preset_label: expectedPresetLabel,
-          semantic_target: semanticTarget,
-        }, config, context.signal),
-    }),
-    tool({
-      name: "zen_approve",
-      label: "ZEN Approve",
-      description:
-        "Approve one exact ZEN preview. ONLY call this after the human explicitly approves that preview in the current conversation. Never infer approval. ZEN still performs its own safety and fresh-state checks before any MA2 write.",
-      parameters: Type.Object(
-        {
-          actionId: Type.String({ minLength: 1, maxLength: 128, description: "Exact action id shown by zen_preview." }),
-          dangerConfirmed: Type.Optional(
-            Type.Boolean({
-              description:
-                "Set true only when ZEN marks the action DANGEROUS and the human explicitly gives the required second confirmation.",
-            }),
-          ),
-        },
-        { additionalProperties: false },
-      ),
-      execute: async ({ actionId, dangerConfirmed }, config, context) =>
-        invokeZen(
-          "zen.approve",
-          { action_id: actionId, danger_confirmed: dangerConfirmed ?? false },
-          config,
-          context.signal,
-        ),
     }),
     tool({
       name: "zen_department_status",

@@ -58,7 +58,7 @@ Templates under `systemd/` are not installed automatically.
 Primary templates:
 
 - `zen-show-controller.service` — loopback-only Show Agent Controller control-plane service for a validated headless controller host. It reuses the existing FieldHost runtime without granting production MA authority.
-- `zen-controller-readonly-facade.service` — optional loopback-only facade for authenticated private transport. It exposes health/status GET plus `zen.department.status` POST only; it does not expose preview/approval/write tools.
+- `zen-controller-readonly-facade.service` — loopback-only bounded Controller facade used by the Mini OpenClaw plugin. It exposes health/status GET plus `zen.department.status` and `zen.department.preview`; the latter delegates only the fixed Preview allowlist and never exposes approval/write authority.
 - `zen-lighting-operator-proxy.service` — loopback-only proxy from Mini `127.0.0.1:18878` to the Windows lighting host's Tailscale-restricted typed operator facade on `18878`. This keeps the OpenClaw plugin's local-URL policy while preserving Windows-local MA execution.
 - `zen-field-core.service` — normal ZEN FieldHost process. It owns Operator
   API, MA Bridge, Watchdog, Host Metrics and Worker Registry.
@@ -92,14 +92,15 @@ Git. Do not commit secrets or MA credentials.
 The normal Field Core keeps Operator API and MA Bridge on loopback by default.
 Remote exposure requires an explicit authenticated-network decision.
 
-A Show Agent Controller may read a department-local ZEN Operator API with
+A Show Agent Controller may register a department-local ZEN Operator API with
 `--department-adapter ADAPTER_ID=BASE_URL`. The endpoint is restricted to a
 literal loopback, private-LAN, or Tailscale CGNAT address. The federation path
-reads only the fixed remote status contract and exposes `zen.department.status`;
-it does not forward `zen.approve`, shell access, raw MA commands, credentials,
-or arbitrary HTTP paths. Tailscale Serve can publish a loopback Operator API to
-an authenticated tailnet without changing the underlying ZEN bind from
-`127.0.0.1`.
+projects the fixed status contract through `zen.department.status` and supports
+`zen.department.preview` only for the fixed Preview allowlist. It does not
+forward `zen.approve`, `zen.position.semantic.bind`, shell access, raw MA
+commands, credentials, or arbitrary HTTP paths. The validated Mini deployment
+uses `http://127.0.0.1:18878` as the Lighting adapter URL; that loopback proxy
+reaches the Windows typed facade over Tailscale.
 
 Worker API also stays loopback-only by default. If a later private-network
 deployment requires a non-loopback Worker bind, use the existing

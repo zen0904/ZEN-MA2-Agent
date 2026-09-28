@@ -185,6 +185,7 @@ class FieldHost:
                 self.core, "bind_semantic_position_target", None
             ),
             department_status_provider=self.department_adapters.snapshot,
+            department_preview_handler=self.department_adapters.preview,
         )
         self._stop = threading.Event()
         self._ma_thread: threading.Thread | None = None
