@@ -484,3 +484,4 @@ Home compute accelerates ZEN.
 Home compute is never required for field safety/core operation.
 ```
 
+No implementation should begin solely because this file exists. Future work should first confirm the second GPU, remote-network constraints, desired offline behavior, and whether this distributed model still offers enough practical benefit compared with a single stronger portable inference machine.
