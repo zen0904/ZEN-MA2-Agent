@@ -8,7 +8,11 @@
     "properties": {
       "operatorBaseUrl": {
         "type": "string",
-        "description": "ZEN Operator API base URL. Development default is loopback-only."
+        "description": "MA-local ZEN Operator API base URL. Default is loopback 127.0.0.1:8876."
+      },
+      "controllerBaseUrl": {
+        "type": "string",
+        "description": "Show Agent Controller read-only facade. Default is loopback 127.0.0.1:18876."
       }
     },
     "additionalProperties": false
@@ -23,11 +27,14 @@
       "zen_ma_visual",
       "zen_ma_stage_visual",
       "zen_design_request",
+      "zen_preview",
       "zen_position_preview",
       "zen_position_raw_preview",
       "zen_position_calibration_preview",
-      "zen_preview",
+      "zen_position_semantic_bindings",
+      "zen_position_semantic_bind",
       "zen_approve",
+      "zen_department_status",
       "zen_worker_status",
       "zen_watchdog_status",
       "zen_host_status"

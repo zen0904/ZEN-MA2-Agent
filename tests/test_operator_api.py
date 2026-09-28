@@ -232,6 +232,21 @@ class OperatorApiTests(unittest.TestCase):
         )
         self.assertEqual(rejected["status"], "REJECTED")
 
+    def test_department_status_tool_is_read_only_projection(self):
+        adapter = OpenClawOperatorAdapter(
+            self._snapshot,
+            department_status_provider=lambda: {
+                "schema": "zen.department_adapter_status.v0.1",
+                "read_only_federation": True,
+                "ma2_writes": 0,
+                "adapters": [],
+            },
+        )
+        result = adapter.invoke("zen.department.status")
+        self.assertEqual(result["status"], "SUCCESS")
+        self.assertEqual(result["result"]["ma2_writes"], 0)
+        self.assertTrue(result["result"]["read_only_federation"])
+
     def test_mutating_tools_are_reserved_but_not_implemented(self):
         adapter = OpenClawOperatorAdapter(self._snapshot)
         for name in ("zen.design.request", "zen.preview", "zen.approve"):

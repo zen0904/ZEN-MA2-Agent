@@ -39,15 +39,19 @@ Wi-Fi
 → Internet / API / GitHub / Remote administration
 
 Ethernet
+→ static `10.0.0.50/8` (`255.0.0.0`)
 → reserved for MA / Production LAN
-→ no default Internet route
+→ no DHCP, DNS, or default Internet route
 
 IPv4 forwarding = off
 IPv6 forwarding = off
 ```
 
 Known Wi-Fi profiles are auto-connect profiles; Ethernet remains the production
-network path and must not steal the default Internet route.
+network path and must not steal the default Internet route. Tailscale provides a
+stable private overlay for controller/department-adapter transport across home
+Wi-Fi, iPhone hotspot, or other Internet uplinks; it does not replace the
+Production LAN used by show hardware.
 
 ## Runtime
 
@@ -64,6 +68,14 @@ Operator API  127.0.0.1:8876
 MA Bridge     127.0.0.1:8877
 ```
 
+The controller Operator API remains loopback-only. Tailscale Serve publishes
+its TCP 8876 only inside the authenticated tailnet. The Windows lighting host
+does **not** publish its full Operator API; instead it publishes a dedicated
+read-only facade on tailnet TCP 18877. That facade allows only health and raw
+operator-status GETs, denies mutation methods, and lets the controller project
+a typed `LIGHTING_GRANDMA2` department status without exposing either full
+Operator API to the public Internet.
+
 Acceptance evidence on 2026-09-28:
 
 - `zen-show-controller.service` enabled + active;
@@ -71,7 +83,7 @@ Acceptance evidence on 2026-09-28:
 - Field Core reports ONLINE;
 - MA Bridge process boundary reports ONLINE while MA connection remains DISCONNECTED;
 - forced controller process kill is recovered by systemd and health returns;
-- `977/977` unit tests PASS;
+- `982/982` unit tests PASS after read-only department-adapter federation;
 - repository self-check reports `ma2_writes: 0`;
 - repository worktree clean before host-role documentation update.
 
@@ -81,8 +93,8 @@ Codebase Memory MCP 0.11.0 is installed and validated locally.
 
 ZEN indexing acceptance:
 
-- 7,310 nodes;
-- 28,678 edges;
+- 7,355 nodes;
+- 28,826 edges;
 - architecture/search/trace/coverage checks PASS;
 - no `.codebase-memory/` artifact is written into the tracked repository;
 - auto-index / auto-watch enabled, UI disabled.
@@ -91,13 +103,24 @@ ToolRush was reviewed as an optimization reference. Its warm-shell, direct
 search, bounded-read, parallel read-only batching, kill-switch and fail-closed
 ideas are approved for later **ZEN-native** adaptation. The upstream Hermes / Windows/MSYS runtime is not installed on this Ubuntu host.
 
+## Read-only department federation
+
+The controller may register a department-local ZEN Operator API with
+`--department-adapter ADAPTER_ID=BASE_URL`. The current validated adapter is
+`LIGHTING_GRANDMA2` on the Windows host over the authenticated Tailscale
+network. Federation is intentionally narrow: only the fixed remote
+`/zen/v0.1/status` contract is read and projected into
+`zen.department.status`. There is no generic HTTP proxy, no credential
+forwarding, no remote shell, and no cross-host `zen.approve` or raw MA command
+path. The projected result always declares `ma2_writes = 0`.
+
 ## Production authority gate
 
 Before this Mac mini can ever be promoted from controller host to a production
 Field Host, all of the following require an explicit owner decision and fresh
 evidence:
 
-1. production Ethernet / MA subnet profile validated on the real show network;
+1. production Ethernet `10.0.0.50/8` profile validated against the real show network;
 2. MA reachability and current-show identity verified;
 3. deterministic adapter write path verified for the intended scope;
 4. Preview + explicit human approval remains mandatory;

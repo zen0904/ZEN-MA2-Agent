@@ -1156,8 +1156,56 @@
       "operator_api": "127.0.0.1:8876",
       "ma_bridge": "127.0.0.1:8877",
       "authority": "CONTROL_PLANE_ONLY_MA2_WRITES_0",
-      "production_field_host_status": "NOT_GRANTED"
+      "production_field_host_status": "NOT_GRANTED",
+      "production_lan": {
+        "interface_role": "ETHERNET_PRODUCTION_ONLY",
+        "address": "10.0.0.50/8",
+        "netmask": "255.0.0.0",
+        "default_route": false,
+        "dns": false
+      },
+      "private_overlay": {
+        "provider": "TAILSCALE",
+        "controller_ip": "100.122.169.17",
+        "operator_api_transport": "TAILNET_ONLY_TCP_SERVE_8876_TO_LOOPBACK"
+      }
     },
-    "control_plane_authority_boundary": "Control-plane hosting, code intelligence, state/cache, remote administration and loopback orchestration do not imply production MA execution authority. Preview/Approval/verified department adapters remain mandatory."
+    "control_plane_authority_boundary": "Control-plane hosting, code intelligence, state/cache, remote administration and loopback orchestration do not imply production MA execution authority. Preview/Approval/verified department adapters remain mandatory.",
+    "department_federation": {
+      "status": "READ_ONLY_LIGHTING_ADAPTER_VALIDATED",
+      "validated_on": "2026-09-28",
+      "tool": "zen.department.status",
+      "schema": "zen.department_adapter_status.v0.1",
+      "current_adapter": {
+        "adapter_id": "LIGHTING_GRANDMA2",
+        "department": "LIGHTING",
+        "host": "DESKTOP-AA2GR39",
+        "transport": "TAILSCALE_PRIVATE_HTTP",
+        "remote_operator_ip": "100.67.178.35:18877",
+        "ma_state_at_acceptance": "READY",
+        "authority": "REMOTE_READ_ONLY",
+        "ma2_writes": 0,
+        "surface": "READ_ONLY_STATUS_FACADE",
+        "full_operator_api_tailnet_exposed": false
+      },
+      "prohibited_paths": [
+        "generic HTTP proxy",
+        "remote shell",
+        "raw MA command forwarding",
+        "cross-host zen.approve forwarding before a separate authority contract",
+        "credential forwarding"
+      ],
+      "transport_boundary": {
+        "windows_loopback_full_operator": "127.0.0.1:8876",
+        "windows_loopback_readonly_facade": "127.0.0.1:18877",
+        "tailnet_published_surface": "100.67.178.35:18877",
+        "allowed_remote_methods": [
+          "GET /healthz",
+          "GET /zen/v0.1/status"
+        ],
+        "mutation_methods": "HTTP_405",
+        "unknown_paths": "HTTP_404"
+      }
+    }
   }
 }

@@ -206,6 +206,7 @@ RawPositionPreviewHandler = Callable[..., Mapping[str, Any]]
 PositionCalibrationPreviewHandler = Callable[..., Mapping[str, Any]]
 SemanticPositionBindingsHandler = Callable[[], Mapping[str, Any]]
 SemanticPositionBindHandler = Callable[..., Mapping[str, Any]]
+DepartmentStatusProvider = Callable[[], Mapping[str, Any]]
 
 
 class UnknownOpenClawTool(ValueError):
@@ -225,6 +226,7 @@ class OpenClawOperatorAdapter:
             "zen.host.status",
             "zen.ma.visual",
             "zen.position.semantic.bindings",
+            "zen.department.status",
         }
     )
     NAVIGATION_TOOLS = frozenset({"zen.ma.stage.visual"})
@@ -256,6 +258,7 @@ class OpenClawOperatorAdapter:
         position_calibration_preview_handler: Optional[PositionCalibrationPreviewHandler] = None,
         semantic_position_bindings_handler: Optional[SemanticPositionBindingsHandler] = None,
         semantic_position_bind_handler: Optional[SemanticPositionBindHandler] = None,
+        department_status_provider: Optional[DepartmentStatusProvider] = None,
     ):
         self._status_provider = status_provider
         self._watchdog_provider = watchdog_provider
@@ -270,6 +273,7 @@ class OpenClawOperatorAdapter:
         self._position_calibration_preview_handler = position_calibration_preview_handler
         self._semantic_position_bindings_handler = semantic_position_bindings_handler
         self._semantic_position_bind_handler = semantic_position_bind_handler
+        self._department_status_provider = department_status_provider
 
     def invoke(
         self,
@@ -446,6 +450,17 @@ class OpenClawOperatorAdapter:
 
         if tool_name in self.RESERVED_TOOLS:
             return self._result(tool_name, "NOT_IMPLEMENTED", None, None, request_id)
+
+        if tool_name == "zen.department.status":
+            if self._department_status_provider is None:
+                return self._result(tool_name, "NOT_IMPLEMENTED", None, None, request_id)
+            return self._result(
+                tool_name,
+                "SUCCESS",
+                dict(self._department_status_provider()),
+                None,
+                request_id,
+            )
 
         if tool_name == "zen.watchdog.status":
             if self._watchdog_provider is None:

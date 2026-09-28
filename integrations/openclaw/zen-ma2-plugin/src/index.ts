@@ -1,45 +1,83 @@
 import { Type } from "typebox";
 import { defineToolPlugin } from "openclaw/plugin-sdk/tool-plugin";
 
-const DEFAULT_BASE_URL = "http://127.0.0.1:8876";
+const DEFAULT_OPERATOR_BASE_URL = "http://127.0.0.1:8876";
+const DEFAULT_CONTROLLER_BASE_URL = "http://127.0.0.1:18876";
+
+export type ZenPluginConfig = {
+  operatorBaseUrl?: string;
+  controllerBaseUrl?: string;
+};
+
+type ZenEndpoint = "operator" | "controller";
+
+export function endpointForTool(toolName: string): ZenEndpoint {
+  return toolName === "zen.department.status" ? "controller" : "operator";
+}
 
 const ConfigSchema = Type.Object(
   {
     operatorBaseUrl: Type.Optional(
       Type.String({
-        description: "ZEN Operator API base URL. Development default is loopback-only.",
+        description: "MA-local ZEN Operator API base URL. Default is loopback 127.0.0.1:8876.",
+      }),
+    ),
+    controllerBaseUrl: Type.Optional(
+      Type.String({
+        description: "Show Agent Controller read-only facade. Default is loopback 127.0.0.1:18876.",
       }),
     ),
   },
   { additionalProperties: false },
 );
 
-function baseUrl(config: { operatorBaseUrl?: string }): string {
-  const value = (config.operatorBaseUrl || DEFAULT_BASE_URL).replace(/\/+$/, "");
+function loopbackBaseUrl(value: string, fieldName: string): string {
+  const normalized = value.replace(/\/+$/, "");
   let parsed: URL;
   try {
-    parsed = new URL(value);
+    parsed = new URL(normalized);
   } catch {
-    throw new Error("ZEN operatorBaseUrl must be a valid URL.");
+    throw new Error(`ZEN ${fieldName} must be a valid URL.`);
   }
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    throw new Error("ZEN operatorBaseUrl must use http or https.");
+    throw new Error(`ZEN ${fieldName} must use http or https.`);
   }
   const host = parsed.hostname.toLowerCase();
   if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(host)) {
-    throw new Error("ZEN development plugin accepts loopback Operator API only.");
+    throw new Error(`ZEN ${fieldName} accepts loopback endpoints only.`);
   }
-  return value;
+  return normalized;
+}
+
+function operatorBaseUrl(config: ZenPluginConfig): string {
+  return loopbackBaseUrl(
+    config.operatorBaseUrl || DEFAULT_OPERATOR_BASE_URL,
+    "operatorBaseUrl",
+  );
+}
+
+function controllerBaseUrl(config: ZenPluginConfig): string {
+  return loopbackBaseUrl(
+    config.controllerBaseUrl || DEFAULT_CONTROLLER_BASE_URL,
+    "controllerBaseUrl",
+  );
+}
+
+export function baseUrlForTool(toolName: string, config: ZenPluginConfig): string {
+  return endpointForTool(toolName) === "controller"
+    ? controllerBaseUrl(config)
+    : operatorBaseUrl(config);
 }
 
 async function invokeZen(
   toolName: string,
   args: Record<string, unknown>,
-  config: { operatorBaseUrl?: string },
+  config: ZenPluginConfig,
   signal?: AbortSignal,
 ): Promise<unknown> {
+  const root = baseUrlForTool(toolName, config);
   const response = await fetch(
-    `${baseUrl(config)}/zen/v0.1/tools/${encodeURIComponent(toolName)}`,
+    `${root}/zen/v0.1/tools/${encodeURIComponent(toolName)}`,
     {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -269,6 +307,15 @@ export default defineToolPlugin({
           config,
           context.signal,
         ),
+    }),
+    tool({
+      name: "zen_department_status",
+      label: "ZEN Department Status",
+      description:
+        "Read controller-visible department adapter states. Read-only federation; no remote approval, shell, raw MA command, or write authority.",
+      parameters: Type.Object({}, { additionalProperties: false }),
+      execute: async (_params, config, context) =>
+        invokeZen("zen.department.status", {}, config, context.signal),
     }),
     tool({
       name: "zen_worker_status",

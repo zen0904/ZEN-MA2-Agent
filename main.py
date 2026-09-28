@@ -4,6 +4,7 @@ import argparse
 import json
 
 from zen_ma2_agent.core import AgentCore
+from zen_ma2_agent.department_adapters import DepartmentAdapterEndpoint
 from zen_ma2_agent.field_host import FieldHost, FieldHostConfig
 from zen_ma2_agent.worker_health import WorkerEndpoint
 
@@ -14,6 +15,28 @@ def _worker_endpoint(value: str) -> WorkerEndpoint:
         raise argparse.ArgumentTypeError("worker must use WORKER_ID=BASE_URL")
     try:
         return WorkerEndpoint(worker_id=worker_id, base_url=base_url)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from exc
+
+
+def _department_adapter_endpoint(value: str) -> DepartmentAdapterEndpoint:
+    adapter_id, separator, base_url = value.partition("=")
+    if not separator or not adapter_id or not base_url:
+        raise argparse.ArgumentTypeError(
+            "department adapter must use ADAPTER_ID=BASE_URL"
+        )
+    upper = adapter_id.upper()
+    if upper.startswith("LIGHTING"):
+        department, adapter_kind = "LIGHTING", "GRANDMA2"
+    else:
+        department, adapter_kind = "UNKNOWN", "UNKNOWN"
+    try:
+        return DepartmentAdapterEndpoint(
+            adapter_id=adapter_id,
+            base_url=base_url,
+            department=department,
+            adapter_kind=adapter_kind,
+        )
     except ValueError as exc:
         raise argparse.ArgumentTypeError(str(exc)) from exc
 
@@ -40,6 +63,14 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--worker-health-interval", type=float, default=5.0)
     parser.add_argument("--worker-health-timeout", type=float, default=2.0)
+    parser.add_argument(
+        "--department-adapter",
+        action="append",
+        type=_department_adapter_endpoint,
+        default=[],
+        metavar="ADAPTER_ID=BASE_URL",
+        help="Register a private read-only department adapter Operator API.",
+    )
     return parser
 
 
@@ -63,6 +94,7 @@ def main() -> int:
             worker_health_timeout_seconds=args.worker_health_timeout,
         ),
         worker_endpoints=args.worker,
+        department_adapter_endpoints=args.department_adapter,
     )
 
     if args.self_check:

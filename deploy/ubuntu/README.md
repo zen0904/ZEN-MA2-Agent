@@ -58,6 +58,7 @@ Templates under `systemd/` are not installed automatically.
 Primary templates:
 
 - `zen-show-controller.service` — loopback-only Show Agent Controller control-plane service for a validated headless controller host. It reuses the existing FieldHost runtime without granting production MA authority.
+- `zen-controller-readonly-facade.service` — optional loopback-only facade for authenticated private transport. It exposes health/status GET plus `zen.department.status` POST only; it does not expose preview/approval/write tools.
 - `zen-field-core.service` — normal ZEN FieldHost process. It owns Operator
   API, MA Bridge, Watchdog, Host Metrics and Worker Registry.
 - `zen-worker.service` — Worker HTTP control plane.
@@ -90,6 +91,15 @@ Git. Do not commit secrets or MA credentials.
 The normal Field Core keeps Operator API and MA Bridge on loopback by default.
 Remote exposure requires an explicit authenticated-network decision.
 
+A Show Agent Controller may read a department-local ZEN Operator API with
+`--department-adapter ADAPTER_ID=BASE_URL`. The endpoint is restricted to a
+literal loopback, private-LAN, or Tailscale CGNAT address. The federation path
+reads only the fixed remote status contract and exposes `zen.department.status`;
+it does not forward `zen.approve`, shell access, raw MA commands, credentials,
+or arbitrary HTTP paths. Tailscale Serve can publish a loopback Operator API to
+an authenticated tailnet without changing the underlying ZEN bind from
+`127.0.0.1`.
+
 Worker API also stays loopback-only by default. If a later private-network
 deployment requires a non-loopback Worker bind, use the existing
 `--allow-remote` flag only after that network/security decision is made.
@@ -117,7 +127,7 @@ When a physical host returns:
 - actual service/autostart behavior;
 - MA and peer reachability;
 - OpenClaw Gateway support/version on the selected host;
-- private-network transport;
+- production acceptance of private-network transport beyond the validated Mac mini ↔ Windows lighting-adapter path;
 - actual model runtime;
 - real remote inference;
 - production MA writes.
