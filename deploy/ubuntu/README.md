@@ -1,6 +1,6 @@
 # ZEN Linux/systemd deployment skeleton
 
-Status: **REPOSITORY PREPARED / HOST INSTALL NOT PERFORMED**
+Status: **GENERIC DEPLOYMENT PREPARED / MAC MINI CONTROLLER HOST VALIDATED**
 
 This directory prepares ZEN for a possible Linux/systemd Gateway, Field Core,
 and/or Worker host without modifying any real machine.
@@ -12,7 +12,9 @@ physical machines return.
 ## Current deployment direction
 
 - Operator-visible Windows machine: OpenClaw Windows Hub only.
-- Preferred next Gateway / Field Host candidate to verify: Worker A.
+- Validated Home/Portable Show Agent Controller host: 2012 Mac mini (`zen-agent-server`) running Ubuntu 24.04.5. It hosts the loopback-only ZEN control plane, code intelligence, cache/state and remote administration.
+- This Mac mini selection does **not** grant production Field Host or MA write authority. `MA2_WRITES=0` remains required during integration.
+- Preferred next production Gateway / Field Host candidate to verify remains Worker A.
 - Worker A may physically co-host OpenClaw Gateway + ZEN Field Core + Worker
   runtime if host checks pass.
 - Worker B remains primarily an AI Worker.
@@ -55,6 +57,7 @@ Templates under `systemd/` are not installed automatically.
 
 Primary templates:
 
+- `zen-show-controller.service` — loopback-only Show Agent Controller control-plane service for a validated headless controller host. It reuses the existing FieldHost runtime without granting production MA authority.
 - `zen-field-core.service` — normal ZEN FieldHost process. It owns Operator
   API, MA Bridge, Watchdog, Host Metrics and Worker Registry.
 - `zen-worker.service` — Worker HTTP control plane.

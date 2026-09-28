@@ -56,7 +56,8 @@ The Field Node role is not assigned permanently to one chassis.
 Current decision:
 
 - the operator-visible Windows machine is Hub-only and is not the Gateway / Field Host;
-- the 2012 Mac mini is explicitly excluded from current Gateway / Field Host consideration;
+- the 2012 Mac mini (`zen-agent-server`) is now validated as the Home/Portable **Show Agent Controller control-plane host**;
+- that control-plane selection does not by itself make the Mac mini the production Gateway / Field Host and does not grant MA write authority;
 - Worker A/B remain primary AI compute;
 - Worker A is explicitly allowed to co-host OpenClaw Gateway + ZEN Field Core +
   Worker runtime if real host checks pass;
@@ -452,11 +453,18 @@ Current working direction to preserve for later discussion:
 
 ```text
 Field hardware:
-Preferred next candidate for verification: Worker A
+Home/Portable Show Agent Controller host:
+2012 Mac mini (`zen-agent-server`)
+→ VALIDATED on Ubuntu 24.04.5
+→ loopback Operator API / MA Bridge control plane
+→ code intelligence / cache / state / remote administration
+→ MA2_WRITES=0 during integration
+→ NOT automatically promoted to production Field Host / MA authority
+
+Preferred next production Field Host candidate for verification: Worker A
 → currently NOT PHYSICALLY AVAILABLE
 → may co-host OpenClaw Gateway + ZEN Field Core + Worker runtime
 → must pass real OS/network/service/recovery checks after the machine returns
-→ 2012 Mac mini EXCLUDED
 → operator Windows machine HUB-ONLY
 
 Primary AI compute:
