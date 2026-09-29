@@ -1,9 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "enable-ops-funnel-20260929-2324",
+  "job_id": "antseed-install-20260929-2326",
   "kind": "repo_task",
   "args": {
-    "task": "add_zen_ops_funnel_10000",
-    "timeout": 120
+    "task": "install_antseed_buyer",
+    "timeout": 1800
   }
 }
