@@ -1,0 +1,26 @@
+[Unit]
+Description=ZEN Antseed buyer proxy (local free-only inference)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=zenantseed
+Group=zenantseed
+WorkingDirectory=/var/lib/zen-antseed
+Environment=HOME=/var/lib/zen-antseed
+Environment=ANTSEED_DATA_DIR=/var/lib/zen-antseed/runtime
+Environment=ANTSEED_ENABLE_SETTLEMENT=false
+Environment=ANTSEED_BUYER_MAX_INPUT_USD_PER_MILLION=0
+Environment=ANTSEED_BUYER_MAX_OUTPUT_USD_PER_MILLION=0
+ExecStart=/usr/local/bin/zen-antseed --data-dir /var/lib/zen-antseed/runtime buyer start --max-input-usd-per-million 0 --max-output-usd-per-million 0
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+ReadWritePaths=/var/lib/zen-antseed
+
+[Install]
+WantedBy=multi-user.target
