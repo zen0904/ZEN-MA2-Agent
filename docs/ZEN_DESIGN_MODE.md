@@ -34,6 +34,36 @@ native MA2 readback.
 Short form: Strong Primary Brain + Mature Agent/Tool Infrastructure + Specialized
 Workers when valuable + Deterministic MA Execution.
 
+## Interactive primary brain and autonomous runtime
+
+The Strong Primary Brain is a role, not a requirement that ZEN must always
+delegate design to a separate API Agent.
+
+When the owner is actively working with ChatGPT on ZEN, ChatGPT may directly
+occupy the Primary Lighting Designer role: it may reason across the song,
+current Show, rig/spatial state, Reference Lighting, accepted design history,
+operator feedback, and neighboring Cue context, then produce the artistic
+intent consumed by the ZEN Compiler. In this mode, ChatGPT is not merely
+teaching or supervising another Designer Agent; it is participating in the
+design itself.
+
+For unattended/offline runtime, the same role may be filled by one strong
+provider model through the same bounded artistic contract and verified context.
+That runtime model is an autonomous substitute for the interactive Primary
+Brain, not a second competing brain and not a permanent multi-agent committee.
+
+Specialized workers may be invoked by the Primary Brain for coding, research,
+audio/video/vision evidence, structural code intelligence, critique, or other
+bounded work. Their outputs return to the Primary Brain as evidence,
+implementation results, or review. They do not own the whole-song artistic
+decision unless the owner explicitly chooses a deep/research workflow.
+
+This distinction does not broaden execution authority. Whether the artistic
+intent originates from interactive ChatGPT or an autonomous provider model, it
+must still pass through the same verified-resource boundary, ZEN Compiler,
+strict typed ShowPlan, Preview, explicit Approval, deterministic Builder, and
+native MA2 readback. The Primary Brain never becomes a raw MA command channel.
+
 ## Product shape
 
 ZEN has four core responsibilities:
