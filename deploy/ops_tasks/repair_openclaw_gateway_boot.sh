@@ -3,7 +3,7 @@ set -euo pipefail
 
 export HOME=/root
 export XDG_RUNTIME_DIR=/run/user/0
-export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus
+unset DBUS_SESSION_BUS_ADDRESS || true
 export PATH=/opt/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 echo "=== root linger ==="
