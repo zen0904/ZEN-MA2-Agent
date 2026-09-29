@@ -38,15 +38,17 @@ primary component plus a compatibility shim where required.
 | --- | --- | --- |
 | Glances | Mini host telemetry, Web/API, MCP system status | INTEGRATE |
 | restic | Mini state/config/artifact backup | INTEGRATE |
-| Docker MCP Gateway | Central MCP lifecycle, isolation, tool profiles, secrets, logging | REPLACE + INTEGRATE |
-| Supergateway | stdio/SSE/Streamable-HTTP compatibility bridge | INTEGRATE as compatibility shim |
+| OpenClaw native MCP registry/client | Primary Mini MCP client/tool-policy surface for ZEN and shared tools | REPLACE + INTEGRATE |
+| Docker MCP Gateway | Optional cross-client MCP lifecycle/isolation layer where OpenClaw-native MCP is insufficient | ON_DEMAND + INTEGRATE |
+| Supergateway | stdio/SSE/Streamable-HTTP compatibility bridge only when native transports do not line up | ON_DEMAND compatibility shim |
 | Codebase Memory MCP | Structural code intelligence | INTEGRATE (already adopted) |
 
 ### Model / coding-agent fabric
 
 | Tool | Intended role | Initial classification |
 | --- | --- | --- |
-| LiteLLM | Provider transport, normalized APIs, fallback/routing primitives, budget/spend/telemetry | REPLACE + INTEGRATE |
+| OpenClaw native model/provider routing | Primary provider/auth/fallback/cost surface for normal ZEN Designer calls | REPLACE + INTEGRATE |
+| LiteLLM | Optional shared OpenAI-compatible gateway for non-OpenClaw clients or capabilities OpenClaw does not cover | ON_DEMAND + INTEGRATE |
 | Agent Client Protocol (ACP) | Common control protocol for coding agents | REPLACE + INTEGRATE |
 | codex-acp | Codex CLI ACP adapter | INTEGRATE |
 | Gemini CLI ACP mode | Gemini coding-agent control | INTEGRATE |
@@ -114,27 +116,32 @@ Current custom code handles generic concerns including OpenAI-compatible HTTP,
 provider slot parsing, fallback ordering, bounded parallel fan-out, timeouts and
 diagnostics.
 
-Target direction:
+Current preferred replacement direction after verifying OpenClaw 2026.9.4:
 
 ```text
-ZEN Provider Policy
-  - role eligibility
-  - FREE / LOCAL / PAID allow/deny
-  - artistic contract
-  - evidence and image provenance
+ZEN Designer Policy
+  - exact artistic contract
+  - verified resource context
+  - evidence/image provenance
+  - explicit allowed model set for this role
         ↓
-LiteLLM gateway
-  - provider adapters
-  - request transport
-  - retry/fallback primitives
-  - provider/model telemetry
-  - budgets/spend/rate controls
+dedicated OpenClaw zen-designer agent
+  - provider adapters/auth profiles
+  - model fallback/retry
+  - model catalog
+  - token/cost accounting
         ↓
-OpenAI / Gemini / OpenRouter / NVIDIA / local OpenAI-compatible endpoints
+OpenAI / Gemini / OpenRouter / NVIDIA / local endpoints
 ```
 
-Do not delete the current router until parity tests prove that the thin ZEN
-policy adapter preserves fail-closed behavior and current provider provenance.
+OpenClaw already owns model/provider fallback and credential/runtime integration
+on the Mini, so normal ZEN inference should not add LiteLLM merely to duplicate
+those features. LiteLLM remains an optional shared OpenAI-compatible gateway
+for non-OpenClaw clients or future requirements that OpenClaw cannot satisfy.
+
+Do not delete the current router until a dedicated tool-less ZEN Designer
+agent preserves the explicit no-paid/no-unapproved-model policy and parity
+tests cover provider provenance, failure behavior and saved-artifact retry.
 
 ### 2. Coding-agent wrappers
 
@@ -154,22 +161,27 @@ artistic/MA authority.
 
 ### 3. MCP transport / lifecycle
 
-Prefer Docker MCP Gateway as the primary Mini MCP service manager where it fits:
+OpenClaw 2026.9.4 already has native MCP server definitions, tool discovery,
+tool filtering/policy, Streamable HTTP/SSE/Stdio support and live probe/doctor
+flows. For the current Mini, prefer the shortest path:
 
 ```text
-GPT / OpenClaw / Codex / Gemini / other clients
-                 ↓
-         Docker MCP Gateway
-       profiles / auth / isolation
-       lifecycle / logging / secrets
-                 ↓
-          MCP tool services
+OpenClaw
+   ↓ native MCP
+ZEN MCP server + other MCP tools
 ```
 
-Use Supergateway only where a stdio/SSE/Streamable-HTTP compatibility bridge is
-still needed. Existing ZEN typed operator facades remain until an MCP
-replacement is proven at least as restrictive; standardization alone is not
-sufficient reason to weaken or replace a verified safety boundary.
+The first ZEN migration target is the custom OpenClaw TypeScript tool plugin and
+its duplicate argument schemas. Expose the existing bounded ZEN tool contract
+through the official MCP Python SDK and let OpenClaw consume it natively.
+
+Docker MCP Gateway remains useful when multiple non-OpenClaw clients need one
+containerized/isolation-managed MCP fabric. Supergateway remains useful only
+when a legacy/third-party transport shape needs conversion.
+
+Existing cross-host Windows typed facades remain until the MCP migration proves
+an equal-or-narrower authority boundary. Do not replace a verified safety
+boundary merely to make the diagram prettier.
 
 ### 4. Document ingestion
 
