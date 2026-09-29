@@ -1,9 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "inspect-openclaw-config-location-safe-20260930-0036",
-  "kind": "repo_task",
+  "job_id": "inspect-root-openclaw-config-20260930-0037",
+  "kind": "shell",
   "args": {
-    "task": "inspect_openclaw_config_location_safe",
-    "timeout": 120
+    "cwd": "/opt/zen",
+    "timeout": 30,
+    "command": "python3 - <<'PY'\nimport json, os\np='/openclaw.json'\nprint('ROOT_CONFIG_EXISTS='+('YES' if os.path.isfile(p) else 'NO'))\nif os.path.isfile(p):\n d=json.load(open(p))\n print('TOP_KEYS='+','.join(sorted(d.keys())))\n print('HAS_MODELS='+('YES' if isinstance(d.get('models'),dict) else 'NO'))\n print('HAS_AGENTS='+('YES' if isinstance(d.get('agents'),dict) else 'NO'))\nPY"
   }
 }
