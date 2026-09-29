@@ -20,8 +20,17 @@ else
 fi
 
 cd "$SRC"
-npm_config_force=true npm_config_cache="$STATE/npm-cache" "$NPM" ci
-npm_config_force=true npm_config_cache="$STATE/npm-cache" "$NPM" run build
+# npm/node-gyp inherits root HOME when repo_task runs as root. Keep every build
+# cache inside the dedicated OpenChatX state tree instead of touching /root.
+install -d -o zenopenchatx -g zenopenchatx -m 0750 "$STATE/home" "$STATE/node-gyp-cache"
+export HOME="$STATE/home"
+export XDG_CACHE_HOME="$STATE/home/.cache"
+export npm_config_cache="$STATE/npm-cache"
+export npm_config_devdir="$STATE/node-gyp-cache"
+export npm_config_force=true
+install -d -o zenopenchatx -g zenopenchatx -m 0750 "$XDG_CACHE_HOME"
+"$NPM" ci
+"$NPM" run build
 
 cat >"$STATE/config.toml" <<'EOF'
 state_dir = "/var/lib/zen-openchatx/state"
