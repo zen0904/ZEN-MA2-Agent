@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+set -u
+
+REPO="/opt/zen/ZEN-MA2-Agent"
+STATE="/run/zen-sentinel/state.json"
+
+state() {
+  local service="$1"
+  systemctl is-active "$service" 2>/dev/null || true
+}
+
+printf 'ZEN MA AGENT / SHOW CORE    %s\n' "$(date '+%Y-%m-%d %H:%M:%S')"
+printf '%s\n' '===================================================================='
+printf 'Controller       %-12s  Operator proxy   %-12s\n' "$(state zen-show-controller)" "$(state zen-lighting-operator-proxy)"
+printf 'Read-only facade %-12s  Glances          %-12s\n' "$(state zen-controller-readonly-facade)" "$(state zen-glances)"
+printf 'OpenClaw port    %-12s  Sentinel         %-12s\n' "$(ss -ltn 2>/dev/null | grep -q ':18789 ' && echo LISTEN || echo DOWN)" "$(state zen-sentinel)"
+printf '\n'
+
+printf 'PORTS\n'
+printf '%s\n' '--------------------------------------------------------------------'
+for p in 8876 8877 18876 18878 18789 61208; do
+  if ss -ltn 2>/dev/null | awk '{print $4}' | grep -Eq "(^|:)$p$"; then
+    printf '%-7s LISTEN\n' "$p"
+  else
+    printf '%-7s DOWN\n' "$p"
+  fi
+done
+
+printf '\nNETWORK\n'
+printf '%s\n' '--------------------------------------------------------------------'
+ip -br link show enp1s0f0 2>/dev/null || true
+ip -br link show wlp2s0b1 2>/dev/null || true
+ip -br link show tailscale0 2>/dev/null || true
+printf 'AVB NIC          BCM57766/tg3\n'
+printf 'AVB PTP PHC      %s\n' "$([ -e /dev/ptp0 ] && echo YES || echo NO)"
+printf 'AVB hw-tc        %s\n' "$(ethtool -k enp1s0f0 2>/dev/null | awk '/hw-tc-offload:/ {print $2}' | head -1)"
+
+printf '\nREPOSITORY\n'
+printf '%s\n' '--------------------------------------------------------------------'
+if [ -d "$REPO/.git" ]; then
+  cd "$REPO" || exit 0
+  printf 'Branch           %s\n' "$(git branch --show-current 2>/dev/null)"
+  printf 'HEAD             %s\n' "$(git rev-parse --short HEAD 2>/dev/null)"
+  git status --short --branch 2>/dev/null | head -8
+fi
+
+printf '\nHOST\n'
+printf '%s\n' '--------------------------------------------------------------------'
+free -h | awk 'NR==2 {printf "RAM              %s / %s\\n", $3, $2}'
+df -h / | awk 'NR==2 {printf "Disk             %s / %s (%s)\\n", $3, $2, $5}'
+uptime -p 2>/dev/null || true
+
+if [ -r "$STATE" ]; then
+  printf '\nSENTINEL\n'
+  printf '%s\n' '--------------------------------------------------------------------'
+  jq -r '"mode             " + (.mode // "unknown"), "last_update      " + (.updated_at // "unknown"), "ma_ports_ok      " + ((.ma_ports_ok // false)|tostring)' "$STATE" 2>/dev/null || true
+fi
+
+printf '\nF12 = MONITOR <-> MA_AGENT\n'
