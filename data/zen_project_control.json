@@ -5,7 +5,7 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "SHEESH_DETAILED_REDESIGN_303_001 / POSITION_FOUNDATION_V1: use data/sheesh_303_position_foundation_v1.json as the progressive static Position foundation. Next gate is SHEESH_303_POSITION_STAGE_VIEW_PREVIEW_001: fresh-check current Show/target occupancy, generate Preview-only candidate looks, capture visual evidence, reject weak/ambiguous patterns, then promote accepted candidates to Agent-owned Position Preset design. MA2 writes remain 0."
+    "active_objective": "SHEESH_DETAILED_REDESIGN_303_001 / POSITION_FOUNDATION_V1: use data/sheesh_303_position_foundation_v1.json as the progressive static Position foundation. Next gate is SHEESH_303_POSITION_STAGE_VIEW_PREVIEW_001: fresh-check current Show/target occupancy, generate Preview-only candidate looks, capture visual evidence, reject weak/ambiguous patterns, then promote accepted candidates to Agent-owned Position Preset design. MA2 writes remain 0. Workflow-origin invariant: begin Agent/design/orchestration work on zen-agent-server Mini; contact Windows only as the LIGHTING_GRANDMA2 Field Core for bounded MA-local evidence/execution."
   },
   "last_closed_task": {
     "id": "SEMANTIC_POSITION_BINDING_OPERATOR_CAPTURE_001",
@@ -1320,7 +1320,7 @@
       "hardware": "Macmini6,2 (2012 Mac mini)",
       "os": "Ubuntu 24.04.5 LTS",
       "validated_on": "2026-09-28",
-      "role": "HOME_PORTABLE_OPENCLAW_GATEWAY_SHOW_AGENT_CONTROLLER",
+      "role": "CANONICAL_HOME_PORTABLE_OPENCLAW_GATEWAY_SHOW_AGENT_CONTROLLER",
       "service": "zen-show-controller.service",
       "operator_api": "127.0.0.1:8876",
       "ma_bridge": "127.0.0.1:8877",
@@ -1474,6 +1474,39 @@
         "MA2_WRITES_ZERO"
       ],
       "limitations": "This proves cross-host read/plan/Preview delegation only. Human approval, semantic-binding mutation, arbitrary HTTP forwarding, shell access and raw MA commands remain outside the Mini-to-Windows surface. A successful Preview does not authorize execution."
+    }
+  ],
+  "architecture_invariants": [
+    {
+      "id": "MINI_CANONICAL_AGENT_WINDOWS_FIELD_CORE_001",
+      "status": "ACTIVE_CANONICAL",
+      "owner_clarification_date": "2026-09-29",
+      "rule": "All Agent reasoning, OpenClaw Gateway, Show Agent Controller orchestration, provider calls, design initiation, project continuation and canonical state recovery start from zen-agent-server (Mini). DESKTOP-AA2GR39 Windows is not an Agent/Gateway origin; it is the LIGHTING_GRANDMA2 Field Core only.",
+      "mini_roles": [
+        "CANONICAL_OPENCLAW_GATEWAY",
+        "SHOW_AGENT_CONTROLLER",
+        "AGENT_REASONING_AND_PROVIDER_ORCHESTRATION",
+        "PROJECT_CONTINUATION_START_POINT",
+        "CANONICAL_REPO_STATE_CONSUMER",
+        "MINI_TO_WINDOWS_TYPED_LIGHTING_TRANSPORT"
+      ],
+      "windows_roles": [
+        "GRANDMA2_ONPC_HOST",
+        "LIGHTING_GRANDMA2_FIELD_CORE",
+        "MA_LOCAL_EXECUTION_ADAPTER",
+        "LIVE_MA_STATE_AND_STAGE_VIEW_EVIDENCE",
+        "NATIVE_SEQUENCE_EXPORT_AND_READBACK",
+        "DETERMINISTIC_MA_EXECUTION_AFTER_APPROVAL"
+      ],
+      "prohibited_interpretations": [
+        "DO_NOT_TREAT_WINDOWS_AS_OPENCLAW_GATEWAY",
+        "DO_NOT_START_AGENT_OR_DESIGN_REASONING_FROM_WINDOWS",
+        "DO_NOT_RECREATE_RETIRED_WINDOWS_GATEWAY_STATE",
+        "DO_NOT_USE_WINDOWS_REPO_AS_CANONICAL_PROJECT_START_STATE",
+        "DO_NOT_INFER_REMOTE_FIELD_CORE_ACCESS_MEANS_AGENT_AUTHORITY"
+      ],
+      "access_rule": "Windows may be contacted directly only for bounded Field Core / MA-local evidence and execution duties. That does not make Windows the workflow origin. Normal workflow origin remains Mini -> typed LIGHTING_GRANDMA2 adapter -> Windows.",
+      "note": "The Windows OpenClaw Gateway was retired during Mini migration. Windows may still retain code/runtime artifacts needed for MA-local operation, but retired Gateway/control-plane state is not to be revived or treated as canonical."
     }
   ]
 }
