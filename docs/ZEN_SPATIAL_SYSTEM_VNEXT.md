@@ -334,6 +334,71 @@ genuinely special and should remain a named reusable object, for example:
 
 The system must not create a new Position Preset for every Cue.
 
+
+## Pre-named empty Position Presets as Spatial Anchor Slots
+
+A normal operator template may intentionally contain Position Preset pool objects
+whose identity and label already exist while their fixture content is still
+empty. These are not unused noise. When explicitly designated by the operator,
+ZEN should treat them as reserved Spatial Anchor Slots.
+
+Example operator template:
+
+```text
+Position Preset 2.x  MAIN_CENTER
+Position Preset 2.y  MAIN_LEFT
+Position Preset 2.z  MAIN_RIGHT
+Position Preset 2.a  MAIN_DSC
+Position Preset 2.b  MAIN_USC
+Position Preset 2.c  AIR_IN
+Position Preset 2.d  AIR_OUT
+```
+
+The intended workflow is:
+
+```text
+operator pre-names empty Position Preset slots
+        ↓
+ZEN reads exact Preset reference / type / label
+        ↓
+operator-approved semantic mapping
+        ↓
+Space resolves per-fixture values for the target
+        ↓
+Preview
+        ↓
+approved deterministic hydration of the same Preset slot
+        ↓
+native content readback
+        ↓
+Cues reference the Position Preset
+        ↓
+onsite focus correction updates the Preset, not every Cue
+```
+
+This is preferred over allocating a new Position Preset for every song or Cue.
+A semantic target should normally remain a reusable native Position resource.
+
+Important boundaries:
+
+- Existing label identity is not content proof.
+- A pre-named slot must be verified as a POSITION Preset and explicitly empty
+  before first hydration.
+- ZEN must not silently repurpose a non-empty or differently typed Preset.
+- Exact update/merge grammar for hydrating an already existing empty Position
+  Preset requires separate real-machine verification before it becomes an
+  executable capability. Do not assume `/merge` behavior from Cue-store grammar.
+- Post-write native evidence must prove the expected per-fixture PAN/TILT rows
+  and exact Preset identity.
+- Cues should preserve native Preset references wherever possible so onsite
+  Preset correction propagates to all dependent Cues.
+- Song-specific exceptional looks may still use SPECIAL resources, but they
+  should not replace the reusable anchor library.
+
+This creates a practical onsite focus model: the operator adjusts a small set of
+foundation Position Presets to match the real venue, while the already-built Cue
+structure continues to reference those native resources.
+
 ## Selective Position Presets
 
 One semantic Position Preset may contain different PAN/TILT values for different
