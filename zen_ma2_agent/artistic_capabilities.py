@@ -48,6 +48,41 @@ TECHNICAL_CAPABILITY_KEYS = {
 
 CAPABILITY_INTENT_USES = frozenset({"USE", "AVOID", "OPTIONAL"})
 
+ARTISTIC_SELECTION_POLICY_SCHEMA = "zen.artistic_selection_policy.v0.1"
+_ARTISTIC_SELECTION_PRINCIPLES = (
+    "FULL_REPERTOIRE_IS_AVAILABLE_FOR_REASONING_NOT_A_CHECKLIST",
+    "RESOURCE_AVAILABILITY_IS_NOT_A_REQUIREMENT_TO_USE_IT",
+    "EVERY_MECHANISM_IS_OPTIONAL_UNLESS_ARTISTICALLY_JUSTIFIED",
+    "DELIBERATE_NON_USE_IS_A_VALID_DESIGN_CHOICE",
+    "NO_PER_CUE_OR_PER_SONG_MECHANISM_QUOTA",
+    "NO_MECHANISM_SHOULD_BE_USED_MERELY_TO_INCREASE_VARIETY_OR_COMPLEXITY",
+    "SELECTION_SHOULD_FOLLOW_MUSIC_ARRANGEMENT_LYRICS_CHOREOGRAPHY_SPATIAL_STATE_SHOW_LANGUAGE_AND_NEIGHBORING_CUES",
+    "REVIEW_SHOULD_NOTICE_BOTH_UNJUSTIFIED_OMISSION_AND_GRATUITOUS_OVERUSE",
+    "IMPLEMENTATION_RESOURCES_DO_NOT_DEFINE_THE_ARTISTIC_ONTOLOGY",
+    "UNEXECUTABLE_ARTISTIC_INTENT_MAY_REMAIN_EXPLICIT_BUT_EXECUTION_MUST_FAIL_CLOSED",
+)
+
+
+def artistic_selection_policy() -> dict[str, object]:
+    """Return the global model-facing mechanism-selection contract.
+
+    The complete vocabulary is intentionally visible so the Lighting Designer
+    can think like a designer rather than like a pool-object picker. Visibility
+    never creates an obligation to use a mechanism, and this policy grants no
+    MA2 execution authority.
+    """
+    return {
+        "schema": ARTISTIC_SELECTION_POLICY_SCHEMA,
+        "repertoire_mode": "FULL_VOCABULARY_NOT_CHECKLIST",
+        "artistic_repertoire": list(ARTISTIC_DIMENSIONS),
+        "principles": list(_ARTISTIC_SELECTION_PRINCIPLES),
+        "default_mechanism_state": "OPTIONAL",
+        "selection_requires_artistic_reason": True,
+        "deliberate_non_use_valid": True,
+        "resource_availability_implies_use": False,
+        "mechanism_quota": None,
+    }
+
 
 _COMPOSITE_DIMENSION_ALIASES = {
     "SHUTTER/STROBE": ("SHUTTER", "STROBE"),
@@ -90,6 +125,8 @@ __all__ = [
     "ARTISTIC_DIMENSIONS",
     "TECHNICAL_CAPABILITY_KEYS",
     "CAPABILITY_INTENT_USES",
+    "ARTISTIC_SELECTION_POLICY_SCHEMA",
     "PRESET_BACKED_DIMENSIONS",
+    "artistic_selection_policy",
     "normalize_artistic_dimensions",
 ]
