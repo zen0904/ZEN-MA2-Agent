@@ -5,7 +5,7 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "SHEESH_DETAILED_REDESIGN_303_001 / POSITION_FOUNDATION_V1: use data/sheesh_303_position_foundation_v1.json as the progressive static Position foundation. Next gate is SHEESH_303_POSITION_STAGE_VIEW_PREVIEW_001: fresh-check current Show/target occupancy, generate Preview-only candidate looks, capture visual evidence, reject weak/ambiguous patterns, then promote accepted candidates to Agent-owned Position Preset design. MA2 writes remain 0. Workflow-origin invariant: begin Agent/design/orchestration work on zen-agent-server Mini; contact Windows only as the LIGHTING_GRANDMA2 Field Core for bounded MA-local evidence/execution."
+    "active_objective": "SPATIAL_SYSTEM_VNEXT: promote geometry by verified provenance rather than bootstrap label. Read XYZ+Rot for Agent- and operator-authored layouts; preserve ZEN_STAGE_FRAME relation for Agent-authored geometry after native readback; use operator-confirmed MA geometry when intentionally arranged. Next implementation gap: current Auto Geometry hardcodes target_rotation=(0,0,0) and NEW_UNDESIGNED_SHOW strips geometry authority too broadly."
   },
   "last_closed_task": {
     "id": "SEMANTIC_POSITION_BINDING_OPERATOR_CAPTURE_001",
@@ -176,6 +176,23 @@
         "NO_GLOBAL_REQUIREMENT_THAT_EVERY_INTERMEDIATE_ITERATION_BE_PRODUCTION_COMPLETE"
       ],
       "limitations": "This rule does not permit unsafe replay, stale-state reuse, or bypass of fresh identity/resource checks. Reuse applies only to evidence and mechanisms that still match current Show/runtime truth. Each live write still requires Preview, explicit owner approval, deterministic Builder execution, and native verification."
+    },
+    {
+      "id": "SPATIAL_GEOMETRY_AUTHORITY_PROVENANCE_001",
+      "source": "Owner clarification 2026-09-29",
+      "status": "APPROVED_DESIGN_RULE",
+      "outcomes": [
+        "READ_FRESH_NATIVE_XYZ_AND_ROTATION_FOR_ALL_AVAILABLE_FIXTURE_GEOMETRY",
+        "AGENT_AUTHORED_GEOMETRY_BECOMES_SPATIAL_AUTHORITY_AFTER_APPROVED_WRITE_AND_NATIVE_READBACK",
+        "OPERATOR_AUTHORED_MA2_GEOMETRY_MAY_BECOME_SPATIAL_AUTHORITY_AFTER_FRESH_READBACK_AND_OPERATOR_CONFIRMATION",
+        "DO_NOT_KEEP_VERIFIED_AGENT_OR_OPERATOR_LAYOUT_CLASSIFIED_AS_UNDESIGNED",
+        "HEIGHT_USES_Z_AFTER_FRAME_MAPPING",
+        "ROTATION_DESCRIBES_FIXTURE_ORIENTATION_NOT_HEIGHT",
+        "BEAM_TARGET_CALCULATION_REQUIRES_POSE_PLUS_PAN_TILT_AND_VERIFIED_AXIS_SEMANTICS",
+        "RAW_MA2_COORDINATES_DO_NOT_BY_THEMSELVES_PROVE_STAGE_LEFT_RIGHT_UPSTAGE_DOWNSTAGE_SIGN_MEANING",
+        "AUTO_GEOMETRY_ROTATION_ZERO_IS_PLACEHOLDER_NOT_FINAL_SPATIAL_BEHAVIOR"
+      ],
+      "limitations": "This rule does not authorize geometry writes. Agent-authored geometry still requires Preview, explicit approval, deterministic execution and native readback. Operator-authored geometry requires fresh current-Show evidence and explicit confirmation that the MA2 layout is intentional before promotion to spatial authority."
     }
   ],
   "evidence_results": [
