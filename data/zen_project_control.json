@@ -5,7 +5,7 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "SHEESH_DETAILED_REDESIGN_303_001 design preparation may proceed alongside the blocked Spatial live-operator acceptance. Build a detailed song-driven Preview targeting requested Sequence 303 / Executor 2.015 only after fresh target occupancy checks and actual audio-bound trigger timing are available. Preserve all existing MA authority and approval boundaries."
+    "active_objective": "SHEESH_DETAILED_REDESIGN_303_001: build a K-pop-density detailed redesign targeting requested Sequence 303 / Executor 2.015, with audio-bound timed trigger_seconds plus a separate operator Free Cue layer whose density follows arrangement/choreography and distinguishes shared versus SHEESH-specific tools. Preserve Preview/Approval/native verification and MA2 authority boundaries."
   },
   "last_closed_task": {
     "id": "SEMANTIC_POSITION_BINDING_OPERATOR_CAPTURE_001",
@@ -130,9 +130,32 @@
         "STATIC_POSITION_PLUS_DIMMER_CHASE_ONLY_IS_NOT_ACCEPTABLE_FOR_FINAL_SHEESH_DESIGN",
         "FREE_CUE_LAYER_MAY_COEXIST_WITH_TIMED_TRIGGERS_WHEN_ARTISTICALLY_USEFUL",
         "NO_FIXED_CUE_COUNT_PROMOTED_AS_GLOBAL_RULE",
-        "NO_MA2_WRITE_AUTHORIZED_BY_THIS_DECISION"
+        "NO_MA2_WRITE_AUTHORIZED_BY_THIS_DECISION",
+        "KPOP_STAGE_DENSITY_WITH_FREE_CUE_LAYER_REQUIRED",
+        "FREE_CUE_LAYER_MUST_INCLUDE_SHARED_VS_SONG_SPECIFIC_SCOPE",
+        "FREE_CUE_ENTRY_RETURN_BEHAVIOR_REQUIRED"
       ],
       "limitations": "Sequence 303 and Executor 2.015 are owner-requested targets but must be fresh-verified free/appropriate in the current Show before Preview can become approvable. Exact trigger seconds must not be invented; they require the actual playback audio/timeline as arrangement truth. This decision authorizes detailed design and Preview preparation only, not live MA2 execution."
+    },
+    {
+      "id": "SHEESH_303_KPOP_FREE_CUE_ARCHITECTURE_001",
+      "source": "Owner direction 2026-09-29",
+      "status": "APPROVED_DESIGN_RULE",
+      "outcomes": [
+        "SHEESH_303_MUST_BE_PROGRAMMED_AT_KPOP_STAGE_DENSITY_NOT_SMOKE_TEST_DENSITY",
+        "TIMED_CUES_AND_FREE_CUES_ARE_SEPARATE_BUT_COOPERATING_LAYERS",
+        "TIMED_CUES_FOLLOW_AUDIO_BOUND_TRIGGER_SECONDS_AND_MAJOR_ARRANGEMENT_EVENTS",
+        "FREE_CUES_ARE_NOT_REQUIRED_TO_HAVE_FIXED_TRIGGER_SECONDS",
+        "FREE_CUE_DENSITY_FOLLOWS_SECTION_ENERGY_ARRANGEMENT_CHOREOGRAPHY_AND_OPERATOR_NEED",
+        "SOME_FREE_CUES_MAY_BE_SHOW_SHARED_WHEN_SEMANTICALLY_GENERIC",
+        "SOME_FREE_CUES_MUST_REMAIN_SONG_SPECIFIC_WHEN_TIED_TO_SHEESH_ARRANGEMENT_OR_VISUAL_LANGUAGE",
+        "FREE_CUES_MAY_INCLUDE_HITS_ACCELERATORS_BLACKOUTS_MOVEMENT_TEXTURES_EFFECT_ACCENTS_TRANSITION_HOLDS_AND_DANCE_BREAK_TOOLS",
+        "FREE_CUES_MUST_DEFINE_SAFE_ENTRY_AND_RETURN_BEHAVIOR_RELATIVE_TO_TIMED_STATE",
+        "NO_GLOBAL_FIXED_FREE_CUE_COUNT",
+        "NO_GLOBAL_FIXED_CUE_DENSITY",
+        "NO_MA2_WRITE_AUTHORIZED_BY_THIS_DECISION"
+      ],
+      "limitations": "This defines the artistic/operator contract only. Exact free-cue resources and executable actions still require verified current-Show resource evidence. Movement-native execution remains fail-closed until a typed verified grammar exists. Free cues must not bypass the normal Preview/Approval/Builder/native-readback boundary."
     }
   ],
   "evidence_results": [
