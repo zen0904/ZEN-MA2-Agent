@@ -1,11 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "install-ripgrep-20260929-2255",
-  "kind": "apt_install",
+  "job_id": "openchatx-smoke3-20260929-2300",
+  "kind": "shell",
   "args": {
-    "packages": [
-      "ripgrep"
-    ],
-    "timeout": 600
+    "cwd": "/var/lib/zen-ops/work/openchatx-linux-probe",
+    "timeout": 180,
+    "command": "set -euo pipefail; sed -i 's#state_dir = \"~/.openchatx-mcp\"#state_dir = \"./.openchatx-state\"#' .openchatx/config.toml; mkdir -p .openchatx-state; echo '===CONFIG==='; cat .openchatx/config.toml; echo '===START==='; /opt/node/bin/node dist/index.js > /tmp/openchatx-linux-smoke3.log 2>&1 &; pid=$!; trap 'kill $pid 2>/dev/null || true' EXIT; sleep 5; echo '===PROCESS==='; ps -o pid,ppid,stat,etime,%cpu,%mem,args -p $pid; echo '===PORT==='; ss -ltnp | grep ':8001 ' || true; echo '===HTTP_ROOT==='; curl -sS -o /tmp/openchatx-root.out -w 'HTTP %{http_code}\\n' http://127.0.0.1:8001/ || true; head -c 300 /tmp/openchatx-root.out || true; echo; echo '===MCP_INIT==='; curl -sS -i -X POST http://127.0.0.1:8001/mcp -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' --data-binary '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2025-06-18\",\"capabilities\":{},\"clientInfo\":{\"name\":\"zen-linux-probe\",\"version\":\"1\"}}}' | sed -n '1,40p' || true; echo '===LOG==='; cat /tmp/openchatx-linux-smoke3.log"
   }
 }
