@@ -1,9 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "repair-openclaw-boot2-20260929-0013",
-  "kind": "repo_task",
+  "job_id": "inspect-tailscale-routes-20260929-0021",
+  "kind": "shell",
   "args": {
-    "task": "repair_openclaw_gateway_boot",
-    "timeout": 180
+    "command": "echo '=== serve status ==='; tailscale serve status --json 2>&1 || tailscale serve status 2>&1 || true; echo '=== funnel status ==='; tailscale funnel status --json 2>&1 || tailscale funnel status 2>&1 || true; echo '=== local listeners ==='; ss -ltn 2>/dev/null | grep -E ':(18789|18991|8443|10000) ' || true",
+    "timeout": 120
   }
 }
