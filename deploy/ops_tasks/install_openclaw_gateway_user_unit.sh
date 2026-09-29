@@ -57,10 +57,13 @@ else
   echo "PERSISTENT_UNIT_CREATED=NO"
 fi
 
-if ! grep -qF "ExecStart=/opt/node/bin/openclaw gateway --port ${PORT}" "$UNIT"; then
+# Accept either ZEN's wrapper form or OpenClaw's managed Node entrypoint. Do not
+# rewrite an existing official unit merely because its executable path differs.
+if ! grep -Eq '^ExecStart=.*(openclaw|openclaw/dist/index\.js).*gateway.*--port[ =]18789([[:space:]]|$)' "$UNIT"; then
   echo "PERSISTENT_UNIT_UNEXPECTED_EXECSTART"
   exit 23
 fi
+echo "OPENCLAW_EXECSTART_VALID=YES"
 if ! grep -qF 'WantedBy=default.target' "$UNIT"; then
   echo "PERSISTENT_UNIT_UNEXPECTED_INSTALL_TARGET"
   exit 24
