@@ -1,10 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "check-antseed-task-v4b-20260930-0021",
-  "kind": "shell",
+  "job_id": "configure-antseed-openclaw-free-20260930-0029",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 30,
-    "command": "if grep -q 'export OPENCLAW_STATE_DIR=' /opt/zen/zen-ops-runtime/deploy/ops_tasks/configure_antseed_openclaw_free.sh 2>/dev/null; then echo TASK_V4=YES; else echo TASK_V4=NO; fi"
+    "task": "configure_antseed_openclaw_free",
+    "timeout": 900
   }
 }
