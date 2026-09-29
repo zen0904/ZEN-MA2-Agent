@@ -1,10 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wait-antseed-infer-helper-v2-20260930-0059",
-  "kind": "shell",
+  "job_id": "verify-openclaw-antseed-infer-20260930-0060",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 190,
-    "command": "for i in $(seq 1 90); do if grep -q 'OPENCLAW_ANTSEED_INFER=PASS' /opt/zen/zen-ops-runtime/deploy/ops_tasks/configure_openclaw_antseed_helper.sh 2>/dev/null; then echo HELPER_V2=YES; exit 0; fi; sleep 2; done; echo HELPER_V2=NO; exit 1"
+    "task": "configure_openclaw_antseed_privileged",
+    "timeout": 300
   }
 }
