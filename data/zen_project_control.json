@@ -674,6 +674,33 @@
         "MA2_WRITES_ZERO"
       ],
       "limitations": "No live semantic binding inventory was accepted because the temporary fallback runtime did not have an MA READY session. The active MA READY Field Core was intentionally not restarted because its original E-drive runtime volume is absent. This result is a fail-closed blocker record, not semantic mapping evidence and not authorization to restart or write MA."
+    },
+    {
+      "id": "OPENCLAW_PROVIDER_KEY_ROTATION_001",
+      "source": "Owner/interactive Mini acceptance 2026-09-29",
+      "status": "LOCAL_SECRET_ROTATION_COMPLETE_PROVIDER_COMPLETION_UNRESOLVED",
+      "outcomes": [
+        "OPENROUTER_REPLACEMENT_KEY_STORED_IN_PROTECTED_STORE",
+        "NVIDIA_REPLACEMENT_KEY_STORED_IN_PROTECTED_STORE",
+        "SECRET_VALUES_NOT_ECHOED_TO_REPOSITORY",
+        "OPENCLAW_SECRETS_RELOAD_PASS",
+        "OPENCLAW_SECRETS_AUDIT_CLEAN",
+        "PLAINTEXT_ZERO",
+        "UNRESOLVED_ZERO",
+        "SHADOWED_ZERO",
+        "STORE_RESIDUE_ZERO",
+        "LEGACY_ZERO",
+        "NVIDIA_MODEL_DISCOVERY_4_MODELS",
+        "OPENROUTER_MODEL_DISCOVERY_459_MODELS",
+        "GATEWAY_HEALTH_OK",
+        "IPHONE_PAIRING_REMAINS_APPROVED",
+        "IPHONE_DEVICE_TOKEN_MISMATCH_REPORTED",
+        "NO_DEVICE_TOKEN_ROTATION_OR_REISSUE",
+        "NO_CROSS_HOST_APPROVE",
+        "NO_SEMANTIC_BIND_MUTATION",
+        "MA2_WRITES_ZERO"
+      ],
+      "limitations": "Direct provider completion did not return within 75 seconds and therefore is not accepted as PASS. Model discovery confirms credential/config reachability but not completion success. The previously exposed external OpenRouter/NVIDIA keys were not independently confirmed revoked in provider consoles. iPhone remains paired/approved but disconnected with a device-token mismatch; no token rotation/reissue was performed because that would change pairing/session authority."
     }
   ],
   "backlog": [
@@ -1228,7 +1255,44 @@
         "state_authority": "MINI_CANONICAL",
         "windows_gateway_status": "RETIRED",
         "windows_client_role": "REMOTE_CLIENT_ONLY",
-        "full_windows_state_cold_archive": "PRESENT_ON_MINI_HOST_LOCAL_BACKUP"
+        "full_windows_state_cold_archive": "PRESENT_ON_MINI_HOST_LOCAL_BACKUP",
+        "provider_security": {
+          "validated_on": "2026-09-29",
+          "fallback_credentials": {
+            "openrouter": "REPLACED_IN_PROTECTED_STORE_OLD_EXTERNAL_KEY_REVOCATION_UNVERIFIED",
+            "nvidia": "REPLACED_IN_PROTECTED_STORE_OLD_EXTERNAL_KEY_REVOCATION_UNVERIFIED"
+          },
+          "secrets_reload": "PASS",
+          "secrets_audit": {
+            "status": "CLEAN",
+            "plaintext": 0,
+            "unresolved": 0,
+            "shadowed": 0,
+            "store_residue": 0,
+            "legacy": 0
+          },
+          "provider_discovery": {
+            "nvidia_models": 4,
+            "openrouter_models": 459
+          },
+          "completion_smoke": "UNRESOLVED_TIMEOUT_75S_NOT_PASS",
+          "ma2_writes": 0,
+          "notes": [
+            "No provider secret value is stored in repository state.",
+            "Provider discovery proves credential/config reachability only; it does not prove completion success.",
+            "External revocation of the previously exposed OpenRouter/NVIDIA keys has not been independently verified."
+          ]
+        },
+        "mobile_client_state": {
+          "iphone": {
+            "paired": true,
+            "approval_state": "approved",
+            "connected": false,
+            "blocker": "DEVICE_TOKEN_MISMATCH_ROTATE_OR_REISSUE_REQUIRED",
+            "authority_change_performed": false,
+            "next_safe_step": "Read-only diagnosis first; do not rotate/reissue the device token without explicit owner authorization."
+          }
+        }
       }
     },
     "control_plane_authority_boundary": "Control-plane hosting, code intelligence, state/cache, remote administration and loopback orchestration do not imply production MA execution authority. Preview/Approval/verified department adapters remain mandatory.",
