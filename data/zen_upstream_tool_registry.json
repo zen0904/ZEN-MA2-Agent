@@ -226,6 +226,22 @@
       "interface": "FILES",
       "authority": "REFERENCE_ONLY",
       "runtime": "on_demand"
+    },
+    {
+      "id": "tailscale-ssh",
+      "state": "READY",
+      "interface": "SSH_OVER_TAILNET",
+      "authority": "REMOTE_SYSTEM_ACCESS",
+      "runtime": "always",
+      "notes": "Tailscale SSH enabled; OpenSSH service active."
+    },
+    {
+      "id": "meshcentral",
+      "state": "READY_NEEDS_FIRST_ADMIN",
+      "interface": "WEB_RMM",
+      "authority": "REMOTE_TERMINAL_FILES_DESKTOP_DEVICE_MGMT",
+      "runtime": "always",
+      "notes": "MeshCentral 1.2.5 active on Tailscale-only 100.122.169.17:8443; first created account becomes site admin."
     }
   ]
 }
