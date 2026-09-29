@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SESSION="zenmon"
+MODE="${1:-toggle}"
+mkdir -p /run/zen-sentinel
+
+case "$MODE" in
+  ma|MA|ma-agent|MA_AGENT)
+    printf 'ma\n' > /run/zen-sentinel/mode
+    tmux select-window -t "$SESSION:MA_AGENT"
+    ;;
+  monitor|MONITOR)
+    printf 'monitor\n' > /run/zen-sentinel/mode
+    tmux select-window -t "$SESSION:MONITOR"
+    ;;
+  toggle)
+    current="$(tmux display-message -p -t "$SESSION" '#{window_name}')"
+    if [ "$current" = "MONITOR" ]; then
+      exec "$0" ma
+    else
+      exec "$0" monitor
+    fi
+    ;;
+  auto)
+    printf 'auto\n' > /run/zen-sentinel/mode
+    ;;
+  *)
+    echo "usage: zen-console-mode {ma|monitor|toggle|auto}" >&2
+    exit 64
+    ;;
+esac
