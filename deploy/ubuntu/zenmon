@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+set -u
+
+SESSION="zenmon"
+REPO="/opt/zen/ZEN-MA2-Agent"
+
+pane_live() {
+  while true; do
+    body="$(
+      {
+        printf 'ZEN LIVE COMMANDS    %s\n' "$(date '+%Y-%m-%d %H:%M:%S')"
+        printf '%s\n' '────────────────────────────────────────────────────────────'
+        ps -eo pid,ppid,etime,%cpu,%mem,args --sort=-start_time 2>/dev/null |
+          awk 'NR==1 || /\/opt\/zen|codebase-memory|cmake|git |pytest|python|node|rtpmidid|curl|bash -lc/ {print}' |
+          grep -v '[z]enmon pane-live' |
+          head -n 32
+      }
+    )"
+    printf '\033[H%s\033[J' "$body"
+    sleep 0.75
+  done
+}
+
+pane_git() {
+  while true; do
+    clear
+    printf 'ZEN MA2 AGENT / GIT    %s\n' "$(date '+%H:%M:%S')"
+    printf '%s\n' '────────────────────────────────────────────────────────────'
+    if [[ -d "$REPO/.git" ]]; then
+      cd "$REPO" || exit 1
+      git status --short --branch 2>/dev/null
+      printf '\nLAST COMMITS\n'
+      git log --oneline --decorate -6 2>/dev/null
+      printf '\nDIFF STAT\n'
+      git diff --stat 2>/dev/null | tail -n 14
+    else
+      echo "Repo not found: $REPO"
+    fi
+    sleep 1
+  done
+}
+
+pane_files() {
+  printf 'RECENT FILE WRITES  (append-only, no flicker)\n'
+  printf '%s\n' '────────────────────────────────────────────────────────────'
+  local last now
+  last="$(date '+%s.%N')"
+  while true; do
+    sleep 1
+    now="$(date '+%s.%N')"
+    if [[ -d "$REPO" ]]; then
+      find "$REPO" -type f -newermt "@$last" -not -path '*/.git/*' \
+        -printf '%TY-%Tm-%Td %TH:%TM:%TS  %p\n' 2>/dev/null |
+        sort | tail -n 24
+    fi
+    last="$now"
+  done
+}
+
+case "${1:-}" in
+  pane-live) pane_live; exit ;;
+  pane-git) pane_git; exit ;;
+  pane-files) pane_files; exit ;;
+esac
+
+if ! tmux has-session -t "$SESSION" 2>/dev/null; then
+  if command -v btop >/dev/null 2>&1; then
+    MONITOR="btop --utf-force"
+  else
+    MONITOR="$(command -v htop || command -v top)"
+  fi
+  tmux new-session -d -s "$SESSION" -n MONITOR "$MONITOR"
+  SYSTEM_PANE="$(tmux display-message -p -t "$SESSION:0.0" '#{pane_id}')"
+  AI_PANE="$(tmux split-window -h -t "$SYSTEM_PANE" -P -F '#{pane_id}' "python3 -u /usr/local/bin/zen-ai-live")"
+  COMMAND_PANE="$(tmux split-window -v -t "$SYSTEM_PANE" -P -F '#{pane_id}' "/usr/local/bin/zenmon pane-live")"
+  GIT_PANE="$(tmux split-window -v -l 34% -t "$AI_PANE" -P -F '#{pane_id}' "/usr/local/bin/zenmon pane-git")"
+  WRITES_PANE="$(tmux split-window -h -l 50% -t "$GIT_PANE" -P -F '#{pane_id}' "/usr/local/bin/zenmon pane-files")"
+
+  tmux select-pane -t "$SYSTEM_PANE" -T "SYSTEM"
+  tmux select-pane -t "$AI_PANE" -T "AI LIVE"
+  tmux select-pane -t "$COMMAND_PANE" -T "COMMANDS"
+  tmux select-pane -t "$GIT_PANE" -T "GIT"
+  tmux select-pane -t "$WRITES_PANE" -T "WRITES"
+
+  tmux set-option -t "$SESSION" -g mouse on
+  tmux set-option -t "$SESSION" -g pane-border-status top
+  tmux set-option -t "$SESSION" -g pane-border-format ' #[bold]#{pane_title} '
+  tmux set-option -t "$SESSION" -g status on
+  tmux set-option -t "$SESSION" -g status-left ' ZEN AGENT MONITOR '
+  tmux set-option -t "$SESSION" -g status-right ' #{host_short} | %Y-%m-%d %H:%M:%S '
+  tmux set-option -t "$SESSION" -g status-interval 1
+fi
+
+if ! tmux list-windows -t "$SESSION" -F '#{window_name}' 2>/dev/null | grep -qx MA_AGENT; then
+  tmux new-window -d -t "$SESSION" -n MA_AGENT "watch -t -n 1 /usr/local/bin/zen-ma-dashboard"
+fi
+
+tmux bind-key -n F12 if-shell -F '#{==:#{window_name},MONITOR}' 'select-window -t zenmon:MA_AGENT' 'select-window -t zenmon:MONITOR'
+
+exec tmux attach-session -t "$SESSION"
