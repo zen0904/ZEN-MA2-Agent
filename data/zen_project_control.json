@@ -97,6 +97,22 @@
         "NO_NEW_MA_WRITE_FOR_THIS_CAPTURE_TASK"
       ],
       "limitations": "This approval captures design direction and backlog only. It does not authorize Spatial vNext implementation, a new live Preview, a live MA write, Patch/Address/Fixture identity/type changes, or replay of any historical Action."
+    },
+    {
+      "id": "SHEESH_MOVEMENT_EFFECT_DESIGN_RULE_001",
+      "source": "Owner clarification 2026-09-29",
+      "status": "APPROVED_DESIGN_RULE",
+      "outcomes": [
+        "MOVEMENT_AND_EFFECT_ARE_CONDITIONAL_ARTISTIC_TOOLS_NOT_MANDATORY_PER_SONG_OR_PER_CUE",
+        "SELECTION_MUST_FOLLOW_SONG_ARRANGEMENT_SECTION_CHOREOGRAPHY_AND_VERIFIED_SHOW_RESOURCES",
+        "SHEESH_FAST_SONG_CASE_REQUIRES_MEANINGFUL_DYNAMIC_EXPRESSION_BEYOND_STATIC_POSITION_CHANGES",
+        "STATIC_POSITION_PRESET_CHANGES_PLUS_DIMMER_CHASE_ONLY_ARE_INSUFFICIENT_FOR_THIS_SHEESH_CASE",
+        "DIMMER_CHASE_EFFECTS_2500_2502_DO_NOT_COUNT_AS_PAN_TILT_MOVEMENT",
+        "MOVEMENT_MAY_BE_INTENTIONALLY_UNUSED_IN_SOME_CUES_OR_SECTIONS",
+        "NO_FIXED_MOVEMENT_DENSITY_OR_EFFECT_COUNT_IS_PROMOTED_AS_A_GLOBAL_RULE",
+        "TRUE_MOVEMENT_EXECUTION_REMAINS_FAIL_CLOSED_UNTIL_NATIVE_TYPED_GRAMMAR_IS_VERIFIED"
+      ],
+      "limitations": "This is an artistic design rule and case requirement, not authority to invent or execute raw MA movement commands. The current Sequence 302 resource-authoring path may continue to build static Position resources, but SHEESH acceptance must separately address dynamic movement intent using a verified native execution path before any live write is approved."
     }
   ],
   "evidence_results": [
@@ -742,10 +758,10 @@
       "id": "MOVEMENT_TEXTURE_ACTION_GRAMMAR",
       "classification": "RESEARCH_UNKNOWN",
       "milestone": "M2_EXPRESSIVE_CAPABILITY",
-      "status": "UPCOMING",
-      "why_it_matters": "Requires safe typed action grammar and does not follow merely from mover capability.",
+      "status": "ACTIVE_CASE_TRIGGERED_BY_SHEESH",
+      "why_it_matters": "SHEESH provides a concrete fast-song design case where static Position changes plus Dimmer chase are artistically insufficient. A safe typed Movement grammar is now needed so dynamic Pan/Tilt texture can be expressed without raw MA commands or mandatory movement in every Cue.",
       "blocks_current_milestone": false,
-      "next_review_condition": "A verified native action path and a specific design-intent use case exist."
+      "next_review_condition": "Prototype and verify a bounded native Movement path for the SHEESH test case. Keep Movement optional per Cue/section, require explicit artistic intent, and preserve Preview/Approval/native verification before any MA write."
     },
     {
       "id": "TIMING_IMPACT_ACTION_GRAMMAR",
@@ -1181,9 +1197,9 @@
     },
     {
       "id": "MATRICKS_SPEED_MASTER_NATIVE_COMPOSITION",
-      "status": "CASE_DRIVEN_VERIFICATION_PENDING",
+      "status": "CASE_TRIGGERED_RESEARCH_REQUIRED",
       "blocks_spatial_vnext_start": false,
-      "review_condition": "A real artistic/programming case benefits from these native mechanisms."
+      "review_condition": "SHEESH fast-song programming now provides a concrete case to evaluate whether verified MATricks / Speed Master / native Effect composition materially improves Movement texture without hard-coding one workflow."
     },
     {
       "id": "FOCUS_EXECUTE_OPERATOR_HANDOVER",
