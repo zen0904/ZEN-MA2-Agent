@@ -311,6 +311,22 @@
         "DIAGNOSTIC_AND_SCRATCH_RESOURCES_NOW_EXPLICITLY_BOUND_TO_FIRST_FREE_FROM_FRONT_POLICY"
       ],
       "limitations": "Historical capability/evidence JSON may still cite the deleted sacrificial object numbers because they are immutable evidence references. Those numbers are not reserved and must not be reused as a preferred test range."
+    },
+    {
+      "id": "INTERACTIVE_PRIMARY_BRAIN_001",
+      "source": "Owner clarification 2026-09-29",
+      "status": "APPROVED_ARCHITECTURE_PRINCIPLE",
+      "outcomes": [
+        "CHATGPT_MAY_DIRECTLY_OCCUPY_THE_PRIMARY_LIGHTING_DESIGNER_ROLE_DURING_INTERACTIVE_ZEN_WORK",
+        "DO_NOT_REQUIRE_A_SEPARATE_API_AGENT_TO_REINTERPRET_OR_RELAY_CHATGPT_DESIGN_INTENT",
+        "UNATTENDED_RUNTIME_MAY_USE_ONE_STRONG_PROVIDER_MODEL_AS_THE_SAME_PRIMARY_BRAIN_ROLE",
+        "SPECIALIZED_WORKERS_RETURN_EVIDENCE_IMPLEMENTATION_OR_REVIEW_TO_THE_PRIMARY_BRAIN",
+        "ORDINARY_LIGHTING_DESIGN_REMAINS_SINGLE_PRIMARY_DESIGNER_BY_DEFAULT",
+        "COMPILER_BUILDER_PREVIEW_APPROVAL_AND_NATIVE_READBACK_REMAIN_DETERMINISTIC_EXECUTION_AUTHORITY",
+        "NO_RAW_MA_COMMAND_AUTHORITY_IS_GRANTED_TO_CHATGPT_OR_ANY_PROVIDER_MODEL",
+        "OPERATOR_WORKFLOW_REMAINS_UNCHANGED"
+      ],
+      "limitations": "This clarifies who may fill the Primary Brain role. It does not authorize raw MA2 writes, bypass Preview/Approval, change Operator Workflow, or make ChatGPT/API model output authoritative over verified Show state or native readback."
     }
   ],
   "evidence_results": [
