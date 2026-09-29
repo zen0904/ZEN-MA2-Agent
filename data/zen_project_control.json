@@ -1609,6 +1609,28 @@
         "MA2_WRITES_ZERO"
       ],
       "limitations": "This proves cross-host read/plan/Preview delegation only. Human approval, semantic-binding mutation, arbitrary HTTP forwarding, shell access and raw MA commands remain outside the Mini-to-Windows surface. A successful Preview does not authorize execution."
+    },
+    {
+      "id": "OPENCLAW_NATIVE_MCP_CUTOVER_001",
+      "source": "docs/ZEN_NATIVE_MCP_REPLACEMENT_POC_001.md; OpenClaw 2026.9.4 live Gateway acceptance on zen-agent-server 2026-09-29",
+      "status": "CLOSED_SUCCESS_NATIVE_MCP_PRIMARY_PROVIDER_COMPLETION_SEPARATE_BLOCKER",
+      "outcomes": [
+        "LEGACY_ZEN_MA2_TYPESCRIPT_PLUGIN_DISABLED_ROLLBACK_RETAINED",
+        "OPENCLAW_NATIVE_STDIO_MCP_PRIMARY",
+        "MCP_TOOL_CATALOG_14",
+        "MCP_DIAGNOSTICS_ZERO",
+        "ZEN_APPROVE_NOT_EXPOSED",
+        "PERSISTENT_MCP_DAEMON_NOT_ADOPTED",
+        "TEMPORARY_DUPLICATE_MCP_CONFIG_REMOVED",
+        "REAL_GATEWAY_AGENT_SUCCESSFULLY_CALLED_ZEN_NATIVE_STDIO_ZEN_STATUS",
+        "ZEN_STATUS_REPORTED_FIELD_CORE_ONLINE_MA_READY",
+        "PREVIEW_ROUTE_RETAINS_REMOTE_PREVIEW_ONLY_MA2_WRITES_ZERO_GUARD",
+        "TARGETED_MCP_TESTS_6_PASS_4_SUBTESTS_1_57_SECONDS",
+        "FULL_PYTEST_1004_PASS_128_SUBTESTS_22_10_SECONDS",
+        "MA2_WRITES_ZERO"
+      ],
+      "limitations": "The live Gateway smoke reached and successfully executed zen-native-stdio__zen_status, then the effective NVIDIA provider timed out in the provider phase after about 121 seconds before a final natural-language reply. Provider completion remains a separate unresolved runtime issue. This cutover does not replace Windows typed facades, ZEN Safety, Preview/Approval, Builder, protected-object policy, MA transport or native readback.",
+      "rollback": "Re-enable the retained zen-ma2 OpenClaw plugin and restart the Gateway. No plugin uninstall or destructive rollback-state removal was performed."
     }
   ],
   "architecture_invariants": [
