@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+R=/opt/zen/zen-ops-runtime
+old="$(git -C "$R" rev-parse HEAD)"
+git -C "$R" fetch -q --depth 1 origin main
+new="$(git -C "$R" rev-parse origin/main)"
+
+if [[ "$old" != "$new" ]]; then
+  git -C "$R" reset -q --hard origin/main
+  install -m 0644 "$R/deploy/ubuntu/systemd/zen-ops-worker.service" /etc/systemd/system/zen-ops-worker.service
+  install -m 0644 "$R/deploy/ubuntu/systemd/zen-ops-updater.service" /etc/systemd/system/zen-ops-updater.service
+  install -m 0644 "$R/deploy/ubuntu/systemd/zen-ops-updater.timer" /etc/systemd/system/zen-ops-updater.timer
+  install -m 0755 "$R/deploy/ubuntu/zen-ops-update" /usr/local/sbin/zen-ops-update
+  systemctl daemon-reload
+  systemctl restart zen-ops-worker.service
+fi
