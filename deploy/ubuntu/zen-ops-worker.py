@@ -234,6 +234,28 @@ def execute(job_id: str, kind: str, args: dict[str, Any]) -> dict[str, Any]:
             "finished_at": now(),
         }
 
+    if kind == "repo_task":
+        task = str(args.get("task", "")).strip()
+        if not re.fullmatch(r"[A-Za-z0-9._-]{1,96}", task):
+            raise ValueError("invalid repo task name")
+        base = Path("/opt/zen/zen-ops-runtime/deploy/ops_tasks").resolve()
+        path = (base / (task if task.endswith(".sh") else task + ".sh")).resolve()
+        if not str(path).startswith(str(base) + "/"):
+            raise ValueError("repo task escaped task root")
+        if not path.is_file():
+            raise ValueError("repo task does not exist in the deployed main runtime")
+        task_args = args.get("task_args", [])
+        if not isinstance(task_args, list) or len(task_args) > 32:
+            raise ValueError("task_args must be a short list")
+        clean_args = [str(x)[:512] for x in task_args]
+        proc = run(["/bin/bash", str(path), *clean_args], timeout=timeout)
+        return {
+            "returncode": proc.returncode,
+            "output": sanitize(proc.stdout),
+            "started_at": started,
+            "finished_at": now(),
+        }
+
     if kind == "tests":
         proc = run(
             ["/opt/zen/venv/bin/python", "-m", "pytest", "-q"],
