@@ -1,10 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "post-repair-health-20260930-0011q",
+  "job_id": "check-direct-antseed-patch-task-20260930-0030",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 60,
-    "command": "echo '=== services ==='; for s in zen-ops-worker zen-ops-results tailscaled zen-show-controller zen-lighting-operator-proxy zen-glances zen-sentinel; do printf '%s=' \"$s\"; systemctl is-active \"$s\" 2>/dev/null || true; done; echo '=== listeners ==='; ss -ltn | grep -E '127\\.0\\.0\\.1:(18789|18991|8876|18878)[[:space:]]' || true; echo '=== openclaw ==='; ps -eo pid,ppid,user,args | grep -E '[o]penclaw.*/dist/index.js gateway|[o]penclaw gateway' || true; echo '=== persistence ==='; grep -E 'LINGER=|OPENCLAW_EXECSTART_VALID=|OPENCLAW_UNIT_VERIFY=|OPENCLAW_ENABLE_LINK=|OPENCLAW_ACTIVE_CGROUP=|OPENCLAW_PORT=|OPENCLAW_BOOT_PERSISTENCE=|ZEN_OPENCLAW_PERSISTENCE_HELPER=' /var/lib/zen-ops/openclaw-persistence-status.txt 2>/dev/null || true; echo '=== funnel ==='; tailscale funnel status 2>&1 | head -40"
+    "timeout": 30,
+    "command": "if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/patch_openclaw_antseed_provider_direct.sh ]; then echo TASK_PRESENT=YES; else echo TASK_PRESENT=NO; fi"
   }
 }
