@@ -1,9 +1,6 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "add-ops-funnel-10000-20260929-0031",
-  "kind": "repo_task",
-  "args": {
-    "task": "add_zen_ops_funnel_10000",
-    "timeout": 120
-  }
+  "job_id": "sync-openclaw-userbus-fix-20260929-0038",
+  "kind": "repo_sync",
+  "args": {}
 }
