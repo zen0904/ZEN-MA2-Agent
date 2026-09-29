@@ -10,10 +10,43 @@ MODEL=deepseek-v4-flash
 [[ -x "$OPENCLAW" ]] || { echo "openclaw missing" >&2; exit 70; }
 
 echo "=== Antseed free-only routing ==="
-runuser -u zenantseed -- env HOME="$ANT_HOME" "$ANTSEED" config buyer set routingPreferences.preferFreePeers true
-runuser -u zenantseed -- env HOME="$ANT_HOME" "$ANTSEED" config buyer set routingPreferences.minTrustScore 0
-runuser -u zenantseed -- env HOME="$ANT_HOME" "$ANTSEED" config buyer set maxPricing.defaults.inputUsdPerMillion 0
-runuser -u zenantseed -- env HOME="$ANT_HOME" "$ANTSEED" config buyer set maxPricing.defaults.outputUsdPerMillion 0
+ANT_CFG="$ANT_HOME/.antseed/config.json"
+install -d -o zenantseed -g zenantseed -m 0700 "$ANT_HOME/.antseed"
+if [[ ! -f "$ANT_CFG" ]]; then
+  runuser -u zenantseed -- env HOME="$ANT_HOME" "$ANTSEED" -c "$ANT_CFG" config init
+fi
+python3 - "$ANT_CFG" <<'PY'
+import json, os, sys, tempfile
+from pathlib import Path
+p=Path(sys.argv[1])
+d=json.loads(p.read_text())
+buyer=d.setdefault("buyer",{})
+routing=buyer.setdefault("routingPreferences",{})
+routing["preferFreePeers"]=True
+routing["minTrustScore"]=0
+maxp=buyer.setdefault("maxPricing",{}).setdefault("defaults",{})
+maxp["inputUsdPerMillion"]=0
+maxp["outputUsdPerMillion"]=0
+fd,tmp=tempfile.mkstemp(prefix=".config.", suffix=".json", dir=str(p.parent))
+os.close(fd)
+Path(tmp).write_text(json.dumps(d, ensure_ascii=False, indent=2)+"\n")
+os.chmod(tmp,0o600)
+os.replace(tmp,p)
+PY
+chown zenantseed:zenantseed "$ANT_CFG"
+runuser -u zenantseed -- env HOME="$ANT_HOME" "$ANTSEED" -c "$ANT_CFG" config show >/tmp/zen-antseed-config-show.json
+python3 - <<'PY'
+import json
+p=json.load(open("/tmp/zen-antseed-config-show.json"))
+b=p.get("buyer",{})
+r=b.get("routingPreferences",{})
+m=b.get("maxPricing",{}).get("defaults",{})
+print("PREFER_FREE="+str(r.get("preferFreePeers")))
+print("MIN_TRUST="+str(r.get("minTrustScore")))
+print("MAX_INPUT="+str(m.get("inputUsdPerMillion")))
+print("MAX_OUTPUT="+str(m.get("outputUsdPerMillion")))
+PY
+rm -f /tmp/zen-antseed-config-show.json
 
 echo "=== Verify current catalog contains target ==="
 python3 - <<'PY'
