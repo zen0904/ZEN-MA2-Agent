@@ -449,9 +449,11 @@ Important boundaries:
 - A pre-named slot must be verified as a POSITION Preset and explicitly empty
   before first hydration.
 - ZEN must not silently repurpose a non-empty or differently typed Preset.
-- Exact update/merge grammar for hydrating an already existing empty Position
-  Preset requires separate real-machine verification before it becomes an
-  executable capability. Do not assume `/merge` behavior from Cue-store grammar.
+- Existing-empty Position Preset hydration grammar is now separately real-machine
+  verified for grandMA2 3.9 as `Store Preset <ref> /merge /selective /nc`, with
+  native Sequence Export proving PAN/TILT rows remain linked to the same Preset.
+  This grammar capability does **not** prove that an arbitrary target Preset is
+  empty; exact per-slot emptiness evidence remains mandatory before first hydration.
 - Post-write native evidence must prove the expected per-fixture PAN/TILT rows
   and exact Preset identity.
 - Cues should preserve native Preset references wherever possible so onsite
@@ -462,6 +464,40 @@ Important boundaries:
 This creates a practical onsite focus model: the operator adjusts a small set of
 foundation Position Presets to match the real venue, while the already-built Cue
 structure continues to reference those native resources.
+
+### Real-machine hydration grammar evidence — 2026-09-29
+
+A bounded grandMA2 3.9.60 probe used sacrificial audit objects rather than the
+operator's template anchors:
+
+- existing empty Position Preset `2.900 ZEN_SPATIAL_HYDRATE_PROBE`;
+- exact current Group `1 HYBRID`;
+- test values PAN `20` / TILT `30`;
+- grammar `Store Preset 2.900 /merge /selective /nc`;
+- audit-only Sequence `9900`, Cue `1`;
+- no Executor assignment, Patch/Address mutation, Fixture identity/type change,
+  or Fixture 9999 access.
+
+Native Sequence Export status was `VERIFIED`. For Fixtures 101–108 it exposed
+PAN/TILT values `20` / `30`, each linked to Position Preset `2.900`. grandMA2
+serialized these single-instance Fixture rows with parent Fixture IDs and the
+Preset address as `1.2.900`; the existing production Position verifier correctly
+canonicalized the parent rows to `.1` and matched the trailing `2.900` Preset
+identity. The resulting Position application binding is
+`REAL_MACHINE_CONTENT_VERIFIED`.
+
+The first ad-hoc probe verifier falsely reported failure because it required
+literal `.1` channel rows and exactly two Preset address components. That false
+negative did not trigger replay. The production canonical verifier subsequently
+passed read-only against the same retained native Sequence evidence.
+
+Capability artifact:
+`data/ZEN_SPATIAL_ANCHOR_HYDRATION_CAPABILITY.json`
+
+Remaining gate: determine whether each operator pre-named template Position
+Preset is actually empty before first hydration. `List Preset` label/type
+identity and the current metadata-only Preset XML export are not sufficient
+content proof.
 
 ## Selective Position Presets
 

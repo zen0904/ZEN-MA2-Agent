@@ -1,0 +1,52 @@
+{
+  "schema": "zen.spatial_anchor_hydration_capability.v0.1",
+  "status": "REAL_MACHINE_CONTENT_VERIFIED",
+  "grammar": "STORE_PRESET_MERGE_SELECTIVE",
+  "ma2_version_family": "grandMA2_3.9",
+  "verified_at": "2026-09-29T06:55:00+00:00",
+  "evidence": {
+    "preset_ref": "2.900",
+    "preset_label": "ZEN_SPATIAL_HYDRATE_PROBE",
+    "target_group": 1,
+    "target_group_name": "HYBRID",
+    "group_refs": [
+      "101",
+      "102",
+      "103",
+      "104",
+      "105",
+      "106",
+      "108",
+      "107"
+    ],
+    "matched_channel_refs": [
+      "101.1",
+      "102.1",
+      "103.1",
+      "104.1",
+      "105.1",
+      "106.1",
+      "107.1",
+      "108.1"
+    ],
+    "sequence": 9900,
+    "cue": 1,
+    "sequence_export_sha256": "beb8e61b8347bf5f1a293b00daf98b72c76e03f3cdddfbb184ed35d5cbbe5250"
+  },
+  "verification": {
+    "existing_empty_preset_identity": "VERIFIED",
+    "merge_selective_application": "REAL_MACHINE_CONTENT_VERIFIED",
+    "native_position_attributes": [
+      "PAN",
+      "TILT"
+    ],
+    "preset_reference_suffix_match": "VERIFIED",
+    "single_instance_parent_row_canonicalization": "VERIFIED",
+    "cue_content_readback": "VERIFIED"
+  },
+  "safety_boundary": {
+    "slot_emptiness_is_per_target_evidence": true,
+    "capability_does_not_authorize_nonempty_preset_overwrite": true,
+    "preview_and_explicit_approval_still_required": true
+  }
+}

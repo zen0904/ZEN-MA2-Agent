@@ -5,7 +5,7 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "SPATIAL_SYSTEM_VNEXT: reserved named Position anchor identity layer is offline-verified. Next bounded gate is read-only/current-Show proof of an explicitly reserved Position Preset being safe for hydration, followed by separate real-machine verification of the exact existing-Preset store/merge grammar. No MA write is authorized."
+    "active_objective": "SPATIAL_SYSTEM_VNEXT: existing-empty Position Preset hydration grammar is REAL_MACHINE_CONTENT_VERIFIED. Next bounded gate is a safe per-slot native emptiness proof for the operator pre-named template Position Presets; only then may Space hydrate those exact slots after Preview/Approval."
   },
   "last_closed_task": {
     "id": "SEMANTIC_POSITION_BINDING_OPERATOR_CAPTURE_001",
@@ -245,6 +245,28 @@
         "FULL_REGRESSION_991_PASSED_124_SUBTESTS"
       ],
       "limitations": "This foundation reserves existing named POSITION Preset identities only. Current MA2 List Preset and verified Preset XML discovery do not prove that a named Preset has empty native content. No hydration/write command is generated. Full Mini regression: 991 passed, 124 subtests; 3 non-failing warnings."
+    },
+    {
+      "id": "SPATIAL_EXISTING_EMPTY_POSITION_PRESET_HYDRATION_001",
+      "source": "Owner-authorized bounded real-machine hydration probe 2026-09-29 + native Sequence 9900 export + production Position verifier",
+      "status": "CLOSED_REAL_MACHINE_CONTENT_VERIFIED",
+      "outcomes": [
+        "OWNER_AUTHORIZED_BOUNDED_MA_WRITE_TEST",
+        "SACRIFICIAL_PRESET_2_900_ONLY_TEMPLATE_ANCHORS_UNTOUCHED",
+        "EXISTING_EMPTY_POSITION_PRESET_CREATED_AND_IDENTITY_READ_BACK",
+        "STORE_PRESET_MERGE_SELECTIVE_GRAMMAR_ACCEPTED_BY_GRANDMA2_3_9_60",
+        "GROUP1_HYBRID_CURRENT_ORDER_101_102_103_104_105_106_108_107_PRESERVED",
+        "GROUP1_FIXTURES_101_THRU_108_SINGLE_INSTANCE_VERIFIED",
+        "SEQUENCE_9900_CUE1_NATIVE_EXPORT_VERIFIED",
+        "PAN_20_TILT_30_NATIVE_ROWS_PRESENT_FOR_101_THRU_108",
+        "PRESET_2_900_NATIVE_LINK_PRESENT_FOR_ALL_PAN_TILT_ROWS",
+        "PARENT_FIXTURE_ROWS_CANONICALIZED_TO_DOT1_BY_EXISTING_PRODUCTION_VERIFIER",
+        "PRESET_ADDRESS_1_2_900_MATCHED_BY_TRAILING_2_900_SUFFIX",
+        "POSITION_APPLICATION_BINDING_REAL_MACHINE_CONTENT_VERIFIED",
+        "INITIAL_AD_HOC_VERIFIER_FAILURE_CLASSIFIED_FALSE_NEGATIVE_NO_REPLAY",
+        "TEST_PRESET_2_900_AND_SEQUENCE_9900_RETAINED_AS_AUDIT_EVIDENCE_NO_AUTO_DELETE"
+      ],
+      "limitations": "This closes the existing-empty Position Preset hydration grammar only. It does not prove that operator template slots such as 2.2 CENTER are empty. Exact per-slot native emptiness evidence remains required before first hydration. No automatic cleanup or replay was performed."
     }
   ],
   "evidence_results": [
@@ -975,8 +997,7 @@
     },
     {
       "id": "FIXTURE_REQUIREMENT_ASSESSMENT",
-      "classification": "DEFERRED",
-      "milestone": "M3_SHOW_RIG_ADAPTATION",
+      "classification": "DEFERRED",      "milestone": "M3_SHOW_RIG_ADAPTATION",
       "status": "CONDITIONAL",
       "why_it_matters": "Only flexible/large-production planning may assess an actual design gap for equipment.",
       "blocks_current_milestone": false,

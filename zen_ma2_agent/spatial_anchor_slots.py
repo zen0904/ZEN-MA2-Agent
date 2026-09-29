@@ -2,8 +2,8 @@
 
 This module is deliberately identity-only.  A named Position Preset can be
 reserved as a future semantic anchor without claiming that its native content
-is empty.  Hydration stays fail-closed until a separate real-machine evidence
-path proves both emptiness and safe store/merge semantics for the exact Preset.
+is empty.  Hydration stays fail-closed until the exact target slot has separate
+native emptiness evidence.  The store/merge grammar is a distinct capability.
 """
 from __future__ import annotations
 
@@ -119,7 +119,7 @@ def reserve_spatial_anchor_slots(
         "slots": slots,
         "constraints": [
             "PRESET_CONTENT_EMPTY_NOT_PROVEN",
-            "NO_HYDRATION_GRAMMAR_AUTHORIZED",
+            "VERIFIED_HYDRATION_GRAMMAR_CAPABILITY_REQUIRED",
             "NO_MA2_WRITE_AUTHORITY",
         ],
         "ma2_writes": 0,
