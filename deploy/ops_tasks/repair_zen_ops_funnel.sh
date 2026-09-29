@@ -23,9 +23,9 @@ tailscale funnel status 2>&1 || true
 echo "=== ensure funnel ==="
 # Modern Tailscale accepts an HTTP URL target; --bg persists the serve/funnel
 # configuration in tailscaled rather than depending on an interactive process.
-if ! tailscale funnel --bg "$TARGET"; then
+if ! tailscale funnel --yes --bg "$TARGET"; then
   # Compatibility fallback for releases that expect a port target.
-  tailscale funnel --bg "$PORT"
+  tailscale funnel --yes --bg "$PORT"
 fi
 
 echo "=== final funnel status ==="
