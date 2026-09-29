@@ -1,6 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "sync-controlled-reboot-20260929-0102",
-  "kind": "repo_sync",
-  "args": {}
+  "job_id": "controlled-reboot-openclaw-20260929-0105",
+  "kind": "repo_task",
+  "args": {
+    "task": "schedule_controlled_reboot",
+    "timeout": 60
+  }
 }
