@@ -1,10 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "check-antseed-smoke-task-20260930-0038",
-  "kind": "shell",
+  "job_id": "smoke-antseed-openclaw-20260930-0040",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 30,
-    "command": "if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/smoke_antseed_openclaw.sh ]; then echo SMOKE_TASK_PRESENT=YES; else echo SMOKE_TASK_PRESENT=NO; fi"
+    "task": "smoke_antseed_openclaw",
+    "timeout": 300
   }
 }
