@@ -5,7 +5,7 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "SPATIAL_SYSTEM_VNEXT: promote geometry by verified provenance rather than bootstrap label. Read XYZ+Rot for Agent- and operator-authored layouts; preserve ZEN_STAGE_FRAME relation for Agent-authored geometry after native readback; use operator-confirmed MA geometry when intentionally arranged. Next implementation gap: current Auto Geometry hardcodes target_rotation=(0,0,0) and NEW_UNDESIGNED_SHOW strips geometry authority too broadly."
+    "active_objective": "SPATIAL_SYSTEM_VNEXT: add reserved pre-named empty Position Preset anchor slots to the foundation workflow. Next bounded capability is real-machine verification of safely hydrating one explicitly empty existing POSITION Preset and proving native PAN/TILT content readback, without allocating a new Preset or modifying unrelated content."
   },
   "last_closed_task": {
     "id": "SEMANTIC_POSITION_BINDING_OPERATOR_CAPTURE_001",
@@ -193,6 +193,23 @@
         "AUTO_GEOMETRY_ROTATION_ZERO_IS_PLACEHOLDER_NOT_FINAL_SPATIAL_BEHAVIOR"
       ],
       "limitations": "This rule does not authorize geometry writes. Agent-authored geometry still requires Preview, explicit approval, deterministic execution and native readback. Operator-authored geometry requires fresh current-Show evidence and explicit confirmation that the MA2 layout is intentional before promotion to spatial authority."
+    },
+    {
+      "id": "SPATIAL_PRENAMED_EMPTY_POSITION_ANCHOR_SLOTS_001",
+      "source": "Owner clarification 2026-09-29",
+      "status": "APPROVED_DESIGN_RULE",
+      "outcomes": [
+        "PRENAMED_EMPTY_POSITION_PRESETS_MAY_BE_RESERVED_AS_SPATIAL_ANCHOR_SLOTS",
+        "READ_EXACT_PRESET_REFERENCE_TYPE_AND_LABEL_BEFORE_USE",
+        "DO_NOT_ALLOCATE_NEW_POSITION_PRESET_WHEN_AN_AUTHORIZED_RESERVED_SLOT_EXISTS",
+        "EMPTY_LABEL_ONLY_PRESET_IDENTITY_IS_NOT_CONTENT_PROOF",
+        "HYDRATE_APPROVED_SLOT_WITH_PER_FIXTURE_POSITION_VALUES_ONLY_AFTER_PREVIEW",
+        "CUES_SHOULD_REFERENCE_NATIVE_POSITION_PRESETS_RATHER_THAN_EMBED_RAW_PAN_TILT_WHERE_POSSIBLE",
+        "ONSITE_FOCUS_CORRECTION_SHOULD_UPDATE_FOUNDATION_PRESETS_SO_DEPENDENT_CUES_FOLLOW",
+        "SONG_SPECIFIC_SPECIAL_POSITIONS_REMAIN_ALLOWED_WHEN_REUSABLE_ANCHORS_ARE_INSUFFICIENT",
+        "EXISTING_EMPTY_PRESET_HYDRATION_GRAMMAR_REQUIRES_REAL_MACHINE_VERIFICATION_BEFORE_EXECUTION"
+      ],
+      "limitations": "This design rule does not authorize writes. Current proven Position path creates a new selective Position Preset; the exact grammar for hydrating an already existing empty Position Preset has not yet been real-machine verified. Do not assume Cue /merge semantics apply to Preset storage."
     }
   ],
   "evidence_results": [
