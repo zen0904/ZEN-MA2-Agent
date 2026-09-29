@@ -1,10 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "post-shutdown-audit-20260929-2350",
+  "job_id": "post-shutdown-detail-20260929-2355",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 180,
-    "command": "echo '===HOST==='; hostname; uptime -p; echo '===SERVICES==='; for s in zen-ops-worker zen-ops-updater.timer zen-ops-results zen-sentinel zen-meshcentral zen-glances zen-show-controller zen-controller-readonly-facade zen-lighting-operator-proxy ssh tailscaled; do printf '%-38s' \"$s\"; systemctl is-active \"$s\" 2>/dev/null || true; done; echo '===OPS_FILES==='; for p in /opt/zen/zen-ops-runtime /var/lib/zen-ops /usr/local/lib/zen-ops-worker.py /usr/local/sbin/zen-ops-update; do [ -e \"$p\" ] && echo \"OK $p\" || echo \"MISSING $p\"; done; echo '===MONITOR_FILES==='; for p in /usr/local/bin/zenmon /usr/local/bin/zen-ma-dashboard /usr/local/bin/zen-console-mode /usr/local/lib/zen-sentinel.py; do [ -e \"$p\" ] && echo \"OK $p\" || echo \"MISSING $p\"; done; echo '===OPENCHATX==='; for p in /opt/zen/tools/openchatx-linux-sandbox /var/lib/zen-openchatx /var/lib/zen-ops/work/openchatx-linux-probe; do [ -e \"$p\" ] && echo \"OK $p\" || echo \"MISSING $p\"; done; printf 'zen-openchatx.service '; systemctl is-active zen-openchatx.service 2>/dev/null || true; ss -ltn 2>/dev/null | grep -E ':18001 |:8001 ' || true; echo '===MESHCENTRAL==='; ss -ltn 2>/dev/null | grep ':8443 ' || true; echo '===SENTINEL_STATE==='; cat /run/zen-sentinel/state.json 2>/dev/null | head -80 || true; echo '===TOOLS==='; for c in restic midimonster rtpmidid-cli ltcgen rg supergateway codex-acp gemini bd ptp4l; do printf '%-16s' \"$c\"; command -v \"$c\" || true; done; echo '===GRUB_ROTATE==='; grep '^GRUB_CMDLINE_LINUX_DEFAULT' /etc/default/grub 2>/dev/null || true"
+    "timeout": 120,
+    "command": "echo '===OPENCLAW==='; systemctl list-unit-files | grep -Ei 'openclaw' || true; systemctl list-units --type=service --all | grep -Ei 'openclaw' || true; ps -ef | grep -Ei '[o]penclaw' || true; ss -ltnp 2>/dev/null | grep ':18789 ' || true; echo '===OPENCHATX_UNIT==='; test -f /etc/systemd/system/zen-openchatx.service && echo UNIT_EXISTS || echo UNIT_MISSING; systemctl status zen-openchatx.service --no-pager --full 2>&1 | head -60 || true; echo '===OPENCHATX_DIRS==='; du -sh /opt/zen/tools/openchatx-linux-sandbox 2>/dev/null || true; du -sh /var/lib/zen-openchatx 2>/dev/null || true; du -sh /var/lib/zen-ops/work/openchatx-linux-probe 2>/dev/null || true"
   }
 }
