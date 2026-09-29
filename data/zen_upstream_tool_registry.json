@@ -1,0 +1,231 @@
+{
+  "schema": "zen.upstream_tool_registry.v0.1",
+  "generated_at": "2026-09-29",
+  "policy": {
+    "mini_first": true,
+    "primary_brain": "STRONG_SINGLE_BRAIN",
+    "external_tools_role": "INFRASTRUCTURE_OR_SPECIALIZED_WORKER",
+    "ma2_write_authority": "ZEN_DETERMINISTIC_BUILDER_ONLY",
+    "operator_workflow_change_requires_owner_approval": true
+  },
+  "tools": [
+    {
+      "id": "zen-native-mcp",
+      "state": "PRIMARY",
+      "interface": "MCP",
+      "authority": "BOUNDED_ZEN_TOOLS",
+      "runtime": "always"
+    },
+    {
+      "id": "glances",
+      "state": "READY",
+      "interface": "MCP_SSE+HTTP",
+      "authority": "READ_ONLY_TELEMETRY",
+      "runtime": "always"
+    },
+    {
+      "id": "zen-sentinel",
+      "state": "READY",
+      "interface": "state_json",
+      "authority": "READ_ONLY_MONITOR",
+      "runtime": "always",
+      "path": "/run/zen-sentinel/state.json"
+    },
+    {
+      "id": "markitdown",
+      "state": "READY",
+      "interface": "MCP",
+      "authority": "ANALYSIS_ONLY",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "docling",
+      "state": "READY",
+      "interface": "MCP",
+      "authority": "ANALYSIS_ONLY",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "crawl4ai",
+      "state": "READY",
+      "interface": "MCP+CLI",
+      "authority": "RESEARCH_ONLY",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "codebase-memory",
+      "state": "READY",
+      "interface": "MCP",
+      "authority": "DEVELOPMENT_INTELLIGENCE",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "basic-memory",
+      "state": "READY",
+      "interface": "MCP",
+      "authority": "NOTE_MEMORY",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "reaper-readonly",
+      "state": "READY",
+      "interface": "MCP",
+      "authority": "READ_ONLY_DAW",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "reaper-live",
+      "state": "INSTALLED_DISABLED_ON_MINI",
+      "interface": "MCP",
+      "authority": "BOUNDED_DAW_CONTROL",
+      "runtime": "workstation_node_required"
+    },
+    {
+      "id": "litellm",
+      "state": "READY",
+      "interface": "CLI+HTTP",
+      "authority": "PROVIDER_TRANSPORT",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "essentia",
+      "state": "READY",
+      "interface": "PYTHON",
+      "authority": "AUDIO_ANALYSIS_ONLY",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "pyscenedetect",
+      "state": "READY",
+      "interface": "CLI+PYTHON",
+      "authority": "VIDEO_ANALYSIS_ONLY",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "restic",
+      "state": "READY_NO_DESTINATION_CONFIGURED",
+      "interface": "CLI",
+      "authority": "BACKUP",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "docker-mcp-gateway",
+      "state": "READY",
+      "interface": "DOCKER_CLI_PLUGIN",
+      "authority": "TOOL_TRANSPORT",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "supergateway",
+      "state": "READY",
+      "interface": "CLI",
+      "authority": "MCP_TRANSPORT_ADAPTER",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "codex-acp",
+      "state": "READY",
+      "interface": "ACP",
+      "authority": "CODING_WORKER",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "gemini-cli",
+      "state": "READY",
+      "interface": "ACP",
+      "authority": "CODING_OR_RESEARCH_WORKER",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "beads",
+      "state": "INSTALLED_NOT_INITIALIZED",
+      "interface": "CLI",
+      "authority": "TASK_GRAPH",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "ola",
+      "state": "READY",
+      "interface": "CLI+DAEMON",
+      "authority": "PROTOCOL_LAB",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "midimonster",
+      "state": "READY_FULL_BUILD",
+      "interface": "CLI",
+      "authority": "PROTOCOL_ROUTING_NO_MA_PROGRAM_AUTHORITY",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "rtpmidid",
+      "state": "READY",
+      "interface": "CLI+DAEMON",
+      "authority": "RTP_MIDI_TRANSPORT",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "libltc-ltc-tools",
+      "state": "READY",
+      "interface": "CLI+LIB",
+      "authority": "TIMECODE_UTILITY",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "linuxptp",
+      "state": "READY",
+      "interface": "CLI",
+      "authority": "PTP_DIAGNOSTIC",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "libavtp",
+      "state": "READY",
+      "interface": "LIB",
+      "authority": "AVTP_RESEARCH",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "openavnu",
+      "state": "REFERENCE_READY",
+      "interface": "SOURCE_REFERENCE",
+      "authority": "REFERENCE_ONLY",
+      "runtime": "never_by_default"
+    },
+    {
+      "id": "chataigne",
+      "state": "READY_GUI",
+      "interface": "APPIMAGE",
+      "authority": "SHOW_CONTROL_EXPERIMENT",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "ossia-score",
+      "state": "READY_GUI",
+      "interface": "APPIMAGE",
+      "authority": "SHOW_TIMELINE_EXPERIMENT",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "open-sound-meter",
+      "state": "READY_GUI",
+      "interface": "APPIMAGE",
+      "authority": "AUDIO_MEASUREMENT",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "aes67-stream-monitor",
+      "state": "READY_GUI",
+      "interface": "DEB_APP",
+      "authority": "AES67_DIAGNOSTIC",
+      "runtime": "on_demand"
+    },
+    {
+      "id": "ma2-reference-corpus",
+      "state": "READY",
+      "interface": "FILES",
+      "authority": "REFERENCE_ONLY",
+      "runtime": "on_demand"
+    }
+  ]
+}
