@@ -113,6 +113,63 @@ calibration regions are invalidated.
 For complex productions, Blender may provide a richer world model. This is a
 future adapter, not a dependency of Spatial vNext's first implementation slice.
 
+
+## Geometry authority and provenance
+
+Spatial geometry must be accepted or rejected by provenance and verification, not merely by whether a workflow originally began as `NEW_UNDESIGNED_SHOW`.
+
+ZEN must always be able to read fresh native fixture geometry when grandMA2 exposes it, including:
+
+- fixture/subfixture Pos X / Pos Y / Pos Z;
+- Rot X / Rot Y / Rot Z;
+- Pan/Tilt offsets and invert metadata when exposed by the verified reader.
+
+The intended authority classes are:
+
+### AGENT_AUTHORED_VERIFIED
+
+Geometry proposed by ZEN, explicitly approved, written through the deterministic MA boundary, and then native-read back with exact XYZ/rotation agreement becomes valid current spatial geometry. It must not continue to be treated as `UNDESIGNED` merely because the original bootstrap mode was `NEW_UNDESIGNED_SHOW`.
+
+### OPERATOR_AUTHORED_VERIFIED
+
+Geometry intentionally arranged by the operator in grandMA2 and then freshly read back may become current spatial geometry once the operator confirms that the arrangement is intentional. ZEN must not require the operator to recreate that layout in a separate ZEN editor.
+
+### IMPORTED_VERIFIED
+
+Geometry imported from a verified supported source may be used according to its bound source/frame confidence.
+
+### UNDESIGNED_OR_UNKNOWN
+
+Default, all-zero, stale, accidental, or provenance-unknown geometry remains non-authoritative. This is the state that the historical `NEW_UNDESIGNED_SHOW` exclusion was protecting against.
+
+### Calculation rule
+
+- Height comes from the fixture/world Z coordinate after the relevant frame mapping is established; Rotation is orientation, not height.
+- XYZ + Rot XYZ describe the fixture pose.
+- A beam direction/target calculation additionally requires the fixture's verified Pan/Tilt state or requested Pan/Tilt, Pan/Tilt offsets/inversion where relevant, and the fixture's verified axis/model semantics.
+- Raw MA2 coordinates alone do not prove which sign is Stage Left, Stage Right, Upstage or Downstage. A stage-frame/orientation mapping is still required for those semantic labels.
+- When ZEN itself authored the geometry from `ZEN_STAGE_FRAME_V1`, the authored transform plus native readback can preserve that known frame relation instead of discarding it.
+
+The long-term spatial pipeline therefore becomes:
+
+```text
+Agent- or operator-authored fixture layout
+        ↓
+fresh native XYZ + Rotation readback
+        ↓
+geometry provenance / authority classification
+        ↓
+ZEN Stage Frame mapping
+        ↓
+fixture world pose
+        ↓
+semantic target / vector resolution
+        ↓
+Position Preset / derived solution
+```
+
+This rule also means future Auto Geometry proposals must treat fixture Rotation as real design data. A blanket `Rot X/Y/Z = 0` is only a bounded placeholder, not the final Spatial vNext behavior.
+
 ## Stage coordinate system
 
 The semantic world is stage-centric.
