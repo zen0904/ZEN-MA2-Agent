@@ -1,6 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "sync-openclaw-443-release-20260929-0048",
-  "kind": "repo_sync",
-  "args": {}
+  "job_id": "release-443-openclaw-20260929-0051",
+  "kind": "repo_task",
+  "args": {
+    "task": "release_tailscale_443_for_openclaw",
+    "timeout": 120
+  }
 }
