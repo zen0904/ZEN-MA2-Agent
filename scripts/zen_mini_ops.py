@@ -136,6 +136,12 @@ def main() -> int:
             rc |= run(cmd, timeout=30)
         return rc
 
+    if action == "recovery-verify":
+        return run(
+            ["/bin/bash", "deploy/ops_tasks/verify_zen_ops_recovery.sh"],
+            timeout=300,
+        )
+
     raise SystemExit(f"Unsupported action: {action}")
 
 
