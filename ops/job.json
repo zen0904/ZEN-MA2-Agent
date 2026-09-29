@@ -1,10 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "antseed-anthropic-smoke-20260930-0002",
+  "job_id": "antseed-protocol-probe-20260930-0003",
   "kind": "shell",
   "args": {
     "cwd": "/tmp",
-    "timeout": 180,
-    "command": "python3 - <<'PY'\nimport json, urllib.request\nurl='http://127.0.0.1:8377/v1/messages'\nbody=json.dumps({'model':'deepseek-v4-flash','max_tokens':16,'messages':[{'role':'user','content':'Reply only: OK'}]}).encode()\nreq=urllib.request.Request(url,data=body,headers={'content-type':'application/json','x-api-key':'antseed-p2p','anthropic-version':'2023-06-01'},method='POST')\nwith urllib.request.urlopen(req,timeout=150) as r:\n    p=json.load(r)\nprint('TYPE='+str(p.get('type')))\nprint('MODEL='+str(p.get('model')))\ncontent=p.get('content',[])\ntext=' '.join(str(x.get('text','')) for x in content if isinstance(x,dict))\nprint('TEXT='+text[:200])\nprint('STOP_REASON='+str(p.get('stop_reason')))\nPY"
+    "timeout": 240,
+    "command": "python3 - <<'PY'\nimport json, urllib.request, urllib.error\ncases=[\n ('anthropic','http://127.0.0.1:8377/v1/messages',{'model':'deepseek-v4-flash','max_tokens':16,'messages':[{'role':'user','content':'Reply only: OK'}]},{'content-type':'application/json','x-api-key':'antseed-p2p','anthropic-version':'2023-06-01'}),\n ('openai','http://127.0.0.1:8377/v1/chat/completions',{'model':'deepseek-v4-flash','max_tokens':16,'messages':[{'role':'user','content':'Reply only: OK'}]},{'content-type':'application/json','Authorization':'Bearer antseed-p2p'})\n]\nfor name,url,payload,headers in cases:\n print('===',name,'===')\n req=urllib.request.Request(url,data=json.dumps(payload).encode(),headers=headers,method='POST')\n try:\n  with urllib.request.urlopen(req,timeout=180) as r:\n   body=r.read().decode(errors='replace')\n   print('HTTP',r.status)\n   print(body[:1200])\n except urllib.error.HTTPError as e:\n  print('HTTP',e.code)\n  print(e.read().decode(errors='replace')[:1200])\n except Exception as e:\n  print(type(e).__name__,repr(e))\nPY"
   }
 }
