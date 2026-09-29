@@ -5,7 +5,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 /usr/local/lib/zen-ops-worker.py
+ExecStart=/usr/bin/python3 /opt/zen/zen-ops-runtime/deploy/ubuntu/zen-ops-worker.py
 Restart=always
 RestartSec=3
 NoNewPrivileges=true
