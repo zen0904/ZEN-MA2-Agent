@@ -12,6 +12,7 @@ ALLOWED_SERVICES = {
     "zen-controller-readonly-facade",
     "zen-lighting-operator-proxy",
     "zen-glances",
+    "zen-antseed-buyer",
 }
 MCP_SERVERS = {
     "zen-native-stdio",
@@ -67,6 +68,19 @@ def main() -> int:
             rc |= run(["systemctl", "is-active", service], timeout=20)
         rc |= run(["free", "-h"], timeout=20)
         rc |= run(["df", "-h", "/"], timeout=20)
+        return rc
+
+    if action == "antseed-status":
+        rc = run(["systemctl", "is-active", "zen-antseed-buyer"], timeout=20)
+        rc |= run(["systemctl", "is-enabled", "zen-antseed-buyer"], timeout=20)
+        rc |= run(["ss", "-ltn"], timeout=20)
+        rc |= run(
+            [
+                "python3", "-c",
+                "import json,urllib.request; p=json.load(urllib.request.urlopen('http://127.0.0.1:8377/v1/models', timeout=5)); ids=[str(x.get('id')) for x in p.get('data',[]) if isinstance(x,dict) and x.get('id')]; print('MODELS_COUNT='+str(len(ids))); print('MODELS_SAMPLE='+','.join(ids[:30]))",
+            ],
+            timeout=20,
+        )
         return rc
 
     if action == "tests":
