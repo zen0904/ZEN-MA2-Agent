@@ -5,7 +5,7 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "SPATIAL_SYSTEM_VNEXT: add reserved pre-named empty Position Preset anchor slots to the foundation workflow. Next bounded capability is real-machine verification of safely hydrating one explicitly empty existing POSITION Preset and proving native PAN/TILT content readback, without allocating a new Preset or modifying unrelated content."
+    "active_objective": "SPATIAL_SYSTEM_VNEXT: trusted geometry -> membership-preserving normal Group spatial reorder -> native readback -> reusable Position anchor hydration -> detailed song programming. Preserve exact subfixture identity; no live Group overwrite is authorized by this design capture."
   },
   "last_closed_task": {
     "id": "SEMANTIC_POSITION_BINDING_OPERATOR_CAPTURE_001",
@@ -210,6 +210,24 @@
         "EXISTING_EMPTY_PRESET_HYDRATION_GRAMMAR_REQUIRES_REAL_MACHINE_VERIFICATION_BEFORE_EXECUTION"
       ],
       "limitations": "This design rule does not authorize writes. Current proven Position path creates a new selective Position Preset; the exact grammar for hydrating an already existing empty Position Preset has not yet been real-machine verified. Do not assume Cue /merge semantics apply to Preset storage."
+    },
+    {
+      "id": "SPATIAL_GROUP_REORDER_AFTER_GEOMETRY_001",
+      "source": "Owner clarification 2026-09-29 + prior accepted geometry workflow",
+      "status": "APPROVED_DESIGN_RULE",
+      "outcomes": [
+        "AFTER_TRUSTED_3D_GEOMETRY_REBUILD_EXISTING_NORMAL_GROUP_SELECTION_ORDER",
+        "PRESERVE_EXACT_GROUP_MEMBERSHIP_AND_SUBFIXTURE_REFERENCES",
+        "STORE_OVERWRITE_EXISTING_NORMAL_GROUPS_INSTEAD_OF_CREATING_DUPLICATE_NORMAL_GROUPS",
+        "DEFAULT_ORDER_SINGLE_ROW_BY_STAGE_SPACE_X",
+        "DEFAULT_ORDER_MULTI_ROW_BY_STAGE_DEPTH_LAYER_THEN_X",
+        "DO_NOT_SORT_BY_FIXTURE_NUMERIC_ID",
+        "SPECIAL_CHASE_OR_PATTERN_ORDERS_USE_SEPARATELY_NAMED_SPECIAL_GROUPS",
+        "GROUP_ORDER_READBACK_REQUIRED_BEFORE_MOVEMENT_EFFECT_PROGRAMMING",
+        "GROUP7_EXACT_REFERENCE_FAILURE_REMAINS_FAIL_CLOSED_PRECEDENT",
+        "POSITION_PRESETS_AND_CUES_ARE_BUILT_AFTER_GEOMETRY_AND_NORMAL_GROUP_ORDER_STABILIZE"
+      ],
+      "limitations": "This records the workflow and ordering rule only; it does not authorize a live Group overwrite. Any actual reorder must use fresh exact membership evidence, the bounded GroupOrderSpec path, Preview/Approval, exact post-write order readback, and Fixture 9999 protection."
     }
   ],
   "evidence_results": [
