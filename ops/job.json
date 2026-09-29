@@ -1,10 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "inspect-openclaw-cgroup-20260930-0047",
+  "job_id": "wait-openclaw-authority-task-20260930-0049",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 30,
-    "command": "pid=$(pgrep -f 'openclaw/dist/index.js gateway --port 18789' | head -n1 || true); if [ -z \"$pid\" ]; then echo GATEWAY=NONE; exit 0; fi; cat /proc/$pid/cgroup 2>/dev/null || true; ps -o pid,ppid,user,args -p \"$pid\" --no-headers"
+    "timeout": 190,
+    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/inspect_openclaw_runtime_authority.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
   }
 }
