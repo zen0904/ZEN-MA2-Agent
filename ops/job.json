@@ -1,9 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "repair-openclaw-persistence-current-20260930-0052",
+  "job_id": "inspect-openclaw-user-unit-postrepair-20260930-0053",
   "kind": "repo_task",
   "args": {
-    "task": "repair_openclaw_gateway_boot",
-    "timeout": 180
+    "task": "inspect_openclaw_user_unit_safe",
+    "timeout": 120
   }
 }
