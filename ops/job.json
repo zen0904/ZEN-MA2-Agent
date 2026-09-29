@@ -1,10 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "check-openclaw-configdiag-task-20260930-0035",
-  "kind": "shell",
+  "job_id": "inspect-openclaw-config-location-safe-20260930-0036",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 30,
-    "command": "if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/inspect_openclaw_config_location_safe.sh ]; then echo TASK_PRESENT=YES; else echo TASK_PRESENT=NO; fi"
+    "task": "inspect_openclaw_config_location_safe",
+    "timeout": 120
   }
 }
