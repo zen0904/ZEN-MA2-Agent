@@ -1,9 +1,6 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "antseed-install-main-20260929-2334",
-  "kind": "repo_task",
-  "args": {
-    "task": "install_antseed_buyer",
-    "timeout": 3600
-  }
+  "job_id": "sync-openclaw-repair-20260929-0002",
+  "kind": "repo_sync",
+  "args": {}
 }
