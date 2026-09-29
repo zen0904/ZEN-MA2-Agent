@@ -92,6 +92,7 @@ and a detected chorus/onset is not an instruction to fire a chase.
 | dschuler36/reaper-mcp-server | INSTALLED/client-ready | REAPER host required for live project readback | custom RPP/read-only analysis glue |
 | Open Sound Meter | INSTALLED/reference/API client | measurement workstation for live I/O | custom measurement parsing |
 | AES67 Stream Monitor | INSTALLED/ON_DEMAND | AoIP workstation optional | generic AES67 stream monitoring |
+| AVB / TSN Linux stack | INSTALLED / DIAGNOSTIC | future AVB-capable host/NIC | generic gPTP/AVTP discovery and transport experiments |
 
 Mini remains the orchestration point even when execution must occur next to a
 local DAW, interface or measurement device.
@@ -159,6 +160,10 @@ always-on; heavyweight or GUI components remain on-demand unless stated.
 | danishaft/reaper-mcp 0.1.0 | INSTALLED on Mini; second copy required on live REAPER host for local session control |
 | reaper-mcp-server 0.1.0 | INSTALLED on Mini; second copy required on live REAPER host for local project/readback access |
 | MA2 reference corpus | `grandma2-hub`, `gma2-plugins`, GrandMA2 API docs, Lua ldoc and Ma2-API cloned on Mini as REFERENCE only |
+| ZEN Sentinel | ACTIVE deterministic monitor; ~6.5 MB observed RAM; no model calls; writes /run/zen-sentinel/state.json |
+| ZEN console MA view | ACTIVE; tmux MONITOR + MA_AGENT windows; F12 toggle and zen-console-mode command |
+| AVB/TSN tools | linuxptp, libavtp, Avahi installed; OpenAvnu/libavtp reference cloned; built-in BCM57766/tg3 has no exposed PHC under Ubuntu and is not accepted as a production AVB endpoint |
+| GitHub self-hosted runner | v2.337.0 package downloaded and checksum-verified; allowlisted repo workflow/dispatcher committed; registration remains blocked only by the one-time repository runner registration token |
 
 ### Replacement status
 
