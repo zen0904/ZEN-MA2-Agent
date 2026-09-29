@@ -119,6 +119,17 @@ A second copy belongs on the machine that actually runs/owns the live REAPER
 project when local session access is required. The Mini remains the orchestration
 point and may consume that workstation node remotely through MCP.
 
+
+### AVB / TSN
+
+The Mini carries the Linux AVB/TSN research and diagnostic stack: linuxptp,
+libavtp, Avahi, and read-only OpenAvnu/libavtp references. The built-in
+Broadcom BCM57766 using the Linux tg3 driver currently exposes no PTP Hardware
+Clock device and no hardware traffic-control offload. Treat it as a diagnostic
+interface, not as a verified production AVB Audio talker/listener. A future
+production AVB endpoint requires a NIC/driver path with verified PHC/TSN
+capability and real-device interoperability testing.
+
 ## Replacement audit priorities
 
 ### 1. ZEN ProviderRouter
