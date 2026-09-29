@@ -271,6 +271,68 @@ def execute(job_id: str, kind: str, args: dict[str, Any]) -> dict[str, Any]:
             "finished_at": now(),
         }
 
+    if kind == "process_list":
+        pattern = str(args.get("pattern", "")).strip()
+        proc = run(
+            ["ps", "-eo", "pid,ppid,etime,%cpu,%mem,user,args", "--sort=-%cpu"],
+            timeout=min(timeout, 30),
+        )
+        output = proc.stdout
+        if pattern:
+            try:
+                rx = re.compile(pattern, re.IGNORECASE)
+            except re.error as exc:
+                raise ValueError(f"invalid process pattern: {exc}") from exc
+            lines = output.splitlines()
+            output = "\n".join([lines[0], *[line for line in lines[1:] if rx.search(line)]]) + "\n"
+        return {
+            "returncode": proc.returncode,
+            "output": sanitize(output),
+            "started_at": started,
+            "finished_at": now(),
+        }
+
+    if kind == "journal":
+        service = str(args.get("service", ""))
+        if service not in ALLOWED_SERVICES:
+            raise ValueError("service is not allowlisted")
+        lines = max(1, min(int(args.get("lines", 200)), 1000))
+        proc = run(
+            ["journalctl", "-u", service, "-n", str(lines), "--no-pager"],
+            timeout=min(timeout, 60),
+        )
+        return {
+            "returncode": proc.returncode,
+            "output": sanitize(proc.stdout),
+            "started_at": started,
+            "finished_at": now(),
+        }
+
+    if kind == "tool_inventory":
+        commands = [
+            ["restic", "version"],
+            ["docker", "--version"],
+            ["midimonster", "-v"],
+            ["rtpmidid-cli", "--help"],
+            ["ltcgen", "--help"],
+            ["bd", "--version"],
+            ["supergateway", "--version"],
+            ["codex-acp", "--version"],
+            ["gemini", "--version"],
+        ]
+        chunks = []
+        rc = 0
+        for cmd in commands:
+            proc = run(cmd, timeout=30)
+            rc |= proc.returncode
+            chunks.append("$ " + " ".join(cmd) + "\n" + proc.stdout)
+        return {
+            "returncode": rc,
+            "output": sanitize("\n".join(chunks)),
+            "started_at": started,
+            "finished_at": now(),
+        }
+
     if kind == "read_file":
         path = Path(str(args.get("path", ""))).resolve()
         if not any(str(path) == base or str(path).startswith(base + "/") for base in SAFE_CWDS):
