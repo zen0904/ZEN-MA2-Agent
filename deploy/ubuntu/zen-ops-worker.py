@@ -40,6 +40,7 @@ ALLOWED_SERVICES = {
     "zen-sentinel",
     "zen-meshcentral",
     "zen-ops-results",
+    "zen-antseed-buyer",
     "ssh",
     "tailscaled",
 }
