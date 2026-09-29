@@ -335,6 +335,70 @@ genuinely special and should remain a named reusable object, for example:
 The system must not create a new Position Preset for every Cue.
 
 
+
+## Geometry-to-Group-order-to-Position workflow
+
+Once a fixture layout becomes trusted spatial geometry, normal Group selection
+order should be rebuilt from that geometry before song programming begins.
+
+The intended production sequence is:
+
+```text
+Agent designs fixture XYZ + Rotation
+        ↓
+Preview / explicit approval
+        ↓
+MA2 geometry write
+        ↓
+fresh native XYZ + Rotation readback
+        ↓
+trusted Spatial geometry
+        ↓
+rebuild existing normal Group selection order from live spatial order
+        ↓
+Store Group <id> /overwrite /nc
+        ↓
+fresh exact Group membership/order readback
+        ↓
+hydrate / update reusable Position anchor Presets
+        ↓
+Lighting design / Cues / Movement / Effects reference those resources
+        ↓
+onsite operator corrects foundation Position Presets as needed
+```
+
+Normal Group reorder is membership-preserving:
+
+- preserve the exact verified fixture/subfixture member set;
+- preserve exact subfixture references such as `.1` or `.2`;
+- change selection order only;
+- do not create duplicate normal Groups solely to represent the new geometry;
+- Fixture 9999 remains protected;
+- fresh native Group readback must exactly match the desired order and original
+  member set.
+
+The default spatial ordering policy remains deterministic:
+
+- one spatial row: order by live stage-space X;
+- multiple rows/layers: order by stage depth/layer first, then X inside the row;
+- the exact stage-frame axis convention and row grouping must come from the
+  trusted Spatial model rather than Fixture numeric IDs.
+
+Special artistic orders are separate resources. A song may require a dedicated
+Group for a special chase, cross-order, center-out, or other non-normal sequence,
+but that must not corrupt the ordinary spatial Group order.
+
+This reorder step belongs after trusted geometry and before effect/movement
+programming because MAtricks, phase, fan and chase behavior may depend on native
+selection order.
+
+The historical Group 7 incident remains a hard safety lesson: never reconstruct
+a normal Group from parent Fixture IDs when the verified Group contains exact
+subfixture identities. The committed `GroupOrderSpec` builder already enforces
+same-member-set and exact-reference preservation; future Spatial orchestration
+should call that bounded path rather than synthesizing ad-hoc Group overwrite
+commands.
+
 ## Pre-named empty Position Presets as Spatial Anchor Slots
 
 A normal operator template may intentionally contain Position Preset pool objects
