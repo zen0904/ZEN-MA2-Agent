@@ -1,9 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "configure-antseed-openclaw-free-20260930-0009",
-  "kind": "repo_task",
+  "job_id": "check-ops-runtime-antseed-task-20260930-0010",
+  "kind": "shell",
   "args": {
-    "task": "configure_antseed_openclaw_free",
-    "timeout": 900
+    "cwd": "/opt/zen",
+    "timeout": 30,
+    "command": "git -C /opt/zen/zen-ops-runtime rev-parse HEAD 2>/dev/null || true; if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/configure_antseed_openclaw_free.sh ]; then echo TASK_PRESENT=YES; else echo TASK_PRESENT=NO; fi"
   }
 }
