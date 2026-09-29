@@ -1,10 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "antseed-temp-install-20260929-2320",
-  "kind": "shell",
+  "job_id": "repair-openchatx-20260929-2320",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/tmp",
-    "timeout": 1800,
-    "command": "set -e; rm -rf /tmp/antseed-zenops /tmp/npm22-zenops; mkdir -p /tmp/antseed-zenops /tmp/npm22-zenops; export npm_config_cache=/tmp/npm22-zenops; N22=/opt/node-v22-backup-20260928-213623/bin/node; NPM22=/opt/node-v22-backup-20260928-213623/lib/node_modules/npm/bin/npm-cli.js; \"$N22\" \"$NPM22\" install --prefix /tmp/antseed-zenops @antseed/cli@0.1.165; echo '===VERIFY==='; \"$N22\" /tmp/antseed-zenops/node_modules/@antseed/cli/dist/cli/index.js --version; echo '===HELP==='; \"$N22\" /tmp/antseed-zenops/node_modules/@antseed/cli/dist/cli/index.js buyer start --help | head -80"
+    "task": "install_openchatx_linux_sandbox",
+    "timeout": 2400
   }
 }
