@@ -181,3 +181,38 @@ always-on; heavyweight or GUI components remain on-demand unless stated.
 - No Docker/Crawl4AI/LiteLLM/Supergateway daemon is kept running merely because the package is installed.
 - No Beads repo initialization is performed without a separate workflow decision.
 - No restic destination or secret is fabricated when no real backup destination has been selected.
+
+## Primary remote execution plane
+
+The Mini no longer depends on Remote Desktop Commander as its normal maintenance
+transport.
+
+Primary machine-operation path:
+
+```text
+ChatGPT / GitHub connector
+        ↓
+zen-ops-control branch
+        ↓
+ZEN Ops Worker on Mini
+        ↓
+typed job execution
+        ↓
+persistent result JSON
+        ↓
+Tailscale Funnel read-only result plane
+```
+
+The control branch is writable only through GitHub repository permissions. The
+worker polls only that exact branch and does not execute PR content or arbitrary
+public Issue text. Normal shell jobs run as the unprivileged `zenops` account;
+root maintenance remains typed. The Ops plane is not an MA2 write authority and
+must not bypass ZEN Compiler / Preview / Approval / Builder boundaries.
+
+The worker runs from an independent `/opt/zen/zen-ops-runtime` clone and a
+systemd timer updates it from `main` every 60 seconds. Therefore future
+maintenance capabilities can be deployed without using Remote Desktop Commander.
+
+Tailscale SSH and MeshCentral remain the direct human/RMM control surfaces.
+Remote Desktop Commander is fallback-only for ChatGPT-native GUI/visual or
+emergency access.
