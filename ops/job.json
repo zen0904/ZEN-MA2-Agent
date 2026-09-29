@@ -1,10 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "check-openclaw-helper-deployed-20260930-0011m",
-  "kind": "shell",
+  "job_id": "persist-openclaw-gateway-20260930-0011n",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 30,
-    "command": "if test -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/install_openclaw_gateway_user_unit.sh && grep -q 'ZEN_OPENCLAW_PERSISTENCE_HELPER=PASS' /opt/zen/zen-ops-runtime/deploy/ops_tasks/repair_openclaw_gateway_boot.sh 2>/dev/null; then echo SCRIPT_READY=YES; else echo SCRIPT_READY=NO; fi; systemctl list-timers zen-ops-updater.timer --no-pager 2>/dev/null || true"
+    "task": "repair_openclaw_gateway_boot",
+    "timeout": 180
   }
 }
