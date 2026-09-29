@@ -5,7 +5,7 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "SPATIAL_SYSTEM_VNEXT: existing-Preset hydration grammar and current-template empty-slot evidence are verified. Return to main Space flow: trusted 3D XYZ/Rotation -> membership-preserving normal Group spatial reorder -> explicit semantic mapping of reserved Position slots -> Preview/Approval -> hydration. Revalidate empty evidence after any Show fingerprint drift."
+    "active_objective": "SPATIAL_SYSTEM_VNEXT: hydration grammar and current-template empty-slot evidence are verified; high-number sacrificial MA resources were owner-authorized deleted. Continue main Space flow using FIRST_FREE_FROM_FRONT for every production/test/scratch allocation: trusted 3D XYZ/Rotation -> normal Group spatial reorder -> semantic Position mapping -> Preview/Approval -> hydration."
   },
   "last_closed_task": {
     "id": "SEMANTIC_POSITION_BINDING_OPERATOR_CAPTURE_001",
@@ -264,9 +264,10 @@
         "PRESET_ADDRESS_1_2_900_MATCHED_BY_TRAILING_2_900_SUFFIX",
         "POSITION_APPLICATION_BINDING_REAL_MACHINE_CONTENT_VERIFIED",
         "INITIAL_AD_HOC_VERIFIER_FAILURE_CLASSIFIED_FALSE_NEGATIVE_NO_REPLAY",
-        "TEST_PRESET_2_900_AND_SEQUENCE_9900_RETAINED_AS_AUDIT_EVIDENCE_NO_AUTO_DELETE"
+        "TEST_PRESET_2_900_AND_SEQUENCE_9900_RETAINED_AS_AUDIT_EVIDENCE_NO_AUTO_DELETE",
+        "SUBSEQUENT_OWNER_AUTHORIZED_CLEANUP_DELETED_PRESETS_2_900_2_901_SEQUENCE_9900_GROUP_9901_WITH_ABSENCE_READBACK_VERIFIED"
       ],
-      "limitations": "This closes the existing-empty Position Preset hydration grammar only. It does not prove that operator template slots such as 2.2 CENTER are empty. Exact per-slot native emptiness evidence remains required before first hydration. No automatic cleanup or replay was performed."
+      "limitations": "This closes the existing-empty Position Preset hydration grammar only. It does not prove that operator template slots such as 2.2 CENTER are empty. Exact per-slot native emptiness evidence remains required before first hydration. No automatic cleanup or replay was performed. The high-number sacrificial MA objects were subsequently deleted under explicit owner authorization after identity verification; committed evidence artifacts remain historical evidence only."
     },
     {
       "id": "SPATIAL_TEMPLATE_POSITION_EMPTY_EVIDENCE_001",
@@ -291,9 +292,25 @@
         "TARGET_TEMPLATE_POSITION_PRESETS_NOT_MODIFIED",
         "EVIDENCE_BOUND_TO_FINGERPRINT_b1b79e3b0ed19f8f9b74aa801920ca8146769a665697a757791d57ef7ce583a6",
         "FINGERPRINT_DRIFT_INVALIDATES_EMPTY_EVIDENCE",
-        "SCRATCH_PRESETS_2_900_2_901_SEQUENCE_9900_GROUP_9901_RETAINED_AS_AUDIT_EVIDENCE_NO_AUTO_DELETE"
+        "SCRATCH_PRESETS_2_900_2_901_SEQUENCE_9900_GROUP_9901_RETAINED_AS_AUDIT_EVIDENCE_NO_AUTO_DELETE",
+        "SUBSEQUENT_OWNER_AUTHORIZED_CLEANUP_DELETED_PRESETS_2_900_2_901_SEQUENCE_9900_GROUP_9901_WITH_ABSENCE_READBACK_VERIFIED"
       ],
-      "limitations": "This proves the exact current template Position slots 2.1-2.11 are empty on the recorded Show fingerprint. It does not assign semantic meanings from their labels, calculate target Pan/Tilt, authorize hydration, or survive Show fingerprint drift. The A/B and inventory probes wrote only sacrificial Preset/Sequence/Group audit objects and scratch Group 9901; target template Position Presets were read/selected but not modified."
+      "limitations": "This proves the exact current template Position slots 2.1-2.11 are empty on the recorded Show fingerprint. It does not assign semantic meanings from their labels, calculate target Pan/Tilt, authorize hydration, or survive Show fingerprint drift. The A/B and inventory probes wrote only sacrificial Preset/Sequence/Group audit objects and scratch Group 9901; target template Position Presets were read/selected but not modified. The high-number sacrificial MA objects were subsequently deleted under explicit owner authorization after identity verification; committed evidence artifacts remain historical evidence only."
+    },
+    {
+      "id": "HIGH_NUMBER_TEST_RESOURCE_CLEANUP_001",
+      "source": "Explicit owner authorization 2026-09-29",
+      "status": "CLOSED_REAL_MACHINE_DELETED_VERIFIED",
+      "outcomes": [
+        "PRESET_2_900_ZEN_SPATIAL_HYDRATE_PROBE_DELETED",
+        "PRESET_2_901_ZEN_SPATIAL_EMPTY_PROBE_DELETED",
+        "SEQUENCE_9900_ZEN_SPATIAL_ANCHOR_PROBE_DELETED",
+        "GROUP_9901_ZEN_PRESET_CONTENT_PROBE_DELETED",
+        "POST_DELETE_LIST_READBACK_CONFIRMED_ALL_FOUR_OBJECTS_ABSENT",
+        "NO_TEMPLATE_POSITION_PRESET_WAS_DELETED",
+        "DIAGNOSTIC_AND_SCRATCH_RESOURCES_NOW_EXPLICITLY_BOUND_TO_FIRST_FREE_FROM_FRONT_POLICY"
+      ],
+      "limitations": "Historical capability/evidence JSON may still cite the deleted sacrificial object numbers because they are immutable evidence references. Those numbers are not reserved and must not be reused as a preferred test range."
     }
   ],
   "evidence_results": [
@@ -1626,5 +1643,10 @@
       "access_rule": "Windows may be contacted directly only for bounded Field Core / MA-local evidence and execution duties. That does not make Windows the workflow origin. Normal workflow origin remains Mini -> typed LIGHTING_GRANDMA2 adapter -> Windows.",
       "note": "The Windows OpenClaw Gateway was retired during Mini migration. Windows may still retain code/runtime artifacts needed for MA-local operation, but retired Gateway/control-plane state is not to be revived or treated as canonical."
     }
-  ]
+  ],
+  "allocation_policy": {
+    "default": "FIRST_FREE_FROM_FRONT",
+    "rule": "Scan fresh inventory, start at the front of the relevant pool, skip occupied/protected/foreign slots, and use the first safe free slot. This applies equally to production, test, scratch, diagnostic, and manually-authored probe resources; artificial high-number isolation is prohibited unless a documented technical constraint requires it.",
+    "diagnostic_probe_rule": "LOWEST_SAFE_FREE_SLOT_FIRST; do not jump to 900/9900-style IDs merely to visually separate test resources."
+  }
 }
