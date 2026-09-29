@@ -1,10 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "inspect-gateway-env-safe-20260930-0039",
+  "job_id": "inspect-openclaw-process-chain-20260930-0041",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
     "timeout": 30,
-    "command": "pid=$(pgrep -f 'openclaw/dist/index.js gateway --port 18789' | head -n1 || true); if [ -z \"$pid\" ]; then echo GATEWAY_PID=NONE; exit 0; fi; python3 - \"$pid\" <<'PY'\nimport sys\npid=sys.argv[1]\nraw=open(f'/proc/{pid}/environ','rb').read().split(b'\\0')\nwant={'HOME','OPENCLAW_HOME','OPENCLAW_CONFIG_PATH','OPENCLAW_STATE_DIR','OPENCLAW_PROFILE','XDG_CONFIG_HOME','PWD','USER','LOGNAME'}\nvals={}\nfor item in raw:\n if b'=' not in item: continue\n k,v=item.split(b'=',1); k=k.decode(errors='replace')\n if k in want: vals[k]=v.decode(errors='replace')\nfor k in sorted(want):\n print(k+'='+vals.get(k,'<UNSET>'))\nPY"
+    "command": "pid=$(pgrep -f 'openclaw/dist/index.js gateway --port 18789' | head -n1 || true); if [ -z \"$pid\" ]; then echo GATEWAY=NONE; exit 0; fi; ppid=$(ps -o ppid= -p \"$pid\" | tr -d ' '); gpid=$(ps -o ppid= -p \"$ppid\" | tr -d ' '); ps -o pid,ppid,user,args -p \"$pid,$ppid,$gpid\" --no-headers"
   }
 }
