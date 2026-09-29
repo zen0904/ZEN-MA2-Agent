@@ -5,7 +5,7 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "SPATIAL_SYSTEM_VNEXT: trusted geometry -> membership-preserving normal Group spatial reorder -> native readback -> reusable Position anchor hydration -> detailed song programming. Preserve exact subfixture identity; no live Group overwrite is authorized by this design capture."
+    "active_objective": "SPATIAL_SYSTEM_VNEXT: reserved named Position anchor identity layer is offline-verified. Next bounded gate is read-only/current-Show proof of an explicitly reserved Position Preset being safe for hydration, followed by separate real-machine verification of the exact existing-Preset store/merge grammar. No MA write is authorized."
   },
   "last_closed_task": {
     "id": "SEMANTIC_POSITION_BINDING_OPERATOR_CAPTURE_001",
@@ -228,6 +228,23 @@
         "POSITION_PRESETS_AND_CUES_ARE_BUILT_AFTER_GEOMETRY_AND_NORMAL_GROUP_ORDER_STABILIZE"
       ],
       "limitations": "This records the workflow and ordering rule only; it does not authorize a live Group overwrite. Any actual reorder must use fresh exact membership evidence, the bounded GroupOrderSpec path, Preview/Approval, exact post-write order readback, and Fixture 9999 protection."
+    },
+    {
+      "id": "SPATIAL_ANCHOR_SLOT_IDENTITY_FOUNDATION_001",
+      "source": "Implementation on Mini after owner-approved Spatial Anchor workflow 2026-09-29",
+      "status": "IMPLEMENTED_OFFLINE_VERIFIED_NO_MA_WRITE",
+      "outcomes": [
+        "NEW_MODULE_ZEN_MA2_AGENT_SPATIAL_ANCHOR_SLOTS_PY",
+        "EXACT_EXISTING_POSITION_PRESET_REFERENCE_TYPE_AND_LABEL_REQUIRED",
+        "SEMANTIC_TARGET_RESERVATION_USES_EXACT_MAPPING_NO_FUZZY_LABEL_INFERENCE",
+        "PRESET_NATIVE_CONTENT_REMAINS_UNVERIFIED",
+        "HYDRATION_BLOCKED_UNTIL_EMPTY_CONTENT_AND_EXISTING_PRESET_STORE_GRAMMAR_ARE_REAL_MACHINE_VERIFIED",
+        "SHOW_IDENTITY_OR_PRESET_LABEL_DRIFT_INVALIDATES_CATALOG",
+        "MA2_WRITES_ZERO",
+        "TARGETED_SPATIAL_REGRESSION_76_PASSED_26_SUBTESTS",
+        "FULL_REGRESSION_991_PASSED_124_SUBTESTS"
+      ],
+      "limitations": "This foundation reserves existing named POSITION Preset identities only. Current MA2 List Preset and verified Preset XML discovery do not prove that a named Preset has empty native content. No hydration/write command is generated. Full Mini regression: 991 passed, 124 subtests; 3 non-failing warnings."
     }
   ],
   "evidence_results": [
