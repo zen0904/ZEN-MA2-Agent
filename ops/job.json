@@ -1,10 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wait-openclaw-unitdiag-task-20260930-0045",
-  "kind": "shell",
+  "job_id": "inspect-openclaw-user-unit-safe-20260930-0046",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 190,
-    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/inspect_openclaw_user_unit_safe.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
+    "task": "inspect_openclaw_user_unit_safe",
+    "timeout": 120
   }
 }
