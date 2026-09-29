@@ -1,10 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "trace-openclaw-pid-20260930-0011e",
-  "kind": "shell",
+  "job_id": "repair-openclaw-gateway-boot-20260930-0011f",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 30,
-    "command": "ps -o pid,ppid,lstart,user,args -p 834,885; echo CGroup; cat /proc/885/cgroup 2>/dev/null || true; echo SystemdStatus; systemctl status 885 --no-pager --full 2>&1 || true"
+    "task": "repair_openclaw_gateway_boot",
+    "timeout": 180
   }
 }
