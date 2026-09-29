@@ -12,6 +12,8 @@ import re
 from typing import Any, Mapping, Sequence
 
 from .spatial_semantics import normalize_semantic_position_target
+from .spatial_anchor_empty_evidence import verified_empty_refs
+from .spatial_anchor_hydration import spatial_anchor_hydration_capability_is_verified
 
 
 SPATIAL_ANCHOR_SLOT_SCHEMA = "zen.spatial_anchor_slot.v0.1"
@@ -58,6 +60,9 @@ def _position_inventory(profile: Mapping[str, Any]) -> dict[str, list[Mapping[st
 def reserve_spatial_anchor_slots(
     profile: Mapping[str, Any],
     requests: Sequence[Mapping[str, Any]],
+    *,
+    empty_evidence: Mapping[str, Any] | None = None,
+    hydration_capability: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Reserve exact existing Position Presets for future semantic hydration.
 
@@ -69,6 +74,8 @@ def reserve_spatial_anchor_slots(
         raise SpatialAnchorSlotError("SPATIAL_ANCHOR_REQUESTS_REQUIRED")
 
     inventory = _position_inventory(profile)
+    empty_refs = verified_empty_refs(profile, empty_evidence)
+    grammar_verified = spatial_anchor_hydration_capability_is_verified(hydration_capability)
     seen_targets: set[str] = set()
     seen_refs: set[str] = set()
     slots: list[dict[str, Any]] = []
@@ -96,6 +103,8 @@ def reserve_spatial_anchor_slots(
         if preset.get("name") != expected_label:
             raise SpatialAnchorSlotError("SPATIAL_ANCHOR_PRESET_LABEL_DRIFT")
 
+        empty_verified = reference in empty_refs
+        prerequisites_verified = empty_verified and grammar_verified
         slots.append({
             "schema": SPATIAL_ANCHOR_SLOT_SCHEMA,
             "semantic_target": target,
@@ -103,8 +112,10 @@ def reserve_spatial_anchor_slots(
             "preset_ref": reference,
             "preset_label": expected_label,
             "identity_status": IDENTITY_STATUS,
-            "native_content_status": "UNVERIFIED",
-            "hydration_status": HYDRATION_STATUS,
+            "native_content_status": "EMPTY_VERIFIED" if empty_verified else "UNVERIFIED",
+            "hydration_grammar_status": "REAL_MACHINE_CONTENT_VERIFIED" if grammar_verified else "UNVERIFIED",
+            "hydration_preconditions_verified": prerequisites_verified,
+            "hydration_status": "READY_FOR_PREVIEW" if prerequisites_verified else HYDRATION_STATUS,
             "hydration_allowed": False,
             "source": "EXACT_EXISTING_POSITION_PRESET_IDENTITY",
         })
@@ -118,9 +129,9 @@ def reserve_spatial_anchor_slots(
         "show_identity": deepcopy(dict(_show_identity(profile))),
         "slots": slots,
         "constraints": [
-            "PRESET_CONTENT_EMPTY_NOT_PROVEN",
-            "VERIFIED_HYDRATION_GRAMMAR_CAPABILITY_REQUIRED",
-            "NO_MA2_WRITE_AUTHORITY",
+            *([] if empty_refs else ["PRESET_CONTENT_EMPTY_NOT_PROVEN"]),
+            *([] if grammar_verified else ["VERIFIED_HYDRATION_GRAMMAR_CAPABILITY_REQUIRED"]),
+            "PREVIEW_AND_EXPLICIT_APPROVAL_REQUIRED_FOR_WRITE",
         ],
         "ma2_writes": 0,
     }
@@ -129,6 +140,9 @@ def reserve_spatial_anchor_slots(
 def spatial_anchor_catalog_matches_profile(
     profile: Mapping[str, Any],
     catalog: Mapping[str, Any],
+    *,
+    empty_evidence: Mapping[str, Any] | None = None,
+    hydration_capability: Mapping[str, Any] | None = None,
 ) -> bool:
     """Require current Show and exact Position identity/labels to still match."""
     try:
@@ -152,7 +166,10 @@ def spatial_anchor_catalog_matches_profile(
             for slot in slots
             if isinstance(slot, Mapping)
         ]
-        rebuilt = reserve_spatial_anchor_slots(profile, requests)
+        rebuilt = reserve_spatial_anchor_slots(
+            profile, requests, empty_evidence=empty_evidence,
+            hydration_capability=hydration_capability,
+        )
         return rebuilt.get("slots") == slots
     except (SpatialAnchorSlotError, TypeError, ValueError):
         return False

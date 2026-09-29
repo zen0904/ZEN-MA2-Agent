@@ -1,0 +1,129 @@
+{
+  "schema": "zen.spatial_anchor_empty_evidence.v0.1",
+  "status": "NATIVE_EMPTY_VERIFIED",
+  "source": "PRESET_SELFIX_TO_ISOLATED_GROUP_NATIVE_EXPORT",
+  "method_validation": "KNOWN_NONEMPTY_AND_KNOWN_EMPTY_AB_CONTROL_VERIFIED",
+  "verified_at": "2026-09-29T07:10:55.309344+00:00",
+  "show_identity": {
+    "kind": "SCANNED_SHOW_PROFILE_FINGERPRINT",
+    "value": "b1b79e3b0ed19f8f9b74aa801920ca8146769a665697a757791d57ef7ce583a6",
+    "confidence": "PARTIAL"
+  },
+  "scratch_group": 9901,
+  "ab_controls": {
+    "known_nonempty": {
+      "preset_ref": "2.900",
+      "preset_label": "ZEN_SPATIAL_HYDRATE_PROBE",
+      "selected_fixture_refs": [
+        "101",
+        "102",
+        "103",
+        "104",
+        "105",
+        "106",
+        "107",
+        "108"
+      ]
+    },
+    "known_empty": {
+      "preset_ref": "2.901",
+      "preset_label": "ZEN_SPATIAL_EMPTY_PROBE",
+      "selected_fixture_refs": []
+    }
+  },
+  "slots": [
+    {
+      "reference": "2.1",
+      "label": "HOME",
+      "preset_type": "POSITION",
+      "native_content_status": "EMPTY",
+      "selected_fixture_refs": [],
+      "evidence": "PRESET_SELFIX_TO_ISOLATED_GROUP_NATIVE_EXPORT"
+    },
+    {
+      "reference": "2.2",
+      "label": "CENTER",
+      "preset_type": "POSITION",
+      "native_content_status": "EMPTY",
+      "selected_fixture_refs": [],
+      "evidence": "PRESET_SELFIX_TO_ISOLATED_GROUP_NATIVE_EXPORT"
+    },
+    {
+      "reference": "2.3",
+      "label": "STG R",
+      "preset_type": "POSITION",
+      "native_content_status": "EMPTY",
+      "selected_fixture_refs": [],
+      "evidence": "PRESET_SELFIX_TO_ISOLATED_GROUP_NATIVE_EXPORT"
+    },
+    {
+      "reference": "2.4",
+      "label": "STG L",
+      "preset_type": "POSITION",
+      "native_content_status": "EMPTY",
+      "selected_fixture_refs": [],
+      "evidence": "PRESET_SELFIX_TO_ISOLATED_GROUP_NATIVE_EXPORT"
+    },
+    {
+      "reference": "2.5",
+      "label": "Front",
+      "preset_type": "POSITION",
+      "native_content_status": "EMPTY",
+      "selected_fixture_refs": [],
+      "evidence": "PRESET_SELFIX_TO_ISOLATED_GROUP_NATIVE_EXPORT"
+    },
+    {
+      "reference": "2.6",
+      "label": "Back",
+      "preset_type": "POSITION",
+      "native_content_status": "EMPTY",
+      "selected_fixture_refs": [],
+      "evidence": "PRESET_SELFIX_TO_ISOLATED_GROUP_NATIVE_EXPORT"
+    },
+    {
+      "reference": "2.7",
+      "label": "House",
+      "preset_type": "POSITION",
+      "native_content_status": "EMPTY",
+      "selected_fixture_refs": [],
+      "evidence": "PRESET_SELFIX_TO_ISOLATED_GROUP_NATIVE_EXPORT"
+    },
+    {
+      "reference": "2.8",
+      "label": "Floor",
+      "preset_type": "POSITION",
+      "native_content_status": "EMPTY",
+      "selected_fixture_refs": [],
+      "evidence": "PRESET_SELFIX_TO_ISOLATED_GROUP_NATIVE_EXPORT"
+    },
+    {
+      "reference": "2.9",
+      "label": "Sky",
+      "preset_type": "POSITION",
+      "native_content_status": "EMPTY",
+      "selected_fixture_refs": [],
+      "evidence": "PRESET_SELFIX_TO_ISOLATED_GROUP_NATIVE_EXPORT"
+    },
+    {
+      "reference": "2.10",
+      "label": "Fan",
+      "preset_type": "POSITION",
+      "native_content_status": "EMPTY",
+      "selected_fixture_refs": [],
+      "evidence": "PRESET_SELFIX_TO_ISOLATED_GROUP_NATIVE_EXPORT"
+    },
+    {
+      "reference": "2.11",
+      "label": "Circle",
+      "preset_type": "POSITION",
+      "native_content_status": "EMPTY",
+      "selected_fixture_refs": [],
+      "evidence": "PRESET_SELFIX_TO_ISOLATED_GROUP_NATIVE_EXPORT"
+    }
+  ],
+  "safety_boundary": {
+    "selection_probe_only_modified_isolated_scratch_group": true,
+    "target_position_presets_were_not_modified": true,
+    "fingerprint_drift_invalidates_evidence": true
+  }
+}

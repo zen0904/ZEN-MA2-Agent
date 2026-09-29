@@ -5,7 +5,7 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "SPATIAL_SYSTEM_VNEXT: existing-empty Position Preset hydration grammar is REAL_MACHINE_CONTENT_VERIFIED. Next bounded gate is a safe per-slot native emptiness proof for the operator pre-named template Position Presets; only then may Space hydrate those exact slots after Preview/Approval."
+    "active_objective": "SPATIAL_SYSTEM_VNEXT: existing-Preset hydration grammar and current-template empty-slot evidence are verified. Return to main Space flow: trusted 3D XYZ/Rotation -> membership-preserving normal Group spatial reorder -> explicit semantic mapping of reserved Position slots -> Preview/Approval -> hydration. Revalidate empty evidence after any Show fingerprint drift."
   },
   "last_closed_task": {
     "id": "SEMANTIC_POSITION_BINDING_OPERATOR_CAPTURE_001",
@@ -267,6 +267,33 @@
         "TEST_PRESET_2_900_AND_SEQUENCE_9900_RETAINED_AS_AUDIT_EVIDENCE_NO_AUTO_DELETE"
       ],
       "limitations": "This closes the existing-empty Position Preset hydration grammar only. It does not prove that operator template slots such as 2.2 CENTER are empty. Exact per-slot native emptiness evidence remains required before first hydration. No automatic cleanup or replay was performed."
+    },
+    {
+      "id": "SPATIAL_TEMPLATE_POSITION_EMPTY_EVIDENCE_001",
+      "source": "Owner-authorized real-machine A/B emptiness method + current template scan 2026-09-29",
+      "status": "CLOSED_NATIVE_EMPTY_VERIFIED_CURRENT_SHOW",
+      "outcomes": [
+        "PRESET_KEYWORD_SELFIX_METHOD_VALIDATED_AGAINST_KNOWN_NONEMPTY_AND_KNOWN_EMPTY_CONTROLS",
+        "KNOWN_NONEMPTY_2_900_SELECTED_FIXTURES_101_THRU_108",
+        "KNOWN_EMPTY_2_901_SELECTED_ZERO_FIXTURES",
+        "ISOLATED_SCRATCH_GROUP_9901_NATIVE_EXPORT_USED_AS_MEMBERSHIP_EVIDENCE",
+        "POSITION_2_1_HOME_EMPTY_VERIFIED",
+        "POSITION_2_2_CENTER_EMPTY_VERIFIED",
+        "POSITION_2_3_STG_R_EMPTY_VERIFIED",
+        "POSITION_2_4_STG_L_EMPTY_VERIFIED",
+        "POSITION_2_5_FRONT_EMPTY_VERIFIED",
+        "POSITION_2_6_BACK_EMPTY_VERIFIED",
+        "POSITION_2_7_HOUSE_EMPTY_VERIFIED",
+        "POSITION_2_8_FLOOR_EMPTY_VERIFIED",
+        "POSITION_2_9_SKY_EMPTY_VERIFIED",
+        "POSITION_2_10_FAN_EMPTY_VERIFIED",
+        "POSITION_2_11_CIRCLE_EMPTY_VERIFIED",
+        "TARGET_TEMPLATE_POSITION_PRESETS_NOT_MODIFIED",
+        "EVIDENCE_BOUND_TO_FINGERPRINT_b1b79e3b0ed19f8f9b74aa801920ca8146769a665697a757791d57ef7ce583a6",
+        "FINGERPRINT_DRIFT_INVALIDATES_EMPTY_EVIDENCE",
+        "SCRATCH_PRESETS_2_900_2_901_SEQUENCE_9900_GROUP_9901_RETAINED_AS_AUDIT_EVIDENCE_NO_AUTO_DELETE"
+      ],
+      "limitations": "This proves the exact current template Position slots 2.1-2.11 are empty on the recorded Show fingerprint. It does not assign semantic meanings from their labels, calculate target Pan/Tilt, authorize hydration, or survive Show fingerprint drift. The A/B and inventory probes wrote only sacrificial Preset/Sequence/Group audit objects and scratch Group 9901; target template Position Presets were read/selected but not modified."
     }
   ],
   "evidence_results": [

@@ -494,10 +494,30 @@ passed read-only against the same retained native Sequence evidence.
 Capability artifact:
 `data/ZEN_SPATIAL_ANCHOR_HYDRATION_CAPABILITY.json`
 
-Remaining gate: determine whether each operator pre-named template Position
-Preset is actually empty before first hydration. `List Preset` label/type
-identity and the current metadata-only Preset XML export are not sufficient
-content proof.
+The hydration grammar gate is closed, and the current template's Position
+Presets `2.1` through `2.11` now also have current-Show native emptiness
+evidence. The validated emptiness method uses grandMA2's Preset Selfix behavior
+from a cleared programmer and writes only the resulting selection into isolated
+scratch Group `9901`; native Group Export distinguishes a known non-empty
+control (`2.900`, Fixtures 101-108) from a known empty control (`2.901`, zero
+members). Applying the same method to `2.1`-`2.11` returned zero members for
+every slot. The target Position Presets themselves were not modified.
+
+Current evidence artifact:
+`data/ZEN_SPATIAL_ANCHOR_EMPTY_EVIDENCE.json`
+
+This evidence is bound to Show fingerprint
+`b1b79e3b0ed19f8f9b74aa801920ca8146769a665697a757791d57ef7ce583a6`.
+Any fingerprint drift invalidates the emptiness proof and requires a fresh
+bounded check before first hydration. That is intentional: geometry, Group,
+or other Show changes must not silently inherit stale overwrite authority.
+
+The next Space gate is therefore no longer Preset grammar research. It returns
+to production flow: establish trusted 3D fixture XYZ/Rotation, rebuild normal
+Group selection order from the trusted spatial model, explicitly map the
+operator's reserved Position labels to semantic targets, then build a Preview
+for hydration of only those exact slots. No template Position Preset has yet
+been hydrated by this evidence task.
 
 ## Selective Position Presets
 

@@ -57,6 +57,42 @@ class SpatialAnchorSlotTests(unittest.TestCase):
         with self.assertRaisesRegex(SpatialAnchorSlotError, "PRESET_DUPLICATE"):
             reserve_spatial_anchor_slots(self.profile(), duplicate_ref)
 
+    def test_verified_empty_evidence_and_grammar_make_slot_ready_for_preview(self):
+        profile = self.profile()
+        empty = {
+            "schema": "zen.spatial_anchor_empty_evidence.v0.1",
+            "status": "NATIVE_EMPTY_VERIFIED",
+            "source": "PRESET_SELFIX_TO_ISOLATED_GROUP_NATIVE_EXPORT",
+            "method_validation": "KNOWN_NONEMPTY_AND_KNOWN_EMPTY_AB_CONTROL_VERIFIED",
+            "show_identity": profile["show_identity"],
+            "slots": [
+                {"reference": "2.1", "label": "CENTER", "preset_type": "POSITION", "native_content_status": "EMPTY", "selected_fixture_refs": [], "evidence": "PRESET_SELFIX_TO_ISOLATED_GROUP_NATIVE_EXPORT"},
+                {"reference": "2.2", "label": "STAGE_LEFT", "preset_type": "POSITION", "native_content_status": "EMPTY", "selected_fixture_refs": [], "evidence": "PRESET_SELFIX_TO_ISOLATED_GROUP_NATIVE_EXPORT"},
+            ],
+        }
+        capability = {
+            "schema": "zen.spatial_anchor_hydration_capability.v0.1",
+            "status": "REAL_MACHINE_CONTENT_VERIFIED",
+            "grammar": "STORE_PRESET_MERGE_SELECTIVE",
+            "ma2_version_family": "grandMA2_3.9",
+            "evidence": {"sequence_export_sha256": "a" * 64},
+            "verification": {
+                "existing_empty_preset_identity": "VERIFIED",
+                "merge_selective_application": "REAL_MACHINE_CONTENT_VERIFIED",
+                "cue_content_readback": "VERIFIED",
+            },
+        }
+        catalog = reserve_spatial_anchor_slots(
+            profile, self.requests(), empty_evidence=empty, hydration_capability=capability
+        )
+        self.assertTrue(all(row["hydration_preconditions_verified"] for row in catalog["slots"]))
+        self.assertTrue(all(row["hydration_status"] == "READY_FOR_PREVIEW" for row in catalog["slots"]))
+        self.assertTrue(all(row["hydration_allowed"] is False for row in catalog["slots"]))
+        self.assertEqual(catalog["constraints"], ["PREVIEW_AND_EXPLICIT_APPROVAL_REQUIRED_FOR_WRITE"])
+        self.assertTrue(spatial_anchor_catalog_matches_profile(
+            profile, catalog, empty_evidence=empty, hydration_capability=capability
+        ))
+
     def test_show_or_preset_drift_invalidates_catalog(self):
         catalog = reserve_spatial_anchor_slots(self.profile(), self.requests())
         changed_show = self.profile()
