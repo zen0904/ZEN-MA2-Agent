@@ -1,10 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "antseed-model-metadata-20260929-2358",
+  "job_id": "antseed-anthropic-smoke-20260930-0002",
   "kind": "shell",
   "args": {
     "cwd": "/tmp",
-    "timeout": 60,
-    "command": "python3 - <<'PY'\nimport json, urllib.request\np=json.load(urllib.request.urlopen('http://127.0.0.1:8377/v1/models', timeout=5))\nfor want in ('deepseek-v4-flash','glm-5.3-flash'):\n    rows=[x for x in p.get('data',[]) if isinstance(x,dict) and x.get('id')==want]\n    print(want, json.dumps(rows[0] if rows else None, ensure_ascii=False, sort_keys=True))\nPY"
+    "timeout": 180,
+    "command": "python3 - <<'PY'\nimport json, urllib.request\nurl='http://127.0.0.1:8377/v1/messages'\nbody=json.dumps({'model':'deepseek-v4-flash','max_tokens':16,'messages':[{'role':'user','content':'Reply only: OK'}]}).encode()\nreq=urllib.request.Request(url,data=body,headers={'content-type':'application/json','x-api-key':'antseed-p2p','anthropic-version':'2023-06-01'},method='POST')\nwith urllib.request.urlopen(req,timeout=150) as r:\n    p=json.load(r)\nprint('TYPE='+str(p.get('type')))\nprint('MODEL='+str(p.get('model')))\ncontent=p.get('content',[])\ntext=' '.join(str(x.get('text','')) for x in content if isinstance(x,dict))\nprint('TEXT='+text[:200])\nprint('STOP_REASON='+str(p.get('stop_reason')))\nPY"
   }
 }
