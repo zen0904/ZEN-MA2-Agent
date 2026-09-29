@@ -8,6 +8,32 @@ This document supersedes the old assumption that every design run should use
 the full multi-role pipeline. The multi-agent runtime remains available as an
 explicit research/deep-review tool, but it is not the default product path.
 
+## Primary brain principle
+
+ZEN's ordinary intelligence path is a **Strong Primary Brain**, not a permanent
+committee of Agents.
+
+The primary Lighting Designer should receive high-quality verified context across
+music, current Show resources, fixture topology/capability, stage/spatial state,
+Reference Lighting, accepted design history, operator workflow, and neighboring
+Cue context. It owns the coherent artistic reasoning for the whole design.
+
+Specialized Agents/workers remain available for work that benefits from
+independent specialization: coding, research, spatial bootstrap, deep review,
+regression/evidence comparison, audio/video/vision extraction, and other bounded
+tasks. They return evidence or implementation results to the primary brain; they
+do not become a default Researcher -> Designer -> Critic -> Finalizer relay.
+
+Mature external projects should be adopted as infrastructure, workers, or tools
+where they are stronger than custom generic plumbing. They may replace transport,
+parsing, telemetry, protocol, memory/indexing, provider-routing, or worker
+infrastructure after parity verification. They do **not** replace ZEN product
+authority, the artistic contract, Compiler/Builder/Safety/Preview/Approval, or
+native MA2 readback.
+
+Short form: Strong Primary Brain + Mature Agent/Tool Infrastructure + Specialized
+Workers when valuable + Deterministic MA Execution.
+
 ## Product shape
 
 ZEN has four core responsibilities:
