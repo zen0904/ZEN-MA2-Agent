@@ -1,9 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "antseed-install-20260929-2326",
+  "job_id": "openclaw-runtime-diag-20260929-2350",
   "kind": "repo_task",
   "args": {
-    "task": "install_antseed_buyer",
-    "timeout": 1800
+    "task": "inspect_openclaw_runtime",
+    "timeout": 180
   }
 }
