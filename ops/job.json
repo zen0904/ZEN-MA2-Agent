@@ -1,6 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "sync-openclaw-userbus-fix-20260929-0038",
-  "kind": "repo_sync",
-  "args": {}
+  "job_id": "probe-openclaw-userbus-20260929-0042",
+  "kind": "repo_task",
+  "args": {
+    "task": "repair_openclaw_gateway_boot",
+    "timeout": 180
+  }
 }
