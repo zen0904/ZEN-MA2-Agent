@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "usage: zen-root-ops restart <service>" >&2
+  exit 64
+}
+
+[[ $# -ge 1 ]] || usage
+
+case "$1" in
+  restart)
+    [[ $# -eq 2 ]] || usage
+    case "$2" in
+      zen-show-controller|zen-controller-readonly-facade|zen-lighting-operator-proxy|zen-glances)
+        systemctl restart "$2"
+        systemctl is-active "$2"
+        ;;
+      *)
+        echo "service not allowlisted" >&2
+        exit 65
+        ;;
+    esac
+    ;;
+  *)
+    usage
+    ;;
+esac
