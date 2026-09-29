@@ -15,6 +15,10 @@ For substantial work, read these in order:
      artistic contract, Preset/Effect resources, Color, Position, Beam, Gobo,
      Movement, Strobe, or the SHEESH programming runner. Execution limitations
      must not be promoted into artistic limitations.
+   - For any artistic design, mechanism-selection, Effect/Movement choice, or
+     anti-overuse task, also read `docs/ARTISTIC_MECHANISM_SELECTION_POLICY.md`.
+     The full repertoire is available for reasoning, not a checklist; resource
+     availability never creates an obligation to use a mechanism.
    - Read `docs/MULTI_AGENT_DESIGN_PLAN.md` only when the task explicitly
      concerns the legacy/research multi-agent runtime, spatial bootstrap roles,
      or an intentionally independent deep review.
