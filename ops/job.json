@@ -1,9 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "release-443-openclaw-20260929-0051",
+  "job_id": "restore-openclaw-gateway-20260929-0054",
   "kind": "repo_task",
   "args": {
-    "task": "release_tailscale_443_for_openclaw",
-    "timeout": 120
+    "task": "repair_openclaw_gateway_boot",
+    "timeout": 180
   }
 }
