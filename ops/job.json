@@ -1,9 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "patch-openclaw-antseed-provider-direct-20260930-0031",
-  "kind": "repo_task",
+  "job_id": "inspect-openclaw-config-location-20260930-0033",
+  "kind": "shell",
   "args": {
-    "task": "patch_openclaw_antseed_provider_direct",
-    "timeout": 300
+    "cwd": "/opt/zen",
+    "timeout": 30,
+    "command": "python3 - <<'PY'\nimport os, subprocess\np=subprocess.run(['/opt/node/bin/openclaw','config','file'],text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT).stdout.strip()\nprint('RAW='+p.replace('/root/.openclaw','<OPENCLAW_HOME>').replace('/root/.clawdbot','<LEGACY_OPENCLAW_HOME>'))\nfor label,path in [('NEW','/root/.openclaw/openclaw.json'),('LEGACY','/root/.clawdbot/openclaw.json'),('ZENOPS','/var/lib/zen-ops/.openclaw/openclaw.json')]:\n print(label+'_EXISTS='+('YES' if os.path.isfile(path) else 'NO'))\nPY"
   }
 }
