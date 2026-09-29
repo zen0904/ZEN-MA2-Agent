@@ -8,10 +8,21 @@ new="$(git -C "$R" rev-parse origin/main)"
 
 if [[ "$old" != "$new" ]]; then
   git -C "$R" reset -q --hard origin/main
-  install -m 0644 "$R/deploy/ubuntu/systemd/zen-ops-worker.service" /etc/systemd/system/zen-ops-worker.service
-  install -m 0644 "$R/deploy/ubuntu/systemd/zen-ops-updater.service" /etc/systemd/system/zen-ops-updater.service
-  install -m 0644 "$R/deploy/ubuntu/systemd/zen-ops-updater.timer" /etc/systemd/system/zen-ops-updater.timer
-  install -m 0755 "$R/deploy/ubuntu/zen-ops-update" /usr/local/sbin/zen-ops-update
-  systemctl daemon-reload
-  systemctl restart zen-ops-worker.service
 fi
+
+# Reconcile the OPS control plane every cycle, not only when HEAD changes.
+# This is intentional: a self-update runs the old script body for that cycle,
+# so newly added units must still be installed on the next timer tick even
+# when the repository is already at the new HEAD.
+install -m 0644 "$R/deploy/ubuntu/systemd/zen-ops-worker.service" /etc/systemd/system/zen-ops-worker.service
+install -m 0644 "$R/deploy/ubuntu/systemd/zen-ops-updater.service" /etc/systemd/system/zen-ops-updater.service
+install -m 0644 "$R/deploy/ubuntu/systemd/zen-ops-updater.timer" /etc/systemd/system/zen-ops-updater.timer
+install -m 0644 "$R/deploy/ubuntu/systemd/zen-ops-results.service" /etc/systemd/system/zen-ops-results.service
+install -m 0644 "$R/deploy/ubuntu/systemd/zen-ops-funnel.service" /etc/systemd/system/zen-ops-funnel.service
+install -m 0755 "$R/deploy/ubuntu/zen-ops-update" /usr/local/sbin/zen-ops-update
+
+systemctl daemon-reload
+systemctl enable --now zen-ops-updater.timer
+systemctl enable --now zen-ops-results.service
+systemctl enable --now zen-ops-funnel.service
+systemctl restart zen-ops-worker.service
