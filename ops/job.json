@@ -1,10 +1,11 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "arc-gap-rg-20260929-2250",
-  "kind": "shell",
+  "job_id": "install-ripgrep-20260929-2255",
+  "kind": "apt_install",
   "args": {
-    "cwd": "/opt/zen/zen-ops-runtime",
-    "timeout": 120,
-    "command": "printf '===TRIGGER_SECONDS===\\n'; rg -n --glob '!*.json' 'trigger_seconds|trigger seconds' zen_ma2_agent docs tests | head -120; printf '\\n===FREE_CUE===\\n'; rg -n -i --glob '!*.json' 'free[_ -]?cue|manual|trigger|timecode' zen_ma2_agent docs tests | head -240; printf '\\n===SCENE_EVENT===\\n'; rg -n -i --glob '!*.json' 'scene world|event layer|scene_world|event_layer|resolved lighting|lighting state' zen_ma2_agent docs tests | head -200; printf '\\n===ARTISTIC_FIELDS===\\n'; rg -n 'position_target|position_pattern|provider_contract|ARTISTIC_CUES_V0_2' zen_ma2_agent tests | head -200"
+    "packages": [
+      "ripgrep"
+    ],
+    "timeout": 600
   }
 }
