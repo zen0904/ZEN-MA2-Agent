@@ -1,9 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "processlist-20260929-2214",
-  "kind": "process_list",
+  "job_id": "openchatx-probe-20260929-2230",
+  "kind": "shell",
   "args": {
-    "pattern": "zen|openclaw|meshcentral",
-    "timeout": 60
+    "cwd": "/var/lib/zen-ops/work",
+    "timeout": 1800,
+    "command": "set -euo pipefail; rm -rf openchatx-linux-probe; git clone --depth 1 https://github.com/XiaoPuOuO/openchatx-mcp.git openchatx-linux-probe; cd openchatx-linux-probe; echo '===HEAD==='; git rev-parse --short HEAD; echo '===NODE==='; /opt/node/bin/node --version; echo '===NPM_CI==='; npm_config_force=true /opt/node/bin/npm ci; echo '===CONFIG_ONLY==='; /opt/node/bin/npm run setup -- --config-only; echo '===CONFIG==='; cat .openchatx/config.toml; echo '===BUILD==='; /opt/node/bin/npm run build; echo '===DIST==='; test -f dist/index.js && echo DIST_OK; echo '===SMOKE_START==='; timeout 12 /opt/node/bin/node dist/index.js > /tmp/openchatx-linux-smoke.log 2>&1 || rc=$?; cat /tmp/openchatx-linux-smoke.log; echo SMOKE_RC=${rc:-0}"
   }
 }
