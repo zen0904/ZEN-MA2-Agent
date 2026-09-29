@@ -1,9 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "inspect-openclaw-users-20260929-2358",
-  "kind": "shell",
+  "job_id": "antseed-install-main-20260929-2334",
+  "kind": "repo_task",
   "args": {
-    "command": "echo '=== users ==='; getent passwd | awk -F: '$3==0 || $3>=1000 {print $1\" uid=\"$3\" home=\"$6\" shell=\"$7}'; echo '=== home dirs ==='; ls -lad /root /home/* /opt/zen/openclaw-workspaces 2>/dev/null || true; echo '=== openclaw workspace tree ==='; find /opt/zen/openclaw-workspaces -maxdepth 3 -printf '%M %u:%g %p\\n' 2>/dev/null | head -220; echo '=== env refs in zen files ==='; grep -RniE 'OPENCLAW_(HOME|STATE_DIR|CONFIG_PATH|WORKSPACE_DIR)|openclaw gateway|18789' /opt/zen/ZEN-MA2-Agent /opt/zen/zen-ops-runtime 2>/dev/null | head -220 || true",
-    "timeout": 120
+    "task": "install_antseed_buyer",
+    "timeout": 3600
   }
 }
