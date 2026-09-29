@@ -1,10 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "check-antseed-task-v5b-20260930-0024",
-  "kind": "shell",
+  "job_id": "configure-antseed-openclaw-free-20260930-0031",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 30,
-    "command": "if grep -q 'ZEN_OPENCLAW_CONFIG_CHILD' /opt/zen/zen-ops-runtime/deploy/ops_tasks/configure_antseed_openclaw_free.sh 2>/dev/null; then echo TASK_V5=YES; else echo TASK_V5=NO; fi"
+    "task": "configure_antseed_openclaw_free",
+    "timeout": 900
   }
 }
