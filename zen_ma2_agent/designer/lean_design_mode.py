@@ -14,6 +14,7 @@ from pathlib import Path
 import re
 from typing import Any, Mapping, Sequence
 
+from ..artistic_capabilities import artistic_selection_policy
 from ..portable import portable_state_path
 
 
@@ -240,6 +241,7 @@ def assemble_compact_design_context(
     _reject_forbidden_transport(artistic_resource_map, path="artistic_resource_map")
     context: dict[str, Any] = {
         "schema": COMPACT_CONTEXT_SCHEMA,
+        "artistic_selection_policy": artistic_selection_policy(),
         "song": _compact_song(song_context),
         "spatial": _compact_spatial(spatial_context),
         "verified_groups": _compact_groups(groups),
@@ -381,6 +383,7 @@ def build_delta_revision_context(
     all_effects = _compact_effects(effects)
     context = {
         "schema": DELTA_CONTEXT_SCHEMA,
+        "artistic_selection_policy": artistic_selection_policy(),
         "owner_revision_text": _bounded_text(owner_revision_text) or "",
         "affected_cue_numbers": sorted(selected),
         "cue_neighborhood": sorted(neighborhood),
