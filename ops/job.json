@@ -1,10 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "antseed-routing-inspect-20260930-0005",
-  "kind": "shell",
+  "job_id": "configure-antseed-openclaw-free-20260930-0009",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/tmp",
-    "timeout": 120,
-    "command": "echo '===CONFIG_HELP==='; /usr/local/bin/zen-antseed config --help | head -120; echo '===BUYER_STATUS==='; /usr/local/bin/zen-antseed --data-dir /var/lib/zen-antseed/runtime buyer status 2>&1 | head -120; echo '===CONFIG_FILE_SAFE_KEYS==='; python3 - <<'PY'\nimport json\nfrom pathlib import Path\nfor p in (Path('/var/lib/zen-antseed/runtime/config.json'),Path('/var/lib/zen-antseed/config.json')):\n print('PATH',p,'EXISTS',p.exists())\n if p.exists():\n  d=json.loads(p.read_text())\n  br=d.get('buyer',{}) if isinstance(d,dict) else {}\n  print(json.dumps({'routingPreferences':br.get('routingPreferences'),'router':br.get('router'),'proxyPort':br.get('proxyPort')},ensure_ascii=False,sort_keys=True))\nPY"
+    "task": "configure_antseed_openclaw_free",
+    "timeout": 900
   }
 }
