@@ -1,9 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "configure-antseed-openclaw-free-20260930-0025",
-  "kind": "repo_task",
+  "job_id": "check-antseed-task-v3-20260930-0027",
+  "kind": "shell",
   "args": {
-    "task": "configure_antseed_openclaw_free",
-    "timeout": 900
+    "cwd": "/opt/zen",
+    "timeout": 30,
+    "command": "grep -n 'export HOME=/root\\|OPENCLAW_PATCH_DRY_RUN' /opt/zen/zen-ops-runtime/deploy/ops_tasks/configure_antseed_openclaw_free.sh 2>/dev/null || true; stat -c '%y' /opt/zen/zen-ops-runtime/deploy/ops_tasks/configure_antseed_openclaw_free.sh 2>/dev/null || true"
   }
 }
