@@ -5,6 +5,7 @@ ANTSEED=/usr/local/bin/zen-antseed
 OPENCLAW=/opt/node/bin/openclaw
 ANT_HOME=/var/lib/zen-antseed
 MODEL=deepseek-v4-flash
+export HOME=/root
 
 [[ -x "$ANTSEED" ]] || { echo "zen-antseed wrapper missing" >&2; exit 70; }
 [[ -x "$OPENCLAW" ]] || { echo "openclaw missing" >&2; exit 70; }
