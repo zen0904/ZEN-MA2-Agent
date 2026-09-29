@@ -1,9 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "controlled-reboot-openclaw-20260929-0105",
-  "kind": "repo_task",
+  "job_id": "postreboot-openclaw-health-20260929-0110",
+  "kind": "shell",
   "args": {
-    "task": "schedule_controlled_reboot",
-    "timeout": 60
+    "command": "echo '=== uptime ==='; uptime; echo '=== listeners ==='; ss -ltn 2>/dev/null | grep -E ':(18789|18991|10000|443) ' || true; echo '=== openclaw process ==='; ps -ef | grep -Ei '[o]penclaw|node.*openclaw' || true; echo '=== tailscale ==='; tailscale funnel status --json 2>&1 || true; echo '=== user0 ==='; systemctl status user@0.service --no-pager --lines=40 2>&1 | tail -n 80 || true",
+    "timeout": 120
   }
 }
