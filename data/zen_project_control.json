@@ -5,7 +5,7 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "SHEESH_DETAILED_REDESIGN_303_001: build a K-pop-density detailed redesign targeting requested Sequence 303 / Executor 2.015, with audio-bound timed trigger_seconds plus a separate operator Free Cue layer whose density follows arrangement/choreography and distinguishes shared versus SHEESH-specific tools. Preserve Preview/Approval/native verification and MA2 authority boundaries."
+    "active_objective": "SHEESH_DETAILED_REDESIGN_303_001: progressively extend the verified 302-era execution baseline into a K-pop-density final SHEESH design on requested Sequence 303 / Executor 2.015. Each iteration should add detail, timing, Position amplitude, Movement, Effects, Free Cues and operator behavior while preserving valid evidence and replacing rejected artistic choices. No throwaway reset workflow."
   },
   "last_closed_task": {
     "id": "SEMANTIC_POSITION_BINDING_OPERATOR_CAPTURE_001",
@@ -133,7 +133,10 @@
         "NO_MA2_WRITE_AUTHORIZED_BY_THIS_DECISION",
         "KPOP_STAGE_DENSITY_WITH_FREE_CUE_LAYER_REQUIRED",
         "FREE_CUE_LAYER_MUST_INCLUDE_SHARED_VS_SONG_SPECIFIC_SCOPE",
-        "FREE_CUE_ENTRY_RETURN_BEHAVIOR_REQUIRED"
+        "FREE_CUE_ENTRY_RETURN_BEHAVIOR_REQUIRED",
+        "BUILD_AS_PROGRESSIVE_EXTENSION_TOWARD_FINAL_VERSION",
+        "REUSE_VALIDATED_302_EXECUTION_EVIDENCE_WHILE_REPLACING_REJECTED_ARTISTIC_CHOICES",
+        "EACH_303_ITERATION_SHOULD_ADD_DETAIL_WITHOUT_RESETTING_THE_PROJECT"
       ],
       "limitations": "Sequence 303 and Executor 2.015 are owner-requested targets but must be fresh-verified free/appropriate in the current Show before Preview can become approvable. Exact trigger seconds must not be invented; they require the actual playback audio/timeline as arrangement truth. This decision authorizes detailed design and Preview preparation only, not live MA2 execution."
     },
@@ -156,6 +159,23 @@
         "NO_MA2_WRITE_AUTHORIZED_BY_THIS_DECISION"
       ],
       "limitations": "This defines the artistic/operator contract only. Exact free-cue resources and executable actions still require verified current-Show resource evidence. Movement-native execution remains fail-closed until a typed verified grammar exists. Free cues must not bypass the normal Preview/Approval/Builder/native-readback boundary."
+    },
+    {
+      "id": "ITERATIVE_PRODUCTION_CONVERGENCE_RULE_001",
+      "source": "Owner clarification 2026-09-29",
+      "status": "APPROVED_DEVELOPMENT_RULE",
+      "outcomes": [
+        "EACH_TEST_ITERATION_MUST_EXTEND_THE_PREVIOUS_VERIFIED_BASELINE",
+        "TESTS_ARE_SUCCESSIVE_PRODUCTION_SLICES_NOT_THROWAWAY_DEMOS",
+        "VERIFIED_MECHANISMS_RESOURCES_AND_EVIDENCE_SHOULD_BE_REUSED_WHEN_STILL_VALID",
+        "NEW_ITERATIONS_SHOULD_ADD_DEPTH_DENSITY_AND_CAPABILITY_INSTEAD_OF_RESTARTING_FROM_ZERO",
+        "TECHNICAL_POC_RESULTS_SHOULD_CONVERGE_TOWARD_ONE_FINAL_PRODUCTION_DESIGN",
+        "ARTISTIC_REVISIONS_MAY_REPLACE_WEAK_DESIGN_CHOICES_WITHOUT_DISCARDING_VERIFIED_EXECUTION_INFRASTRUCTURE",
+        "FAILED_OR_REJECTED_ARTISTIC_OUTPUT_REMAINS_EVIDENCE_BUT_IS_NOT_PROMOTED_AS_FINAL_DESIGN",
+        "FINAL_VERSION_IS_REACHED_BY_PROGRESSIVE_ACCUMULATION_AND_REFINEMENT",
+        "NO_GLOBAL_REQUIREMENT_THAT_EVERY_INTERMEDIATE_ITERATION_BE_PRODUCTION_COMPLETE"
+      ],
+      "limitations": "This rule does not permit unsafe replay, stale-state reuse, or bypass of fresh identity/resource checks. Reuse applies only to evidence and mechanisms that still match current Show/runtime truth. Each live write still requires Preview, explicit owner approval, deterministic Builder execution, and native verification."
     }
   ],
   "evidence_results": [
