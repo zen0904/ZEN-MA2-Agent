@@ -82,31 +82,96 @@ print("TEXT="+str(text)[:160])
 PY
 
 echo "=== OpenClaw provider registration ==="
-before="$("$OPENCLAW" config get agents.defaults.model --json 2>/dev/null || true)"
-provider='{"baseUrl":"http://127.0.0.1:8377/v1","apiKey":"antseed-p2p","authHeader":true,"api":"openai-completions","models":[{"id":"deepseek-v4-flash","name":"DeepSeek V4 Flash via Antseed","reasoning":false,"input":["text"],"contextWindow":128000,"maxTokens":8192}]}'
-if "$OPENCLAW" config get models.providers.antseed --json >/tmp/zen-antseed-openclaw-provider.json 2>/dev/null; then
-  "$OPENCLAW" config set models.providers.antseed.baseUrl '"http://127.0.0.1:8377/v1"' --strict-json
-  "$OPENCLAW" config set models.providers.antseed.apiKey '"antseed-p2p"' --strict-json
-  "$OPENCLAW" config set models.providers.antseed.authHeader true --strict-json
-  "$OPENCLAW" config set models.providers.antseed.api '"openai-completions"' --strict-json
-  if ! grep -q '"deepseek-v4-flash"' /tmp/zen-antseed-openclaw-provider.json; then
-    "$OPENCLAW" config set models.providers.antseed.models '[{"id":"deepseek-v4-flash","name":"DeepSeek V4 Flash via Antseed","reasoning":false,"input":["text"],"contextWindow":128000,"maxTokens":8192}]' --strict-json --merge
-  fi
-else
-  "$OPENCLAW" config set models.providers.antseed "$provider" --strict-json --expect-current-absent
-fi
-rm -f /tmp/zen-antseed-openclaw-provider.json
-"$OPENCLAW" config set agents.defaults.models '{"antseed/deepseek-v4-flash":{}}' --strict-json --merge
+before_file="$(mktemp)"
+before_rc=0
+"$OPENCLAW" config get agents.defaults.model --json >"$before_file" 2>/dev/null || before_rc=$?
 
-after="$("$OPENCLAW" config get agents.defaults.model --json 2>/dev/null || true)"
-[[ "$before" == "$after" ]] || {
-  echo "DEFAULT_MODEL_CHANGED_UNEXPECTEDLY" >&2
+patch_file="$(mktemp)"
+cat >"$patch_file" <<'JSON'
+{
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "antseed": {
+        "baseUrl": "http://127.0.0.1:8377/v1",
+        "apiKey": "antseed-p2p",
+        "authHeader": true,
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "deepseek-v4-flash",
+            "name": "DeepSeek V4 Flash via Antseed",
+            "reasoning": false,
+            "input": ["text"],
+            "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+            "contextWindow": 128000,
+            "maxTokens": 8192
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "models": {
+        "antseed/deepseek-v4-flash": {}
+      }
+    }
+  }
+}
+JSON
+
+echo "OPENCLAW_PATCH_DRY_RUN"
+"$OPENCLAW" config patch --file "$patch_file" --dry-run >/tmp/zen-openclaw-patch-dry.txt 2>&1 || {
+  sed -e 's#/root/\.openclaw#<OPENCLAW_HOME>#g' -e 's/antseed-p2p/<LOCAL_PLACEHOLDER>/g' /tmp/zen-openclaw-patch-dry.txt
+  rm -f "$patch_file" "$before_file" /tmp/zen-openclaw-patch-dry.txt
+  exit 71
+}
+sed -e 's#/root/\.openclaw#<OPENCLAW_HOME>#g' -e 's/antseed-p2p/<LOCAL_PLACEHOLDER>/g' /tmp/zen-openclaw-patch-dry.txt
+rm -f /tmp/zen-openclaw-patch-dry.txt
+
+"$OPENCLAW" config patch --file "$patch_file" >/tmp/zen-openclaw-patch-apply.txt 2>&1 || {
+  sed -e 's#/root/\.openclaw#<OPENCLAW_HOME>#g' -e 's/antseed-p2p/<LOCAL_PLACEHOLDER>/g' /tmp/zen-openclaw-patch-apply.txt
+  rm -f "$patch_file" "$before_file" /tmp/zen-openclaw-patch-apply.txt
   exit 72
 }
+sed -e 's#/root/\.openclaw#<OPENCLAW_HOME>#g' -e 's/antseed-p2p/<LOCAL_PLACEHOLDER>/g' /tmp/zen-openclaw-patch-apply.txt
+rm -f "$patch_file" /tmp/zen-openclaw-patch-apply.txt
+
+"$OPENCLAW" config validate >/tmp/zen-openclaw-validate.txt 2>&1 || {
+  sed -e 's#/root/\.openclaw#<OPENCLAW_HOME>#g' /tmp/zen-openclaw-validate.txt
+  rm -f "$before_file" /tmp/zen-openclaw-validate.txt
+  exit 73
+}
+sed -e 's#/root/\.openclaw#<OPENCLAW_HOME>#g' /tmp/zen-openclaw-validate.txt
+rm -f /tmp/zen-openclaw-validate.txt
+
+after_file="$(mktemp)"
+after_rc=0
+"$OPENCLAW" config get agents.defaults.model --json >"$after_file" 2>/dev/null || after_rc=$?
+if [[ "$before_rc" -ne "$after_rc" ]] || ! cmp -s "$before_file" "$after_file"; then
+  echo "DEFAULT_MODEL_CHANGED_UNEXPECTEDLY" >&2
+  rm -f "$before_file" "$after_file"
+  exit 74
+fi
+rm -f "$before_file" "$after_file"
 
 echo "=== OpenClaw verification ==="
-"$OPENCLAW" config get models.providers.antseed --json
-"$OPENCLAW" models list | grep -i 'antseed\|deepseek-v4-flash' || true
+tmp="$(mktemp)"
+"$OPENCLAW" config get models.providers.antseed --json >"$tmp"
+python3 - "$tmp" <<'PY'
+import json,sys
+p=json.load(open(sys.argv[1]))
+models=p.get("models",[]) if isinstance(p,dict) else []
+print("PROVIDER_PRESENT=YES")
+print("BASE_URL="+str(p.get("baseUrl")))
+print("API="+str(p.get("api")))
+print("AUTH_HEADER="+str(p.get("authHeader")))
+print("MODEL_IDS="+",".join(str(x.get("id")) for x in models if isinstance(x,dict) and x.get("id")))
+print("API_KEY_PRESENT="+("YES" if bool(p.get("apiKey")) else "NO"))
+PY
+rm -f "$tmp"
+"$OPENCLAW" models list 2>&1 | grep -i 'antseed\|deepseek-v4-flash' || true
 echo "DEFAULT_MODEL_UNCHANGED=YES"
 echo "ANTSEED_PROVIDER_REGISTERED=YES"
 echo "ANTSEED_PROVIDER_DEFAULT=NO"
