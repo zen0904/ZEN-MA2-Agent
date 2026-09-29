@@ -1,9 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "repair-result-funnel-20260929-2359b",
+  "job_id": "repair-openclaw-boot-20260930-0003",
   "kind": "repo_task",
   "args": {
-    "task": "repair_zen_ops_funnel",
+    "task": "repair_openclaw_boot_persistence",
     "timeout": 180
   }
 }
