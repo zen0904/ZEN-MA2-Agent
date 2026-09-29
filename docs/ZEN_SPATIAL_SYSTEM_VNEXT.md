@@ -494,6 +494,15 @@ passed read-only against the same retained native Sequence evidence.
 Capability artifact:
 `data/ZEN_SPATIAL_ANCHOR_HYDRATION_CAPABILITY.json`
 
+The sacrificial high-number MA objects used during this one-time investigation
+(`Preset 2.900`, `Preset 2.901`, `Sequence 9900`, and `Group 9901`) were later
+deleted under explicit owner authorization, with post-delete `List` readback
+confirming all four objects absent. Their numbers are historical evidence only,
+not a preferred test range. Future production, test, scratch, and diagnostic
+resources all follow `FIRST_FREE_FROM_FRONT`: use the lowest safe free slot from
+the front of the relevant pool and do not jump to arbitrary high numbers merely
+for visual separation.
+
 The hydration grammar gate is closed, and the current template's Position
 Presets `2.1` through `2.11` now also have current-Show native emptiness
 evidence. The validated emptiness method uses grandMA2's Preset Selfix behavior
