@@ -1,9 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "final-postreboot-health-20260929-0118",
-  "kind": "shell",
+  "job_id": "enable-ops-funnel-20260929-2324",
+  "kind": "repo_task",
   "args": {
-    "command": "echo '=== uptime ==='; uptime; echo '=== services ==='; for s in zen-ops-worker zen-ops-updater.timer zen-ops-results zen-sentinel zen-glances zen-meshcentral zen-openchatx tailscaled ssh; do printf '%-24s ' $s; systemctl is-active $s 2>/dev/null || true; done; echo '=== ports ==='; ss -ltn 2>/dev/null | grep -E ':(18001|18080|18789|18991|8876|8877|18878|61208|8443|10000) ' || true; echo '=== openclaw local health ==='; curl -fsS --max-time 5 http://127.0.0.1:18789/healthz 2>&1 || true; echo; echo '=== tailscale routes ==='; tailscale funnel status --json 2>&1 || true",
+    "task": "add_zen_ops_funnel_10000",
     "timeout": 120
   }
 }
