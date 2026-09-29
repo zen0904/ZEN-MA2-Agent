@@ -997,7 +997,8 @@
     },
     {
       "id": "FIXTURE_REQUIREMENT_ASSESSMENT",
-      "classification": "DEFERRED",      "milestone": "M3_SHOW_RIG_ADAPTATION",
+      "classification": "DEFERRED",
+      "milestone": "M3_SHOW_RIG_ADAPTATION",
       "status": "CONDITIONAL",
       "why_it_matters": "Only flexible/large-production planning may assess an actual design gap for equipment.",
       "blocks_current_milestone": false,
