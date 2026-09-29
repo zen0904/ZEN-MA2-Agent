@@ -1,9 +1,6 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "inspect-openclaw-cli-20260929-2340",
-  "kind": "shell",
-  "args": {
-    "command": "set -o pipefail; export PATH=/opt/node/bin:$PATH; echo '=== version ==='; openclaw --version 2>&1 || true; echo '=== help ==='; openclaw --help 2>&1 | head -120 || true; echo '=== gateway help ==='; openclaw gateway --help 2>&1 | head -160 || true; echo '=== status ==='; openclaw status 2>&1 | head -160 || true; echo '=== config roots ==='; find /var/lib /home /opt/zen -maxdepth 4 \\( -iname '.openclaw' -o -iname 'openclaw.json' -o -iname 'openclaw*.json' -o -iname '*openclaw*.toml' -o -iname '*openclaw*.yaml' -o -iname '*openclaw*.yml' \\) -print 2>/dev/null | head -200",
-    "timeout": 120
-  }
+  "job_id": "sync-openclaw-diag-20260929-2347",
+  "kind": "repo_sync",
+  "args": {}
 }
