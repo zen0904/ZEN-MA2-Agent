@@ -1,10 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "antseed-preflight-20260929-2316",
+  "job_id": "antseed-install22-20260929-2318",
   "kind": "shell",
   "args": {
     "cwd": "/var/lib/zen-ops",
-    "timeout": 120,
-    "command": "echo '===NODE==='; /opt/node/bin/node -v 2>&1 || true; /opt/node/bin/npm -v 2>&1 || true; echo '===NODE22_BACKUP==='; ls -ld /opt/node-v22-backup-20260928-213623 2>&1 || true; /opt/node-v22-backup-20260928-213623/bin/node -v 2>&1 || true; test -f /opt/node-v22-backup-20260928-213623/lib/node_modules/npm/bin/npm-cli.js && echo NPM22_CLI_PRESENT || echo NPM22_CLI_MISSING; echo '===ANTSEED_GLOBAL==='; command -v antseed 2>&1 || true; ls -ld /opt/node-v24.18.1-linux-x64/lib/node_modules/@antseed/cli 2>&1 || true; echo '===ZENOPS==='; id; echo HOME=$HOME; echo '===RESOURCES==='; free -h; df -h /"
+    "timeout": 1800,
+    "command": "set -e; mkdir -p /var/lib/zen-ops/antseed /var/lib/zen-ops/.npm22; export npm_config_cache=/var/lib/zen-ops/.npm22; N22=/opt/node-v22-backup-20260928-213623/bin/node; NPM22=/opt/node-v22-backup-20260928-213623/lib/node_modules/npm/bin/npm-cli.js; \"$N22\" \"$NPM22\" install --prefix /var/lib/zen-ops/antseed @antseed/cli@0.1.165; echo '===VERIFY==='; \"$N22\" /var/lib/zen-ops/antseed/node_modules/@antseed/cli/dist/cli/index.js --version; echo '===BIN==='; ls -l /var/lib/zen-ops/antseed/node_modules/.bin/antseed"
   }
 }
