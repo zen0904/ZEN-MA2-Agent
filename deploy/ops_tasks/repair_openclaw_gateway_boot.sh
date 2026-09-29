@@ -1,110 +1,59 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-export HOME=/root
-export PATH=/opt/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-OPENCLAW=/opt/node/bin/openclaw
-PORT=18789
-UNIT_DIR=/root/.config/systemd/user
-UNIT=${UNIT_DIR}/openclaw-gateway.service
-WANTS=${UNIT_DIR}/default.target.wants
-LINK=${WANTS}/openclaw-gateway.service
+RUNTIME=/opt/zen/zen-ops-runtime
+HELPER=${RUNTIME}/deploy/ops_tasks/install_openclaw_gateway_user_unit.sh
+SYSTEM_UNIT=/etc/systemd/system/zen-openclaw-persistence-repair.service
+STATUS=/var/lib/zen-ops/openclaw-persistence-status.txt
 
-[[ -x "$OPENCLAW" ]] || { echo "OPENCLAW_BINARY=MISSING"; exit 31; }
+[[ -f "$HELPER" ]] || { echo "OPENCLAW_PERSISTENCE_HELPER=MISSING"; exit 31; }
 
-echo "=== root user persistence ==="
-loginctl enable-linger root
-linger="$(loginctl show-user root -p Linger --value 2>/dev/null || true)"
-echo "LINGER=${linger:-unknown}"
-[[ "$linger" == yes ]] || { echo "LINGER_ENABLE=FAILED"; exit 21; }
-
-install -d -m 0700 "$UNIT_DIR" "$WANTS"
-
-if [[ ! -f "$UNIT" ]]; then
-  tmp="$(mktemp)"
-  cat >"$tmp" <<EOF
+cat >"$SYSTEM_UNIT" <<EOF
 [Unit]
-Description=OpenClaw Gateway (ZEN managed persistent user unit)
-After=network-online.target
-Wants=network-online.target
-StartLimitBurst=5
-StartLimitIntervalSec=60
+Description=ZEN one-shot OpenClaw persistence repair
+After=user@0.service
 
 [Service]
-Type=simple
-Environment=HOME=/root
-Environment=PATH=/opt/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ExecStart=/opt/node/bin/openclaw gateway --port ${PORT}
-Restart=always
-RestartSec=5
-RestartPreventExitStatus=78
-TimeoutStopSec=30
-TimeoutStartSec=30
-SuccessExitStatus=0 143
-OOMPolicy=continue
-KillMode=control-group
+Type=oneshot
+ExecStart=/bin/bash ${HELPER}
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=false
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
 
-[Install]
-WantedBy=default.target
 EOF
-  install -m 0644 "$tmp" "$UNIT"
-  rm -f "$tmp"
-  echo "PERSISTENT_UNIT_CREATED=YES"
-else
-  echo "PERSISTENT_UNIT_CREATED=NO"
-fi
 
-if ! grep -qF "ExecStart=/opt/node/bin/openclaw gateway --port ${PORT}" "$UNIT"; then
-  echo "PERSISTENT_UNIT_UNEXPECTED_EXECSTART"
-  exit 23
-fi
-if ! grep -qF 'WantedBy=default.target' "$UNIT"; then
-  echo "PERSISTENT_UNIT_UNEXPECTED_INSTALL_TARGET"
-  exit 24
-fi
-
-ln -sfn ../openclaw-gateway.service "$LINK"
-
-echo "=== offline unit verification ==="
-systemd-analyze verify "$UNIT" >/tmp/zen-openclaw-unit-verify.$$ 2>&1 || {
-  cat /tmp/zen-openclaw-unit-verify.$$
-  rm -f /tmp/zen-openclaw-unit-verify.$$
-  exit 25
+cleanup() {
+  rm -f "$SYSTEM_UNIT"
+  systemctl daemon-reload >/dev/null 2>&1 || true
 }
-rm -f /tmp/zen-openclaw-unit-verify.$$
-echo "OPENCLAW_UNIT_VERIFY=PASS"
-[[ -L "$LINK" ]] || { echo "OPENCLAW_ENABLE_LINK=NO"; exit 26; }
-echo "OPENCLAW_ENABLE_LINK=YES"
+trap cleanup EXIT
 
-# Do not disturb the currently healthy transient instance. If the user bus is
-# available, only reload unit metadata; the persistent unit is for the next
-# user-manager/boot cycle.
-export XDG_RUNTIME_DIR=/run/user/0
-export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus
-if systemctl --user show-environment >/dev/null 2>&1; then
-  systemctl --user daemon-reload
-  echo "ROOT_USER_BUS=YES"
+rm -f "$STATUS"
+systemctl daemon-reload
+set +e
+systemctl start zen-openclaw-persistence-repair.service
+rc=$?
+set -e
+
+echo "=== persistence helper result ==="
+if [[ -f "$STATUS" ]]; then
+  cat "$STATUS"
 else
-  echo "ROOT_USER_BUS=NO"
+  echo "PERSISTENCE_STATUS_FILE=MISSING"
 fi
 
-echo "=== current gateway evidence ==="
-active_cgroup=NO
-for cg in /proc/[0-9]*/cgroup; do
-  if grep -q '/openclaw-gateway.service$' "$cg" 2>/dev/null; then
-    active_cgroup=YES
-    break
-  fi
-done
-echo "OPENCLAW_ACTIVE_CGROUP=${active_cgroup}"
-[[ "$active_cgroup" == YES ]] || exit 27
-
-if ! ss -ltn 2>/dev/null | grep -qE "127\\.0\\.0\\.1:${PORT}[[:space:]]"; then
-  echo "OPENCLAW_PORT=NOT_LISTENING"
-  exit 28
+if [[ "$rc" -ne 0 ]]; then
+  echo "=== helper service diagnostics ==="
+  systemctl status zen-openclaw-persistence-repair.service --no-pager --lines=40 2>&1 || true
+  exit "$rc"
 fi
-echo "OPENCLAW_PORT=LISTEN"
-"$OPENCLAW" --version
 
-echo "OPENCLAW_BOOT_PERSISTENCE=CONFIGURED"
-echo "REBOOT_VERIFICATION=PENDING"
+systemctl is-failed zen-openclaw-persistence-repair.service 2>/dev/null | grep -q failed && exit 32 || true
+
+echo "ZEN_OPENCLAW_PERSISTENCE_HELPER=PASS"
