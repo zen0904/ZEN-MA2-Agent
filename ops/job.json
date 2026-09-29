@@ -1,10 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "openchatx-probe2-20260929-2240",
+  "job_id": "arc-gap-rg-20260929-2250",
   "kind": "shell",
   "args": {
-    "cwd": "/var/lib/zen-ops/work",
-    "timeout": 1800,
-    "command": "set -euo pipefail; rm -rf openchatx-linux-probe .npm-openchatx; mkdir -p .npm-openchatx; git clone --depth 1 https://github.com/XiaoPuOuO/openchatx-mcp.git openchatx-linux-probe; cd openchatx-linux-probe; export npm_config_cache=/var/lib/zen-ops/work/.npm-openchatx; export npm_config_force=true; echo '===HEAD==='; git rev-parse --short HEAD; echo '===NPM_CI==='; /opt/node/bin/npm ci; echo '===CONFIG_ONLY==='; /opt/node/bin/npm run setup -- --config-only; sed -i 's#path = \"/bin/zsh\"#path = \"/bin/bash\"#' .openchatx/config.toml; sed -i 's#apply_patch = true#apply_patch = false#' .openchatx/config.toml; echo '===CONFIG==='; cat .openchatx/config.toml; echo '===BUILD==='; /opt/node/bin/npm run build; echo '===DIST==='; test -f dist/index.js && echo DIST_OK; echo '===SMOKE_START==='; set +e; timeout 12 /opt/node/bin/node dist/index.js > /tmp/openchatx-linux-smoke2.log 2>&1; rc=$?; set -e; cat /tmp/openchatx-linux-smoke2.log; echo SMOKE_RC=$rc"
+    "cwd": "/opt/zen/zen-ops-runtime",
+    "timeout": 120,
+    "command": "printf '===TRIGGER_SECONDS===\\n'; rg -n --glob '!*.json' 'trigger_seconds|trigger seconds' zen_ma2_agent docs tests | head -120; printf '\\n===FREE_CUE===\\n'; rg -n -i --glob '!*.json' 'free[_ -]?cue|manual|trigger|timecode' zen_ma2_agent docs tests | head -240; printf '\\n===SCENE_EVENT===\\n'; rg -n -i --glob '!*.json' 'scene world|event layer|scene_world|event_layer|resolved lighting|lighting state' zen_ma2_agent docs tests | head -200; printf '\\n===ARTISTIC_FIELDS===\\n'; rg -n 'position_target|position_pattern|provider_contract|ARTISTIC_CUES_V0_2' zen_ma2_agent tests | head -200"
   }
 }
