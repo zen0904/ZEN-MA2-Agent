@@ -1,0 +1,237 @@
+{
+  "schema": "zen.sheesh_303_position_foundation.v0.1",
+  "status": "PREVIEW_FOUNDATION_ONLY",
+  "target": {
+    "song": "BABYMONSTER - SHEESH",
+    "sequence_requested": 303,
+    "executor_requested": "2.015",
+    "group_id": 1,
+    "exact_refs": [
+      "101.1",
+      "102.1",
+      "103.1",
+      "104.1",
+      "105.1",
+      "106.1",
+      "107.1",
+      "108.1"
+    ]
+  },
+  "evidence_basis": {
+    "verified_position_transport": "REAL_MACHINE_CONTENT_VERIFIED",
+    "verified_group1_position_preset": "2.13 ZEN_POSITION_CAL_P13",
+    "prior_sequence302_position_merge": "464_OF_464_PAN_TILT_PASS",
+    "prior_artistic_result": "REJECTED_FOR_INSUFFICIENT_VISIBLE_AMPLITUDE",
+    "operator_scoped_direction_semantics": {
+      "pan_positive": "STAGE_LEFT_WHEN_FACING_STAGE_FROM_AUDIENCE",
+      "pan_negative": "STAGE_RIGHT_WHEN_FACING_STAGE_FROM_AUDIENCE",
+      "tilt_negative": "TOWARD_AUDIENCE",
+      "tilt_positive": "UPSTAGE_OR_INWARD"
+    },
+    "baseline_anchor_only": {
+      "pan": 20,
+      "tilt": 30
+    },
+    "note": "Natural MA values only. These are not claimed physical degrees or XYZ coordinates."
+  },
+  "design_rules": {
+    "purpose": "Provide a reusable Position layer for SHEESH 303 that later timed cues, Movement, Effects and Free Cues may reference.",
+    "minimum_visual_change": "Each promoted Position must be visibly distinct from CENTER in Stage View/operator review.",
+    "prior_small_amplitude_policy": "Do not reuse the prior +/-9 PAN and +/-3..7.5 TILT scale as the default expressive range.",
+    "promotion_rule": "Candidate -> Stage View Preview -> human visual acceptance -> Agent-owned Position Preset -> cue use.",
+    "movement_relation": "Static Position is an anchor layer. Continuous Movement remains a separate artistic/execution layer.",
+    "physical_order_caveat": "Fixture numeric order is not physical stage-order truth. Fan/Cross/Alternate patterns remain preview-only until Stage View confirms ordering."
+  },
+  "candidate_semantic_positions": [
+    {
+      "name": "CENTER",
+      "kind": "POINT",
+      "pan_delta": 0,
+      "tilt_delta": 0
+    },
+    {
+      "name": "STAGE_LEFT",
+      "kind": "POINT",
+      "pan_delta": 22,
+      "tilt_delta": 0
+    },
+    {
+      "name": "STAGE_RIGHT",
+      "kind": "POINT",
+      "pan_delta": -22,
+      "tilt_delta": 0
+    },
+    {
+      "name": "DOWNSTAGE_CENTER",
+      "kind": "POINT",
+      "pan_delta": 0,
+      "tilt_delta": -14
+    },
+    {
+      "name": "UPSTAGE_CENTER",
+      "kind": "POINT",
+      "pan_delta": 0,
+      "tilt_delta": 14
+    },
+    {
+      "name": "NARROW_FAN",
+      "kind": "ORDERED_PATTERN",
+      "pan_delta_sequence": [
+        -16,
+        -11,
+        -7,
+        -2,
+        2,
+        7,
+        11,
+        16
+      ],
+      "tilt_delta_sequence": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "WIDE_FAN",
+      "kind": "ORDERED_PATTERN",
+      "pan_delta_sequence": [
+        -32,
+        -23,
+        -14,
+        -5,
+        5,
+        14,
+        23,
+        32
+      ],
+      "tilt_delta_sequence": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "CROSS",
+      "kind": "ORDERED_PATTERN",
+      "pan_delta_sequence": [
+        24,
+        17,
+        10,
+        3,
+        -3,
+        -10,
+        -17,
+        -24
+      ],
+      "tilt_delta_sequence": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "ALTERNATE",
+      "kind": "ORDERED_PATTERN",
+      "pan_delta_sequence": [
+        -24,
+        24,
+        -24,
+        24,
+        -24,
+        24,
+        -24,
+        24
+      ],
+      "tilt_delta_sequence": [
+        -10,
+        10,
+        -10,
+        10,
+        -10,
+        10,
+        -10,
+        10
+      ]
+    },
+    {
+      "name": "EXPLODE",
+      "kind": "ORDERED_PATTERN",
+      "pan_delta_sequence": [
+        -34,
+        -24,
+        -15,
+        -5,
+        5,
+        15,
+        24,
+        34
+      ],
+      "tilt_delta_sequence": [
+        -14,
+        14,
+        -14,
+        14,
+        -14,
+        14,
+        -14,
+        14
+      ]
+    },
+    {
+      "name": "COLLAPSE",
+      "kind": "ORDERED_PATTERN",
+      "pan_delta_sequence": [
+        18,
+        13,
+        8,
+        3,
+        -3,
+        -8,
+        -13,
+        -18
+      ],
+      "tilt_delta_sequence": [
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10
+      ]
+    }
+  ],
+  "visual_acceptance": [
+    "CENTER is stable and visually neutral enough to act as a return anchor.",
+    "STAGE_LEFT and STAGE_RIGHT are obviously distinct from CENTER and from each other.",
+    "DOWNSTAGE_CENTER and UPSTAGE_CENTER show a clear depth change.",
+    "WIDE_FAN is materially wider than NARROW_FAN.",
+    "CROSS, ALTERNATE, EXPLODE and COLLAPSE are visually recognizable rather than minor numeric variations.",
+    "No candidate reaches an unsafe or obviously clipped fixture limit.",
+    "No candidate includes Fixture 9999.",
+    "No candidate is promoted solely because numeric verification passed."
+  ],
+  "next_gate": {
+    "required": true,
+    "id": "SHEESH_303_POSITION_STAGE_VIEW_PREVIEW_001",
+    "action": "Generate read-only/Preview candidate looks against the current Show and capture Stage View/operator visual evidence before creating any new Position Preset.",
+    "ma2_writes": 0
+  }
+}
