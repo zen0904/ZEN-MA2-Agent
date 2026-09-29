@@ -1,10 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "ops-updater-timer-check-20260930-0015",
-  "kind": "shell",
+  "job_id": "configure-antseed-openclaw-free-20260930-0017",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 30,
-    "command": "date -Is; systemctl is-active zen-ops-updater.timer 2>/dev/null || true; systemctl list-timers zen-ops-updater.timer --no-pager 2>/dev/null || true; stat -c '%y %n' /opt/zen/zen-ops-runtime/deploy/ops_tasks/configure_antseed_openclaw_free.sh 2>/dev/null || true"
+    "task": "configure_antseed_openclaw_free",
+    "timeout": 900
   }
 }
