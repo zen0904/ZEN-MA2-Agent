@@ -1,9 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "inspect-openclaw-boot-20260929-2332",
+  "job_id": "inspect-openclaw-cli-20260929-2340",
   "kind": "shell",
   "args": {
-    "command": "set -o pipefail; echo '=== units ==='; systemctl list-unit-files --type=service --no-pager 2>/dev/null | grep -Ei 'openclaw|claw' || true; echo '=== running ==='; ps -ef | grep -Ei '[o]penclaw|18789' || true; echo '=== ports ==='; ss -ltnp 2>/dev/null | grep -E ':18789 ' || true; echo '=== binaries ==='; command -v openclaw || true; which openclaw 2>/dev/null || true; ls -l /usr/local/bin/openclaw /usr/bin/openclaw 2>/dev/null || true; echo '=== likely config ==='; find /home /var/lib /opt/zen -maxdepth 4 \\( -iname '*openclaw*' -o -iname '*claw*' \\) -print 2>/dev/null | head -200; echo '=== startup refs ==='; grep -RniE 'openclaw|18789' /etc/systemd/system /etc/cron.d /etc/rc.local /home/*/.config/systemd 2>/dev/null | head -200 || true",
+    "command": "set -o pipefail; export PATH=/opt/node/bin:$PATH; echo '=== version ==='; openclaw --version 2>&1 || true; echo '=== help ==='; openclaw --help 2>&1 | head -120 || true; echo '=== gateway help ==='; openclaw gateway --help 2>&1 | head -160 || true; echo '=== status ==='; openclaw status 2>&1 | head -160 || true; echo '=== config roots ==='; find /var/lib /home /opt/zen -maxdepth 4 \\( -iname '.openclaw' -o -iname 'openclaw.json' -o -iname 'openclaw*.json' -o -iname '*openclaw*.toml' -o -iname '*openclaw*.yaml' -o -iname '*openclaw*.yml' \\) -print 2>/dev/null | head -200",
     "timeout": 120
   }
 }
