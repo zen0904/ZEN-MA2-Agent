@@ -1,9 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "inspect-openclaw-user-unit-safe-20260930-0046",
-  "kind": "repo_task",
+  "job_id": "inspect-openclaw-cgroup-20260930-0047",
+  "kind": "shell",
   "args": {
-    "task": "inspect_openclaw_user_unit_safe",
-    "timeout": 120
+    "cwd": "/opt/zen",
+    "timeout": 30,
+    "command": "pid=$(pgrep -f 'openclaw/dist/index.js gateway --port 18789' | head -n1 || true); if [ -z \"$pid\" ]; then echo GATEWAY=NONE; exit 0; fi; cat /proc/$pid/cgroup 2>/dev/null || true; ps -o pid,ppid,user,args -p \"$pid\" --no-headers"
   }
 }
