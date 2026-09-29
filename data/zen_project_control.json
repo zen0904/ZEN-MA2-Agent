@@ -1664,6 +1664,43 @@
       ],
       "access_rule": "Windows may be contacted directly only for bounded Field Core / MA-local evidence and execution duties. That does not make Windows the workflow origin. Normal workflow origin remains Mini -> typed LIGHTING_GRANDMA2 adapter -> Windows.",
       "note": "The Windows OpenClaw Gateway was retired during Mini migration. Windows may still retain code/runtime artifacts needed for MA-local operation, but retired Gateway/control-plane state is not to be revived or treated as canonical."
+    },
+    {
+      "id": "STRONG_PRIMARY_BRAIN_MATURE_UPSTREAM_001",
+      "status": "ACTIVE_CANONICAL",
+      "owner_clarification_date": "2026-09-29",
+      "rule": "Ordinary ZEN intelligence uses one Strong Primary Brain with high-quality verified context. Mature external projects are adopted as infrastructure, tools, memory/indexing, protocol layers and specialized workers; they do not become a permanent multi-agent artistic committee or MA authority.",
+      "primary_brain_roles": [
+        "UNDERSTAND_OPERATOR_INTENT",
+        "CROSS_DOMAIN_LIGHTING_MUSIC_STAGE_REASONING",
+        "ARTISTIC_LIGHTING_DESIGN",
+        "ARCHITECTURE_AND_OVERENGINEERING_JUDGMENT",
+        "RESEARCH_AND_REFERENCE_SYNTHESIS",
+        "DELTA_REVISION",
+        "SPECIALIZED_WORKER_DISPATCH"
+      ],
+      "specialized_worker_roles": [
+        "CODING_IMPLEMENTATION_AND_TESTS",
+        "RESEARCH",
+        "SPATIAL_BOOTSTRAP",
+        "INDEPENDENT_DEEP_REVIEW_WHEN_JUSTIFIED",
+        "REGRESSION_AND_EVIDENCE_COMPARISON",
+        "AUDIO_VIDEO_VISION_EVIDENCE_EXTRACTION"
+      ],
+      "deterministic_authority": [
+        "ZEN_RESOURCE_RESOLVER_AND_COMPILER",
+        "STRICT_TYPED_SHOW_PLAN",
+        "SAFETY_VALIDATION",
+        "PREVIEW",
+        "HUMAN_APPROVAL",
+        "DETERMINISTIC_BUILDER",
+        "FIELD_CORE",
+        "NATIVE_EXPORT_AND_READBACK"
+      ],
+      "external_tool_rule": "Prefer mature upstream over immature custom generic plumbing after parity and safety verification. Preserve only ZEN-specific policy, evidence, artistic contract and deterministic execution boundaries.",
+      "operator_workflow_change": "NONE",
+      "current_milestone_change": "NONE",
+      "next_acceptance_gate_change": "NONE"
     }
   ],
   "allocation_policy": {
