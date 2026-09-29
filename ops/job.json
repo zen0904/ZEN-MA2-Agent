@@ -1,9 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "configure-antseed-openclaw-free-20260930-0017",
+  "job_id": "inspect-openclaw-antseed-safe-20260930-0019",
   "kind": "repo_task",
   "args": {
-    "task": "configure_antseed_openclaw_free",
-    "timeout": 900
+    "task": "inspect_openclaw_antseed_safe",
+    "timeout": 180
   }
 }
