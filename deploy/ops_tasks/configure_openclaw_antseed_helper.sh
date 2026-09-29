@@ -98,3 +98,38 @@ $OPENCLAW models list 2>&1 | grep -Ei 'antseed|deepseek-v4-flash' || true
 
 echo OPENCLAW_ANTSEED_CONFIG=PASS
 echo OPENCLAW_ANTSEED_DEFAULT=NO
+
+echo '=== OpenClaw -> Antseed inference smoke ==='
+out="$(mktemp)"
+err="$(mktemp)"
+set +e
+timeout 180 "$OPENCLAW" infer model run --local --model antseed/deepseek-v4-flash --prompt 'Reply only: OK' --json >"$out" 2>"$err"
+rc=$?
+set -e
+if [[ "$rc" -ne 0 ]]; then
+  echo "INFER_RC=$rc"
+  sed -e 's#/root/.openclaw#<OPENCLAW_HOME>#g' -e 's/antseed-p2p/<LOCAL_PLACEHOLDER>/g' "$err" | tail -n 80
+  rm -f "$out" "$err"
+  exit 34
+fi
+python3 - "$out" <<'PY'
+import json,sys
+raw=open(sys.argv[1],errors='replace').read().strip()
+try:
+    p=json.loads(raw)
+except Exception:
+    print('INFER_JSON_PARSE=FAIL')
+    print(raw[:1000])
+    raise SystemExit(35)
+print('INFER_OK='+('YES' if p.get('ok') is True else 'NO'))
+print('INFER_PROVIDER='+str(p.get('provider')))
+print('INFER_MODEL='+str(p.get('model')))
+outs=p.get('outputs') or []
+txt=' '.join(str(x.get('text') or '') for x in outs if isinstance(x,dict)).strip()
+print('INFER_TEXT_PRESENT='+('YES' if bool(txt) else 'NO'))
+print('INFER_TEXT='+txt[:160].replace('\n',' '))
+if p.get('ok') is not True or not txt:
+    raise SystemExit(36)
+PY
+rm -f "$out" "$err"
+echo OPENCLAW_ANTSEED_INFER=PASS
