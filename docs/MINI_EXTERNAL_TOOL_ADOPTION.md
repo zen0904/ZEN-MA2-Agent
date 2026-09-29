@@ -12,6 +12,15 @@ references: where practical they should be integrated into the Mini tool fabric,
 and overlapping ZEN/OpenClaw/custom infrastructure should be removed or reduced
 after replacement behavior is verified.
 
+The Mini is the mandatory first adoption point for useful upstream tools. When a
+tool also needs local workstation resources (for example REAPER session state,
+audio I/O, GPU, measurement hardware, or a GUI), keep the Mini-side installation
+or client/tool presence and add a second execution node on that workstation.
+
+External projects are adopted as mature organs around a Strong Primary Brain.
+They should reduce custom plumbing, not fragment ordinary Lighting Design into a
+larger permanent Agent committee.
+
 This track is intentionally non-blocking for the current M4 MA2 acceptance gate.
 It must not silently change the stable operator workflow, bypass ZEN Builder/
 Preview/Approval/readback, or grant external tools MA2 authority.
@@ -105,8 +114,10 @@ as `chorus = chase` or confuse camera cuts with lighting cues.
 | Open Sound Meter | Measurement engine with remote data/API opportunities | INTEGRATE on measurement host |
 | AES67 Stream Monitor | AES67/RAVENNA/ST2110-30 monitoring; Dante AES67 interoperability | ON_DEMAND |
 
-REAPER tools belong on the machine that actually runs/owns REAPER projects, not
-blindly on the Mini. The Mini may consume them remotely through the MCP fabric.
+REAPER tools are installed/prepared on the Mini as part of the shared tool fabric.
+A second copy belongs on the machine that actually runs/owns the live REAPER
+project when local session access is required. The Mini remains the orchestration
+point and may consume that workstation node remotely through MCP.
 
 ## Replacement audit priorities
 
