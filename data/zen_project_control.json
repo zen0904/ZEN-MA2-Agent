@@ -698,9 +698,11 @@
         "NO_DEVICE_TOKEN_ROTATION_OR_REISSUE",
         "NO_CROSS_HOST_APPROVE",
         "NO_SEMANTIC_BIND_MUTATION",
-        "MA2_WRITES_ZERO"
+        "MA2_WRITES_ZERO",
+        "IPHONE_AUTH_DEVICE_TOKEN_MISMATCH_CLASSIFIED",
+        "PROVIDER_75S_CUTOFF_SHORTER_THAN_CONFIGURED_90S_TIMEOUTS"
       ],
-      "limitations": "Direct provider completion did not return within 75 seconds and therefore is not accepted as PASS. Model discovery confirms credential/config reachability but not completion success. The previously exposed external OpenRouter/NVIDIA keys were not independently confirmed revoked in provider consoles. iPhone remains paired/approved but disconnected with a device-token mismatch; no token rotation/reissue was performed because that would change pairing/session authority."
+      "limitations": "Direct provider completion did not return within 75 seconds and therefore is not accepted as PASS. Model discovery confirms credential/config reachability but not completion success. The previously exposed external OpenRouter/NVIDIA keys were not independently confirmed revoked in provider consoles. iPhone remains paired/approved but disconnected with a device-token mismatch; no token rotation/reissue was performed because that would change pairing/session authority. Official OpenClaw guidance classifies AUTH_DEVICE_TOKEN_MISMATCH as a stale/revoked per-device token requiring rotate/reapprove/reconnect. No such authority-changing recovery was performed. The 75-second completion cutoff is shorter than the current 90-second ZEN OpenClaw adapter default and 90-second NVIDIA/OpenRouter free-pool example timeouts, so timeout root cause remains unresolved."
     }
   ],
   "backlog": [
@@ -1281,16 +1283,25 @@
             "No provider secret value is stored in repository state.",
             "Provider discovery proves credential/config reachability only; it does not prove completion success.",
             "External revocation of the previously exposed OpenRouter/NVIDIA keys has not been independently verified."
-          ]
+          ],
+          "completion_smoke_diagnostic": {
+            "observed_cutoff_seconds": 75,
+            "zen_openclaw_adapter_default_timeout_seconds": 90,
+            "free_pool_nvidia_example_timeout_seconds": 90,
+            "free_pool_openrouter_example_timeout_seconds": 90,
+            "conclusion": "75_SECOND_CUTOFF_IS_INSUFFICIENT_TO_CLASSIFY_PROVIDER_COMPLETION_AS_FAILED",
+            "next_test": "Separate providers; use one explicit model each, low/off reasoning, bounded small output, and a client timeout longer than the configured provider timeout."
+          }
         },
         "mobile_client_state": {
           "iphone": {
             "paired": true,
             "approval_state": "approved",
             "connected": false,
-            "blocker": "DEVICE_TOKEN_MISMATCH_ROTATE_OR_REISSUE_REQUIRED",
+            "blocker": "AUTH_DEVICE_TOKEN_MISMATCH_CONFIRMED_CACHED_PER_DEVICE_TOKEN_STALE_OR_REVOKED",
             "authority_change_performed": false,
-            "next_safe_step": "Read-only diagnosis first; do not rotate/reissue the device token without explicit owner authorization."
+            "next_safe_step": "Keep server-side pairing unchanged until explicit owner authorization for token rotation/reapproval.",
+            "recovery_policy": "OWNER_AUTHORIZED_ROTATE_OR_REAPPROVE_THEN_RECONNECT_ONLY"
           }
         }
       }
