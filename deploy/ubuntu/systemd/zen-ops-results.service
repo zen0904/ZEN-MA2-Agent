@@ -1,0 +1,17 @@
+[Unit]
+Description=ZEN Ops local result server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStartPre=/usr/bin/install -d -m 0755 /var/lib/zen-ops/public
+ExecStart=/usr/bin/python3 -m http.server 18991 --bind 127.0.0.1 --directory /var/lib/zen-ops/public
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
