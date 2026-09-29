@@ -1,6 +1,6 @@
 # ZEN Native MCP Replacement POC 001
 
-Status: **POC VERIFIED / CURRENT PLUGIN CATALOG PARITY / NO APPROVE OR MA WRITE AUTHORITY / NO OPERATOR WORKFLOW CHANGE**
+Status: **CUTOVER VERIFIED / NATIVE MCP PRIMARY / LEGACY PLUGIN DISABLED FOR ROLLBACK / NO APPROVE OR MA WRITE AUTHORITY / NO OPERATOR WORKFLOW CHANGE**
 
 Date: 2026-09-29
 Host: `zen-agent-server`
@@ -119,8 +119,8 @@ parity, and MCP safety annotations.
 
 ## Replacement conclusion
 
-The custom OpenClaw TypeScript tool plugin is now a **validated replacement
-candidate**, not a required architecture layer.
+The custom OpenClaw TypeScript tool plugin is now a **disabled rollback-only layer**.
+OpenClaw native stdio MCP is the verified primary ZEN tool transport on the Mini.
 
 Preferred direction:
 
@@ -130,8 +130,9 @@ OpenClaw native MCP
   -> existing verified ZEN typed authority surfaces
 ```
 
-The current 14-tool OpenClaw plugin catalog is represented by the MCP surface,
-so the TypeScript plugin is eligible for a controlled cutover/rollback test.
+The current 14-tool OpenClaw plugin catalog is represented by the MCP surface.
+The controlled cutover was completed on 2026-09-29: plugin `zen-ma2` is disabled
+in runtime config but retained on disk/config for rollback.
 Do not add `zen_approve` merely for symmetry. Any future approval-capable MCP
 tool requires its own explicit authority review and must not inherit the
 preview/read-only policy.
@@ -148,11 +149,41 @@ The temporary HTTP MCP configuration was removed after the stdio proof.
 A draft `zen-mcp-operator.service` for the earlier port-18879 design was
 explicitly not adopted because native stdio makes that daemon unnecessary.
 
+## Controlled cutover verification
+
+After disabling the legacy `zen-ma2` TypeScript plugin and restarting the
+OpenClaw Gateway through its real root user systemd-user service:
+
+```text
+legacy plugin       = disabled
+primary MCP server  = zen-native-stdio
+MCP catalog         = 14 tools
+MCP diagnostics     = []
+zen_approve exposed = NO
+persistent MCP port = NONE
+```
+
+A real Gateway agent run then invoked
+`zen-native-stdio__zen_status` successfully. The terminal receipt recorded the
+tool in `successfulToolNames`, proving the actual OpenClaw runtime used native
+MCP after the legacy plugin was disabled.
+
+That same agent turn did not produce a final natural-language reply because the
+effective NVIDIA provider timed out in the provider phase after approximately
+121 seconds. This is a **separate provider-completion blocker** and does not
+invalidate MCP transport/tool execution. The run performed no MA2 write and no
+approval action.
+
+Temporary duplicate MCP configurations were removed. Runtime now exposes only
+`zen-native-stdio`. The legacy plugin configuration remains disabled as the
+intentional rollback path; its disabled-config warning is therefore accepted.
+
+Rollback, if needed, is to re-enable the existing `zen-ma2` plugin and restart
+the Gateway. No plugin uninstall or destructive config removal was performed.
+
 ## Next replacement audits
 
-1. Run a controlled OpenClaw cutover from the custom TypeScript plugin to the
-   native MCP catalog, keep rollback available, and verify operator behavior.
-2. Replace generic provider transport/fallback with a dedicated tool-less
+1. Replace generic provider transport/fallback with a dedicated tool-less
    OpenClaw ZEN Designer route where current model policy can be preserved.
 3. Retire the unfinished custom AI Worker API in favor of standard model
    runtimes/endpoints once FieldHost status is migrated.
