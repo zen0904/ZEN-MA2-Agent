@@ -5,7 +5,7 @@
     "id": "M4_PROFESSIONAL_MA2_IMPLEMENTATION",
     "title": "Professional MA2 Implementation",
     "status": "ACTIVE",
-    "active_objective": "SHEESH_DETAILED_REDESIGN_303_001: progressively extend the verified 302-era execution baseline into a K-pop-density final SHEESH design on requested Sequence 303 / Executor 2.015. Each iteration should add detail, timing, Position amplitude, Movement, Effects, Free Cues and operator behavior while preserving valid evidence and replacing rejected artistic choices. No throwaway reset workflow."
+    "active_objective": "SHEESH_DETAILED_REDESIGN_303_001 / POSITION_FOUNDATION_V1: use data/sheesh_303_position_foundation_v1.json as the progressive static Position foundation. Next gate is SHEESH_303_POSITION_STAGE_VIEW_PREVIEW_001: fresh-check current Show/target occupancy, generate Preview-only candidate looks, capture visual evidence, reject weak/ambiguous patterns, then promote accepted candidates to Agent-owned Position Preset design. MA2 writes remain 0."
   },
   "last_closed_task": {
     "id": "SEMANTIC_POSITION_BINDING_OPERATOR_CAPTURE_001",
@@ -782,6 +782,24 @@
         "PROVIDER_75S_CUTOFF_SHORTER_THAN_CONFIGURED_90S_TIMEOUTS"
       ],
       "limitations": "Direct provider completion did not return within 75 seconds and therefore is not accepted as PASS. Model discovery confirms credential/config reachability but not completion success. The previously exposed external OpenRouter/NVIDIA keys were not independently confirmed revoked in provider consoles. iPhone remains paired/approved but disconnected with a device-token mismatch; no token rotation/reissue was performed because that would change pairing/session authority. Official OpenClaw guidance classifies AUTH_DEVICE_TOKEN_MISMATCH as a stale/revoked per-device token requiring rotate/reapprove/reconnect. No such authority-changing recovery was performed. The 75-second completion cutoff is shorter than the current 90-second ZEN OpenClaw adapter default and 90-second NVIDIA/OpenRouter free-pool example timeouts, so timeout root cause remains unresolved."
+    },
+    {
+      "id": "SHEESH_303_POSITION_FOUNDATION_V1_001",
+      "source": "data/sheesh_303_position_foundation_v1.json",
+      "status": "FOUNDATION_READY_PREVIEW_ONLY",
+      "outcomes": [
+        "TARGET_SEQUENCE_303_REQUESTED",
+        "TARGET_EXECUTOR_2_015_REQUESTED",
+        "GROUP1_EXACT_REFS_101_1_TO_108_1_BOUND",
+        "VERIFIED_POSITION_TRANSPORT_AND_302_MERGE_EVIDENCE_REUSED",
+        "PRIOR_SMALL_POSITION_AMPLITUDE_REJECTED_AS_DEFAULT",
+        "SEMANTIC_POSITION_CANDIDATES_DEFINED",
+        "VISIBLE_AMPLITUDE_REQUIREMENT_DEFINED",
+        "ORDERED_FAN_CROSS_ALTERNATE_PATTERNS_REQUIRE_STAGE_VIEW_CONFIRMATION",
+        "POSITION_REMAINS_STATIC_ANCHOR_LAYER_NOT_MOVEMENT_SUBSTITUTE",
+        "MA2_WRITES_ZERO"
+      ],
+      "limitations": "Candidate values are preview amplitudes in MA natural-value space, not physical degrees or XYZ. Fixture numeric order is not asserted as physical stage order. No Position Preset, Sequence 303, Executor 2.015, or live Cue has been created. Promotion requires Stage View/operator visual acceptance and fresh current-Show occupancy/resource checks."
     }
   ],
   "backlog": [
