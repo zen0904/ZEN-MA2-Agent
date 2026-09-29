@@ -1,9 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "smoke-antseed-openclaw-20260930-0040",
+  "job_id": "repair-openclaw-gateway-boot-20260930-0011j",
   "kind": "repo_task",
   "args": {
-    "task": "smoke_antseed_openclaw",
-    "timeout": 300
+    "task": "repair_openclaw_gateway_boot",
+    "timeout": 180
   }
 }
