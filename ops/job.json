@@ -1,9 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "repair-openclaw-boot-20260929-0004",
-  "kind": "repo_task",
+  "job_id": "antseed-deepseek-smoke-20260929-2337",
+  "kind": "shell",
   "args": {
-    "task": "repair_openclaw_gateway_boot",
-    "timeout": 180
+    "cwd": "/tmp",
+    "timeout": 180,
+    "command": "python3 - <<'PY'\nimport json,time,urllib.request,urllib.error\nurl=\"http://127.0.0.1:8377/v1/chat/completions\"\nbody=json.dumps({\"model\":\"deepseek-v4-flash\",\"messages\":[{\"role\":\"user\",\"content\":\"Reply exactly: ANTSEED_OK\"}],\"max_tokens\":32,\"stream\":False}).encode()\nreq=urllib.request.Request(url,data=body,headers={\"content-type\":\"application/json\"},method=\"POST\")\nt=time.time()\ntry:\n    with urllib.request.urlopen(req,timeout=120) as r:\n        raw=r.read().decode(\"utf-8\",\"replace\")\n        elapsed=time.time()-t\n        data=json.loads(raw)\n        choice=(data.get(\"choices\") or [{}])[0]\n        msg=choice.get(\"message\") or {}\n        print(\"HTTP=\"+str(r.status))\n        print(\"ELAPSED_SECONDS=\"+f\"{elapsed:.2f}\")\n        print(\"MODEL=\"+str(data.get(\"model\",\"\")))\n        print(\"CONTENT=\"+str(msg.get(\"content\",\"\"))[:300].replace(\"\\n\",\" \"))\nexcept urllib.error.HTTPError as e:\n    print(\"HTTP=\"+str(e.code))\n    print(\"ERROR=\"+e.read().decode(\"utf-8\",\"replace\")[:1000])\n    raise\nPY"
   }
 }
