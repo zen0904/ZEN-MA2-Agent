@@ -1,9 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "funnel-fast-repair-20260930-0008",
+  "job_id": "antseed-model-metadata-20260929-2358",
   "kind": "shell",
   "args": {
-    "command": "tailscale funnel --yes --bg http://127.0.0.1:18991 || tailscale funnel --yes --bg 18991",
-    "timeout": 60
+    "cwd": "/tmp",
+    "timeout": 60,
+    "command": "python3 - <<'PY'\nimport json, urllib.request\np=json.load(urllib.request.urlopen('http://127.0.0.1:8377/v1/models', timeout=5))\nfor want in ('deepseek-v4-flash','glm-5.3-flash'):\n    rows=[x for x in p.get('data',[]) if isinstance(x,dict) and x.get('id')==want]\n    print(want, json.dumps(rows[0] if rows else None, ensure_ascii=False, sort_keys=True))\nPY"
   }
 }
