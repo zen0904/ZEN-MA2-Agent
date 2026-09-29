@@ -1,10 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "post-shutdown-detail-20260929-2355",
+  "job_id": "post-power-health-20260929-2308",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
     "timeout": 120,
-    "command": "echo '===OPENCLAW==='; systemctl list-unit-files | grep -Ei 'openclaw' || true; systemctl list-units --type=service --all | grep -Ei 'openclaw' || true; ps -ef | grep -Ei '[o]penclaw' || true; ss -ltnp 2>/dev/null | grep ':18789 ' || true; echo '===OPENCHATX_UNIT==='; test -f /etc/systemd/system/zen-openchatx.service && echo UNIT_EXISTS || echo UNIT_MISSING; systemctl status zen-openchatx.service --no-pager --full 2>&1 | head -60 || true; echo '===OPENCHATX_DIRS==='; du -sh /opt/zen/tools/openchatx-linux-sandbox 2>/dev/null || true; du -sh /var/lib/zen-openchatx 2>/dev/null || true; du -sh /var/lib/zen-ops/work/openchatx-linux-probe 2>/dev/null || true"
+    "command": "echo '===SERVICES==='; for s in zen-ops-worker zen-ops-updater.timer zen-ops-results zen-sentinel zen-glances zen-meshcentral zen-openchatx tailscaled ssh; do printf '%s active=' \"$s\"; systemctl is-active \"$s\" 2>/dev/null || true; printf '%s enabled=' \"$s\"; systemctl is-enabled \"$s\" 2>/dev/null || true; done; echo '===PORTS==='; ss -ltn 2>/dev/null | grep -E ':(22|8443|18991|61208|18001|18080|18789|8876|8877|18878) ' || true; echo '===FILES==='; for p in /opt/zen/zen-ops-runtime /var/lib/zen-ops /opt/zen/tools/openchatx-linux-sandbox /var/lib/zen-openchatx /var/lib/zen-ops/work/openchatx-linux-probe /usr/local/bin/zen-ma-dashboard /usr/local/bin/zen-sentinel.py /usr/local/bin/midimonster /usr/local/bin/ltcgen; do if [ -e \"$p\" ]; then echo PRESENT \"$p\"; else echo MISSING \"$p\"; fi; done; echo '===REPO_HEADS==='; git -C /opt/zen/zen-ops-runtime rev-parse HEAD 2>/dev/null || true; git -C /opt/zen/ZEN-MA2-Agent rev-parse HEAD 2>/dev/null || true; echo '===UPTIME==='; uptime"
   }
 }
