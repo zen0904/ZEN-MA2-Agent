@@ -1,10 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "servicecheck-20260929-2210",
-  "kind": "service",
+  "job_id": "processlist-20260929-2214",
+  "kind": "process_list",
   "args": {
-    "service": "zen-sentinel",
-    "action": "status",
+    "pattern": "zen|openclaw|meshcentral",
     "timeout": 60
   }
 }
