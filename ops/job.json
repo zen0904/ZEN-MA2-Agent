@@ -1,10 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "post-power-health-20260929-2308",
+  "job_id": "antseed-preflight-20260929-2316",
   "kind": "shell",
   "args": {
-    "cwd": "/opt/zen",
+    "cwd": "/var/lib/zen-ops",
     "timeout": 120,
-    "command": "echo '===SERVICES==='; for s in zen-ops-worker zen-ops-updater.timer zen-ops-results zen-sentinel zen-glances zen-meshcentral zen-openchatx tailscaled ssh; do printf '%s active=' \"$s\"; systemctl is-active \"$s\" 2>/dev/null || true; printf '%s enabled=' \"$s\"; systemctl is-enabled \"$s\" 2>/dev/null || true; done; echo '===PORTS==='; ss -ltn 2>/dev/null | grep -E ':(22|8443|18991|61208|18001|18080|18789|8876|8877|18878) ' || true; echo '===FILES==='; for p in /opt/zen/zen-ops-runtime /var/lib/zen-ops /opt/zen/tools/openchatx-linux-sandbox /var/lib/zen-openchatx /var/lib/zen-ops/work/openchatx-linux-probe /usr/local/bin/zen-ma-dashboard /usr/local/bin/zen-sentinel.py /usr/local/bin/midimonster /usr/local/bin/ltcgen; do if [ -e \"$p\" ]; then echo PRESENT \"$p\"; else echo MISSING \"$p\"; fi; done; echo '===REPO_HEADS==='; git -C /opt/zen/zen-ops-runtime rev-parse HEAD 2>/dev/null || true; git -C /opt/zen/ZEN-MA2-Agent rev-parse HEAD 2>/dev/null || true; echo '===UPTIME==='; uptime"
+    "command": "echo '===NODE==='; /opt/node/bin/node -v 2>&1 || true; /opt/node/bin/npm -v 2>&1 || true; echo '===NODE22_BACKUP==='; ls -ld /opt/node-v22-backup-20260928-213623 2>&1 || true; /opt/node-v22-backup-20260928-213623/bin/node -v 2>&1 || true; test -f /opt/node-v22-backup-20260928-213623/lib/node_modules/npm/bin/npm-cli.js && echo NPM22_CLI_PRESENT || echo NPM22_CLI_MISSING; echo '===ANTSEED_GLOBAL==='; command -v antseed 2>&1 || true; ls -ld /opt/node-v24.18.1-linux-x64/lib/node_modules/@antseed/cli 2>&1 || true; echo '===ZENOPS==='; id; echo HOME=$HOME; echo '===RESOURCES==='; free -h; df -h /"
   }
 }
