@@ -242,6 +242,22 @@
       "authority": "REMOTE_TERMINAL_FILES_DESKTOP_DEVICE_MGMT",
       "runtime": "always",
       "notes": "MeshCentral 1.2.5 active on Tailscale-only 100.122.169.17:8443; first created account becomes site admin."
+    },
+    {
+      "id": "zen-ops-plane",
+      "state": "PRIMARY_REMOTE_EXECUTION",
+      "interface": "GIT_CONTROL_BRANCH+LOCAL_WORKER+HTTPS_RESULTS",
+      "authority": "MINI_MAINTENANCE_NO_DIRECT_MA2_WRITE",
+      "runtime": "always",
+      "notes": "Verified ChatGPT->GitHub control branch->Mini execution->Tailscale Funnel result loop. Worker self-updates from GitHub main every 60 seconds."
+    },
+    {
+      "id": "remote-desktop-commander",
+      "state": "FALLBACK_ONLY",
+      "interface": "CHATGPT_PLUGIN_RMM",
+      "authority": "GUI_EMERGENCY_AND_DIAGNOSTIC_FALLBACK",
+      "runtime": "on_demand",
+      "notes": "No longer the primary Mini execution path; preserve remaining quota for GUI/visual/emergency use."
     }
   ]
 }
