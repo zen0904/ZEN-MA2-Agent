@@ -1,9 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "repair-openclaw-boot-20260930-0003",
-  "kind": "repo_task",
+  "job_id": "funnel-fast-repair-20260930-0008",
+  "kind": "shell",
   "args": {
-    "task": "repair_openclaw_boot_persistence",
-    "timeout": 180
+    "command": "tailscale funnel --yes --bg http://127.0.0.1:18991 || tailscale funnel --yes --bg 18991",
+    "timeout": 60
   }
 }
