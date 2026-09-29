@@ -1,0 +1,10 @@
+[Unit]
+Description=Update ZEN Ops runtime from GitHub main
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/zen-ops-update
+NoNewPrivileges=true
+PrivateTmp=true
