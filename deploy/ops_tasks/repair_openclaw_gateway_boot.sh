@@ -13,12 +13,12 @@ loginctl show-user root -p Linger -p State -p RuntimePath 2>/dev/null || true
 echo "=== ensure root user manager ==="
 systemctl start user@0.service
 for _ in $(seq 1 20); do
-  if systemctl --user show-environment >/dev/null 2>&1; then
+  if systemctl --user --machine=root@.host show-environment >/dev/null 2>&1; then
     break
   fi
   sleep 0.25
 done
-if ! systemctl --user show-environment >/dev/null 2>&1; then
+if ! systemctl --user --machine=root@.host show-environment >/dev/null 2>&1; then
   echo "ROOT_USER_MANAGER=UNREACHABLE"
   systemctl status user@0.service --no-pager --lines=20 2>&1 || true
   ls -la /run/user/0 2>/dev/null || true
@@ -27,7 +27,7 @@ fi
 echo "ROOT_USER_MANAGER=REACHABLE"
 
 echo "=== existing OpenClaw user units ==="
-units="$(systemctl --user list-unit-files --type=service --no-legend 2>/dev/null | awk '$1 ~ /^openclaw/ {print $1}')"
+units="$(systemctl --user --machine=root@.host list-unit-files --type=service --no-legend 2>/dev/null | awk '$1 ~ /^openclaw/ {print $1}')"
 if [[ -z "$units" ]]; then
   echo "OPENCLAW_USER_UNIT=MISSING"
   exit 20
@@ -40,12 +40,12 @@ if [[ -z "$target" ]]; then
 fi
 
 echo "OPENCLAW_TARGET_UNIT=$target"
-systemctl --user daemon-reload
-systemctl --user enable "$target" >/dev/null
-systemctl --user restart "$target"
+systemctl --user --machine=root@.host daemon-reload
+systemctl --user --machine=root@.host enable "$target" >/dev/null
+systemctl --user --machine=root@.host restart "$target"
 
 echo "=== service state ==="
-systemctl --user show "$target" \
+systemctl --user --machine=root@.host show "$target" \
   -p LoadState -p ActiveState -p SubState -p UnitFileState -p FragmentPath \
   --no-pager
 
@@ -65,7 +65,7 @@ if curl -fsS --max-time 5 http://127.0.0.1:18789/healthz >/tmp/openclaw-health.$
   echo
 else
   echo "OPENCLAW_HEALTH=FAILED"
-  systemctl --user status "$target" --no-pager --lines=20 2>&1 | sed -E 's/(token|password|secret)=([^ ]+)/\1=REDACTED/Ig' || true
+  systemctl --user --machine=root@.host status "$target" --no-pager --lines=20 2>&1 | sed -E 's/(token|password|secret)=([^ ]+)/\1=REDACTED/Ig' || true
   rm -f /tmp/openclaw-health.$$
   exit 22
 fi
