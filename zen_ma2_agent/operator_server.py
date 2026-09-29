@@ -27,6 +27,8 @@ from .operator_api import (
     PositionCalibrationPreviewHandler,
     SemanticPositionBindingsHandler,
     SemanticPositionBindHandler,
+    DepartmentStatusProvider,
+    DepartmentPreviewHandler,
     build_operator_status,
 )
 from .remote_workers import WorkerRegistry
@@ -127,6 +129,8 @@ def create_operator_app(
     position_calibration_preview_handler: Optional[PositionCalibrationPreviewHandler] = None,
     semantic_position_bindings_handler: Optional[SemanticPositionBindingsHandler] = None,
     semantic_position_bind_handler: Optional[SemanticPositionBindHandler] = None,
+    department_status_provider: Optional[DepartmentStatusProvider] = None,
+    department_preview_handler: Optional[DepartmentPreviewHandler] = None,
 ) -> FastAPI:
     """Build the narrow localhost-first API intended for the OpenClaw adapter."""
 
@@ -144,6 +148,8 @@ def create_operator_app(
         position_calibration_preview_handler,
         semantic_position_bindings_handler,
         semantic_position_bind_handler,
+        department_status_provider,
+        department_preview_handler,
     )
     app = FastAPI(
         title="ZEN Operator API",
@@ -257,6 +263,8 @@ class OperatorServer:
         position_calibration_preview_handler: Optional[PositionCalibrationPreviewHandler] = None,
         semantic_position_bindings_handler: Optional[SemanticPositionBindingsHandler] = None,
         semantic_position_bind_handler: Optional[SemanticPositionBindHandler] = None,
+        department_status_provider: Optional[DepartmentStatusProvider] = None,
+        department_preview_handler: Optional[DepartmentPreviewHandler] = None,
     ):
         if not 1 <= int(port) <= 65535:
             raise ValueError("operator port must be in range 1..65535")
@@ -280,6 +288,8 @@ class OperatorServer:
             position_calibration_preview_handler,
             semantic_position_bindings_handler,
             semantic_position_bind_handler,
+            department_status_provider,
+            department_preview_handler,
         )
         self._server: Optional[uvicorn.Server] = None
         self._thread: Optional[threading.Thread] = None

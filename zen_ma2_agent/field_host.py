@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Iterable
 
 from .core import AgentCore
+from .department_adapters import DepartmentAdapterEndpoint, DepartmentAdapterRegistry
 from .host_metrics import HostMetricsProvider
 from .llm.lean_design_adapter import load_portable_lean_design_intelligence
 from .llm.openclaw_infer_adapter import load_openclaw_infer_design_intelligence
@@ -59,6 +60,7 @@ class FieldHost:
         core: AgentCore | None = None,
         worker_registry: WorkerRegistry | None = None,
         worker_endpoints: Iterable[WorkerEndpoint] = (),
+        department_adapter_endpoints: Iterable[DepartmentAdapterEndpoint] = (),
     ) -> None:
         self.config = config or FieldHostConfig()
         self.design_intelligence_status: dict[str, Any] = {
@@ -95,6 +97,7 @@ class FieldHost:
                 getattr(core, "design_intelligence_provider", None) is not None
             )
         endpoints = tuple(worker_endpoints)
+        self.department_adapters = DepartmentAdapterRegistry(department_adapter_endpoints)
         if worker_registry is None:
             self.worker_registry = WorkerRegistry(
                 RegisteredWorker(endpoint.worker_id, priority=(index + 1) * 10)
@@ -181,6 +184,8 @@ class FieldHost:
             semantic_position_bind_handler=getattr(
                 self.core, "bind_semantic_position_target", None
             ),
+            department_status_provider=self.department_adapters.snapshot,
+            department_preview_handler=self.department_adapters.preview,
         )
         self._stop = threading.Event()
         self._ma_thread: threading.Thread | None = None

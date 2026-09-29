@@ -15,17 +15,18 @@
   "next_acceptance_gate": {
     "id": "SEMANTIC_POSITION_BINDING_LIVE_OPERATOR_ACCEPTANCE_001",
     "classification": "REQUIRED",
-    "status": "READY",
-    "why_it_matters": "The operator capture surface is implemented, but the deployed runtime still needs to prove the new typed tool is reachable against the current live Show without causing MA mutation. Actual semantic naming remains a human decision.",
+    "status": "BLOCKED_RUNTIME_VOLUME_ABSENT",
+    "why_it_matters": "The semantic operator surface is implemented, but the live Windows Field Core currently runs from the E:\\ZEN_MA2_AGENT runtime volume and that volume is absent. The still-running 8876 process remains MA READY, so it must not be restarted merely to close this gate. A committed C-drive fallback runtime self-checks with MA2_WRITES=0 but a parallel temporary instance cannot establish a second MA session while the live Field Core is active.",
     "blocks_current_milestone": true,
     "dependencies": [
-      "commit and deploy the offline-verified semantic operator surface",
-      "Field API remains localhost-first and MA remains READY",
-      "zen.position.semantic.bindings returns current verified candidates with MA2_WRITES=0",
-      "human explicitly chooses semantic target names before zen.position.semantic.bind is used",
+      "restore the E:\\ZEN_MA2_AGENT runtime volume OR explicitly authorize a controlled cutover from the live 8876 process to the validated C-drive fallback runtime",
+      "preserve the currently healthy live 8876 MA READY session until a replacement runtime is proven ready",
+      "after cutover, verify the deployed runtime exposes zen.position.semantic.bindings",
+      "perform fresh read-only Show discovery with MA READY and MA2_WRITES=0",
+      "human explicitly chooses semantic target names before any semantic binding mutation",
       "no automatic Preset-label-to-semantic inference"
     ],
-    "next_review_condition": "Deploy the committed runtime, perform the read-only semantic binding inventory call, and verify current Show identity/candidates. Stop before recording a semantic mapping unless the operator explicitly names the target to assign."
+    "next_review_condition": "When the primary E runtime volume is restored or a controlled Field Core cutover is explicitly authorized, bring up exactly one live MA session, verify MA READY, call zen.position.semantic.bindings read-only, and stop before recording any semantic mapping unless the operator explicitly names the target."
   },
   "human_review_decisions": [
     {
@@ -631,6 +632,48 @@
         "MA2_WRITES_ZERO"
       ],
       "limitations": "No semantic mapping has been chosen for the live Show by this task. Live runtime deployment/read-only acceptance remains next. POINT+REUSE only; DERIVE, SPECIAL and vector targets remain deferred."
+    },
+    {
+      "id": "SHOW_CONTROLLER_TYPED_PREVIEW_DELEGATION_001",
+      "source": "Mini Show Agent Controller live acceptance 2026-09-29; zen_ma2_agent/department_adapters.py; Operator API; OpenClaw zen-ma2 plugin; Windows lighting-operator-facade.py",
+      "status": "CLOSED_SUCCESS_LIVE_PREVIEW_ONLY",
+      "outcomes": [
+        "MINI_CONTROLLER_ZEN_DEPARTMENT_PREVIEW_LIVE",
+        "LIGHTING_GRANDMA2_ADAPTER_ONLINE_MA_READY",
+        "REMOTE_PREVIEW_ONLY_AUTHORITY",
+        "ZEN_PREVIEW_DELEGATES_THROUGH_CONTROLLER",
+        "WINDOWS_TYPED_FACADE_PREVIEW_ALLOWLIST_ONLY",
+        "CROSS_HOST_ZEN_APPROVE_NOT_EXPOSED",
+        "CROSS_HOST_SEMANTIC_BIND_MUTATION_NOT_EXPOSED",
+        "OPENCLAW_ZEN_APPROVE_TOOL_NOT_EXPOSED_ON_MINI",
+        "OPENCLAW_ZEN_POSITION_SEMANTIC_BIND_TOOL_NOT_EXPOSED_ON_MINI",
+        "PYTHON_FULL_SUITE_986_PASS",
+        "OPENCLAW_PLUGIN_VITEST_5_OF_5_PASS",
+        "OPENCLAW_PLUGIN_TYPESCRIPT_BUILD_PASS",
+        "PLUGIN_PREVIEW_DELEGATION_LIVE_E2E_PASS",
+        "MA2_WRITES_ZERO"
+      ],
+      "limitations": "This acceptance proves typed remote planning/Preview delegation only. It does not authorize or expose cross-host zen.approve, semantic binding mutation, raw MA commands, shell access, generic HTTP proxying or any MA2 write. Human approval remains outside the cross-host surface and any future execution still requires the normal fresh ZEN approval path on an explicitly authorized local execution surface."
+    },
+    {
+      "id": "SEMANTIC_POSITION_BINDING_LIVE_OPERATOR_ACCEPTANCE_ATTEMPT_001",
+      "source": "Windows live runtime inspection 2026-09-29; temporary C-drive Field Core on 127.0.0.1:9876/9877",
+      "status": "BLOCKED_RUNTIME_VOLUME_ABSENT_NO_LIVE_WRITE",
+      "outcomes": [
+        "LIVE_8876_FIELD_CORE_ONLINE_MA_READY",
+        "LIVE_8876_RUNTIME_ORIGIN_E_DRIVE",
+        "E_RUNTIME_VOLUME_CURRENTLY_ABSENT",
+        "C_DRIVE_SEMANTIC_RUNTIME_COMMIT_8CC9EA6_AVAILABLE",
+        "C_DRIVE_SELF_CHECK_PASS_MA2_WRITES_ZERO",
+        "TEMP_OPERATOR_9876_AND_BRIDGE_9877_STARTED_LOOPBACK_ONLY",
+        "TEMP_BRIDGE_ONLINE_MA_CONNECTION_DISCONNECTED",
+        "SEMANTIC_BINDINGS_TOOL_REACHED_AND_REJECTED_WITH_READ_ONLY_SHOW_DISCOVERY_REQUIRED",
+        "TEMP_RUNTIME_STOPPED",
+        "ORIGINAL_8876_REMAINED_MA_READY",
+        "WINDOWS_START_SCRIPT_HARDENED_TO_SELECT_C_FALLBACK_BEFORE_TOUCHING_EXISTING_8876",
+        "MA2_WRITES_ZERO"
+      ],
+      "limitations": "No live semantic binding inventory was accepted because the temporary fallback runtime did not have an MA READY session. The active MA READY Field Core was intentionally not restarted because its original E-drive runtime volume is absent. This result is a fail-closed blocker record, not semantic mapping evidence and not authorization to restart or write MA."
     }
   ],
   "backlog": [
@@ -1145,6 +1188,120 @@
       "video/media-server execution authority",
       "stage/automation safety systems"
     ],
-    "virtualization_model": "Virtualize the coordination/control layer of a large K-pop/touring production: shared Show understanding and cross-domain orchestration above independently verified Lighting/Audio/Video/Stage/Timeline adapters. Do not create one unconstrained Agent with direct authority over every physical system."
-  }
+    "virtualization_model": "Virtualize the coordination/control layer of a large K-pop/touring production: shared Show understanding and cross-domain orchestration above independently verified Lighting/Audio/Video/Stage/Timeline adapters. Do not create one unconstrained Agent with direct authority over every physical system.",
+    "current_control_plane_host": {
+      "host": "zen-agent-server",
+      "hardware": "Macmini6,2 (2012 Mac mini)",
+      "os": "Ubuntu 24.04.5 LTS",
+      "validated_on": "2026-09-28",
+      "role": "HOME_PORTABLE_OPENCLAW_GATEWAY_SHOW_AGENT_CONTROLLER",
+      "service": "zen-show-controller.service",
+      "operator_api": "127.0.0.1:8876",
+      "ma_bridge": "127.0.0.1:8877",
+      "authority": "CONTROL_PLANE_ONLY_MA2_WRITES_0",
+      "production_field_host_status": "NOT_GRANTED",
+      "production_lan": {
+        "interface_role": "ETHERNET_PRODUCTION_ONLY",
+        "address": "10.0.0.50/8",
+        "netmask": "255.0.0.0",
+        "default_route": false,
+        "dns": false
+      },
+      "private_overlay": {
+        "provider": "TAILSCALE",
+        "controller_ip": "100.122.169.17",
+        "openclaw_transport": "MANAGED_HTTPS_SERVE_TO_LOOPBACK_18789",
+        "controller_readonly_transport": "TAILNET_ONLY_TCP_18876_TO_LOOPBACK",
+        "full_controller_operator_api_tailnet_exposed": false,
+        "lighting_status_transport": "LEGACY_READ_ONLY_18877_RETAINED_NOT_PRIMARY_CONTROLLER_ADAPTER",
+        "lighting_operator_transport": "100.67.178.35:18878",
+        "lighting_controller_adapter": "127.0.0.1:18878 -> Tailscale -> 100.67.178.35:18878"
+      },
+      "openclaw_gateway": {
+        "status": "VALIDATED_ACTIVE",
+        "version": "2026.9.4",
+        "node_version": "24.18.1",
+        "service": "official systemd-user openclaw-gateway.service",
+        "bind": "127.0.0.1:18789",
+        "remote_surface": "wss://zen-agent-server.tail3e0394.ts.net",
+        "transport": "MANAGED_TAILSCALE_SERVE_HTTPS",
+        "state_authority": "MINI_CANONICAL",
+        "windows_gateway_status": "RETIRED",
+        "windows_client_role": "REMOTE_CLIENT_ONLY",
+        "full_windows_state_cold_archive": "PRESENT_ON_MINI_HOST_LOCAL_BACKUP"
+      }
+    },
+    "control_plane_authority_boundary": "Control-plane hosting, code intelligence, state/cache, remote administration and loopback orchestration do not imply production MA execution authority. Preview/Approval/verified department adapters remain mandatory.",
+    "department_federation": {
+      "status": "LIGHTING_ADAPTER_STATUS_AND_TYPED_PREVIEW_VALIDATED",
+      "validated_on": "2026-09-29",
+      "current_adapter": {
+        "adapter_id": "LIGHTING_GRANDMA2",
+        "department": "LIGHTING",
+        "host": "DESKTOP-AA2GR39",
+        "transport": "TAILSCALE_PRIVATE_TYPED_ADAPTER",
+        "remote_operator_ip": "100.67.178.35:18878",
+        "ma_state_at_acceptance": "READY",
+        "authority": "MA_LOCAL_EXECUTION_WITH_REMOTE_TYPED_PREVIEW_ONLY",
+        "ma2_writes": 0,
+        "surface": "READ_ONLY_STATUS_PLUS_TYPED_PREVIEW_18878",
+        "full_operator_api_tailnet_exposed": false
+      },
+      "prohibited_paths": [
+        "generic HTTP proxy",
+        "remote shell",
+        "raw MA command forwarding",
+        "credential forwarding",
+        "bypass of ZEN Safety/Preview/Approval/Builder/native verification"
+      ],
+      "transport_boundary": {
+        "windows_loopback_full_operator": "127.0.0.1:8876",
+        "windows_loopback_readonly_facade": "127.0.0.1:18877",
+        "windows_tailnet_readonly_surface": "100.67.178.35:18877",
+        "mini_loopback_typed_operator_proxy": "127.0.0.1:18878",
+        "windows_tailnet_typed_operator_surface": "100.67.178.35:18878",
+        "typed_operator_client_allowlist": [
+          "100.122.169.17"
+        ],
+        "typed_operator_policy": "NAMED_READ_PLAN_PREVIEW_ZEN_TOOLS_ONLY",
+        "approval_policy": "CROSS_HOST_ZEN_APPROVE_PROHIBITED",
+        "raw_ma_commands": "PROHIBITED",
+        "generic_http_proxy": "PROHIBITED",
+        "semantic_bind_policy": "CROSS_HOST_ZEN_POSITION_SEMANTIC_BIND_PROHIBITED",
+        "preview_policy": "ZEN_DEPARTMENT_PREVIEW_FIXED_ALLOWLIST_REMOTE_PREVIEW_ONLY_MA2_WRITES_0"
+      },
+      "tools": [
+        "zen.department.status",
+        "zen.department.preview"
+      ],
+      "schemas": {
+        "status": "zen.department_adapter_status.v0.1",
+        "preview": "zen.department_preview.v0.1"
+      }
+    }
+  },
+  "verified_stages": [
+    {
+      "id": "OPENCLAW_TYPED_PREVIEW_DELEGATION_001",
+      "source": "zen_ma2_agent/department_adapters.py; zen_ma2_agent/operator_api.py; deploy/ubuntu/controller-readonly-facade.py; deploy/windows/lighting-operator-facade.py; integrations/openclaw/zen-ma2-plugin",
+      "status": "CLOSED_SUCCESS_LIVE_PREVIEW_ONLY_E2E",
+      "outcomes": [
+        "CONTROLLER_ZEN_DEPARTMENT_PREVIEW_IMPLEMENTED",
+        "LIGHTING_GRANDMA2_CONTROLLER_ADAPTER_USES_MINI_LOOPBACK_18878",
+        "WINDOWS_TYPED_FACADE_PREVIEW_ONLY",
+        "CROSS_HOST_ZEN_APPROVE_PROHIBITED",
+        "CROSS_HOST_SEMANTIC_BIND_PROHIBITED",
+        "OPENCLAW_ZEN_PREVIEW_DELEGATES_THROUGH_CONTROLLER",
+        "OPENCLAW_PLUGIN_MUTATING_TOOLS_REMOVED",
+        "LIVE_REMOTE_ZEN_PREVIEW_SUCCESS_NO_PREVIEW_STATE",
+        "REMOTE_APPROVE_CONTROLLER_REJECTED",
+        "REMOTE_APPROVE_WINDOWS_HTTP_405",
+        "PYTHON_FULL_SUITE_986_PASS",
+        "OPENCLAW_VITEST_5_OF_5_PASS",
+        "OPENCLAW_TYPESCRIPT_BUILD_PASS",
+        "MA2_WRITES_ZERO"
+      ],
+      "limitations": "This proves cross-host read/plan/Preview delegation only. Human approval, semantic-binding mutation, arbitrary HTTP forwarding, shell access and raw MA commands remain outside the Mini-to-Windows surface. A successful Preview does not authorize execution."
+    }
+  ]
 }

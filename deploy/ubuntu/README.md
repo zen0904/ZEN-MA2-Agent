@@ -1,6 +1,6 @@
 # ZEN Linux/systemd deployment skeleton
 
-Status: **REPOSITORY PREPARED / HOST INSTALL NOT PERFORMED**
+Status: **GENERIC DEPLOYMENT PREPARED / MAC MINI CONTROLLER HOST VALIDATED**
 
 This directory prepares ZEN for a possible Linux/systemd Gateway, Field Core,
 and/or Worker host without modifying any real machine.
@@ -11,8 +11,10 @@ physical machines return.
 
 ## Current deployment direction
 
-- Operator-visible Windows machine: OpenClaw Windows Hub only.
-- Preferred next Gateway / Field Host candidate to verify: Worker A.
+- Validated Home/Portable Show Agent Controller host: 2012 Mac mini (`zen-agent-server`) running Ubuntu 24.04.5. It hosts OpenClaw Gateway 2026.9.4, the loopback-only ZEN control plane, code intelligence, cache/state and remote administration.
+- Operator-visible Windows remains the MA-local `LIGHTING_GRANDMA2` adapter host. Its OpenClaw Gateway role is retired; Windows Tray/CLI may remain only as remote clients of the Mini Gateway.
+- This Mac mini selection does **not** grant production Field Host or MA write authority. `MA2_WRITES=0` remains required during integration.
+- Preferred next production Gateway / Field Host candidate to verify remains Worker A.
 - Worker A may physically co-host OpenClaw Gateway + ZEN Field Core + Worker
   runtime if host checks pass.
 - Worker B remains primarily an AI Worker.
@@ -55,6 +57,9 @@ Templates under `systemd/` are not installed automatically.
 
 Primary templates:
 
+- `zen-show-controller.service` — loopback-only Show Agent Controller control-plane service for a validated headless controller host. It reuses the existing FieldHost runtime without granting production MA authority.
+- `zen-controller-readonly-facade.service` — loopback-only bounded Controller facade used by the Mini OpenClaw plugin. It exposes health/status GET plus `zen.department.status` and `zen.department.preview`; the latter delegates only the fixed Preview allowlist and never exposes approval/write authority.
+- `zen-lighting-operator-proxy.service` — loopback-only proxy from Mini `127.0.0.1:18878` to the Windows lighting host's Tailscale-restricted typed operator facade on `18878`. This keeps the OpenClaw plugin's local-URL policy while preserving Windows-local MA execution.
 - `zen-field-core.service` — normal ZEN FieldHost process. It owns Operator
   API, MA Bridge, Watchdog, Host Metrics and Worker Registry.
 - `zen-worker.service` — Worker HTTP control plane.
@@ -87,6 +92,16 @@ Git. Do not commit secrets or MA credentials.
 The normal Field Core keeps Operator API and MA Bridge on loopback by default.
 Remote exposure requires an explicit authenticated-network decision.
 
+A Show Agent Controller may register a department-local ZEN Operator API with
+`--department-adapter ADAPTER_ID=BASE_URL`. The endpoint is restricted to a
+literal loopback, private-LAN, or Tailscale CGNAT address. The federation path
+projects the fixed status contract through `zen.department.status` and supports
+`zen.department.preview` only for the fixed Preview allowlist. It does not
+forward `zen.approve`, `zen.position.semantic.bind`, shell access, raw MA
+commands, credentials, or arbitrary HTTP paths. The validated Mini deployment
+uses `http://127.0.0.1:18878` as the Lighting adapter URL; that loopback proxy
+reaches the Windows typed facade over Tailscale.
+
 Worker API also stays loopback-only by default. If a later private-network
 deployment requires a non-loopback Worker bind, use the existing
 `--allow-remote` flag only after that network/security decision is made.
@@ -114,7 +129,7 @@ When a physical host returns:
 - actual service/autostart behavior;
 - MA and peer reachability;
 - OpenClaw Gateway support/version on the selected host;
-- private-network transport;
+- production acceptance of private-network transport beyond the validated Mac mini ↔ Windows lighting-adapter path;
 - actual model runtime;
 - real remote inference;
 - production MA writes.

@@ -1,10 +1,13 @@
 # ZEN Windows headless deployment skeleton
 
-Status: **REPOSITORY PREPARED / HOST INSTALL NOT PERFORMED**
+Status: **WINDOWS LIGHTING ADAPTER VALIDATED / GENERIC WORKER DEPLOYMENT PREPARED**
 
-Use this only if a returned Worker/Gateway candidate is actually running
-Windows. The operator-visible Windows machine remains OpenClaw Hub-only and is
-not the target of this deployment skeleton.
+The operator-visible Windows machine (`DESKTOP-AA2GR39`) hosts the MA-local
+`LIGHTING_GRANDMA2` adapter/Field Core. OpenClaw Gateway has migrated to the
+Mac mini Show Agent Controller; Windows Tray/CLI may remain only as remote
+clients. Keeping the lighting adapter beside grandMA2 onPC is intentional
+because native exports, filesystem evidence, GUI/Stage View capture, and
+deterministic MA verification are local to that Windows host.
 
 ## Reuse-first rule
 
@@ -50,6 +53,71 @@ To expose the bounded `zen.ma.stage.visual` native-screen navigation/capture pat
 The stage-visual path has no MA command/write authority. It first attempts background capture of existing native MA2 Screen windows and only falls back to the bounded Screen 2/3/4 navigation rail when required.
 
 Optional Worker endpoints can be supplied after the real addresses are known.
+
+## Controller-facing read-only facade
+
+`lighting-readonly-facade.py` is the narrow controller-facing surface for the
+Windows lighting host. It binds `127.0.0.1:18877` and proxies only:
+
+- `GET /healthz`
+- `GET /zen/v0.1/status`
+
+All mutation methods return HTTP 405 and other paths return 404. The validated
+host publishes this facade, not the full Operator API, through Tailscale Serve.
+The full Windows ZEN Operator API remains on local `127.0.0.1:8876` for the
+Windows/OpenClaw lighting workflow.
+
+Validated 2026-09-28 topology:
+
+```text
+Mac mini Show Agent Controller
+→ authenticated Tailscale overlay
+→ Windows :18877 read-only facade
+→ Windows ZEN :8876 loopback
+→ grandMA2 onPC :30000 loopback
+```
+
+The facade is a visibility boundary only. It does not create cross-host
+`zen.approve`, shell, raw MA command, credential-forwarding, or generic HTTP
+proxy authority.
+
+## Mini-facing typed operator facade
+
+`lighting-operator-facade.py` is the bounded operator surface used by the Mini-hosted
+OpenClaw `zen-ma2` plugin. On the validated host it binds the Windows Tailscale
+address on TCP `18878` and accepts only the Mini Tailscale client address.
+
+The facade allows only the named ZEN tool routes required by the plugin. It does
+not forward arbitrary paths, shell commands, credentials, or raw MA commands.
+The validated path is:
+
+```text
+Mini OpenClaw zen_* tool
+→ Mini 127.0.0.1:18878
+→ zen-lighting-operator-proxy.service
+→ Tailscale
+→ Windows :18878 lighting-operator-facade.py
+→ Windows ZEN 127.0.0.1:8876
+→ grandMA2 onPC 127.0.0.1:30000
+```
+
+The typed facade is Preview-only for cross-host control. It allows the bounded
+read/plan/Preview tool set required by the Mini Controller, but it does not
+expose `zen.approve` or `zen.position.semantic.bind`. Human approval and any MA
+write transition remain outside this cross-host surface.
+
+`mini-controller-proxy.py` and the former `ZEN Mini Controller Proxy` scheduled
+task are retained only as rollback/history from the earlier Windows-hosted
+OpenClaw phase. They are not part of the current Mini-hosted OpenClaw topology.
+
+Validated Task Scheduler roles on `DESKTOP-AA2GR39` now are:
+
+- `ZEN Field Core`
+- `ZEN Lighting ReadOnly Facade`
+- `ZEN Lighting Operator Facade`
+
+The former `OpenClaw Gateway` scheduled task has been retired after full Gateway
+state migration to the Mini.
 
 ## Manual Worker smoke
 

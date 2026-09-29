@@ -1,0 +1,21 @@
+[Unit]
+Description=ZEN Show Controller read-only tailnet facade
+After=zen-show-controller.service
+Requires=zen-show-controller.service
+
+[Service]
+Type=simple
+User=@ZEN_USER@
+Group=@ZEN_GROUP@
+WorkingDirectory=@ZEN_APP_DIR@
+ExecStart=@ZEN_VENV_DIR@/bin/python @ZEN_APP_DIR@/deploy/ubuntu/controller-readonly-facade.py
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/zen-agent
+
+[Install]
+WantedBy=multi-user.target
