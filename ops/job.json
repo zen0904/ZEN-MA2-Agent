@@ -1,9 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "inspect-openclaw-runtime-authority-20260930-0050",
+  "job_id": "repair-openclaw-persistence-current-20260930-0052",
   "kind": "repo_task",
   "args": {
-    "task": "inspect_openclaw_runtime_authority",
-    "timeout": 120
+    "task": "repair_openclaw_gateway_boot",
+    "timeout": 180
   }
 }
