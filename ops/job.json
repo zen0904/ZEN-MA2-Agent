@@ -1,9 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "openclaw-runtime-diag-20260929-2350",
+  "job_id": "repair-result-funnel-20260929-2356",
   "kind": "repo_task",
   "args": {
-    "task": "inspect_openclaw_runtime",
+    "task": "repair_zen_ops_funnel",
     "timeout": 180
   }
 }
