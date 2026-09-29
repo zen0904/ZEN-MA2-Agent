@@ -1,9 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "repair-zen-ops-funnel-20260930-0011a",
-  "kind": "repo_task",
+  "job_id": "check-ops-funnel-script-20260930-0011b",
+  "kind": "shell",
   "args": {
-    "task": "repair_zen_ops_funnel",
-    "timeout": 180
+    "cwd": "/opt/zen",
+    "timeout": 30,
+    "command": "grep -n 'HTTPS_PORT=10000' /opt/zen/zen-ops-runtime/deploy/ops_tasks/repair_zen_ops_funnel.sh 2>/dev/null || true; stat -c '%y' /opt/zen/zen-ops-runtime/deploy/ops_tasks/repair_zen_ops_funnel.sh 2>/dev/null || true"
   }
 }
