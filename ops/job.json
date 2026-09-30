@@ -1,10 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "preflight-chatgpt-codex-desktop-20260930-1600",
+  "job_id": "wait-chatgpt-chrome-codex-task-20260930-1604",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 45,
-    "command": "echo '=== arch/os ==='; uname -m; . /etc/os-release; echo \"$ID $VERSION_ID\"; echo '=== users ==='; loginctl list-users --no-legend 2>/dev/null || true; echo '=== sessions ==='; loginctl list-sessions --no-legend 2>/dev/null || true; echo '=== who ==='; who 2>/dev/null || true; echo '=== node/npm ==='; /opt/node/bin/node --version 2>/dev/null || true; /opt/node/bin/npm --version 2>/dev/null || true; echo '=== codex ==='; command -v codex 2>/dev/null || true; codex --version 2>/dev/null || true; echo '=== chatgpt/chrome ==='; command -v chatgpt 2>/dev/null || true; command -v google-chrome 2>/dev/null || true; command -v chromium 2>/dev/null || true"
+    "timeout": 190,
+    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/install_chatgpt_chrome_codex.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
   }
 }
