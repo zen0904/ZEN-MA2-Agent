@@ -17,17 +17,21 @@ install -m 0644   "$R/deploy/ubuntu/udev/99-zen-display-hotplug.rules"   /etc/ud
 systemctl daemon-reload
 udevadm control --reload-rules
 
-# Acceptance without physically disconnecting the display.
+# Acceptance must run through the real systemd unit, not inside the ZEN Ops
+# worker's PrivateTmp namespace, otherwise the host X11 socket is invisible.
 : > /var/log/zen-display-hotplug.log
-/usr/local/sbin/zen-display-hotplug-recover
+systemctl start zen-display-hotplug.service
+systemctl is-active --quiet zen-display-hotplug.service || true
 
 echo "=== SERVICE ==="
 systemctl cat zen-display-hotplug.service
+systemctl show zen-display-hotplug.service -p Result -p ExecMainStatus --no-pager
 echo "=== UDEV RULE ==="
 cat /etc/udev/rules.d/99-zen-display-hotplug.rules
 echo "=== RECOVERY LOG ==="
 cat /var/log/zen-display-hotplug.log
 
+test "$(systemctl show zen-display-hotplug.service -p Result --value)" = "success"
 grep -q 'EVENT=complete' /var/log/zen-display-hotplug.log
 grep -q 'LAYOUT=PASS' /var/log/zen-display-hotplug.log
 
