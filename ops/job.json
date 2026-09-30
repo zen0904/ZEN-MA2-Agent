@@ -1,21 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "install-display-hotplug-recovery4-20261001-0644",
+  "job_id": "diag-control-room-gui-20261001-0648",
   "kind": "repo_task",
   "args": {
-    "task": "install_display_hotplug_recovery",
-    "timeout": 180
+    "task": "diag_control_room_gui",
+    "timeout": 120
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Install deterministic HDMI hotplug recovery and verify full layout restore",
+    "summary": "Inspect live X11 window titles/classes after HDMI restore",
     "tools": [
       "ZEN Ops",
-      "udev",
-      "systemd",
-      "Xorg",
-      "xrandr",
-      "wmctrl"
+      "wmctrl",
+      "Xorg"
     ]
   }
 }
