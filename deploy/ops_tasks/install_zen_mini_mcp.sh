@@ -23,8 +23,9 @@ install -m 0644 "$SRC/package.json" "$DST/package.json"
 install -m 0644 "$SRC/server.mjs" "$DST/server.mjs"
 install -m 0644 "$SRC/smoke.mjs" "$DST/smoke.mjs"
 
+install -d -m 0755 /var/cache/zen-mini-mcp-npm
 cd "$DST"
-"$NPM" install --omit=dev --no-audit --no-fund
+NPM_CONFIG_CACHE=/var/cache/zen-mini-mcp-npm "$NPM" install --omit=dev --no-audit --no-fund
 chown -R root:root "$DST"
 chmod -R a+rX "$DST"
 
