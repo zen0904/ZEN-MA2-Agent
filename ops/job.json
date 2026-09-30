@@ -1,18 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "repair-rdc-root-20260930-2110",
-  "kind": "repo_task",
+  "job_id": "wifi-profile-audit-20260930-2053",
+  "kind": "shell",
   "args": {
-    "task": "repair_desktop_commander_remote",
-    "timeout": 180
+    "cwd": "/opt/zen",
+    "timeout": 60,
+    "command": "echo '=== SAVED WIFI CONNECTIONS ==='; nmcli -t -f NAME,TYPE,AUTOCONNECT connection show | grep ':802-11-wireless:' || true; echo '=== ACTIVE CONNECTIONS ==='; nmcli -t -f NAME,TYPE,DEVICE connection show --active || true; echo '=== WIFI RADIOS ==='; nmcli radio wifi || true; echo '=== NETWORKMANAGER ==='; systemctl is-enabled NetworkManager.service 2>/dev/null || true; systemctl is-active NetworkManager.service 2>/dev/null || true; echo '=== TAILSCALE ==='; systemctl is-enabled tailscaled.service 2>/dev/null || true; systemctl is-active tailscaled.service 2>/dev/null || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Restore Mini Desktop Commander runtime package through bounded privileged repo task",
+    "summary": "Read-only audit of saved Wi-Fi profiles and autoconnect state without exposing credentials",
     "tools": [
       "ZEN Ops",
-      "systemd",
-      "Desktop Commander"
+      "NetworkManager",
+      "Tailscale"
     ]
   }
 }
