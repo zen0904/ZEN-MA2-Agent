@@ -1,20 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "install-zen-mini-local-mcp-20260930-1820",
+  "job_id": "diag-chatgpt-local-mcp-safe-20260930-1830",
   "kind": "repo_task",
   "args": {
-    "task": "install_zen_mini_mcp",
-    "timeout": 600
+    "task": "diag_chatgpt_local_mcp",
+    "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Install local stdio ZEN Mini MCP into the Mini ChatGPT/Codex identity",
+    "summary": "Diagnose why Mini ChatGPT Desktop does not surface the registered local zen-mini MCP",
     "tools": [
       "ZEN Ops",
-      "Codex",
       "ChatGPT",
-      "MCP",
-      "Node"
+      "Codex",
+      "MCP"
     ]
   }
 }
