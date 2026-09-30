@@ -1,17 +1,20 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wait-persistent-gui-script-fix-20260930-1702",
-  "kind": "shell",
+  "job_id": "install-persistent-gui-services-fixed-20260930-1703",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 190,
-    "command": "for i in $(seq 1 90); do if grep -q '^systemctl daemon-reload$' /opt/zen/zen-ops-runtime/deploy/ops_tasks/install_persistent_gui_services.sh 2>/dev/null; then echo SCRIPT_FIXED=YES; exit 0; fi; sleep 2; done; echo SCRIPT_FIXED=NO; exit 1"
+    "task": "install_persistent_gui_services",
+    "timeout": 600
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Wait for fixed persistent GUI service script deployment",
+    "summary": "Install persistent Mini Chrome and taskbar services after script fix",
     "tools": [
-      "ZEN Ops"
+      "ZEN Ops",
+      "systemd",
+      "Chrome",
+      "tint2",
+      "Openbox"
     ]
   }
 }
