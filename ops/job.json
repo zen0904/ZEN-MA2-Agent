@@ -1,18 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wait-chatgpt-persist-task-20260930-1722",
-  "kind": "shell",
+  "job_id": "install-chatgpt-persist-20260930-1724",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 120,
-    "command": "git -c safe.directory=/opt/zen/zen-ops-runtime -C /opt/zen/zen-ops-runtime rev-parse HEAD 2>&1 || true; test -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/install_persistent_chatgpt_gui_service.sh && echo CHATGPT_PERSIST_TASK=READY || echo CHATGPT_PERSIST_TASK=ABSENT"
+    "task": "install_persistent_chatgpt_gui_service",
+    "timeout": 300
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Verify persistent ChatGPT GUI task reached Mini runtime",
+    "summary": "Convert Mini ChatGPT GUI from transient session to persistent boot service",
     "tools": [
       "ZEN Ops",
-      "git"
+      "systemd",
+      "Xorg",
+      "ChatGPT"
     ]
   }
 }
