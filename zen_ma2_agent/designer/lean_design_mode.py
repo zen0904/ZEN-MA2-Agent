@@ -16,6 +16,7 @@ from typing import Any, Mapping, Sequence
 
 from ..artistic_capabilities import artistic_selection_policy
 from ..portable import portable_state_path
+from ..tool_capabilities import build_agent_tool_context
 
 
 COMPACT_CONTEXT_SCHEMA = "zen.compact_design_context.v0.1"
@@ -242,6 +243,7 @@ def assemble_compact_design_context(
     context: dict[str, Any] = {
         "schema": COMPACT_CONTEXT_SCHEMA,
         "artistic_selection_policy": artistic_selection_policy(),
+        "tool_capabilities": build_agent_tool_context(),
         "song": _compact_song(song_context),
         "spatial": _compact_spatial(spatial_context),
         "verified_groups": _compact_groups(groups),
