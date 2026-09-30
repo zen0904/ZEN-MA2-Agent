@@ -1,0 +1,284 @@
+{
+  "schema": "zen.runtime.entity_registry.v0.1",
+  "note": "Data-driven registry for ZEN Living TUI. Add providers/agents/tools/services here or through an optional runtime registry file; the TUI renderer does not hardcode brands.",
+  "entities": [
+    {
+      "kind": "agent",
+      "id": "zen",
+      "name": "ZEN",
+      "group": "core",
+      "state": "idle",
+      "meta": {
+        "aliases": [
+          "zen agent",
+          "zen"
+        ]
+      },
+      "display": {
+        "label": "ZEN"
+      }
+    },
+    {
+      "kind": "agent",
+      "id": "ops",
+      "name": "ZEN Ops",
+      "group": "core",
+      "state": "idle",
+      "meta": {
+        "aliases": [
+          "zen ops",
+          "zen-ops",
+          "ops"
+        ]
+      }
+    },
+    {
+      "kind": "agent",
+      "id": "openclaw",
+      "name": "OpenClaw",
+      "group": "workers",
+      "state": "idle",
+      "meta": {
+        "aliases": [
+          "openclaw"
+        ]
+      }
+    },
+    {
+      "kind": "agent",
+      "id": "coding",
+      "name": "Coding",
+      "group": "workers",
+      "state": "idle",
+      "meta": {
+        "aliases": [
+          "coding",
+          "codex",
+          "code task"
+        ]
+      }
+    },
+    {
+      "kind": "agent",
+      "id": "research",
+      "name": "Research",
+      "group": "workers",
+      "state": "idle",
+      "meta": {
+        "aliases": [
+          "research",
+          "browser",
+          "web search",
+          "crawl"
+        ]
+      }
+    },
+    {
+      "kind": "agent",
+      "id": "git",
+      "name": "Git",
+      "group": "workers",
+      "state": "idle",
+      "meta": {
+        "aliases": [
+          "git",
+          "github",
+          "commit",
+          "push"
+        ]
+      }
+    },
+    {
+      "kind": "agent",
+      "id": "vision",
+      "name": "Vision",
+      "group": "workers",
+      "state": "idle",
+      "meta": {
+        "aliases": [
+          "vision",
+          "image",
+          "video",
+          "gdtf",
+          "mvr"
+        ]
+      }
+    },
+    {
+      "kind": "provider",
+      "id": "openai",
+      "name": "GPT",
+      "group": "openai",
+      "state": "idle",
+      "meta": {
+        "aliases": [
+          "openai",
+          "gpt"
+        ]
+      }
+    },
+    {
+      "kind": "provider",
+      "id": "anthropic",
+      "name": "Claude",
+      "group": "anthropic",
+      "state": "idle",
+      "meta": {
+        "aliases": [
+          "anthropic",
+          "claude"
+        ]
+      }
+    },
+    {
+      "kind": "provider",
+      "id": "qwen",
+      "name": "Qwen",
+      "group": "qwen",
+      "state": "idle",
+      "meta": {
+        "aliases": [
+          "qwen"
+        ]
+      }
+    },
+    {
+      "kind": "provider",
+      "id": "google-gemini",
+      "name": "Gemini",
+      "group": "google",
+      "state": "idle",
+      "meta": {
+        "aliases": [
+          "gemini",
+          "google ai"
+        ]
+      }
+    },
+    {
+      "kind": "tool",
+      "id": "github",
+      "name": "GitHub",
+      "group": "development",
+      "state": "idle",
+      "meta": {
+        "aliases": [
+          "github",
+          "git"
+        ]
+      }
+    },
+    {
+      "kind": "tool",
+      "id": "shell",
+      "name": "Shell",
+      "group": "system",
+      "state": "idle",
+      "meta": {
+        "aliases": [
+          "shell",
+          "terminal",
+          "bash"
+        ]
+      }
+    },
+    {
+      "kind": "tool",
+      "id": "web",
+      "name": "Web / Research",
+      "group": "research",
+      "state": "idle",
+      "meta": {
+        "aliases": [
+          "web",
+          "browser",
+          "search",
+          "crawl"
+        ]
+      }
+    },
+    {
+      "kind": "tool",
+      "id": "vision",
+      "name": "Vision",
+      "group": "media",
+      "state": "idle",
+      "meta": {
+        "aliases": [
+          "vision",
+          "image",
+          "video"
+        ]
+      }
+    },
+    {
+      "kind": "tool",
+      "id": "ma-bridge",
+      "name": "MA Bridge",
+      "group": "lighting",
+      "state": "idle",
+      "meta": {
+        "aliases": [
+          "ma bridge",
+          "ma2",
+          "ma3",
+          "grandma",
+          "lighting"
+        ]
+      }
+    },
+    {
+      "kind": "service",
+      "id": "zen-ops-worker",
+      "name": "ZEN Ops",
+      "group": "core",
+      "state": "unknown",
+      "meta": {
+        "check": {
+          "type": "systemd",
+          "name": "zen-ops-worker.service"
+        }
+      }
+    },
+    {
+      "kind": "service",
+      "id": "tailscale",
+      "name": "Tailscale",
+      "group": "network",
+      "state": "unknown",
+      "meta": {
+        "check": {
+          "type": "systemd",
+          "name": "tailscaled.service"
+        }
+      }
+    },
+    {
+      "kind": "service",
+      "id": "openclaw-gateway",
+      "name": "OpenClaw Gateway",
+      "group": "core",
+      "state": "unknown",
+      "meta": {
+        "check": {
+          "type": "tcp",
+          "host": "127.0.0.1",
+          "port": 18789
+        }
+      }
+    },
+    {
+      "kind": "service",
+      "id": "chatgpt-gui",
+      "name": "ChatGPT GUI",
+      "group": "operator",
+      "state": "unknown",
+      "meta": {
+        "check": {
+          "type": "systemd",
+          "name": "zen-chatgpt-desktop.service"
+        }
+      }
+    }
+  ]
+}
