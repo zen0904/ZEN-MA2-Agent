@@ -1,17 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wait-chatgpt-vt3-launcher-fix-20260930-1651",
-  "kind": "shell",
+  "job_id": "start-chatgpt-gui-vt3-final-20260930-1652",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 190,
-    "command": "for i in $(seq 1 90); do grep -q 'zen-chatgpt-gui-$(date +%s)' /opt/zen/zen-ops-runtime/deploy/ops_tasks/start_chatgpt_gui_vt3.sh 2>/dev/null && { echo TASK_UPDATED=YES; exit 0; }; sleep 2; done; echo TASK_UPDATED=NO; exit 1"
+    "task": "start_chatgpt_gui_vt3",
+    "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Wait for unique-unit ChatGPT VT3 launcher fix",
+    "summary": "Launch ChatGPT Linux GUI on Mini VT3 using corrected Xorg software path",
     "tools": [
-      "ZEN Ops"
+      "ZEN Ops",
+      "Xorg",
+      "Openbox",
+      "ChatGPT"
     ]
   }
 }
