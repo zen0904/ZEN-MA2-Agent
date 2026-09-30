@@ -1,21 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "inspect-gui-disappear-20260930-1657",
+  "job_id": "wait-persistent-gui-services-20260930-1659",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 60,
-    "command": "export DISPLAY=:0; echo '=== windows ==='; wmctrl -l -x 2>&1 || true; echo '=== tint2 ==='; pgrep -a -u zenui -x tint2 || true; echo '=== chrome ==='; pgrep -a -u zenui -f '/opt/google/chrome/chrome|google-chrome' || true; echo '=== chatgpt ==='; pgrep -a -u zenui -f '/usr/lib/chatgpt/ChatGPT' | head -20 || true; echo '=== xorg ==='; pgrep -a -f '/usr/lib/xorg/Xorg :0' || true; echo '=== tint2 log ==='; tail -n 100 /var/lib/zenui/tint2.log 2>/dev/null || true; echo '=== chrome log ==='; tail -n 100 /var/lib/zenui/chrome.log 2>/dev/null || true; echo '=== openbox log ==='; tail -n 80 /var/lib/zenui/openbox.log 2>/dev/null || true"
+    "timeout": 190,
+    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/install_persistent_gui_services.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Inspect why Chrome or taskbar disappeared from Mini GUI",
+    "summary": "Wait for persistent Mini GUI services installer",
     "tools": [
-      "ZEN Ops",
-      "wmctrl",
-      "Openbox",
-      "Chrome",
-      "tint2"
+      "ZEN Ops"
     ]
   }
 }
