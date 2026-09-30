@@ -1,9 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "repair-zen-ops-recovery-20260930-0810",
-  "kind": "repo_task",
+  "job_id": "sync-zen-ops-runtime-20260930-0812",
+  "kind": "shell",
   "args": {
-    "task": "repair_zen_ops_funnel",
-    "timeout": 300
+    "cwd": "/opt/zen",
+    "timeout": 180,
+    "command": "set -e; echo BEFORE=$(git -C /opt/zen/zen-ops-runtime rev-parse HEAD); git -C /opt/zen/zen-ops-runtime fetch origin main; git -C /opt/zen/zen-ops-runtime reset --hard origin/main; echo AFTER=$(git -C /opt/zen/zen-ops-runtime rev-parse HEAD)"
   }
 }
