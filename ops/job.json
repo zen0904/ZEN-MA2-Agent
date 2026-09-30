@@ -1,18 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "ops-recovery-verify-20260930-1548",
-  "kind": "repo_task",
+  "job_id": "diagnose-updater-auth-20260930-1600",
+  "kind": "shell",
   "args": {
-    "task": "verify_zen_ops_recovery",
-    "timeout": 300
+    "command": "echo '=== updater service ==='; systemctl status zen-ops-updater.service --no-pager --full 2>&1 || true; echo '=== updater journal ==='; journalctl -u zen-ops-updater.service -n 80 --no-pager 2>&1 || true; echo '=== control remote ==='; git -C /var/lib/zen-ops/control.git remote -v 2>&1 || true; git -C /var/lib/zen-ops/control.git config --show-origin --get-all credential.helper 2>&1 || true; echo '=== runtime remote ==='; git -C /opt/zen/zen-ops-runtime remote -v 2>&1 || true; git -C /opt/zen/zen-ops-runtime config --show-origin --get-all credential.helper 2>&1 || true; echo '=== dedicated gh store ==='; test -f /var/lib/zen-ops/gh/hosts.yml && echo DEDICATED_GH_STORE=YES || echo DEDICATED_GH_STORE=NO; echo 'MA2_WRITES=0'; echo 'MA3_WRITES=0'",
+    "cwd": "/var/lib/zen-ops",
+    "timeout": 120
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Verify recovered Mini Ops control plane after repository visibility change",
+    "summary": "Diagnose recovered worker versus stalled updater private-repo auth",
     "tools": [
       "ZEN Ops",
-      "systemd",
-      "Tailscale"
+      "git",
+      "systemd"
     ]
   }
 }
