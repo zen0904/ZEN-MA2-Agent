@@ -1,18 +1,20 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "restore-chatgpt-vt3-20261001-0631",
+  "job_id": "install-display-hotplug-recovery-20261001-0637",
   "kind": "repo_task",
   "args": {
-    "task": "activate_chatgpt_vt3",
-    "timeout": 60
+    "task": "install_display_hotplug_recovery",
+    "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Restore physical display to existing ChatGPT/Living Workspace VT3 session after monitor power cycle",
+    "summary": "Install automatic HDMI hotplug recovery for ChatGPT and Living Workspace display",
     "tools": [
       "ZEN Ops",
-      "VT3",
-      "ChatGPT"
+      "udev",
+      "systemd",
+      "Xorg",
+      "xrandr"
     ]
   }
 }
