@@ -35,7 +35,8 @@ install -m 0755 "$R/deploy/ubuntu/zen-control-room" /usr/local/bin/zen-control-r
 install -m 0755 "$R/deploy/ubuntu/zenmon" /usr/local/bin/zenmon
 install -m 0755 "$R/deploy/ubuntu/zen-console-mode" /usr/local/bin/zen-console-mode
 install -m 0755 "$R/deploy/ubuntu/zen-ma-dashboard" /usr/local/bin/zen-ma-dashboard
-install -m 0755 "$R/deploy/ubuntu/zen-control-room-layout" /usr/local/bin/zen-control-room-layout\ninstall -m 0755 "$R/deploy/ubuntu/zen-living-tui.py" /usr/local/bin/zen-living-tui
+install -m 0755 "$R/deploy/ubuntu/zen-control-room-layout" /usr/local/bin/zen-control-room-layout
+install -m 0755 "$R/deploy/ubuntu/zen-living-tui.py" /usr/local/bin/zen-living-tui
 install -m 0755 "$R/deploy/ubuntu/zen-chatgpt-session.sh" /usr/local/libexec/zen-chatgpt-session.sh
 install -m 0755 "$R/deploy/ubuntu/zen-living-visualizer.py" /usr/local/bin/zen-living-visualizer
 install -m 0644 "$R/deploy/ubuntu/systemd/zen-living-visualizer.service" /etc/systemd/system/zen-living-visualizer.service
