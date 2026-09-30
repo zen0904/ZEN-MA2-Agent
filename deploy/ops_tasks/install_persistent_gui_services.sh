@@ -42,8 +42,7 @@ Environment=DISPLAY=:0
 Environment=XDG_CONFIG_HOME=/var/lib/zenui/.config
 ExecStartPre=/bin/sh -c 'for i in $(seq 1 60); do [ -S /tmp/.X11-unix/X0 ] && exit 0; sleep 1; done; exit 1'
 ExecStart=/usr/bin/google-chrome --no-first-run --no-default-browser-check --disable-gpu --user-data-dir=/var/lib/zenui/.config/google-chrome https://www.google.com/
-Restart=always
-RestartSec=2
+Restart=no
 KillMode=mixed
 
 [Install]
