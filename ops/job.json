@@ -1,17 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "visualizer-state-errorjson-20260930-2215",
-  "kind": "shell",
+  "job_id": "visualizer-sync-final-20260930-2222",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 60,
-    "command": "curl -sS --max-time 5 -i http://127.0.0.1:18992/api/state || true"
+    "task": "repair_zen_ops_updater_self_install",
+    "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Read bounded Living Visualizer api/state error JSON",
+    "summary": "Sync Mini runtime to final Living Visualizer telemetry fix",
     "tools": [
       "ZEN Ops",
+      "GitHub",
       "Living Visualizer"
     ]
   }
