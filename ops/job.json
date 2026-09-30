@@ -1,19 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "visualizer-phase1-syntax3-20260930-2302",
-  "kind": "shell",
+  "job_id": "visualizer-phase1-install-20260930-2310",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen/zen-ops-runtime",
-    "timeout": 60,
-    "command": "set -e; python3 -c 'from pathlib import Path; p=Path(\"deploy/ubuntu/zen-living-visualizer.py\"); compile(p.read_text(encoding=\"utf-8\"), str(p), \"exec\")'; bash -n deploy/ubuntu/zen-control-room-layout; bash -n deploy/ubuntu/zen-chatgpt-session.sh; echo SYNTAX=PASS"
+    "task": "install_living_visualizer",
+    "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Read-only fail-fast syntax gate for Living Visualizer Phase 1",
+    "summary": "Install and restart Living Visualizer Phase 1 redesign",
     "tools": [
       "ZEN Ops",
-      "Python",
-      "Bash"
+      "Living Visualizer",
+      "systemd"
     ]
   }
 }
