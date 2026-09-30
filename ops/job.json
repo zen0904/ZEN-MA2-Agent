@@ -1,19 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "start-chatgpt-gui-vt3-retry-20260930-1649",
-  "kind": "repo_task",
+  "job_id": "wait-chatgpt-vt3-launcher-fix-20260930-1651",
+  "kind": "shell",
   "args": {
-    "task": "start_chatgpt_gui_vt3",
-    "timeout": 180
+    "cwd": "/opt/zen",
+    "timeout": 190,
+    "command": "for i in $(seq 1 90); do grep -q 'zen-chatgpt-gui-$(date +%s)' /opt/zen/zen-ops-runtime/deploy/ops_tasks/start_chatgpt_gui_vt3.sh 2>/dev/null && { echo TASK_UPDATED=YES; exit 0; }; sleep 2; done; echo TASK_UPDATED=NO; exit 1"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Retry ChatGPT Linux GUI on Mini VT3 after disabling Xorg glamor",
+    "summary": "Wait for unique-unit ChatGPT VT3 launcher fix",
     "tools": [
-      "ZEN Ops",
-      "Xorg",
-      "Openbox",
-      "ChatGPT"
+      "ZEN Ops"
     ]
   }
 }
