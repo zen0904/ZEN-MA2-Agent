@@ -1,8 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "rescue-worker-probe-20260930-1430",
-  "kind": "process_list",
+  "job_id": "room-activate-20260930-1437",
+  "kind": "console",
   "args": {
-    "pattern": "zen-ops|tmux"
+    "mode": "room"
+  },
+  "meta": {
+    "actor": "CHATGPT_LEAD",
+    "summary": "Activate Mini Control Room mode through bounded ZEN Ops Plane",
+    "tools": [
+      "ZEN Ops",
+      "tmux",
+      "Control Room"
+    ]
   }
 }
