@@ -329,6 +329,11 @@ def fan_summary() -> str:
                 return f"{max(values)} RPM"
     except Exception:
         pass
+
+    output = sh(["sensors"], timeout=1.0)
+    match = re.search(r"Exhaust\s*:\s*([0-9]+)\s*RPM", output, re.IGNORECASE)
+    if match:
+        return f"{int(match.group(1))} RPM"
     return "N/A"
 
 
@@ -370,9 +375,11 @@ def gpu_temp_summary() -> str:
 
 def disk_summary() -> str:
     try:
-        usage = shutil.disk_usage("/")
-        used = usage.total - usage.free
-        return f"{used / (1024**3):.0f}/{usage.total / (1024**3):.0f} GiB"
+        st = os.statvfs("/")
+        total = st.f_frsize * st.f_blocks
+        free = st.f_frsize * st.f_bavail
+        used = total - free
+        return f"{used / (1024**3):.0f}/{total / (1024**3):.0f} GiB"
     except Exception:
         return "unknown"
 
@@ -391,9 +398,23 @@ def uptime_summary() -> str:
 
 
 def default_interface() -> str:
-    output = sh(["ip", "route", "show", "default"], timeout=0.8)
-    match = re.search(r"\\bdev\\s+(\\S+)", output)
-    return match.group(1) if match else "unknown"
+    try:
+        lines = Path("/proc/net/route").read_text().splitlines()[1:]
+        for line in lines:
+            fields = line.split()
+            if len(fields) < 4:
+                continue
+            interface, destination, _, flags = fields[:4]
+            if destination != "00000000":
+                continue
+            try:
+                if int(flags, 16) & 0x2:
+                    return interface
+            except ValueError:
+                continue
+    except Exception:
+        pass
+    return "unknown"
 
 
 def _network_bytes(interface: str) -> tuple[int, int] | None:
