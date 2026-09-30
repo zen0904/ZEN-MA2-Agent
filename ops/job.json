@@ -1,15 +1,15 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "verify-codex-console-login-20260930-1623",
+  "job_id": "wait-codex-vt2-systemd-task-20260930-1625",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 30,
-    "command": "echo '=== active vt ==='; fgconsole 2>/dev/null || true; echo '=== codex login proc ==='; pgrep -a -f 'codex login --device-auth' || true; echo '=== tty2 ==='; ps -t tty2 -o pid,ppid,user,stat,args --no-headers 2>/dev/null || true"
+    "timeout": 190,
+    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/start_codex_device_auth_vt2_systemd.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Verify Codex device login is actively running on Mini console",
+    "summary": "Wait for persistent Codex VT2 device-auth launcher",
     "tools": [
       "ZEN Ops"
     ]
