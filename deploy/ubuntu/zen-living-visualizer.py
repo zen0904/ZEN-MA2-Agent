@@ -79,6 +79,15 @@ body{margin:0;overflow:hidden;background:radial-gradient(circle at 30% 20%,#1422
 .event{padding:9px 2px;border-bottom:1px solid #1a2934;font-size:11px;line-height:1.35}
 .event .time{color:#718797}.event .type{color:#66d69a;font-weight:700;margin:0 6px}.event.error .type{color:#ff7b7b}
 .legend{position:absolute;left:20px;bottom:16px;font-size:10px;color:#6e8798;background:rgba(4,8,12,.62);border:1px solid #263947;border-radius:10px;padding:7px 9px;z-index:4}
+@media(max-width:900px){
+.main{grid-template-columns:minmax(0,1fr) 280px}
+.station{min-width:88px;padding:8px 9px;font-size:10px}
+.avatar .body{width:38px;height:38px}
+.avatar .label{top:43px;font-size:9px}
+.stats{gap:5px}
+.stat{padding:6px}
+.stat span{font-size:12px}
+}
 </style>
 </head>
 <body>
