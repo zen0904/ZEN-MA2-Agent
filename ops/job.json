@@ -1,18 +1,21 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "diag-control-room-gui-20261001-0648",
+  "job_id": "install-display-hotplug-recovery5-20261001-0654",
   "kind": "repo_task",
   "args": {
-    "task": "diag_control_room_gui",
-    "timeout": 120
+    "task": "install_display_hotplug_recovery",
+    "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Inspect live X11 window titles/classes after HDMI restore",
+    "summary": "Install HDMI hotplug recovery that relaunches missing Living Workspace",
     "tools": [
       "ZEN Ops",
-      "wmctrl",
-      "Xorg"
+      "udev",
+      "systemd",
+      "Xorg",
+      "xterm",
+      "wmctrl"
     ]
   }
 }
