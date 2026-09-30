@@ -23,6 +23,7 @@ install -m 0755 "$R/deploy/ubuntu/zen-ops-update" /usr/local/sbin/zen-ops-update
 install -m 0755 "$R/deploy/ubuntu/zen-control-room" /usr/local/bin/zen-control-room
 install -m 0755 "$R/deploy/ubuntu/zenmon" /usr/local/bin/zenmon
 install -m 0755 "$R/deploy/ubuntu/zen-console-mode" /usr/local/bin/zen-console-mode
+install -m 0755 "$R/deploy/ubuntu/zen-ma-dashboard" /usr/local/bin/zen-ma-dashboard
 
 systemctl daemon-reload
 systemctl enable --now zen-ops-updater.timer
