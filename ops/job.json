@@ -1,17 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wait-codex-vt2-systemd-task-20260930-1625",
-  "kind": "shell",
+  "job_id": "run-codex-vt2-systemd-20260930-1626",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 190,
-    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/start_codex_device_auth_vt2_systemd.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
+    "task": "start_codex_device_auth_vt2_systemd",
+    "timeout": 120
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Wait for persistent Codex VT2 device-auth launcher",
+    "summary": "Run Codex device auth persistently on Mini VT2 and switch console automatically",
     "tools": [
-      "ZEN Ops"
+      "ZEN Ops",
+      "systemd",
+      "Codex CLI"
     ]
   }
 }
