@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+LOCK=/run/zen-display-hotplug.lock
+LOG=/var/log/zen-display-hotplug.log
+DISPLAY_NUM=:0
+
+exec 9>"$LOCK"
+flock -n 9 || exit 0
+
+log() {
+  printf '%s %s\n' "$(date -Is)" "$*" | tee -a "$LOG"
+}
+
+log "EVENT=start"
+
+# HDMI/DP hotplug can report connected before EDID/modes settle.
+sleep 2
+
+if ! systemctl is-active --quiet zen-chatgpt-desktop.service; then
+  log "CHATGPT_SERVICE=inactive"
+  exit 0
+fi
+
+if [[ ! -S /tmp/.X11-unix/X0 ]]; then
+  log "XORG_DISPLAY=missing"
+  exit 0
+fi
+
+output="$(
+  runuser -u zenui -- env     HOME=/var/lib/zenui     DISPLAY="$DISPLAY_NUM"     /usr/bin/xrandr --query 2>/dev/null |
+    awk '/ connected/{print $1; exit}'
+)"
+
+if [[ -z "$output" ]]; then
+  log "DISPLAY_OUTPUT=none_connected"
+  exit 0
+fi
+
+log "DISPLAY_OUTPUT=$output"
+
+runuser -u zenui -- env   HOME=/var/lib/zenui   DISPLAY="$DISPLAY_NUM"   /usr/bin/xrandr --output "$output" --auto --rotate inverted   >>"$LOG" 2>&1 || log "XRANDR=warn"
+
+runuser -u zenui -- env   HOME=/var/lib/zenui   DISPLAY="$DISPLAY_NUM"   /usr/bin/xset dpms force on   >>"$LOG" 2>&1 || true
+
+/usr/bin/chvt 3 >>"$LOG" 2>&1 || log "CHVT=warn"
+
+# Let the window manager notice the restored mode before resizing windows.
+sleep 1
+
+if runuser -u zenui -- env   HOME=/var/lib/zenui   DISPLAY="$DISPLAY_NUM"   /usr/local/bin/zen-control-room-layout living   >>"$LOG" 2>&1; then
+  log "LAYOUT=PASS"
+else
+  log "LAYOUT=DEFERRED"
+fi
+
+log "EVENT=complete"
