@@ -1,6 +1,6 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "install-obsidian-mind2-20260930-1802",
+  "job_id": "install-obsidian-mind3-20260930-1805",
   "kind": "repo_task",
   "args": {
     "task": "install_obsidian_mind",
@@ -8,7 +8,7 @@
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Install Obsidian Mind vault and register OM MCP for zenui Codex after node-path fix",
+    "summary": "Install Obsidian Mind vault and register OM MCP after script fixes",
     "tools": [
       "ZEN Ops",
       "Codex",
