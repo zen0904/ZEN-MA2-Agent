@@ -1,10 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "inspect-control-room-source-20260930-0945",
-  "kind": "shell",
+  "job_id": "install-zen-control-room-20260930-0952",
+  "kind": "repo_task",
+  "meta": {
+    "actor": "CHATGPT_LEAD",
+    "summary": "Deploy ZEN Control Room Room Mode and refresh the live tmux overview",
+    "tools": [
+      "OPS",
+      "GitHub",
+      "tmux",
+      "zen-control-room"
+    ]
+  },
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 120,
-    "command": "set -o pipefail; echo '=== MATCHES ==='; grep -RIl --exclude-dir=.git -E 'ZEN AGENT MONITOR|AI LIVE TOOL STREAM|RECENT FILE WRITES|MONITOR.*MA_AGENT' /opt/zen /var/lib/zen-ops 2>/dev/null | head -80; echo '=== TMUX ==='; tmux list-sessions 2>/dev/null || true; echo '=== WINDOWS ==='; tmux list-windows -a -F '#S:#I:#W #{pane_current_command}' 2>/dev/null || true; echo '=== PANES ==='; tmux list-panes -a -F '#S:#I.#P pid=#{pane_pid} cmd=#{pane_current_command} path=#{pane_current_path}' 2>/dev/null || true"
+    "task": "install_zen_control_room",
+    "timeout": 300
   }
 }
