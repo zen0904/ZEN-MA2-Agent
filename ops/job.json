@@ -1,15 +1,15 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "close-chrome-and-verify-20260930-1717",
+  "job_id": "close-chrome-window-exact-20260930-1718",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 60,
-    "command": "echo '=== policy ==='; systemctl show zen-mini-chrome.service -p Restart -p ActiveState 2>/dev/null || true; export DISPLAY=:0; wmctrl -x -c 'google-chrome.Google-chrome' 2>/dev/null || wmctrl -c 'Google - Google Chrome' 2>/dev/null || true; sleep 3; echo '=== after close ==='; systemctl show zen-mini-chrome.service -p Restart -p ActiveState 2>/dev/null || true; pgrep -a -u zenui -f '/opt/google/chrome/chrome|google-chrome' | head -10 || true; echo '=== taskbar ==='; systemctl is-active zen-mini-taskbar.service 2>/dev/null || true; chvt 3 2>/dev/null || true"
+    "timeout": 45,
+    "command": "export DISPLAY=:0; echo '=== before ==='; wmctrl -l -x || true; id=$(wmctrl -l -x | awk 'tolower($0) ~ /google-chrome/ {print $1; exit}'); if [ -n \"$id\" ]; then wmctrl -ic \"$id\"; fi; sleep 3; echo '=== after ==='; wmctrl -l -x || true; systemctl show zen-mini-chrome.service -p Restart -p ActiveState 2>/dev/null || true; echo 'TASKBAR='$(systemctl is-active zen-mini-taskbar.service 2>/dev/null || true); chvt 3 2>/dev/null || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Close Chrome and verify it no longer reopens automatically",
+    "summary": "Close the exact Chrome window now that auto-restart is disabled",
     "tools": [
       "ZEN Ops",
       "wmctrl",
