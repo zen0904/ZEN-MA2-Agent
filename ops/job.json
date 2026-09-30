@@ -1,17 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wait-chatgpt-gui-runtime-task-20260930-1635",
-  "kind": "shell",
+  "job_id": "install-chatgpt-gui-runtime-20260930-1636",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 190,
-    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/install_chatgpt_gui_runtime.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
+    "task": "install_chatgpt_gui_runtime",
+    "timeout": 900
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Wait for ChatGPT GUI runtime installer deployment",
+    "summary": "Install minimal X11/Openbox runtime for ChatGPT Linux app on Mini",
     "tools": [
-      "ZEN Ops"
+      "ZEN Ops",
+      "apt"
     ]
   }
 }
