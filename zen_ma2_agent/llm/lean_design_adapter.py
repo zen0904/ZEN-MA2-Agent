@@ -64,6 +64,11 @@ that Cue: existing-Effect replacement/clear grammar is not real-machine verified
 fails closed. Omitting a new Effect call preserves existing Effect state; it does NOT mean
 clear/release. `replace_effect_ids` is not executable in this route until a separate replacement
 grammar is verified.
+If context contains `tool_capabilities`, that section describes capabilities the ZEN runtime can
+supply or broker. It is NOT a direct tool handle. Never claim that you executed a tool unless its
+result is already present in context. When `lean_api_designer_direct` is false, you may identify
+the evidence/capability that would help, but you must not emit tool-call syntax, shell/MCP requests,
+or fabricate the result. Tool availability is optional context, not a requirement to use a tool.
 Do not invent unavailable resources. Return JSON only, with no markdown.
 """
 
