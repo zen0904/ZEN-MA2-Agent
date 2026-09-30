@@ -1808,21 +1808,38 @@
     },
     {
       "id": "MINI_CONTROL_ROOM_LAYOUT_001",
-      "status": "DESIGN_CAPTURED_NOT_IMPLEMENTED",
+      "status": "VISUALIZER_MVP_RUNNING",
       "owner_clarification_date": "2026-09-30",
       "source": "docs/MINI_CONTROL_ROOM_LAYOUT_001.md",
-      "rule": "When a monitor is attached, the intended default Mini display is ZEN Control Room rather than full-screen ChatGPT or a full-screen terminal: ChatGPT remains the largest operator surface, with compact system/Agent status and terminal/recent activity visible beside it. Headless operation remains the normal infrastructure mode and no remote capability may depend on GUI availability.",
+      "implementation_source": "docs/LIVING_SYSTEM_VISUALIZER_MVP_001.md",
+      "rule": "Mini Control Room remains the intended attached-display experience. The Living System Visualizer now has a running observation-only MVP on loopback port 18992. It may visualize real runtime state but must never become execution authority.",
       "default_layout": {
         "left": "CHATGPT_PRIMARY_APPROX_65_PERCENT",
         "right_top": "SYSTEM_AND_AGENT_STATUS",
         "right_bottom": "TERMINAL_AND_RECENT_ACTIVITY"
       },
-      "future_living_system_visualizer": {
-        "status": "DESIGN_ONLY",
-        "role": "OBSERVATION_LAYER_ONLY",
-        "execution_authority": "NONE",
-        "failure_impact_on_zen": "NONE_REQUIRED",
-        "event_driven": true
+      "living_system_visualizer": {
+        "status": "MVP_RUNNING",
+        "authority": "OBSERVATION_ONLY",
+        "service": "zen-living-visualizer.service",
+        "listen": "127.0.0.1:18992",
+        "health": "/health",
+        "state": "/api/state",
+        "event_driven": true,
+        "verified_telemetry": [
+          "CPU_USAGE",
+          "CPU_TEMPERATURE",
+          "FAN_RPM",
+          "MEMORY",
+          "ROOT_DISK",
+          "NETWORK_INTERFACE",
+          "NETWORK_RX_TX",
+          "UPTIME",
+          "LOAD",
+          "SERVICE_STATES"
+        ],
+        "gpu_usage": "N_A_NO_TRUSTWORTHY_SOURCE",
+        "gpu_temperature": "N_A_NO_TRUSTWORTHY_SOURCE"
       },
       "verified_display_baseline": {
         "output": "HDMI-3",
@@ -1830,8 +1847,9 @@
         "rotation": "INVERTED_180",
         "rotation_persistent_across_gui_restart": true
       },
-      "implementation_gate": "DO_NOT_IMPLEMENT_LIVING_VISUALIZER_UNTIL_EXPLICITLY_SCHEDULED",
-      "operator_workflow_change": "NONE"
+      "operator_workflow_change": "NONE",
+      "ma2_writes": 0,
+      "ma3_writes": 0
     }
   ],
   "allocation_policy": {
