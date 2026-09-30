@@ -1,19 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "visualizer-telemetry-final-20260930-2318",
+  "job_id": "control-room-tools-audit-20260930-2330",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
     "timeout": 60,
-    "command": "curl -sS --max-time 5 http://127.0.0.1:18992/api/state >/tmp/zen-vis-state-a.json || true; sleep 1.4; curl -sS --max-time 5 http://127.0.0.1:18992/api/state | python3 -c 'import json,sys; d=json.load(sys.stdin); print(json.dumps(d.get(\"system\",{}),ensure_ascii=False))'"
+    "command": "echo '=== GUI TOOLS ==='; for c in chromium chromium-browser google-chrome google-chrome-stable firefox xterm uxterm xfce4-terminal gnome-terminal alacritty kitty wmctrl xdotool openbox chatgpt; do printf '%s=' \"$c\"; command -v \"$c\" 2>/dev/null || true; done; echo '=== SESSION SCRIPT ==='; sed -n '1,120p' /usr/local/libexec/zen-chatgpt-session.sh 2>/dev/null || true; echo '=== OPENBOX CONFIG ==='; find /var/lib/zenui/.config/openbox -maxdepth 2 -type f -printf '%p\\n' 2>/dev/null | head -20 || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Final warmed-up Living Visualizer system telemetry verification",
+    "summary": "Read-only audit Mini GUI tools and current session before Control Room layout install",
     "tools": [
       "ZEN Ops",
-      "Living Visualizer",
-      "Linux telemetry"
+      "Openbox",
+      "Living Visualizer"
     ]
   }
 }
