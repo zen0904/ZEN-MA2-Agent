@@ -1,9 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "verify-zen-ops-recovery-20260930-0759",
-  "kind": "repo_task",
+  "job_id": "inspect-zen-ops-updater-20260930-0803",
+  "kind": "shell",
   "args": {
-    "task": "verify_zen_ops_recovery",
-    "timeout": 300
+    "cwd": "/opt/zen",
+    "timeout": 120,
+    "command": "set -o pipefail; echo '=== TIMER ==='; systemctl status zen-ops-updater.timer --no-pager --full || true; echo '=== SERVICE ==='; systemctl status zen-ops-updater.service --no-pager --full || true; echo '=== INSTALLED UPDATE SCRIPT ==='; ls -l /usr/local/sbin/zen-ops-update || true; sha256sum /usr/local/sbin/zen-ops-update 2>/dev/null || true; grep -n 'zen-ops-funnel\|zen-ops-results\|Reconcile' /usr/local/sbin/zen-ops-update 2>/dev/null || true; echo '=== RUNTIME UPDATE SCRIPT ==='; git -C /opt/zen/zen-ops-runtime rev-parse HEAD; git -C /opt/zen/zen-ops-runtime rev-parse origin/main 2>/dev/null || true; sha256sum /opt/zen/zen-ops-runtime/deploy/ubuntu/zen-ops-update 2>/dev/null || true; grep -n 'zen-ops-funnel\|zen-ops-results\|Reconcile' /opt/zen/zen-ops-runtime/deploy/ubuntu/zen-ops-update 2>/dev/null || true; echo '=== UNIT FILES ==='; ls -l /etc/systemd/system/zen-ops-* 2>/dev/null || true"
   }
 }
