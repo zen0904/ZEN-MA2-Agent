@@ -35,7 +35,7 @@ install -m 0755 "$R/deploy/ubuntu/zen-control-room" /usr/local/bin/zen-control-r
 install -m 0755 "$R/deploy/ubuntu/zenmon" /usr/local/bin/zenmon
 install -m 0755 "$R/deploy/ubuntu/zen-console-mode" /usr/local/bin/zen-console-mode
 install -m 0755 "$R/deploy/ubuntu/zen-ma-dashboard" /usr/local/bin/zen-ma-dashboard
-install -m 0755 "$R/deploy/ubuntu/zen-control-room-layout" /usr/local/bin/zen-control-room-layout
+install -m 0755 "$R/deploy/ubuntu/zen-control-room-layout" /usr/local/bin/zen-control-room-layout\ninstall -m 0755 "$R/deploy/ubuntu/zen-living-tui.py" /usr/local/bin/zen-living-tui
 install -m 0755 "$R/deploy/ubuntu/zen-chatgpt-session.sh" /usr/local/libexec/zen-chatgpt-session.sh
 install -m 0755 "$R/deploy/ubuntu/zen-living-visualizer.py" /usr/local/bin/zen-living-visualizer
 install -m 0644 "$R/deploy/ubuntu/systemd/zen-living-visualizer.service" /etc/systemd/system/zen-living-visualizer.service
@@ -44,7 +44,7 @@ systemctl daemon-reload
 systemctl enable --now zen-ops-updater.timer
 systemctl enable --now zen-ops-results.service
 systemctl enable --now zen-ops-funnel.service
-systemctl enable --now zen-living-visualizer.service
+systemctl disable --now zen-living-visualizer.service >/dev/null 2>&1 || true
 systemctl enable zen-ops-worker.service >/dev/null 2>&1 || true
 if ! systemctl is-active --quiet zen-ops-worker.service; then
   systemctl start zen-ops-worker.service
