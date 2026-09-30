@@ -1,0 +1,466 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import os
+import shutil
+import signal
+import socket
+import subprocess
+import sys
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+REPO = Path("/opt/zen/ZEN-MA2-Agent")
+OPS_PUBLIC = Path("/var/lib/zen-ops/public")
+OPS_CONTROL = Path("/var/lib/zen-ops/control.git")
+CAP_REGISTRY = REPO / "data" / "zen_agent_tool_capabilities.json"
+UPSTREAM_REGISTRY = REPO / "data" / "zen_upstream_tool_registry.json"
+
+ESC = "\033["
+RESET = ESC + "0m"
+BOLD = ESC + "1m"
+DIM = ESC + "2m"
+GREEN = ESC + "32m"
+CYAN = ESC + "36m"
+YELLOW = ESC + "33m"
+RED = ESC + "31m"
+MAGENTA = ESC + "35m"
+BLUE = ESC + "34m"
+GRAY = ESC + "90m"
+
+SPIN = ("◜", "◝", "◞", "◟")
+AGENTS = ("GPT LEAD", "API AUX", "CODEX", "OPENCLAW", "OPENCHATX", "OPS")
+
+
+def sh(argv: list[str], timeout: float = 1.5) -> str:
+    try:
+        p = subprocess.run(argv, text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=timeout, check=False)
+        return p.stdout.strip()
+    except Exception:
+        return ""
+
+
+def read_json(path: Path) -> dict:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+        return value if isinstance(value, dict) else {}
+    except Exception:
+        return {}
+
+
+def iso_age_seconds(value: object) -> float | None:
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return max(0.0, (datetime.now(timezone.utc) - dt.astimezone(timezone.utc)).total_seconds())
+    except Exception:
+        return None
+
+
+def service(name: str) -> str:
+    value = sh(["systemctl", "is-active", name], timeout=0.8)
+    return value if value else "unknown"
+
+
+def port_open(port: int) -> bool:
+    try:
+        with socket.create_connection(("127.0.0.1", port), timeout=0.08):
+            return True
+    except OSError:
+        return False
+
+
+def command_exists(name: str) -> bool:
+    return shutil.which(name) is not None or Path("/opt/node/bin", name).exists()
+
+
+def process_snapshot() -> str:
+    return sh(["ps", "-eo", "args"], timeout=1.0).lower()
+
+
+def control_job() -> dict:
+    if not OPS_CONTROL.exists():
+        return {}
+    text = sh([
+        "git", "-C", str(OPS_CONTROL), "show",
+        "refs/remotes/origin/zen-ops-control:ops/job.json",
+    ], timeout=1.0)
+    try:
+        value = json.loads(text)
+        return value if isinstance(value, dict) else {}
+    except Exception:
+        return {}
+
+
+def tool_inventory() -> list[dict]:
+    rows: dict[str, dict] = {}
+    upstream = read_json(UPSTREAM_REGISTRY)
+    for item in upstream.get("tools", []) if isinstance(upstream.get("tools"), list) else []:
+        if not isinstance(item, dict):
+            continue
+        tid = str(item.get("id") or "").strip()
+        if not tid:
+            continue
+        rows[tid] = {
+            "id": tid,
+            "state": str(item.get("state") or "UNKNOWN"),
+            "interface": str(item.get("interface") or ""),
+            "runtime": str(item.get("runtime") or ""),
+        }
+
+    caps = read_json(CAP_REGISTRY)
+    for item in caps.get("capabilities", []) if isinstance(caps.get("capabilities"), list) else []:
+        if not isinstance(item, dict):
+            continue
+        tid = str(item.get("id") or "").strip()
+        if not tid:
+            continue
+        rows.setdefault(tid, {
+            "id": tid,
+            "state": str(item.get("status") or "UNKNOWN"),
+            "interface": str(item.get("invoke_via") or ""),
+            "runtime": "capability",
+        })
+    return sorted(rows.values(), key=lambda x: x["id"])
+
+
+def status_symbol(state: str, active: bool = False, spinner: str = "●") -> str:
+    if active:
+        return GREEN + spinner + RESET
+    upper = state.upper()
+    if any(k in upper for k in ("ERROR", "FAIL", "DOWN", "BROKEN")):
+        return RED + "×" + RESET
+    if any(k in upper for k in ("DISABLED", "FALLBACK_ONLY", "NEEDS_")):
+        return YELLOW + "·" + RESET
+    if any(k in upper for k in ("READY", "PRIMARY", "LIVE", "ACTIVE", "VERIFIED")):
+        return CYAN + "○" + RESET
+    return GRAY + "·" + RESET
+
+
+def plain_clip(value: str, width: int) -> str:
+    value = value.replace("\n", " ").replace("\r", " ")
+    return value if len(value) <= width else value[: max(0, width - 1)] + "…"
+
+
+def box_title(title: str, width: int) -> str:
+    inner = max(1, width - len(title) - 5)
+    return "┌─ " + BOLD + title + RESET + " " + "─" * inner + "┐"
+
+
+def box_line(text: str, width: int) -> str:
+    text = plain_clip(text, max(0, width - 4))
+    return "│ " + text + " " * max(0, width - 3 - len(text)) + "│"
+
+
+def box_bottom(width: int) -> str:
+    return "└" + "─" * max(1, width - 2) + "┘"
+
+
+def current_activity(latest: dict, ctl: dict, proc: str) -> dict:
+    result_id = str(latest.get("job_id") or "")
+    ctl_id = str(ctl.get("job_id") or "")
+    meta = ctl.get("meta") if isinstance(ctl.get("meta"), dict) else {}
+    actor = str(meta.get("actor") or "")
+    summary = str(meta.get("summary") or "")
+    tools = meta.get("tools") if isinstance(meta.get("tools"), list) else []
+    if ctl_id != result_id:
+        actor = ""
+        summary = ""
+        tools = []
+
+    status = str(latest.get("status") or "idle").lower()
+    age = iso_age_seconds(latest.get("finished_at") or latest.get("received_at"))
+    ops_active = status == "running"
+    recent = age is not None and age < 90
+    if not actor and (ops_active or recent):
+        actor = "CHATGPT_LEAD"
+    if not summary and result_id:
+        summary = result_id.replace("-", " ").replace("_", " ")
+    if not tools and (ops_active or recent):
+        tools = ["OPS", "GitHub"]
+
+    api_active = any(k in proc for k in (
+        "openclaw_sdk_infer", "lighting_designer", "providerrouter", "autonomous_designer"
+    ))
+    codex_active = any(k in proc for k in ("/codex ", "@openai/codex", " codex exec", "codex-linux"))
+    ocx_active = "openchatx" in proc and any(k in proc for k in ("mcp request", "workspace", "tool call"))
+
+    return {
+        "actor": actor or "NONE",
+        "summary": summary or "No active brokered task",
+        "tools": [str(x) for x in tools][:8],
+        "job_id": result_id or "-",
+        "kind": str(latest.get("kind") or "-"),
+        "status": status,
+        "ops_active": ops_active,
+        "api_active": api_active,
+        "codex_active": codex_active,
+        "ocx_active": ocx_active,
+        "recent": recent,
+        "age": age,
+    }
+
+
+def recent_events(limit: int = 6) -> list[str]:
+    events: list[tuple[float, str]] = []
+    if OPS_PUBLIC.is_dir():
+        for p in OPS_PUBLIC.glob("*.json"):
+            if p.name in {"latest.json", "worker-error.json"}:
+                continue
+            try:
+                data = read_json(p)
+                when = p.stat().st_mtime
+                status = str(data.get("status") or "?").upper()
+                job = str(data.get("job_id") or p.stem)
+                events.append((when, f"{datetime.fromtimestamp(when).strftime('%H:%M:%S')} OPS {status:<9} {job}"))
+            except Exception:
+                pass
+    if (REPO / ".git").is_dir():
+        out = sh(["git", "-C", str(REPO), "log", "-4", "--pretty=%ct|%h|%s"], timeout=1.0)
+        for line in out.splitlines():
+            try:
+                epoch, sha, msg = line.split("|", 2)
+                when = float(epoch)
+                events.append((when, f"{datetime.fromtimestamp(when).strftime('%H:%M:%S')} GIT {sha} {msg}"))
+            except ValueError:
+                pass
+    events.sort(key=lambda x: x[0], reverse=True)
+    return [text for _, text in events[:limit]]
+
+
+def tool_active(tool_id: str, activity: dict, proc: str) -> bool:
+    hay = " ".join([
+        activity.get("job_id", ""),
+        activity.get("summary", ""),
+        " ".join(activity.get("tools", [])),
+        proc,
+    ]).lower()
+    aliases = {
+        "zen-ops-plane": ("ops", "zen-ops"),
+        "ops.execute_bounded": ("ops", "zen-ops"),
+        "codebase-memory": ("codebase",),
+        "code.structure": ("codebase",),
+        "openchatx": ("openchatx",),
+        "essentia": ("essentia",),
+        "audio.analyze": ("essentia", "audio"),
+        "pyscenedetect": ("scenedetect",),
+        "video.scene_detect": ("scenedetect", "video"),
+        "gdtf.parse": ("gdtf", "pygdtf"),
+        "mvr.parse": ("mvr", "pymvr"),
+        "markitdown": ("markitdown",),
+        "docling": ("docling",),
+        "crawl4ai": ("crawl4ai",),
+        "gemini-cli": ("gemini",),
+        "codex-acp": ("codex",),
+    }
+    needles = aliases.get(tool_id, (tool_id.replace(".", " "), tool_id))
+    return any(n.lower() in hay for n in needles)
+
+
+def collect() -> dict:
+    latest = read_json(OPS_PUBLIC / "latest.json")
+    ctl = control_job()
+    proc = process_snapshot()
+    activity = current_activity(latest, ctl, proc)
+    spin = SPIN[int(time.monotonic() * 4) % len(SPIN)]
+
+    openclaw = port_open(18789)
+    openchatx = port_open(18001) and service("zen-openchatx") == "active"
+    ops_worker = service("zen-ops-worker") == "active"
+    sentinel = service("zen-sentinel") == "active"
+    glances = service("zen-glances") == "active"
+    ma_controller = port_open(8876)
+    ma_bridge = port_open(8877)
+    ma_proxy = port_open(18878)
+
+    agents = {
+        "GPT LEAD": "ACTIVE" if activity["ops_active"] and activity["actor"].startswith("CHATGPT") else "LOUNGE",
+        "API AUX": "ACTIVE" if activity["api_active"] else "LOUNGE",
+        "CODEX": "ACTIVE" if activity["codex_active"] else ("READY" if command_exists("codex") else "OFFLINE"),
+        "OPENCLAW": "GATEWAY" if openclaw else "OFFLINE",
+        "OPENCHATX": "WORKING" if activity["ocx_active"] else ("STUDIO" if openchatx else "OFFLINE"),
+        "OPS": "ACTIVE" if activity["ops_active"] else ("READY" if ops_worker else "OFFLINE"),
+    }
+
+    tools = tool_inventory()
+    for item in tools:
+        item["active"] = tool_active(item["id"], activity, proc)
+
+    return {
+        "latest": latest,
+        "activity": activity,
+        "agents": agents,
+        "tools": tools,
+        "spin": spin,
+        "openclaw": openclaw,
+        "openchatx": openchatx,
+        "ops_worker": ops_worker,
+        "sentinel": sentinel,
+        "glances": glances,
+        "ma_controller": ma_controller,
+        "ma_bridge": ma_bridge,
+        "ma_proxy": ma_proxy,
+        "proc": proc,
+        "events": recent_events(),
+    }
+
+
+def render(data: dict) -> str:
+    width = max(100, shutil.get_terminal_size((150, 48)).columns)
+    now_s = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    spin = data["spin"]
+    a = data["activity"]
+    agents = data["agents"]
+
+    lines: list[str] = []
+    lines.append(BOLD + CYAN + " ZEN CONTROL ROOM / ROOM MODE " + RESET + DIM + f"  {now_s}" + RESET)
+    lines.append("═" * min(width, 170))
+    lines.append(
+        f" {GREEN if data['ops_worker'] else RED}OPS{RESET}:{'UP' if data['ops_worker'] else 'DOWN'}"
+        f"   {CYAN if data['openclaw'] else RED}OpenClaw{RESET}:{'UP' if data['openclaw'] else 'DOWN'}"
+        f"   {MAGENTA if data['openchatx'] else RED}OpenChatX{RESET}:{'UP' if data['openchatx'] else 'DOWN'}"
+        f"   MA:{GREEN if data['ma_controller'] and data['ma_bridge'] else YELLOW}"
+        f"{'READY' if data['ma_controller'] and data['ma_bridge'] else 'PARTIAL'}{RESET}"
+        f"   Sentinel:{'UP' if data['sentinel'] else 'DOWN'}"
+        f"   Glances:{'UP' if data['glances'] else 'DOWN'}"
+    )
+
+    lines.append("")
+    lines.append(BOLD + "REST LOUNGE" + RESET + "  " + DIM + "Agents stay here when they are not doing work on the Mini." + RESET)
+    lounge = []
+    for name in ("GPT LEAD", "API AUX", "CODEX", "OPENCLAW", "OPENCHATX", "OPS"):
+        state = agents[name]
+        if state in {"LOUNGE", "READY", "GATEWAY", "STUDIO"}:
+            icon = "Zz" if state == "LOUNGE" else "○"
+            lounge.append(f"[{name}:{icon} {state}]")
+    lines.append("  " + "  ".join(lounge) if lounge else "  " + DIM + "(everyone is working)" + RESET)
+
+    lines.append("")
+    lines.append(BOLD + "ACTIVE WORK AREA / SEATS" + RESET)
+    seats = [
+        ("DESIGN POD", "GPT LEAD", agents["GPT LEAD"], "Primary artistic integration"),
+        ("CO-DESIGN", "API AUX", agents["API AUX"], "Optional auxiliary Designer"),
+        ("DEV BENCH", "CODEX", agents["CODEX"], "Repo / code / tests"),
+        ("OPS BENCH", "OPS", agents["OPS"], "Bounded Mini execution"),
+    ]
+    seat_line = []
+    for zone, who, state, detail in seats:
+        icon = GREEN + spin + RESET if state == "ACTIVE" else GRAY + "○" + RESET
+        seat_line.append(f"{zone:<11} {icon} {who:<9} {state:<7}")
+    lines.append("  " + "   |   ".join(seat_line))
+    lines.append("  " + DIM + "When a worker becomes active it leaves the lounge and occupies its seat; no fake hidden reasoning is shown." + RESET)
+
+    panel_w = min(78, max(46, (width - 5) // 2))
+    lines.append("")
+    left = [
+        box_title("OPENCHATX STUDIO", panel_w),
+        box_line(f"service      : {'ACTIVE' if data['openchatx'] else 'DOWN'}", panel_w),
+        box_line("endpoint     : 127.0.0.1:18001", panel_w),
+        box_line(f"worker       : {agents['OPENCHATX']}", panel_w),
+        box_line("toolbox      : shell files web skills image", panel_w),
+        box_line("role         : local workshop / tool host", panel_w),
+        box_line("MA authority : NONE", panel_w),
+        box_bottom(panel_w),
+    ]
+    right = [
+        box_title("MA TOOL BAY", panel_w),
+        box_line(f"Field Core   : {'READY :8876' if data['ma_controller'] else 'DOWN :8876'}", panel_w),
+        box_line(f"MA Bridge    : {'READY :8877' if data['ma_bridge'] else 'DOWN :8877'}", panel_w),
+        box_line(f"Operator     : {'READY :18878' if data['ma_proxy'] else 'DOWN :18878'}", panel_w),
+        box_line("Compiler     : READY / deterministic", panel_w),
+        box_line("Preview      : standby / explicit gate", panel_w),
+        box_line("Builder      : standby / approval only", panel_w),
+        box_line("Readback     : native verification path", panel_w),
+        box_bottom(panel_w),
+    ]
+    for l, r in zip(left, right):
+        lines.append(" " + l + "   " + r)
+
+    lines.append("")
+    lines.append(BOLD + "MA LAB / SPECIAL TOOLS" + RESET)
+    ma_tools = [
+        "gma2-mcp parser/introspection", "The3-MCP MA3 corpus", "GDTF parser",
+        "MVR parser", "MA3 Phaser refs", "MA2 Effect refs",
+        "Chataigne MA2/MA3", "Companion MA2/MA3", "Timecode adapters",
+        "XYZ / StageMarker / PSN",
+    ]
+    lines.append("  " + "  •  ".join(ma_tools[:5]))
+    lines.append("  " + "  •  ".join(ma_tools[5:]))
+
+    lines.append("")
+    lines.append(BOLD + "TOOL RACK" + RESET + DIM + "  ● in use   ○ ready   · parked/limited   × error" + RESET)
+    tools = data["tools"]
+    cols = 3 if width >= 125 else 2
+    rows = (len(tools) + cols - 1) // cols
+    cell_w = max(30, (width - 4) // cols)
+    for row in range(rows):
+        chunks = []
+        for col in range(cols):
+            idx = row + col * rows
+            if idx >= len(tools):
+                chunks.append("")
+                continue
+            t = tools[idx]
+            sym = status_symbol(t["state"], bool(t.get("active")), spin)
+            text = f"{sym} {t['id']} [{plain_clip(t['state'], 20)}]"
+            # ANSI adds bytes but plain content remains comfortably under cell width.
+            chunks.append(text)
+        lines.append("  " + (" " * 2).join(chunk.ljust(cell_w + 12) for chunk in chunks))
+
+    lines.append("")
+    lines.append(BOLD + "CURRENT WORK" + RESET)
+    state_color = GREEN if a["status"] == "running" else (RED if a["status"] in {"failed", "rejected", "timeout"} else CYAN)
+    lines.append(f"  actor   : {a['actor']}     status: {state_color}{a['status'].upper()}{RESET}     kind: {a['kind']}")
+    lines.append(f"  job     : {plain_clip(a['job_id'], max(40, width - 14))}")
+    lines.append(f"  doing   : {plain_clip(a['summary'], max(40, width - 14))}")
+    lines.append(f"  tools   : {', '.join(a['tools']) if a['tools'] else '-'}")
+
+    lines.append("")
+    lines.append(BOLD + "ACTIVITY STREAM" + RESET)
+    for event in data["events"]:
+        lines.append("  " + plain_clip(event, max(60, width - 4)))
+    if not data["events"]:
+        lines.append("  " + DIM + "No recent events." + RESET)
+
+    lines.append("")
+    lines.append(DIM + " F10 ROOM   F11 SYSTEM MONITOR   F12 MA AGENT   | refresh 1s | local text UI, no GPU renderer " + RESET)
+    return "\n".join(lines)
+
+
+_RUNNING = True
+
+
+def stop(*_: object) -> None:
+    global _RUNNING
+    _RUNNING = False
+
+
+def main() -> int:
+    global _RUNNING
+    signal.signal(signal.SIGTERM, stop)
+    signal.signal(signal.SIGINT, stop)
+    sys.stdout.write("\033[?25l\033[2J")
+    sys.stdout.flush()
+    try:
+        while _RUNNING:
+            started = time.monotonic()
+            try:
+                body = render(collect())
+            except Exception as exc:
+                body = f"ZEN CONTROL ROOM\n\nrender error: {type(exc).__name__}: {exc}"
+            sys.stdout.write("\033[H" + body + "\033[J")
+            sys.stdout.flush()
+            remaining = 1.0 - (time.monotonic() - started)
+            if remaining > 0:
+                time.sleep(remaining)
+    finally:
+        sys.stdout.write("\033[?25h\033[0m\n")
+        sys.stdout.flush()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
