@@ -1,17 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wait-chatgpt-input-runtime-20260930-1700",
-  "kind": "shell",
+  "job_id": "install-chatgpt-input-runtime-20260930-1701",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 190,
-    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/install_chatgpt_input_runtime.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
+    "task": "install_chatgpt_input_runtime",
+    "timeout": 600
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Wait for Mini ChatGPT input runtime installer",
+    "summary": "Install Xorg libinput and xinput for Mini mouse support",
     "tools": [
-      "ZEN Ops"
+      "ZEN Ops",
+      "apt",
+      "Xorg"
     ]
   }
 }
