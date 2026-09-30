@@ -1,19 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "visualizer-phase1-layout-20260930-2320",
-  "kind": "repo_task",
+  "job_id": "tui-capability-probe-20260930-2334",
+  "kind": "shell",
   "args": {
-    "task": "repair_control_room_gui",
-    "timeout": 120
+    "cwd": "/opt/zen",
+    "timeout": 60,
+    "command": "echo '=== TERMINALS ==='; for x in xterm uxterm xfce4-terminal lxterminal mate-terminal gnome-terminal alacritty kitty foot konsole terminator; do p=$(command -v \"$x\" 2>/dev/null || true); [ -n \"$p\" ] && echo \"$x=$p\"; done; echo '=== PYTHON TUI ==='; python3 -c 'import curses; print(\"curses=YES\")' 2>/dev/null || echo curses=NO; python3 -c 'import rich; print(\"rich=YES\", rich.__version__ if hasattr(rich,\"__version__\") else \"\")' 2>/dev/null || echo rich=NO; python3 -c 'import textual; print(\"textual=YES\", textual.__version__)' 2>/dev/null || echo textual=NO; python3 -c 'import prompt_toolkit; print(\"prompt_toolkit=YES\", prompt_toolkit.__version__)' 2>/dev/null || echo prompt_toolkit=NO; echo '=== TMUX ==='; command -v tmux || true; echo '=== TERMINFO ==='; infocmp xterm-256color >/dev/null 2>&1 && echo xterm-256color=YES || echo xterm-256color=NO"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Apply Living mode 30/70 Control Room layout for Visualizer Phase 1",
+    "summary": "Read-only probe terminal and Python TUI capabilities for CLI-first Living Workspace",
     "tools": [
       "ZEN Ops",
-      "X11",
-      "Openbox",
-      "Living Visualizer"
+      "Python",
+      "curses"
     ]
   }
 }
