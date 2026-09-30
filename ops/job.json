@@ -1,14 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "display-rotate-180-20260930-2017",
-  "kind": "repo_task",
+  "job_id": "diag-rdc-mini-20260930-2035",
+  "kind": "shell",
   "args": {
-    "task": "rotate_display_180",
-    "timeout": 30
+    "cwd": "/opt/zen",
+    "timeout": 90,
+    "command": "echo '=== SYSTEM SERVICES ==='; systemctl list-unit-files --type=service --no-pager | grep -Ei 'desktop|commander|remote|mcp' || true; echo '=== ACTIVE/INACTIVE UNITS ==='; systemctl list-units --type=service --all --no-pager | grep -Ei 'desktop|commander|remote|mcp' || true; echo '=== USER UNITS zenui ==='; sudo -u zenui XDG_RUNTIME_DIR=/run/user/$(id -u zenui) systemctl --user list-unit-files --type=service --no-pager 2>&1 | grep -Ei 'desktop|commander|remote|mcp' || true; echo '=== PROCESSES ==='; ps -eo pid,user,etime,args | grep -Ei 'desktop.?commander|mcp\\.desktopcommander|remote.?commander' | grep -v grep || true; echo '=== UNIT FILE CANDIDATES ==='; find /etc/systemd/system /usr/lib/systemd/system /home/zenui/.config/systemd/user /root/.config/systemd/user -maxdepth 2 -type f \\( -iname '*desktop*' -o -iname '*commander*' -o -iname '*remote*' \\) -print 2>/dev/null | head -100; echo '=== NPM/GLOBAL CANDIDATES ==='; find /opt /usr/local /home/zenui -maxdepth 4 \\( -iname '*desktop*commander*' -o -iname '*remote*commander*' \\) -print 2>/dev/null | head -100"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Rotate the Mini Xorg display on VT3 by 180 degrees using a bounded repo task",
-    "tools": ["ZEN Ops", "GitHub", "xrandr"]
+    "summary": "Read-only locate Desktop Commander service/process on Mini before restart",
+    "tools": [
+      "ZEN Ops",
+      "systemd",
+      "Desktop Commander"
+    ]
   }
 }
