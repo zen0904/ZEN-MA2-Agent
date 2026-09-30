@@ -1,19 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "living-tui-install-20260930-2352",
+  "job_id": "control-room-tui-repair-20260930-2358",
   "kind": "repo_task",
   "args": {
-    "task": "install_living_tui",
-    "timeout": 300
+    "task": "repair_control_room_tui",
+    "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Install xterm and CLI-first ZEN Living TUI, retire web visualizer service",
+    "summary": "Replace legacy Chrome visualizer with terminal-native ZEN Living TUI and apply fixed 30/70 layout",
     "tools": [
       "ZEN Ops",
       "xterm",
       "curses TUI",
-      "systemd"
+      "Openbox"
     ]
   }
 }
