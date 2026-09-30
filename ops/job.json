@@ -1,18 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "control-room-sync-verifytask-20260930-2350",
+  "job_id": "control-room-gui-verify-20260930-2355",
   "kind": "repo_task",
   "args": {
-    "task": "repair_zen_ops_updater_self_install",
-    "timeout": 180
+    "task": "verify_control_room_gui",
+    "timeout": 120
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Sync Mini runtime for Control Room GUI verification task",
+    "summary": "Verify actual ChatGPT and Visualizer window geometry on Mini display",
     "tools": [
       "ZEN Ops",
-      "GitHub",
-      "Control Room"
+      "X11",
+      "Openbox",
+      "Living Visualizer"
     ]
   }
 }
