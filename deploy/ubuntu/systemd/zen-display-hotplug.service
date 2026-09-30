@@ -2,6 +2,8 @@
 Description=ZEN display hotplug recovery
 After=zen-chatgpt-desktop.service
 Wants=zen-chatgpt-desktop.service
+StartLimitIntervalSec=30
+StartLimitBurst=3
 
 [Service]
 Type=oneshot
