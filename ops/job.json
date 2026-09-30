@@ -1,18 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "inspect-mini-gui-windows-20260930-1718",
+  "job_id": "wait-gui-taskbar-google-20260930-1720",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 45,
-    "command": "export DISPLAY=:0; echo '=== windows ==='; wmctrl -l -x 2>&1 || true; echo '=== chrome ==='; pgrep -a -f '/opt/google/chrome/chrome|google-chrome' || true; echo '=== chatgpt ==='; pgrep -a -f '/usr/lib/chatgpt/ChatGPT' || true; echo '=== tint2 ==='; command -v tint2 || true"
+    "timeout": 190,
+    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/install_gui_taskbar_and_open_google.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Inspect Mini GUI windows before adding app switching",
+    "summary": "Wait for Mini GUI taskbar and Google launcher deployment",
     "tools": [
-      "ZEN Ops",
-      "wmctrl"
+      "ZEN Ops"
     ]
   }
 }
