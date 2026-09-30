@@ -2,7 +2,7 @@
 set -euo pipefail
 
 export DISPLAY=:0
-xsetroot -solid '#202124' || true
+xsetroot -solid '#1b1a18' || true
 xhost +SI:localuser:zenui >/dev/null 2>&1 || true
 
 output="$(runuser -u zenui -- env DISPLAY=:0 /usr/bin/xrandr --query | awk '/ connected/{print $1; exit}')"
@@ -25,27 +25,25 @@ exec runuser -u zenui -- env \
     /usr/bin/chatgpt >/var/lib/zenui/chatgpt-gui.log 2>&1 &
     CHATGPT_PID=$!
 
+    /usr/bin/xterm \
+      -T "ZEN Living Workspace" \
+      -name zen-living-tui \
+      -fa "DejaVu Sans Mono" \
+      -fs 10 \
+      -bg "#1b1a18" \
+      -fg "#e9e1d8" \
+      -bd "#1b1a18" \
+      -cr "#c7b8a3" \
+      +sb \
+      -b 0 \
+      -e /usr/local/bin/zen-living-tui \
+      >/var/lib/zenui/living-tui-xterm.log 2>&1 &
+
     for _ in $(seq 1 20); do
-      if /usr/bin/curl -fsS --max-time 1 http://127.0.0.1:18992/health >/dev/null 2>&1; then
-        break
-      fi
-      sleep 0.5
-    done
-
-    /usr/bin/google-chrome \
-      --app=http://127.0.0.1:18992/ \
-      --user-data-dir=/var/lib/zenui/.config/zen-living-chrome \
-      --no-first-run \
-      --disable-session-crashed-bubble \
-      --disable-features=Translate \
-      --ozone-platform=x11 \
-      >/var/lib/zenui/visualizer-chrome.log 2>&1 &
-
-    for _ in $(seq 1 12); do
       if /usr/local/bin/zen-control-room-layout living >/var/lib/zenui/control-room-layout.log 2>&1; then
         break
       fi
-      sleep 1
+      sleep 0.5
     done
 
     wait "$CHATGPT_PID"
