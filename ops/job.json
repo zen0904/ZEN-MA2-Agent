@@ -1,17 +1,20 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wait-gui-taskbar-google-20260930-1720",
-  "kind": "shell",
+  "job_id": "install-gui-taskbar-open-google-20260930-1721",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 190,
-    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/install_gui_taskbar_and_open_google.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
+    "task": "install_gui_taskbar_and_open_google",
+    "timeout": 600
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Wait for Mini GUI taskbar and Google launcher deployment",
+    "summary": "Install clickable taskbar and open Google beside ChatGPT on Mini",
     "tools": [
-      "ZEN Ops"
+      "ZEN Ops",
+      "apt",
+      "tint2",
+      "Chrome",
+      "ChatGPT"
     ]
   }
 }
