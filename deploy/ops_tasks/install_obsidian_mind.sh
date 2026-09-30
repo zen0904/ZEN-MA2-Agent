@@ -12,7 +12,8 @@ echo "MA3_WRITES=0"
 
 id zenui >/dev/null
 test -x "$CODEX"
-test -n "$NODE"\ntest -x "$NODE"
+test -n "$NODE"
+test -x "$NODE"
 
 if [[ -d "$VAULT/.git" ]]; then
   git -C "$VAULT" fetch --depth=1 origin main
