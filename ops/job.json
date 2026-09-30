@@ -1,19 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "control-room-sync-final-20260930-2355",
+  "job_id": "visualizer-install-timefix-20260930-2310",
   "kind": "repo_task",
   "args": {
-    "task": "repair_zen_ops_updater_self_install",
+    "task": "install_living_visualizer",
     "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Sync Mini runtime for Control Room GUI install",
+    "summary": "Restart Living Visualizer with time-import and hardened telemetry fixes",
     "tools": [
       "ZEN Ops",
-      "GitHub",
-      "Openbox",
-      "Living Visualizer"
+      "Living Visualizer",
+      "systemd"
     ]
   }
 }
