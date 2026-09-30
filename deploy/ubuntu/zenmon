@@ -3,6 +3,7 @@ set -u
 
 SESSION="zenmon"
 REPO="/opt/zen/ZEN-MA2-Agent"
+NEW_SESSION=0
 
 pane_live() {
   while true; do
@@ -64,6 +65,7 @@ case "${1:-}" in
 esac
 
 if ! tmux has-session -t "$SESSION" 2>/dev/null; then
+  NEW_SESSION=1
   if command -v btop >/dev/null 2>&1; then
     MONITOR="btop --utf-force"
   else
@@ -91,10 +93,23 @@ if ! tmux has-session -t "$SESSION" 2>/dev/null; then
   tmux set-option -t "$SESSION" -g status-interval 1
 fi
 
+if ! tmux list-windows -t "$SESSION" -F '#{window_name}' 2>/dev/null | grep -qx ROOM; then
+  tmux new-window -d -t "$SESSION" -n ROOM "/usr/local/bin/zen-control-room"
+fi
+
 if ! tmux list-windows -t "$SESSION" -F '#{window_name}' 2>/dev/null | grep -qx MA_AGENT; then
   tmux new-window -d -t "$SESSION" -n MA_AGENT "watch -t -n 1 /usr/local/bin/zen-ma-dashboard"
 fi
 
-tmux bind-key -n F12 if-shell -F '#{==:#{window_name},MONITOR}' 'select-window -t zenmon:MA_AGENT' 'select-window -t zenmon:MONITOR'
+# Dedicated keys keep the old system monitor available while Room Mode becomes
+# the human-readable overview.
+tmux bind-key -n F10 select-window -t zenmon:ROOM
+tmux bind-key -n F11 select-window -t zenmon:MONITOR
+tmux bind-key -n F12 select-window -t zenmon:MA_AGENT
+tmux set-option -t "$SESSION" -g status-left ' ZEN | F10 ROOM F11 MON F12 MA '
+
+if [[ "$NEW_SESSION" == "1" ]]; then
+  tmux select-window -t "$SESSION:ROOM"
+fi
 
 exec tmux attach-session -t "$SESSION"
