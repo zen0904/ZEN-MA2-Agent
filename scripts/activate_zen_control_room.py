@@ -7,7 +7,7 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
-REPO = Path("/opt/zen/ZEN-MA2-Agent")
+REPO = Path("/opt/zen/zen-ops-runtime") if Path("/opt/zen/zen-ops-runtime/.git").is_dir() else Path("/opt/zen/ZEN-MA2-Agent")
 ROOM = REPO / "deploy" / "ubuntu" / "zen-control-room"
 SESSION = "zenmon"
 PUBLIC_RESULT = Path("/var/lib/zen-ops/public/control-room-activate.json")
