@@ -339,19 +339,19 @@ def render(data: dict) -> str:
     lines.append("  " + "  ".join(lounge) if lounge else "  " + DIM + "(everyone is working)" + RESET)
 
     lines.append("")
-    lines.append(BOLD + "ACTIVE WORK AREA / SEATS" + RESET)
-    seats = [
-        ("DESIGN POD", "GPT LEAD", agents["GPT LEAD"], "Primary artistic integration"),
-        ("CO-DESIGN", "API AUX", agents["API AUX"], "Optional auxiliary Designer"),
-        ("DEV BENCH", "CODEX", agents["CODEX"], "Repo / code / tests"),
-        ("OPS BENCH", "OPS", agents["OPS"], "Bounded Mini execution"),
-    ]
-    seat_line = []
-    for zone, who, state, detail in seats:
-        icon = GREEN + spin + RESET if state == "ACTIVE" else GRAY + "○" + RESET
-        seat_line.append(f"{zone:<11} {icon} {who:<9} {state:<7}")
-    lines.append("  " + "   |   ".join(seat_line))
-    lines.append("  " + DIM + "When a worker becomes active it leaves the lounge and occupies its seat; no fake hidden reasoning is shown." + RESET)
+    lines.append(BOLD + "ACTIVE WORK AREA / ROUND TABLE" + RESET)
+    gpt_icon = GREEN + spin + RESET if agents["GPT LEAD"] == "ACTIVE" else GRAY + "○" + RESET
+    api_icon = GREEN + spin + RESET if agents["API AUX"] == "ACTIVE" else GRAY + "○" + RESET
+    cx_icon = GREEN + spin + RESET if agents["CODEX"] == "ACTIVE" else GRAY + "○" + RESET
+    ops_icon = GREEN + spin + RESET if agents["OPS"] == "ACTIVE" else GRAY + "○" + RESET
+    lines.append(f"                              [ DESIGN POD ]")
+    lines.append(f"                         {gpt_icon} GPT LEAD   {api_icon} API AUX")
+    lines.append("                                  │")
+    lines.append(f" [ OPENCHATX STUDIO ] ─────── [ ZEN CORE ] ─────── [ MA TOOL BAY ]")
+    lines.append("                                  │")
+    lines.append(f"                         {cx_icon} CODEX      {ops_icon} OPS")
+    lines.append(f"                           [ DEV / OPS BENCH ]")
+    lines.append("  " + DIM + "Active workers leave the lounge and light their seat. Only observable task/tool state is shown." + RESET)
 
     panel_w = min(78, max(46, (width - 5) // 2))
     lines.append("")
