@@ -1,19 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "cleanup-chatgpt-transient-20260930-1743",
+  "job_id": "inspect-codex-mcp-home-20260930-1750",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 60,
-    "command": "systemctl reset-failed zen-chatgpt-gui.service zen-chatgpt-gui-1790757955.service 2>/dev/null || true; systemctl list-units 'zen-chatgpt*.service' --all --no-legend 2>/dev/null || true; systemctl is-active zen-chatgpt-desktop.service; systemctl is-enabled zen-chatgpt-desktop.service"
+    "timeout": 120,
+    "command": "echo '=== USERS ==='; id zenui 2>&1 || true; id zenops 2>&1 || true; echo '=== NODE ==='; node --version 2>&1 || /opt/node/bin/node --version 2>&1 || true; echo '=== CODEX ==='; command -v codex || true; codex --version 2>&1 || true; echo '=== ZENUI HOME ==='; getent passwd zenui || true; ls -la /var/lib/zenui/.codex 2>&1 || true; find /var/lib/zenui -maxdepth 3 -type f \\( -name 'config.toml' -o -name 'hooks.json' -o -name '.mcp.json' \\) -print 2>/dev/null | head -50; echo '=== CODEX MCP HELP ==='; runuser -u zenui -- env HOME=/var/lib/zenui codex mcp --help 2>&1 | head -120 || true; echo '=== CODEX MCP LIST ==='; runuser -u zenui -- env HOME=/var/lib/zenui codex mcp list 2>&1 || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Clear stale transient ChatGPT failed units after persistent service acceptance",
+    "summary": "Inspect Mini Codex MCP config home before Obsidian Mind integration",
     "tools": [
       "ZEN Ops",
-      "systemd",
-      "ChatGPT"
+      "Codex",
+      "MCP"
     ]
   }
 }
