@@ -8,7 +8,7 @@
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Convert Mini ChatGPT GUI from transient session to persistent boot service",
+    "summary": "Persist ChatGPT GUI as boot service on Mini and disable Chrome autostart",
     "tools": [
       "ZEN Ops",
       "systemd",
