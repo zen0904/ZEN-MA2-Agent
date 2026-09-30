@@ -1,6 +1,6 @@
 {
   "schema": "zen.upstream_tool_registry.v0.1",
-  "generated_at": "2026-09-29",
+  "generated_at": "2026-09-30",
   "policy": {
     "mini_first": true,
     "primary_brain": "STRONG_SINGLE_BRAIN",
@@ -245,11 +245,11 @@
     },
     {
       "id": "zen-ops-plane",
-      "state": "PRIMARY_REMOTE_EXECUTION",
+      "state": "PRIMARY_REMOTE_EXECUTION_LIVE_RECOVERY_VERIFIED",
       "interface": "GIT_CONTROL_BRANCH+LOCAL_WORKER+HTTPS_RESULTS",
       "authority": "MINI_MAINTENANCE_NO_DIRECT_MA2_WRITE",
       "runtime": "always",
-      "notes": "Verified ChatGPT->GitHub control branch->Mini execution->Tailscale Funnel result loop. Worker self-updates from GitHub main every 60 seconds."
+      "notes": "Canonical ChatGPT->GitHub zen-ops-control->Mini zen-ops-worker->bounded execution->zen-ops-results->Tailscale Funnel :10000 loop is live recovery verified. 2026-09-30 acceptance PASS after updater/results/Funnel reconciliation; worker self-updates from GitHub main about every 60 seconds. GitHub Actions self-hosted zen-mini runner is a separate backup/diagnostic lane and does not gate this path."
     },
     {
       "id": "remote-desktop-commander",
