@@ -73,10 +73,10 @@ done
 [[ -S /tmp/.X11-unix/X0 ]]
 
 for _ in $(seq 1 60); do
-  pgrep -u zenui -f '/usr/bin/chatgpt|/usr/lib/chatgpt' >/dev/null 2>&1 && break
+  pgrep -u zenui -f '/usr/lib/chatgpt/ChatGPT|/usr/bin/chatgpt|/usr/lib/chatgpt' >/dev/null 2>&1 && break
   sleep 1
 done
-pgrep -u zenui -f '/usr/bin/chatgpt|/usr/lib/chatgpt' >/dev/null 2>&1
+pgrep -u zenui -f '/usr/lib/chatgpt/ChatGPT|/usr/bin/chatgpt|/usr/lib/chatgpt' >/dev/null 2>&1
 
 # Keep the existing taskbar attached to the new display.
 systemctl enable zen-mini-taskbar.service >/dev/null 2>&1 || true
@@ -86,7 +86,7 @@ sleep 3
 
 echo "CHATGPT_GUI_ACTIVE=$(systemctl is-active zen-chatgpt-desktop.service || true)"
 echo "CHATGPT_GUI_ENABLED=$(systemctl is-enabled zen-chatgpt-desktop.service || true)"
-echo "CHATGPT_PROCESS=$(pgrep -u zenui -f '/usr/bin/chatgpt|/usr/lib/chatgpt' | head -1 || true)"
+echo "CHATGPT_PROCESS=$(pgrep -u zenui -f '/usr/lib/chatgpt/ChatGPT|/usr/bin/chatgpt|/usr/lib/chatgpt' | head -1 || true)"
 echo "XORG_PROCESS=$(pgrep -f '/usr/lib/xorg/Xorg :0|/usr/bin/Xorg :0' | head -1 || true)"
 echo "TASKBAR_ACTIVE=$(systemctl is-active zen-mini-taskbar.service || true)"
 echo "CHROME_ENABLED=$(systemctl is-enabled zen-mini-chrome.service 2>/dev/null || true)"
