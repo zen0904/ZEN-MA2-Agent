@@ -6,6 +6,10 @@ MODE="${1:-toggle}"
 mkdir -p /run/zen-sentinel
 
 case "$MODE" in
+  room|ROOM)
+    printf 'room\\n' > /run/zen-sentinel/mode
+    tmux select-window -t "$SESSION:ROOM"
+    ;;
   ma|MA|ma-agent|MA_AGENT)
     printf 'ma\n' > /run/zen-sentinel/mode
     tmux select-window -t "$SESSION:MA_AGENT"
@@ -26,7 +30,7 @@ case "$MODE" in
     printf 'auto\n' > /run/zen-sentinel/mode
     ;;
   *)
-    echo "usage: zen-console-mode {ma|monitor|toggle|auto}" >&2
+    echo "usage: zen-console-mode {room|ma|monitor|toggle|auto}" >&2
     exit 64
     ;;
 esac
