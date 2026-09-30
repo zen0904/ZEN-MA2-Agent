@@ -4,16 +4,17 @@
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 90,
-    "command": "echo '=== CHATGPT BIN ==='; command -v chatgpt || true; ls -l /usr/bin/chatgpt /usr/local/bin/chatgpt /opt/chatgpt/chatgpt 2>/dev/null || true; echo '=== SESSION ==='; ls -l /usr/local/libexec/zen-chatgpt-session.sh 2>/dev/null || true; sed -n '1,160p' /usr/local/libexec/zen-chatgpt-session.sh 2>/dev/null || true; echo '=== PROCESSES ==='; pgrep -a -u zenui -f 'chatgpt|chrome|openbox' || true; pgrep -a -f '/usr/lib/xorg/Xorg :0|/usr/bin/Xorg :0' || true; echo '=== UNITS ==='; systemctl list-units 'zen-chatgpt*.service' --all --no-legend 2>/dev/null || true; systemctl is-active zen-mini-taskbar.service 2>/dev/null || true"
+    "timeout": 120,
+    "command": "echo '=== BINARIES ==='; ls -l /usr/bin/chatgpt /usr/local/libexec/zen-chatgpt-session.sh /usr/bin/xinit /usr/bin/Xorg 2>&1 || true; echo '=== EXECUTABLE ==='; test -x /usr/bin/chatgpt; echo CHATGPT_X=$?; test -x /usr/local/libexec/zen-chatgpt-session.sh; echo SESSION_X=$?; echo '=== SERVICES ==='; systemctl status zen-chatgpt-desktop.service --no-pager --full 2>&1 || true; systemctl status 'zen-chatgpt-gui*.service' --no-pager --full 2>&1 || true; echo '=== PROCESSES ==='; pgrep -a -f '/usr/bin/chatgpt|/usr/lib/chatgpt|Xorg :0|xinit' || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Diagnose exact ChatGPT binary/session paths for persistent service",
+    "summary": "Diagnose persistent ChatGPT GUI prerequisite failure",
     "tools": [
       "ZEN Ops",
       "systemd",
-      "procfs"
+      "Xorg",
+      "ChatGPT"
     ]
   }
 }
