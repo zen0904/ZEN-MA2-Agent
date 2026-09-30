@@ -1,18 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "verify-mini-mouse-after-libinput-20260930-1704",
+  "job_id": "inspect-mini-chrome-chatgpt-login-20260930-1706",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 30,
-    "command": "echo '=== xinput ==='; DISPLAY=:0 xinput list 2>&1 || true; echo '=== libinput log ==='; grep -Ei 'Using input driver|libinput|Logitech M545|Wireless Receiver Mouse|K270' /var/log/Xorg.0.log 2>/dev/null | tail -n 120 || true; chvt 3 2>/dev/null || true"
+    "timeout": 45,
+    "command": "echo '=== chrome processes ==='; pgrep -a -f 'google-chrome|chrome ' || true; echo '=== default browser ==='; update-alternatives --query x-www-browser 2>/dev/null | head -30 || true; echo '=== zenui env ==='; ls -ld /var/lib/zenui /var/lib/zenui/.config 2>/dev/null || true; echo '=== recent ChatGPT login/open logs ==='; journalctl --no-pager -n 180 -u 'zen-chatgpt-gui-*' 2>/dev/null | grep -Ei 'account/login|Opening in existing browser|https://|oauth|authorize|sign in' | tail -n 80 || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Verify Logitech mouse is attached to Xorg after libinput install",
+    "summary": "Inspect Chrome launch state for ChatGPT desktop login on Mini",
     "tools": [
       "ZEN Ops",
-      "Xorg"
+      "Chrome",
+      "ChatGPT"
     ]
   }
 }
