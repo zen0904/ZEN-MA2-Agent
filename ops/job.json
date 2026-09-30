@@ -1,19 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "start-chatgpt-gui-vt3-final-20260930-1652",
-  "kind": "repo_task",
+  "job_id": "wait-activate-chatgpt-vt3-20260930-1654",
+  "kind": "shell",
   "args": {
-    "task": "start_chatgpt_gui_vt3",
-    "timeout": 180
+    "cwd": "/opt/zen",
+    "timeout": 190,
+    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/activate_chatgpt_vt3.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Launch ChatGPT Linux GUI on Mini VT3 using corrected Xorg software path",
+    "summary": "Wait for ChatGPT VT3 activation task",
     "tools": [
-      "ZEN Ops",
-      "Xorg",
-      "Openbox",
-      "ChatGPT"
+      "ZEN Ops"
     ]
   }
 }
