@@ -2,6 +2,16 @@
 set -euo pipefail
 
 R=/opt/zen/zen-ops-runtime
+export GH_CONFIG_DIR="${GH_CONFIG_DIR:-/var/lib/zen-ops/gh}"
+export GIT_TERMINAL_PROMPT=0
+
+# The worker intentionally keeps ProtectHome=true.  When a dedicated gh
+# credential store has been hydrated under /var/lib/zen-ops, use it without
+# exposing /root or embedding a token in any repository URL.
+if command -v gh >/dev/null 2>&1 && [[ -s "$GH_CONFIG_DIR/hosts.yml" ]]; then
+  git -C "$R" config credential.helper "!/usr/bin/gh auth git-credential"
+fi
+
 old="$(git -C "$R" rev-parse HEAD)"
 git -C "$R" fetch -q --depth 1 origin main
 new="$(git -C "$R" rev-parse origin/main)"
