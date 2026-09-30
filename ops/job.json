@@ -1,9 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "repair-zen-ops-recovery-units-20260930-0814",
+  "job_id": "verify-zen-ops-recovery-final-20260930-0815",
   "kind": "repo_task",
   "args": {
-    "task": "repair_zen_ops_funnel",
+    "task": "verify_zen_ops_recovery",
     "timeout": 300
   }
 }
