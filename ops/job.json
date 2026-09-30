@@ -1,18 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "control-room-sync-regexfix-20260930-2415",
+  "job_id": "control-room-gui-repair2-20260930-2422",
   "kind": "repo_task",
   "args": {
-    "task": "repair_zen_ops_updater_self_install",
-    "timeout": 180
+    "task": "repair_control_room_gui",
+    "timeout": 120
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Sync Mini runtime for Control Room layout regex fix",
+    "summary": "Reapply Mini Control Room layout after regex fix",
     "tools": [
       "ZEN Ops",
-      "GitHub",
-      "Control Room"
+      "X11",
+      "Openbox",
+      "Living Visualizer"
     ]
   }
 }
