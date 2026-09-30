@@ -8,7 +8,7 @@ WA_X=0
 WA_Y=0
 WA_W=1920
 WA_H=1080
-if [[ "$line" =~ WA: ([0-9]+),([0-9]+) ([0-9]+)x([0-9]+) ]]; then
+wa_re='WA: ([0-9]+),([0-9]+) ([0-9]+)x([0-9]+)'\nif [[ "$line" =~ $wa_re ]]; then
   WA_X="${BASH_REMATCH[1]}"
   WA_Y="${BASH_REMATCH[2]}"
   WA_W="${BASH_REMATCH[3]}"
