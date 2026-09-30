@@ -216,3 +216,9 @@ maintenance capabilities can be deployed without using Remote Desktop Commander.
 Tailscale SSH and MeshCentral remain the direct human/RMM control surfaces.
 Remote Desktop Commander is fallback-only for ChatGPT-native GUI/visual or
 emergency access.
+
+## Architecture-only reference: THE ARC
+
+`jasontzeng123/the-arc` is recorded as an **ARCHITECTURE REFERENCE ONLY**, not as a ZEN runtime dependency. See `docs/THE_ARC_ARCHITECTURE_ADOPTION_REVIEW_001.md`.
+
+Keep/adapt: canonical shared semantic timeline, beat/bar clock concepts, Scene World + Event Layer separation, deterministic state resolution, and reproducible shared event timing. Do not adopt as ZEN Core: three.js/WebGL, browser/Playwright frame rendering, the film-scene runtime, fixed-BPM assumptions, or any alternate MA programming authority. The existing ZEN Compiler, Builder, Preview, Approval, and verification boundaries stay unchanged.
