@@ -1,18 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "visualizer-sync-install-20260930-2058",
+  "job_id": "install-living-visualizer-20260930-2107",
   "kind": "repo_task",
   "args": {
-    "task": "repair_zen_ops_updater_self_install",
+    "task": "install_living_visualizer",
     "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Sync Mini zen-ops runtime to latest main before installing Living System Visualizer",
+    "summary": "Install and start observation-only ZEN Living System Visualizer MVP",
     "tools": [
       "ZEN Ops",
-      "GitHub",
-      "Living Visualizer"
+      "Living Visualizer",
+      "systemd"
     ]
   }
 }
