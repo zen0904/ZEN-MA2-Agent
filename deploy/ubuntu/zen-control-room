@@ -464,7 +464,7 @@ def render(data: dict) -> str:
     lines.append("")
     lines.append(BOLD + "TOOL RACK" + RESET + DIM + "  ● in use   ○ ready   · parked/limited   × error" + RESET)
     tools = data["tools"]
-    cols = 3 if width >= 125 else 2
+    cols = 4 if width >= 160 else (3 if width >= 125 else 2)
     rows = (len(tools) + cols - 1) // cols
     cell_w = max(30, (width - 4) // cols)
     for row in range(rows):
