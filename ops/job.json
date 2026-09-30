@@ -1,19 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "inspect-chatgpt-linux-cx-20260930-1601",
+  "job_id": "inspect-chatgpt-linux-mini-20260930-1603",
   "kind": "shell",
   "args": {
+    "command": "echo '=== commands ==='; command -v chatgpt || true; command -v openai || true; command -v codex || true; echo '=== desktop entries ==='; find /usr/share/applications /usr/local/share/applications -maxdepth 2 -type f \\( -iname '*chatgpt*' -o -iname '*openai*' \\) -print 2>/dev/null || true; echo '=== opt/usr local matches ==='; find /opt /usr/local/bin /usr/bin -maxdepth 3 \\( -type f -o -type l \\) \\( -iname '*chatgpt*' -o -iname '*openai*' \\) -print 2>/dev/null | head -n 120 || true; echo '=== packages ==='; dpkg -l 2>/dev/null | grep -Ei 'chatgpt|openai' || true; snap list 2>/dev/null | grep -Ei 'chatgpt|openai' || true; flatpak list 2>/dev/null | grep -Ei 'chatgpt|openai' || true; echo '=== processes ==='; ps -eo pid,user,args | grep -Ei '[c]hatgpt|[o]penai' || true; echo '=== user services ==='; systemctl --user list-units --all 2>/dev/null | grep -Ei 'chatgpt|openai' || true; echo 'MA2_WRITES=0'; echo 'MA3_WRITES=0'",
     "cwd": "/opt/zen",
-    "timeout": 120,
-    "command": "echo '=== CHATGPT APP ==='; command -v chatgpt || true; dpkg-query -W -f='${Package} ${Version} ${Architecture}\\n' chatgpt 2>/dev/null || true; chatgpt --version 2>/dev/null || true; pgrep -a -f '(^|/)chatgpt( |$)' || true; echo '=== CODEX CLI ==='; command -v codex || true; codex --version 2>/dev/null || true; echo '=== DISPLAY ==='; printf 'DISPLAY=%s\\nWAYLAND_DISPLAY=%s\\nXDG_SESSION_TYPE=%s\\n' \"${DISPLAY:-}\" \"${WAYLAND_DISPLAY:-}\" \"${XDG_SESSION_TYPE:-}\""
+    "timeout": 120
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Inspect official ChatGPT Linux app and CX Codex CLI separately on Mini",
+    "summary": "Inspect installed ChatGPT Linux app/runtime on Mini and distinguish it from CX CLI",
     "tools": [
       "ZEN Ops",
-      "ChatGPT Linux",
-      "Codex CLI"
+      "system inventory"
     ]
   }
 }
