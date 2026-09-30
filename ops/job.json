@@ -1,18 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "start-chrome-chatgpt-login-20260930-1709",
-  "kind": "repo_task",
+  "job_id": "rotate-mini-display-180-20260930-1711",
+  "kind": "shell",
   "args": {
-    "task": "start_chrome_chatgpt_login",
-    "timeout": 120
+    "cwd": "/opt/zen",
+    "timeout": 45,
+    "command": "echo '=== outputs before ==='; DISPLAY=:0 xrandr --query 2>&1 || true; OUT=$(DISPLAY=:0 xrandr --query 2>/dev/null | awk '/ connected/{print $1; exit}'); echo \"OUTPUT=$OUT\"; if [ -z \"$OUT\" ]; then echo 'NO_CONNECTED_OUTPUT'; exit 1; fi; DISPLAY=:0 xrandr --output \"$OUT\" --rotate inverted; sleep 1; echo '=== after ==='; DISPLAY=:0 xrandr --query | grep ' connected' | head -5; echo 'DISPLAY_ROTATION=180'; chvt 3 2>/dev/null || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Launch Chrome on Mini VT3 for ChatGPT desktop sign-in",
+    "summary": "Rotate Mini desktop display 180 degrees for upside-down monitor",
     "tools": [
       "ZEN Ops",
-      "Chrome",
-      "ChatGPT"
+      "xrandr"
     ]
   }
 }
