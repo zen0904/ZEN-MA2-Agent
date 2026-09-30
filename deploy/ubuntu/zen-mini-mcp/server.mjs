@@ -1,17 +1,14 @@
-import { createServer } from "node:http";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 
-import { createMcpHandler, McpServer } from "@modelcontextprotocol/server";
-import { localhostHostValidation, localhostOriginValidation, toNodeHandler } from "@modelcontextprotocol/node";
+import { McpServer } from "@modelcontextprotocol/server";
+import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import * as z from "zod/v4";
 
 const execFileAsync = promisify(execFile);
-const PORT = Number(process.env.ZEN_MINI_MCP_PORT || 19090);
-const HOST = "127.0.0.1";
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 
 const SAFE_FILES = {
   updater_heartbeat: "/var/lib/zen-ops/public/updater-heartbeat.json",
@@ -91,9 +88,9 @@ async function zenProjectStatus() {
   let projectControl = null;
   try { projectControl = JSON.parse(await readFile(SAFE_FILES.project_control, "utf8")); } catch {}
   const git = {};
-  try { git.head = (await run("git", ["-C", "/opt/zen/zen-ops-runtime", "rev-parse", "HEAD"])).stdout; } catch {}
-  try { git.branch = (await run("git", ["-C", "/opt/zen/zen-ops-runtime", "branch", "--show-current"])).stdout; } catch {}
-  try { git.status = (await run("git", ["-C", "/opt/zen/zen-ops-runtime", "status", "--short"])).stdout; } catch {}
+  try { git.head = (await run("git", ["-c", "safe.directory=/opt/zen/zen-ops-runtime", "-C", "/opt/zen/zen-ops-runtime", "rev-parse", "HEAD"])).stdout; } catch {}
+  try { git.branch = (await run("git", ["-c", "safe.directory=/opt/zen/zen-ops-runtime", "-C", "/opt/zen/zen-ops-runtime", "branch", "--show-current"])).stdout; } catch {}
+  try { git.status = (await run("git", ["-c", "safe.directory=/opt/zen/zen-ops-runtime", "-C", "/opt/zen/zen-ops-runtime", "status", "--short"])).stdout; } catch {}
   return { git, project_control: projectControl };
 }
 
@@ -146,14 +143,11 @@ async function obsidianSearch(query, limit) {
   return { query, count: matches.length, matches };
 }
 
-function buildServer() {
-  const server = new McpServer(
-    { name: "zen-mini", version: VERSION },
-    { capabilities: { tools: {} } }
-  );
+function createServer() {
+  const server = new McpServer({ name: "zen-mini", version: VERSION });
 
   server.registerTool("mini_status", {
-    description: "Read health, uptime, storage, memory and allowlisted service state from the ZEN Mac mini. Read-only."
+    description: "Read health, uptime, storage, memory and allowlisted service state from this ZEN Mac mini. Read-only."
   }, async () => result(await miniStatus()));
 
   server.registerTool("zen_project_status", {
@@ -166,7 +160,7 @@ function buildServer() {
   }, async ({ unit }) => result(await serviceState(unit)));
 
   server.registerTool("read_safe_file", {
-    description: "Read one explicitly allowlisted ZEN/Obsidian status or governance file. No arbitrary paths.",
+    description: "Read one explicitly allowlisted ZEN or Obsidian governance/status file. No arbitrary paths.",
     inputSchema: z.object({ key: z.enum(Object.keys(SAFE_FILES)) })
   }, async ({ key }) => {
     const file = SAFE_FILES[key];
@@ -180,7 +174,7 @@ function buildServer() {
   }, async ({ limit }) => result(await recentOpsResults(limit)));
 
   server.registerTool("obsidian_search", {
-    description: "Lexically search the local Obsidian Mind vault for persistent agent memory. Read-only; QMD is not required.",
+    description: "Lexically search the local Obsidian Mind vault for persistent agent memory. Read-only.",
     inputSchema: z.object({
       query: z.string().min(2).max(200),
       limit: z.number().int().min(1).max(20).default(8)
@@ -188,12 +182,12 @@ function buildServer() {
   }, async ({ query, limit }) => result(await obsidianSearch(query, limit)));
 
   server.registerTool("gateway_info", {
-    description: "Describe this bounded read-only ZEN Mini MCP gateway."
+    description: "Describe this bounded local ZEN Mini MCP."
   }, async () => result({
     name: "zen-mini",
     version: VERSION,
+    transport: "stdio",
     mode: "read-only",
-    bind: `${HOST}:${PORT}`,
     ma2_writes: false,
     ma3_writes: false,
     arbitrary_shell: false,
@@ -203,33 +197,4 @@ function buildServer() {
   return server;
 }
 
-const handler = createMcpHandler(buildServer, { responseMode: "json" });
-const nodeHandler = toNodeHandler(handler);
-const validateHost = localhostHostValidation();
-const validateOrigin = localhostOriginValidation();
-
-const http = createServer((req, res) => {
-  if (req.url === "/healthz") {
-    res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify({ ok: true, name: "zen-mini", version: VERSION }));
-    return;
-  }
-  if (req.url !== "/mcp") {
-    res.writeHead(404, { "content-type": "application/json" });
-    res.end(JSON.stringify({ error: "not_found" }));
-    return;
-  }
-  if (!validateHost(req, res) || !validateOrigin(req, res)) return;
-  void nodeHandler(req, res);
-});
-
-http.listen(PORT, HOST, () => {
-  console.error(`zen-mini-mcp listening on http://${HOST}:${PORT}/mcp`);
-});
-
-async function shutdown() {
-  await handler.close().catch(() => {});
-  http.close(() => process.exit(0));
-}
-process.on("SIGTERM", shutdown);
-process.on("SIGINT", shutdown);
+serveStdio(createServer);
