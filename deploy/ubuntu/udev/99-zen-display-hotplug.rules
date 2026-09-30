@@ -1,0 +1,2 @@
+# Restore the Mini's persistent ChatGPT/Living Workspace display after monitor hotplug.
+ACTION=="change", SUBSYSTEM=="drm", TAG+="systemd", ENV{SYSTEMD_WANTS}+="zen-display-hotplug.service"
