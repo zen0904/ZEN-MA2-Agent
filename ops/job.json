@@ -1,19 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "tui-capability-probe-20260930-2334",
-  "kind": "shell",
+  "job_id": "living-tui-sync-20260930-2342",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 60,
-    "command": "echo '=== TERMINALS ==='; for x in xterm uxterm xfce4-terminal lxterminal mate-terminal gnome-terminal alacritty kitty foot konsole terminator; do p=$(command -v \"$x\" 2>/dev/null || true); [ -n \"$p\" ] && echo \"$x=$p\"; done; echo '=== PYTHON TUI ==='; python3 -c 'import curses; print(\"curses=YES\")' 2>/dev/null || echo curses=NO; python3 -c 'import rich; print(\"rich=YES\", rich.__version__ if hasattr(rich,\"__version__\") else \"\")' 2>/dev/null || echo rich=NO; python3 -c 'import textual; print(\"textual=YES\", textual.__version__)' 2>/dev/null || echo textual=NO; python3 -c 'import prompt_toolkit; print(\"prompt_toolkit=YES\", prompt_toolkit.__version__)' 2>/dev/null || echo prompt_toolkit=NO; echo '=== TMUX ==='; command -v tmux || true; echo '=== TERMINFO ==='; infocmp xterm-256color >/dev/null 2>&1 && echo xterm-256color=YES || echo xterm-256color=NO"
+    "task": "repair_zen_ops_updater_self_install",
+    "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Read-only probe terminal and Python TUI capabilities for CLI-first Living Workspace",
+    "summary": "Sync Mini runtime for CLI-first ZEN Living TUI",
     "tools": [
       "ZEN Ops",
-      "Python",
-      "curses"
+      "GitHub",
+      "curses TUI"
     ]
   }
 }
