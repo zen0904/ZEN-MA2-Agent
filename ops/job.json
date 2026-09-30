@@ -1,19 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "verify-runtime-head-20260930-1601",
+  "job_id": "preflight-chatgpt-codex-desktop-20260930-1600",
   "kind": "shell",
   "args": {
-    "command": "git -c safe.directory=/opt/zen/zen-ops-runtime -C /opt/zen/zen-ops-runtime rev-parse HEAD; git -c safe.directory=/var/lib/zen-ops/control.git -C /var/lib/zen-ops/control.git rev-parse refs/remotes/origin/zen-ops-control; systemctl is-active zen-ops-worker.service; systemctl is-active zen-ops-updater.timer; test -f /var/lib/zen-ops/public/updater-heartbeat.json && cat /var/lib/zen-ops/public/updater-heartbeat.json || echo UPDATER_HEARTBEAT=ABSENT; echo MA2_WRITES=0; echo MA3_WRITES=0",
-    "cwd": "/var/lib/zen-ops",
-    "timeout": 120
-  },
-  "meta": {
-    "actor": "CHATGPT_LEAD",
-    "summary": "Verify recovered Mini runtime head and updater heartbeat",
-    "tools": [
-      "ZEN Ops",
-      "git",
-      "systemd"
-    ]
+    "cwd": "/opt/zen",
+    "timeout": 45,
+    "command": "echo '=== arch/os ==='; uname -m; . /etc/os-release; echo \"$ID $VERSION_ID\"; echo '=== users ==='; loginctl list-users --no-legend 2>/dev/null || true; echo '=== sessions ==='; loginctl list-sessions --no-legend 2>/dev/null || true; echo '=== who ==='; who 2>/dev/null || true; echo '=== node/npm ==='; /opt/node/bin/node --version 2>/dev/null || true; /opt/node/bin/npm --version 2>/dev/null || true; echo '=== codex ==='; command -v codex 2>/dev/null || true; codex --version 2>/dev/null || true; echo '=== chatgpt/chrome ==='; command -v chatgpt 2>/dev/null || true; command -v google-chrome 2>/dev/null || true; command -v chromium 2>/dev/null || true"
   }
 }
