@@ -1,15 +1,21 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "mini-spatial-preflight-20261001-0014",
+  "job_id": "mini-spatial-preflight-export-20261001-0020",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 90,
-    "command": "set +e; echo === HOST ===; hostname; echo === ZEN_OPS_WORKER ===; systemctl is-active zen-ops-worker.service; echo === REPO ===; git -C /opt/zen/ZEN-MA2-Agent status --short --branch; git -C /opt/zen/ZEN-MA2-Agent rev-parse HEAD; git -C /opt/zen/ZEN-MA2-Agent log -1 --format=%h:%s; echo === CODEX ===; command -v codex || true; codex --version 2>&1 || true; echo === CLAUDE ===; command -v claude || true; claude --version 2>&1 || true; echo === SPATIAL ===; rg --files /opt/zen/ZEN-MA2-Agent/zen_ma2_agent /opt/zen/ZEN-MA2-Agent/tests | rg 'spatial|position|group_order' | head -80"
+    "timeout": 120,
+    "command": "set +e\n{\n  echo \"=== HOST ===\"; hostname\n  echo \"=== ZEN OPS WORKER ===\"; systemctl is-active zen-ops-worker.service\n  echo \"=== REPO ===\"; git -C /opt/zen/ZEN-MA2-Agent status --short --branch\n  git -C /opt/zen/ZEN-MA2-Agent rev-parse HEAD\n  git -C /opt/zen/ZEN-MA2-Agent log -1 --format=%h:%s\n  echo \"=== CODEX ===\"; command -v codex || true; codex --version 2>&1 || true\n  echo \"=== CLAUDE ===\"; command -v claude || true; claude --version 2>&1 || true\n  echo \"=== SPATIAL FILES ===\"; rg --files /opt/zen/ZEN-MA2-Agent/zen_ma2_agent /opt/zen/ZEN-MA2-Agent/tests 2>&1 | rg 'spatial|position|group_order' | head -80\n} > /tmp/mini-spatial-preflight.txt 2>&1\npython3 -c 'import json,sys,datetime; print(json.dumps({\"schema\":\"zen.mini.preflight.v1\",\"captured_at\":datetime.datetime.now(datetime.timezone.utc).isoformat(),\"output\":sys.stdin.read()},ensure_ascii=False,indent=2))' < /tmp/mini-spatial-preflight.txt > /tmp/mini-spatial-preflight.json\nblob=\"$(base64 -w0 /tmp/mini-spatial-preflight.json)\"\ngh api --method PUT repos/zen0904/ZEN-MA2-Agent/contents/ops/evidence/mini-spatial-preflight-20261001.json -f message=\"ops: preserve Mini spatial preflight evidence\" -f content=\"$blob\" -f branch=zen-ops-control > /tmp/mini-spatial-preflight-push.json\npython3 -c 'import json; d=json.load(open(\"/tmp/mini-spatial-preflight-push.json\")); print(\"COMMIT=\"+d[\"commit\"][\"sha\"]); print(\"FILE=\"+d[\"content\"][\"path\"])'\ncat /tmp/mini-spatial-preflight.txt"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Read-only Mini preflight for Spatial vNext workspace and coding CLI availability",
-    "tools": ["ZEN Ops", "git", "codex CLI", "claude CLI", "rg"]
+    "summary": "Read-only Mini Spatial vNext preflight, retain nonsecret evidence on the ops branch",
+    "tools": [
+      "ZEN Ops",
+      "git",
+      "codex CLI",
+      "claude CLI",
+      "GitHub CLI"
+    ]
   }
 }
