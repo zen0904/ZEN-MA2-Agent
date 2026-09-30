@@ -4,7 +4,7 @@ set -euo pipefail
 VAULT=/var/lib/zenui/obsidian-mind
 REPO=https://github.com/breferrari/obsidian-mind.git
 CODEX=/usr/local/bin/codex
-NODE=/usr/bin/node
+NODE="$(command -v node)"
 
 echo "TASK=INSTALL_OBSIDIAN_MIND"
 echo "MA2_WRITES=0"
@@ -12,7 +12,7 @@ echo "MA3_WRITES=0"
 
 id zenui >/dev/null
 test -x "$CODEX"
-test -x "$NODE"
+test -n "$NODE"\ntest -x "$NODE"
 
 if [[ -d "$VAULT/.git" ]]; then
   git -C "$VAULT" fetch --depth=1 origin main
