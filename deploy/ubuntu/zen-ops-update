@@ -10,7 +10,7 @@ if [[ "$old" != "$new" ]]; then
   git -C "$R" reset -q --hard origin/main
 fi
 
-# Reconcile the OPS control plane every cycle, not only when HEAD changes.
+# Reconcile the OPS control plane every cycle, not only when HEAD changes.\n# A harmless main-HEAD bump can bootstrap hosts stranded on the pre-reconcile updater.
 # This is intentional: a self-update runs the old script body for that cycle,
 # so newly added units must still be installed on the next timer tick even
 # when the repository is already at the new HEAD.
