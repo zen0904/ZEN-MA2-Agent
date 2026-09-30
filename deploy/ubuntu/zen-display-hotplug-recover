@@ -12,9 +12,13 @@ log() {
   printf '%s %s\n' "$(date -Is)" "$*" | tee -a "$LOG"
 }
 
+as_zenui() {
+  runuser -u zenui -- env     HOME=/var/lib/zenui     USER=zenui     LOGNAME=zenui     DISPLAY="$DISPLAY_NUM"     "$@"
+}
+
 log "EVENT=start"
 
-# HDMI/DP hotplug can report connected before EDID/modes settle.
+# DRM hotplug can report connected slightly before EDID/modes settle.
 sleep 2
 
 if ! systemctl is-active --quiet zen-chatgpt-desktop.service; then
@@ -27,11 +31,7 @@ if [[ ! -S /tmp/.X11-unix/X0 ]]; then
   exit 0
 fi
 
-output="$(
-  runuser -u zenui -- env     HOME=/var/lib/zenui     DISPLAY="$DISPLAY_NUM"     /usr/bin/xrandr --query 2>/dev/null |
-    awk '/ connected/{print $1; exit}'
-)"
-
+output="$(as_zenui /usr/bin/xrandr --query 2>/dev/null | awk '/ connected/{print $1; exit}')"
 if [[ -z "$output" ]]; then
   log "DISPLAY_OUTPUT=none_connected"
   exit 0
@@ -39,16 +39,28 @@ fi
 
 log "DISPLAY_OUTPUT=$output"
 
-runuser -u zenui -- env   HOME=/var/lib/zenui   DISPLAY="$DISPLAY_NUM"   /usr/bin/xrandr --output "$output" --auto --rotate inverted   >>"$LOG" 2>&1 || log "XRANDR=warn"
+as_zenui /usr/bin/xrandr   --output "$output"   --auto   --rotate inverted   >>"$LOG" 2>&1 || log "XRANDR=warn"
 
-runuser -u zenui -- env   HOME=/var/lib/zenui   DISPLAY="$DISPLAY_NUM"   /usr/bin/xset dpms force on   >>"$LOG" 2>&1 || true
+# The physical monitor may be switched off manually; X itself should not add
+# another idle blanking layer when it comes back.
+as_zenui /usr/bin/xset s off >>"$LOG" 2>&1 || true
+as_zenui /usr/bin/xset s noblank >>"$LOG" 2>&1 || true
+as_zenui /usr/bin/xset -dpms >>"$LOG" 2>&1 || true
 
 /usr/bin/chvt 3 >>"$LOG" 2>&1 || log "CHVT=warn"
 
-# Let the window manager notice the restored mode before resizing windows.
-sleep 1
+# Openbox may need a few seconds to republish both windows after mode/VT
+# restoration. Retry rather than declaring the layout missing immediately.
+layout_ok=0
+for _ in $(seq 1 20); do
+  if as_zenui /usr/local/bin/zen-control-room-layout living >>"$LOG" 2>&1; then
+    layout_ok=1
+    break
+  fi
+  sleep 0.5
+done
 
-if runuser -u zenui -- env   HOME=/var/lib/zenui   DISPLAY="$DISPLAY_NUM"   /usr/local/bin/zen-control-room-layout living   >>"$LOG" 2>&1; then
+if [[ "$layout_ok" = "1" ]]; then
   log "LAYOUT=PASS"
 else
   log "LAYOUT=DEFERRED"
