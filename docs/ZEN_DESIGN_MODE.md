@@ -52,6 +52,46 @@ provider model through the same bounded artistic contract and verified context.
 That runtime model is an autonomous substitute for the interactive Primary
 Brain, not a second competing brain and not a permanent multi-agent committee.
 
+### Interactive Lead Designer + Auxiliary API Designer
+
+When the owner is actively working with ChatGPT, the artistic hierarchy is
+explicit:
+
+```text
+Human Owner
+    ↓
+ChatGPT = Lead / Primary Lighting Designer
+    ↕
+optional API Designer = auxiliary co-designer
+    ↓
+one unified artistic plan
+```
+
+The auxiliary API Designer may help with alternatives, critique, research
+interpretation, section ideas, mechanism suggestions, and structured draft
+generation. It does not own the final artistic direction, does not replace the
+Lead Designer, and does not form a co-equal two-brain voting system.
+
+API availability is never a prerequisite for interactive design. If the API
+provider is unavailable, out of quota, rate-limited, or intentionally disabled,
+ChatGPT continues the complete design process from the same verified context and
+tool-capability layer. This is a graceful quality/throughput degradation, not a
+product failure and not a reason to block programming.
+
+Short form:
+
+```text
+CHATGPT_LEAD_DESIGNER = REQUIRED_IN_INTERACTIVE_MODE
+API_AUXILIARY_DESIGNER = OPTIONAL
+API_FAILURE_BLOCKS_ARTISTIC_WORK = NO
+FINAL_ARTISTIC_INTEGRATION = CHATGPT_LEAD
+```
+
+The auxiliary model may never gain raw MA execution authority merely because it
+participates in design. Its output remains evidence/advice/draft intent until
+the Lead Designer integrates it into the single artistic plan consumed by the
+normal ZEN Compiler path.
+
 Specialized workers may be invoked by the Primary Brain for coding, research,
 audio/video/vision evidence, structural code intelligence, critique, or other
 bounded work. Their outputs return to the Primary Brain as evidence,
