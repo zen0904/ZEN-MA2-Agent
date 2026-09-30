@@ -1,19 +1,14 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "probe-gh-auth-20260930-2021",
-  "kind": "shell",
+  "job_id": "display-rotate-180-20260930-2017",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 60,
-    "command": "echo '=== GH AUTH ==='; gh auth status 2>&1; echo '=== GIT REMOTE ==='; git -C /var/lib/zen-ops/control.git remote -v 2>&1; echo '=== CRED HELPER ==='; git -C /var/lib/zen-ops/control.git config --get credential.helper 2>&1 || true"
+    "task": "rotate_display_180",
+    "timeout": 30
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Read-only verify Mini zen-ops GitHub credential availability before result writeback design",
-    "tools": [
-      "ZEN Ops",
-      "GitHub",
-      "git"
-    ]
+    "summary": "Rotate the Mini Xorg display on VT3 by 180 degrees using a bounded repo task",
+    "tools": ["ZEN Ops", "GitHub", "xrandr"]
   }
 }
