@@ -1243,6 +1243,20 @@
         "preserve current MA2 deterministic Builder/Preview/Approval boundary"
       ],
       "next_review_condition": "After the current Spatial vNext live operator acceptance is unblocked, define only a small Musical Clock and canonical semantic Event Timeline artifact before any broader Scene/Event resolver refactor."
+    },
+    {
+      "id": "SAFE_AGENT_TOOL_BROKER_001",
+      "classification": "HIGH_LEVERAGE_FUTURE",
+      "milestone": "M1_DESIGNER_FOUNDATION",
+      "status": "CATALOG_ACTIVE_BROKER_NOT_ENABLED",
+      "why_it_matters": "Interactive ChatGPT can use Mini tools through ZEN OPS, and API Designers now receive the same tool-capability catalog, but ordinary Lean API inference remains intentionally zero-tool. A typed allowlisted broker is required before provider models may directly request analysis tools without gaining raw shell/MCP/MA authority.",
+      "blocks_current_milestone": false,
+      "dependencies": [
+        "data/zen_agent_tool_capabilities.json",
+        "docs/ZEN_AGENT_TOOL_CAPABILITY_LAYER.md",
+        "preserve Compiler/Preview/Human Approval/Builder/native readback as the only MA mutation path"
+      ],
+      "next_review_condition": "After Spatial vNext's current acceptance gate or when a design task first materially needs provider-initiated GDTF/MVR/audio/video/document analysis, implement only the smallest typed read/analysis broker adapters required by that case."
     }
   ],
   "recent_foundation": {
