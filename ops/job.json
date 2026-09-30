@@ -1,17 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wait-activate-chatgpt-vt3-20260930-1654",
-  "kind": "shell",
+  "job_id": "activate-chatgpt-vt3-20260930-1655",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 190,
-    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/activate_chatgpt_vt3.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
+    "task": "activate_chatgpt_vt3",
+    "timeout": 120
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Wait for ChatGPT VT3 activation task",
+    "summary": "Switch Mini console to the already-running ChatGPT Linux app on VT3",
     "tools": [
-      "ZEN Ops"
+      "ZEN Ops",
+      "chvt",
+      "ChatGPT"
     ]
   }
 }
