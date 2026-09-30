@@ -1,18 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wait-clean-chatgpt-persist-20260930-1730",
-  "kind": "shell",
+  "job_id": "install-chatgpt-persist2-20260930-1731",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 150,
-    "command": "set -e; R=/opt/zen/zen-ops-runtime; for i in $(seq 1 120); do if git -c safe.directory=$R -C $R merge-base --is-ancestor 7fcfa027b4a2ddb5cb9a28c364e96f8da114f0f3 HEAD 2>/dev/null; then echo RUNTIME_HEAD=$(git -c safe.directory=$R -C $R rev-parse HEAD); echo CLEAN_PERSIST_TASK=READY; exit 0; fi; sleep 1; done; echo CLEAN_PERSIST_TASK=TIMEOUT; exit 1"
+    "task": "install_persistent_chatgpt_gui_service",
+    "timeout": 300
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Wait until cleaned ChatGPT persistence installer reaches Mini runtime",
+    "summary": "Install persistent ChatGPT desktop service on Mini boot",
     "tools": [
       "ZEN Ops",
-      "git"
+      "systemd",
+      "Xorg",
+      "ChatGPT"
     ]
   }
 }
