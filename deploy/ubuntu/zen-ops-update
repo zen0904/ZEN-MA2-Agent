@@ -20,9 +20,33 @@ install -m 0644 "$R/deploy/ubuntu/systemd/zen-ops-updater.timer" /etc/systemd/sy
 install -m 0644 "$R/deploy/ubuntu/systemd/zen-ops-results.service" /etc/systemd/system/zen-ops-results.service
 install -m 0644 "$R/deploy/ubuntu/systemd/zen-ops-funnel.service" /etc/systemd/system/zen-ops-funnel.service
 install -m 0755 "$R/deploy/ubuntu/zen-ops-update" /usr/local/sbin/zen-ops-update
+install -m 0755 "$R/deploy/ubuntu/zen-control-room" /usr/local/bin/zen-control-room
+install -m 0755 "$R/deploy/ubuntu/zenmon" /usr/local/bin/zenmon
+install -m 0755 "$R/deploy/ubuntu/zen-console-mode" /usr/local/bin/zen-console-mode
 
 systemctl daemon-reload
 systemctl enable --now zen-ops-updater.timer
 systemctl enable --now zen-ops-results.service
 systemctl enable --now zen-ops-funnel.service
 systemctl restart zen-ops-worker.service
+
+# Reconcile the human-facing tmux console without depending on the stale
+# /opt/zen/ZEN-MA2-Agent worktree. The updater itself follows canonical main.
+if command -v tmux >/dev/null 2>&1; then
+  for sock in /tmp/tmux-*/default; do
+    [[ -S "$sock" ]] || continue
+    if tmux -S "$sock" has-session -t zenmon 2>/dev/null; then
+      if tmux -S "$sock" list-windows -t zenmon -F '#{window_name}' 2>/dev/null | grep -qx ROOM; then
+        tmux -S "$sock" respawn-pane -k -t zenmon:ROOM.0 /usr/local/bin/zen-control-room || true
+      else
+        tmux -S "$sock" new-window -d -t zenmon -n ROOM /usr/local/bin/zen-control-room || true
+      fi
+      tmux -S "$sock" bind-key -n F10 select-window -t zenmon:ROOM || true
+      tmux -S "$sock" bind-key -n F11 select-window -t zenmon:MONITOR || true
+      tmux -S "$sock" bind-key -n F12 select-window -t zenmon:MA_AGENT || true
+      tmux -S "$sock" set-option -t zenmon -g status-left ' ZEN | F10 ROOM F11 MON F12 MA ' || true
+      tmux -S "$sock" select-window -t zenmon:ROOM || true
+      break
+    fi
+  done
+fi
