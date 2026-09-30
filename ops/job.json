@@ -1,18 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "show-codex-device-auth-console-20260930-1621",
-  "kind": "repo_task",
+  "job_id": "verify-codex-console-login-20260930-1623",
+  "kind": "shell",
   "args": {
-    "task": "show_codex_device_auth_on_console",
-    "timeout": 120
+    "cwd": "/opt/zen",
+    "timeout": 30,
+    "command": "echo '=== active vt ==='; fgconsole 2>/dev/null || true; echo '=== codex login proc ==='; pgrep -a -f 'codex login --device-auth' || true; echo '=== tty2 ==='; ps -t tty2 -o pid,ppid,user,stat,args --no-headers 2>/dev/null || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Show Codex device-auth flow directly on Mini VT2 console",
+    "summary": "Verify Codex device login is actively running on Mini console",
     "tools": [
-      "ZEN Ops",
-      "openvt",
-      "Codex CLI"
+      "ZEN Ops"
     ]
   }
 }
