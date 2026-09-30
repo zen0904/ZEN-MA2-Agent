@@ -1761,6 +1761,77 @@
       "operator_workflow_change": "NONE",
       "current_milestone_change": "NONE",
       "next_acceptance_gate_change": "NONE"
+    },
+    {
+      "id": "MINI_REMOTE_TRANSPORT_PRIORITY_001",
+      "status": "ACTIVE_CANONICAL",
+      "owner_clarification_date": "2026-09-30",
+      "source": "docs/MINI_REMOTE_ACCESS_REDUNDANCY_001.md",
+      "rule": "Mini remote administration uses redundant parallel transports. zen-mini MCP and ZEN Ops are co-primary Tier 1 paths. Gateway SSH and Tailscale SSH/OpenSSH are Tier 2 and are preferred ahead of Remote Desktop Commander. Remote Desktop Commander is Tier 3 interactive fallback. Legacy/bootstrap paths such as TRIGGERcmd are lower-priority emergency-only paths.",
+      "tier_1_co_primary": [
+        "ZEN_MINI_MCP",
+        "ZEN_OPS"
+      ],
+      "tier_2_secure_shell": [
+        "GATEWAY_SSH",
+        "TAILSCALE_SSH_OR_OPENSSH"
+      ],
+      "tier_3_interactive_fallback": [
+        "REMOTE_DESKTOP_COMMANDER"
+      ],
+      "tier_4_legacy_emergency": [
+        "TRIGGERCMD",
+        "LEGACY_SELF_HOSTED_GITHUB_ISSUE_WORKFLOW",
+        "TEMPORARY_BOOTSTRAP_CONNECTORS"
+      ],
+      "routing_policy": [
+        "MULTIPLE_TRANSPORTS_MAY_REMAIN_HEALTHY_IN_PARALLEL",
+        "READS_MAY_USE_MULTIPLE_LIVE_SOURCES",
+        "ONE_MUTATION_ONE_EXECUTION_TRANSPORT",
+        "AMBIGUOUS_MUTATION_TIMEOUT_MUST_NOT_BE_REPLAYED_CROSS_TRANSPORT_WITHOUT_AUTHORITATIVE_NONEXECUTION_PROOF",
+        "REMOTE_ADMINISTRATION_NEVER_BYPASSES_ZEN_PREVIEW_APPROVAL_DETERMINISTIC_EXECUTION_OR_NATIVE_READBACK"
+      ],
+      "verified_on_2026_09_30": [
+        "ZEN_MINI_MCP_ENABLED_ON_MINI",
+        "ZEN_OPS_END_TO_END_VERIFIED",
+        "TAILSCALED_ACTIVE",
+        "REMOTE_DESKTOP_COMMANDER_ZEN_AGENT_SERVER_ONLINE_AFTER_REPAIR"
+      ],
+      "pending_acceptance": [
+        "GATEWAY_SSH_MINI_ONBOARD_AND_LIVE_ACCEPTANCE",
+        "TAILSCALE_SSH_OR_OPENSSH_FINAL_AUTH_AND_LIVE_ACCEPTANCE",
+        "MOBILE_HOTSPOT_SAVED_PROFILE_AND_AUTOCONNECT_READBACK"
+      ],
+      "operator_workflow_change": "NONE",
+      "ma2_writes": 0,
+      "ma3_writes": 0
+    },
+    {
+      "id": "MINI_CONTROL_ROOM_LAYOUT_001",
+      "status": "DESIGN_CAPTURED_NOT_IMPLEMENTED",
+      "owner_clarification_date": "2026-09-30",
+      "source": "docs/MINI_CONTROL_ROOM_LAYOUT_001.md",
+      "rule": "When a monitor is attached, the intended default Mini display is ZEN Control Room rather than full-screen ChatGPT or a full-screen terminal: ChatGPT remains the largest operator surface, with compact system/Agent status and terminal/recent activity visible beside it. Headless operation remains the normal infrastructure mode and no remote capability may depend on GUI availability.",
+      "default_layout": {
+        "left": "CHATGPT_PRIMARY_APPROX_65_PERCENT",
+        "right_top": "SYSTEM_AND_AGENT_STATUS",
+        "right_bottom": "TERMINAL_AND_RECENT_ACTIVITY"
+      },
+      "future_living_system_visualizer": {
+        "status": "DESIGN_ONLY",
+        "role": "OBSERVATION_LAYER_ONLY",
+        "execution_authority": "NONE",
+        "failure_impact_on_zen": "NONE_REQUIRED",
+        "event_driven": true
+      },
+      "verified_display_baseline": {
+        "output": "HDMI-3",
+        "resolution": "1920x1080",
+        "rotation": "INVERTED_180",
+        "rotation_persistent_across_gui_restart": true
+      },
+      "implementation_gate": "DO_NOT_IMPLEMENT_LIVING_VISUALIZER_UNTIL_EXPLICITLY_SCHEDULED",
+      "operator_workflow_change": "NONE"
     }
   ],
   "allocation_policy": {
