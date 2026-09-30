@@ -17,6 +17,7 @@ OPS_PUBLIC = Path("/var/lib/zen-ops/public")
 OPS_CONTROL = Path("/var/lib/zen-ops/control.git")
 CAP_REGISTRY = REPO / "data" / "zen_agent_tool_capabilities.json"
 UPSTREAM_REGISTRY = REPO / "data" / "zen_upstream_tool_registry.json"
+ACTIVITY_FILE = OPS_PUBLIC / "activity.json"
 
 ESC = "\033["
 RESET = ESC + "0m"
@@ -162,14 +163,12 @@ def box_bottom(width: int) -> str:
 def current_activity(latest: dict, ctl: dict, proc: str) -> dict:
     result_id = str(latest.get("job_id") or "")
     ctl_id = str(ctl.get("job_id") or "")
-    meta = ctl.get("meta") if isinstance(ctl.get("meta"), dict) else {}
+    result_meta = latest.get("meta") if isinstance(latest.get("meta"), dict) else {}
+    control_meta = ctl.get("meta") if isinstance(ctl.get("meta"), dict) else {}
+    meta = result_meta or (control_meta if ctl_id == result_id else {})
     actor = str(meta.get("actor") or "")
     summary = str(meta.get("summary") or "")
     tools = meta.get("tools") if isinstance(meta.get("tools"), list) else []
-    if ctl_id != result_id:
-        actor = ""
-        summary = ""
-        tools = []
 
     status = str(latest.get("status") or "idle").lower()
     age = iso_age_seconds(latest.get("finished_at") or latest.get("received_at"))
@@ -201,8 +200,59 @@ def current_activity(latest: dict, ctl: dict, proc: str) -> dict:
         "ocx_active": ocx_active,
         "recent": recent,
         "age": age,
+        "received_at": latest.get("received_at"),
     }
 
+
+
+def room_activity_events(limit: int = 12) -> list[dict]:
+    data = read_json(ACTIVITY_FILE)
+    events = data.get("events") if isinstance(data.get("events"), list) else []
+    rows = [item for item in events if isinstance(item, dict)]
+    return rows[-limit:]
+
+
+def worker_trip_line(activity: dict, width: int) -> list[str]:
+    if not activity.get("ops_active"):
+        return [
+            DIM + "  REST ───────────── TOOL RACK ───────────── WORK SEAT" + RESET,
+            DIM + "  workers remain parked until an observable task starts" + RESET,
+        ]
+
+    actor_raw = str(activity.get("actor") or "WORKER").upper()
+    actor = "GPT" if actor_raw.startswith("CHATGPT") else ("API" if actor_raw.startswith("API") else actor_raw[:8])
+    tools = [str(x) for x in activity.get("tools", []) if str(x).strip()]
+    tool = tools[0] if tools else "TOOL"
+    age = iso_age_seconds(activity.get("received_at"))
+    if age is None:
+        age = 99.0
+
+    # One-shot visual story for each real job:
+    # leave lounge -> walk to rack -> pick up tool -> walk to seat -> work.
+    if age < 1.5:
+        step = min(5, int(age / 0.3))
+        path = " " * step + f"[{actor}]" + "·" * max(0, 8 - step)
+        line1 = f"  REST {path}────── [{tool}] ────── WORK SEAT"
+        line2 = f"  {actor} left the lounge"
+    elif age < 3.0:
+        step = min(5, int((age - 1.5) / 0.3))
+        lead = " " * max(0, 6 - step)
+        line1 = f"  REST ───────── {lead}[{actor}▶{tool}] ────── WORK SEAT"
+        line2 = f"  {actor} picked up {tool}"
+    elif age < 5.0:
+        step = min(6, int((age - 3.0) / 0.33))
+        dots_left = "·" * step
+        dots_right = "·" * max(0, 6 - step)
+        line1 = f"  REST ───── [{tool}] ─── {dots_left}[{actor}+{tool}]{dots_right} WORK SEAT"
+        line2 = f"  {actor} carrying {tool} to the active seat"
+    else:
+        line1 = f"  REST ───── [{tool}] ───────────── [{actor}+{tool} {SPIN[int(time.monotonic()*4)%len(SPIN)]}]"
+        extra = ", ".join(tools[1:4])
+        line2 = f"  working: {activity.get('summary') or activity.get('job_id')}"
+        if extra:
+            line2 += f"  | support: {extra}"
+
+    return [plain_clip(line1, width), plain_clip(line2, width)]
 
 def recent_events(limit: int = 6) -> list[str]:
     events: list[tuple[float, str]] = []
@@ -305,6 +355,7 @@ def collect() -> dict:
         "ma_proxy": ma_proxy,
         "proc": proc,
         "events": recent_events(),
+        "room_events": room_activity_events(),
     }
 
 
@@ -337,6 +388,11 @@ def render(data: dict) -> str:
             icon = "Zz" if state == "LOUNGE" else "○"
             lounge.append(f"[{name}:{icon} {state}]")
     lines.append("  " + "  ".join(lounge) if lounge else "  " + DIM + "(everyone is working)" + RESET)
+
+    lines.append("")
+    lines.append(BOLD + "WORKER MOVEMENT" + RESET + DIM + "  real task start -> fetch tool -> occupy seat" + RESET)
+    for trip_line in worker_trip_line(a, max(60, width - 4)):
+        lines.append(trip_line)
 
     lines.append("")
     lines.append(BOLD + "ACTIVE WORK AREA / ROUND TABLE" + RESET)
@@ -420,7 +476,18 @@ def render(data: dict) -> str:
 
     lines.append("")
     lines.append(BOLD + "ACTIVITY STREAM" + RESET)
-    for event in data["events"]:
+    room_events = data.get("room_events") or []
+    for event in room_events[-4:][::-1]:
+        when = str(event.get("time") or "")
+        try:
+            stamp = datetime.fromisoformat(when.replace("Z", "+00:00")).astimezone().strftime("%H:%M:%S")
+        except Exception:
+            stamp = "--:--:--"
+        actor = str(event.get("actor") or "ZEN")
+        evt = str(event.get("event") or "WORK")
+        summary = str(event.get("summary") or event.get("job_id") or "")
+        lines.append("  " + plain_clip(f"{stamp} {actor:<12} {evt:<10} {summary}", max(60, width - 4)))
+    for event in data["events"][:4]:
         lines.append("  " + plain_clip(event, max(60, width - 4)))
     if not data["events"]:
         lines.append("  " + DIM + "No recent events." + RESET)
