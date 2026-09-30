@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SERVICE=/etc/systemd/system/zen-chatgpt-gui.service
+SERVICE=/etc/systemd/system/zen-chatgpt-desktop.service
 SESSION=/usr/local/libexec/zen-chatgpt-session.sh
 
 echo "TASK=INSTALL_PERSISTENT_CHATGPT_GUI"
@@ -35,9 +35,9 @@ EOF
 # A previous systemd-run session may have created the exact same unit name as
 # a transient unit under /run. Remove that transient registration before
 # daemon-reload so the persistent /etc unit becomes authoritative.
-systemctl stop zen-chatgpt-gui.service >/dev/null 2>&1 || true
-rm -f /run/systemd/transient/zen-chatgpt-gui.service
-systemctl reset-failed zen-chatgpt-gui.service >/dev/null 2>&1 || true
+systemctl stop zen-chatgpt-desktop.service >/dev/null 2>&1 || true
+rm -f /run/systemd/transient/zen-chatgpt-desktop.service
+systemctl reset-failed zen-chatgpt-desktop.service >/dev/null 2>&1 || true
 systemctl daemon-reload
 
 # Chrome was only a login handoff helper. Keep it available, but do not launch
@@ -59,7 +59,7 @@ if ! pgrep -f '/usr/lib/xorg/Xorg :0|/usr/bin/Xorg :0' >/dev/null 2>&1; then
   rm -f /tmp/.X0-lock /tmp/.X11-unix/X0
 fi
 
-systemctl enable --now zen-chatgpt-gui.service
+systemctl enable --now zen-chatgpt-desktop.service
 
 # The taskbar attaches to display :0. Keep it enabled and restart once the new
 # X server is ready so it always follows ChatGPT at boot.
@@ -73,8 +73,8 @@ systemctl restart zen-mini-taskbar.service || true
 chvt 3 || true
 sleep 5
 
-echo "CHATGPT_GUI_ACTIVE=$(systemctl is-active zen-chatgpt-gui.service || true)"
-echo "CHATGPT_GUI_ENABLED=$(systemctl is-enabled zen-chatgpt-gui.service || true)"
+echo "CHATGPT_GUI_ACTIVE=$(systemctl is-active zen-chatgpt-desktop.service || true)"
+echo "CHATGPT_GUI_ENABLED=$(systemctl is-enabled zen-chatgpt-desktop.service || true)"
 echo "CHATGPT_PROCESS=$(pgrep -u zenui -f '/usr/bin/chatgpt|/usr/lib/chatgpt' | head -1 || true)"
 echo "XORG_PROCESS=$(pgrep -f '/usr/lib/xorg/Xorg :0|/usr/bin/Xorg :0' | head -1 || true)"
 echo "TASKBAR_ACTIVE=$(systemctl is-active zen-mini-taskbar.service || true)"
@@ -92,7 +92,7 @@ if ! pgrep -f '/usr/lib/xorg/Xorg :0|/usr/bin/Xorg :0' >/dev/null 2>&1; then
   rm -f /tmp/.X0-lock /tmp/.X11-unix/X0
 fi
 
-systemctl enable --now zen-chatgpt-gui.service
+systemctl enable --now zen-chatgpt-desktop.service
 
 # The taskbar attaches to display :0. Keep it enabled and restart once the new
 # X server is ready so it always follows ChatGPT at boot.
@@ -106,8 +106,8 @@ systemctl restart zen-mini-taskbar.service || true
 chvt 3 || true
 sleep 5
 
-echo "CHATGPT_GUI_ACTIVE=$(systemctl is-active zen-chatgpt-gui.service || true)"
-echo "CHATGPT_GUI_ENABLED=$(systemctl is-enabled zen-chatgpt-gui.service || true)"
+echo "CHATGPT_GUI_ACTIVE=$(systemctl is-active zen-chatgpt-desktop.service || true)"
+echo "CHATGPT_GUI_ENABLED=$(systemctl is-enabled zen-chatgpt-desktop.service || true)"
 echo "CHATGPT_PROCESS=$(pgrep -u zenui -f '/usr/bin/chatgpt|/usr/lib/chatgpt' | head -1 || true)"
 echo "XORG_PROCESS=$(pgrep -f '/usr/lib/xorg/Xorg :0|/usr/bin/Xorg :0' | head -1 || true)"
 echo "TASKBAR_ACTIVE=$(systemctl is-active zen-mini-taskbar.service || true)"
