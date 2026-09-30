@@ -1,17 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "configure-xorg-software-accel-20260930-1648",
+  "job_id": "start-chatgpt-gui-vt3-retry-20260930-1649",
   "kind": "repo_task",
   "args": {
-    "task": "configure_xorg_software_accel",
-    "timeout": 120
+    "task": "start_chatgpt_gui_vt3",
+    "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Disable Xorg glamor acceleration on Mini Intel graphics",
+    "summary": "Retry ChatGPT Linux GUI on Mini VT3 after disabling Xorg glamor",
     "tools": [
       "ZEN Ops",
-      "Xorg"
+      "Xorg",
+      "Openbox",
+      "ChatGPT"
     ]
   }
 }
