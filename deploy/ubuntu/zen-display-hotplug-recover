@@ -17,8 +17,6 @@ as_zenui() {
 }
 
 log "EVENT=start"
-
-# DRM hotplug can report connected slightly before EDID/modes settle.
 sleep 2
 
 if ! systemctl is-active --quiet zen-chatgpt-desktop.service; then
@@ -39,7 +37,6 @@ fi
 
 log "DISPLAY_OUTPUT=$output"
 
-# Suppress any immediate follow-up event caused by our own mode/property changes.
 LAST=/run/zen-display-hotplug.last
 now="$(date +%s)"
 if [[ -f "$LAST" ]]; then
@@ -51,40 +48,19 @@ if [[ -f "$LAST" ]]; then
 fi
 printf '%s\n' "$now" > "$LAST"
 
-as_zenui /usr/bin/xrandr   --output "$output"   --auto   --rotate inverted   >>"$LOG" 2>&1 || log "XRANDR=warn"
-
-# The physical monitor may be switched off manually; X itself should not add
-# another idle blanking layer when it comes back.
+as_zenui /usr/bin/xrandr --output "$output" --auto --rotate inverted >>"$LOG" 2>&1 || log "XRANDR=warn"
 as_zenui /usr/bin/xset s off >>"$LOG" 2>&1 || true
 as_zenui /usr/bin/xset s noblank >>"$LOG" 2>&1 || true
 as_zenui /usr/bin/xset -dpms >>"$LOG" 2>&1 || true
 
 /usr/bin/chvt 3 >>"$LOG" 2>&1 || log "CHVT=warn"
 
-# The Living Workspace is an xterm process launched inside the X session.
-# If it vanished during/after a display power cycle, recreate only that pane.
 windows="$(as_zenui /usr/bin/wmctrl -lx 2>/dev/null || true)"
 if ! printf '%s\n' "$windows" | grep -Eqi 'zen-living-tui|zen living workspace'; then
-  log "LIVING_WORKSPACE=relaunch"
-  runuser -u zenui -- env \
-    HOME=/var/lib/zenui \
-    USER=zenui \
-    LOGNAME=zenui \
-    DISPLAY="$DISPLAY_NUM" \
-    XDG_CONFIG_HOME=/var/lib/zenui/.config \
-    /usr/bin/xterm \
-      -T 'ZEN Living Workspace' \
-      -geometry 145x50+580+0 \
-      -fa 'DejaVu Sans Mono' \
-      -fs 10 \
-      -bg black \
-      -fg white \
-      -e /usr/local/bin/zen-living-tui \
-      >>/var/lib/zenui/zen-living-tui.log 2>&1 &
+  log "LIVING_WORKSPACE=restart_service"
+  systemctl restart zen-living-workspace.service >>"$LOG" 2>&1 || log "LIVING_WORKSPACE=restart_warn"
 fi
 
-# Openbox may need a few seconds to republish both windows after mode/VT
-# restoration or after the TUI pane is relaunched.
 layout_ok=0
 for _ in $(seq 1 20); do
   if as_zenui /usr/local/bin/zen-control-room-layout living >>"$LOG" 2>&1; then
