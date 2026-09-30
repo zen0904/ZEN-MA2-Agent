@@ -1808,7 +1808,7 @@
     },
     {
       "id": "MINI_CONTROL_ROOM_LAYOUT_001",
-      "status": "CONTROL_ROOM_LIVE_VERIFIED",
+      "status": "PHASE1_SENTIENT_LOGIC_BOARD_LIVE",
       "owner_clarification_date": "2026-09-30",
       "source": "docs/MINI_CONTROL_ROOM_LAYOUT_001.md",
       "implementation_source": "docs/LIVING_SYSTEM_VISUALIZER_MVP_001.md",
@@ -1820,7 +1820,7 @@
         "terminal_default": "ON_DEMAND_NOT_ALWAYS_VISIBLE"
       },
       "living_system_visualizer": {
-        "status": "MVP_RUNNING_AND_VISIBLE",
+        "status": "PHASE1_LIVE",
         "authority": "OBSERVATION_ONLY",
         "service": "zen-living-visualizer.service",
         "listen": "127.0.0.1:18992",
@@ -1842,7 +1842,14 @@
         "gpu_usage": "N_A_NO_TRUSTWORTHY_SOURCE",
         "gpu_temperature": "N_A_NO_TRUSTWORTHY_SOURCE",
         "gui_window": "GOOGLE_CHROME_APP_MODE",
-        "live_layout_verified": true
+        "live_layout_verified": true,
+        "art_direction": "SENTIENT_LOGIC_BOARD",
+        "renderer": "DOM_CSS_PLUS_SVG",
+        "state_schema": "zen.living_visualizer.state.v0.2",
+        "providers_rendered_as": "API_STATION_SOCKETS",
+        "idle_animation_policy": "NO_FAKE_WORK_NO_IDLE_WANDERING",
+        "visualizer_health": "PASS",
+        "layout_result": "PASS"
       },
       "verified_display_baseline": {
         "output": "HDMI-3",
@@ -1850,9 +1857,29 @@
         "rotation": "INVERTED_180",
         "rotation_persistent_across_gui_restart": true
       },
-      "operator_workflow_change": "NONE",
+      "operator_workflow_change": "ATTACHED_DISPLAY_DEFAULT_IS_LIVING_MODE",
       "ma2_writes": 0,
-      "ma3_writes": 0
+      "ma3_writes": 0,
+      "final_spec": "docs/LIVING_SYSTEM_VISUALIZER_FINAL_SPEC_001.md",
+      "default_mode": "LIVING",
+      "mode_layouts": {
+        "LIVING": {
+          "chatgpt": "30%",
+          "visualizer": "70%",
+          "geometry": {
+            "chatgpt": "0,0,576,1038",
+            "visualizer": "576,0,1344,1038"
+          }
+        },
+        "CONTROL": {
+          "chatgpt": "55%",
+          "visualizer": "45%"
+        },
+        "DIAGNOSTIC": {
+          "chatgpt": "35%",
+          "visualizer": "65%"
+        }
+      }
     }
   ],
   "allocation_policy": {
