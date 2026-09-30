@@ -1,19 +1,20 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "control-room-tui-repair-20260930-2358",
-  "kind": "repo_task",
+  "job_id": "living-tui-resource-audit-20260930-2359",
+  "kind": "shell",
   "args": {
-    "task": "repair_control_room_tui",
-    "timeout": 180
+    "cwd": "/opt/zen",
+    "timeout": 60,
+    "command": "echo '=== TUI PROCESSES ==='; ps -u zenui -o pid,ppid,comm,%cpu,%mem,rss,vsz,args --sort=-%cpu | grep -E 'zen-living-tui|xterm' || true; echo '=== LEGACY CHROME VISUALIZER ==='; runuser -u zenui -- env DISPLAY=:0 wmctrl -lx 2>/dev/null | awk 'tolower($0) ~ /google-chrome/ && tolower($0) ~ /zen living system/ {print}' || true; echo '=== WEB VISUALIZER SERVICE ==='; systemctl is-active zen-living-visualizer.service 2>/dev/null || true; echo '=== WINDOWS ==='; runuser -u zenui -- env DISPLAY=:0 wmctrl -lxG 2>/dev/null || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Replace legacy Chrome visualizer with terminal-native ZEN Living TUI and apply fixed 30/70 layout",
+    "summary": "Read-only verify Living TUI resource footprint and confirm legacy web visualizer is retired",
     "tools": [
       "ZEN Ops",
-      "xterm",
-      "curses TUI",
-      "Openbox"
+      "ps",
+      "wmctrl",
+      "systemd"
     ]
   }
 }
