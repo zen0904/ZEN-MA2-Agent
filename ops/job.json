@@ -1,19 +1,20 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "verify-obsidian-mind-idempotent-20260930-1808",
+  "job_id": "controlled-reboot-chatgpt-om-20260930-1812",
   "kind": "repo_task",
   "args": {
-    "task": "install_obsidian_mind",
-    "timeout": 300
+    "task": "schedule_controlled_reboot",
+    "timeout": 60
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Verify Obsidian Mind installation is idempotent and OM MCP remains registered",
+    "summary": "Controlled reboot acceptance for persistent ChatGPT GUI and Obsidian Mind MCP",
     "tools": [
       "ZEN Ops",
+      "systemd",
+      "ChatGPT",
       "Codex",
-      "MCP",
-      "Git"
+      "MCP"
     ]
   }
 }
