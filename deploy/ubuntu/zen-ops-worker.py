@@ -15,6 +15,7 @@ CONTROL_REPO = Path("/var/lib/zen-ops/control.git")
 STATE_DIR = Path("/var/lib/zen-ops")
 PUBLIC_DIR = STATE_DIR / "public"
 JOBS_DIR = STATE_DIR / "jobs"
+ACTIVITY_FILE = PUBLIC_DIR / "activity.json"
 STATE_FILE = STATE_DIR / "worker-state.json"
 REMOTE = "https://github.com/zen0904/ZEN-MA2-Agent.git"
 CONTROL_REF = "refs/remotes/origin/zen-ops-control"
@@ -88,6 +89,69 @@ def sanitize(text: str, limit: int = 200_000) -> str:
             text = text.replace(line, "[REDACTED]")
     return text
 
+
+
+def normalized_meta(job: dict[str, Any]) -> dict[str, Any]:
+    raw = job.get("meta")
+    if not isinstance(raw, dict):
+        return {}
+    actor = str(raw.get("actor") or "").strip()[:64]
+    summary = sanitize(str(raw.get("summary") or "").strip(), limit=240)
+    tools_raw = raw.get("tools")
+    tools: list[str] = []
+    if isinstance(tools_raw, list):
+        for item in tools_raw[:12]:
+            value = re.sub(r"[^A-Za-z0-9._+:/ -]", "", str(item))[:64].strip()
+            if value:
+                tools.append(value)
+    if actor and not re.fullmatch(r"[A-Za-z0-9._ -]{1,64}", actor):
+        actor = "UNKNOWN"
+    result: dict[str, Any] = {}
+    if actor:
+        result["actor"] = actor
+    if summary:
+        result["summary"] = summary
+    if tools:
+        result["tools"] = tools
+    return result
+
+
+def record_activity(
+    *,
+    event: str,
+    job_id: str,
+    kind: str,
+    meta: dict[str, Any],
+    status: str,
+) -> None:
+    try:
+        current = {}
+        if ACTIVITY_FILE.is_file():
+            current = json.loads(ACTIVITY_FILE.read_text())
+        events = current.get("events") if isinstance(current, dict) else []
+        if not isinstance(events, list):
+            events = []
+        row = {
+            "time": now(),
+            "event": event,
+            "job_id": job_id,
+            "kind": kind,
+            "status": status,
+            "actor": str(meta.get("actor") or "ZEN_OPS"),
+            "summary": sanitize(str(meta.get("summary") or job_id), limit=240),
+            "tools": list(meta.get("tools") or [])[:12],
+        }
+        events.append(row)
+        write_json(
+            ACTIVITY_FILE,
+            {
+                "schema": "zen.room.activity.v0.1",
+                "updated_at": row["time"],
+                "events": events[-100:],
+            },
+        )
+    except Exception:
+        pass
 
 def ensure_control_repo() -> None:
     STATE_DIR.mkdir(parents=True, exist_ok=True)
@@ -284,7 +348,7 @@ def execute(job_id: str, kind: str, args: dict[str, Any]) -> dict[str, Any]:
 
     if kind == "console":
         mode = str(args.get("mode", "toggle"))
-        if mode not in {"ma", "monitor", "toggle", "auto"}:
+        if mode not in {"room", "ma", "monitor", "toggle", "auto"}:
             raise ValueError("invalid console mode")
         proc = run(["/usr/local/bin/zen-console-mode", mode], timeout=20)
         return {
@@ -385,6 +449,7 @@ def process_once() -> None:
     if job is None:
         return
     job_id, kind, args = validate_job(job)
+    meta = normalized_meta(job)
     state = load_state()
     if state.get("last_job_id") == job_id:
         return
@@ -396,7 +461,16 @@ def process_once() -> None:
         "status": "running",
         "received_at": now(),
     }
+    if meta:
+        running["meta"] = meta
     publish(job_id, running)
+    record_activity(
+        event="WORK_START",
+        job_id=job_id,
+        kind=kind,
+        meta=meta,
+        status="running",
+    )
 
     try:
         detail = execute(job_id, kind, args)
@@ -424,6 +498,13 @@ def process_once() -> None:
         }
 
     publish(job_id, result)
+    record_activity(
+        event="WORK_END",
+        job_id=job_id,
+        kind=kind,
+        meta=meta,
+        status=str(result.get("status") or "unknown"),
+    )
     write_json(STATE_FILE, {"last_job_id": job_id, "updated_at": now()})
 
 
