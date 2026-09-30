@@ -1,0 +1,32 @@
+{
+  "schema": "zen.tui.state_map.v0.1",
+  "map": {
+    "429": "error",
+    "active": "active",
+    "running": "active",
+    "working": "active",
+    "ready": "active",
+    "up": "active",
+    "online": "active",
+    "waiting": "waiting",
+    "awaiting_input": "waiting",
+    "waiting_for_approval": "waiting",
+    "needs_approval": "waiting",
+    "needsapproval": "waiting",
+    "error": "error",
+    "failed": "error",
+    "failure": "error",
+    "rejected": "error",
+    "timeout": "error",
+    "down": "error",
+    "offline": "error",
+    "idle": "idle",
+    "standby": "idle",
+    "parked": "idle",
+    "complete": "idle",
+    "completed": "idle",
+    "unknown": "unknown",
+    "warming": "unknown",
+    "unavailable": "unknown"
+  }
+}
