@@ -1,10 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "install-zen-control-room-20260930-0952",
+  "job_id": "install-zen-control-room-20260930-1006",
   "kind": "repo_task",
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Deploy ZEN Control Room Room Mode and refresh the live tmux overview",
+    "summary": "Deploy Room Mode with worker walking and tool pickup animation",
     "tools": [
       "OPS",
       "GitHub",
