@@ -1,20 +1,15 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "living-tui-resource-audit-20260930-2359",
+  "job_id": "mini-spatial-preflight-20261001-0014",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 60,
-    "command": "echo '=== TUI PROCESSES ==='; ps -u zenui -o pid,ppid,comm,%cpu,%mem,rss,vsz,args --sort=-%cpu | grep -E 'zen-living-tui|xterm' || true; echo '=== LEGACY CHROME VISUALIZER ==='; runuser -u zenui -- env DISPLAY=:0 wmctrl -lx 2>/dev/null | awk 'tolower($0) ~ /google-chrome/ && tolower($0) ~ /zen living system/ {print}' || true; echo '=== WEB VISUALIZER SERVICE ==='; systemctl is-active zen-living-visualizer.service 2>/dev/null || true; echo '=== WINDOWS ==='; runuser -u zenui -- env DISPLAY=:0 wmctrl -lxG 2>/dev/null || true"
+    "timeout": 90,
+    "command": "set +e; echo === HOST ===; hostname; echo === ZEN_OPS_WORKER ===; systemctl is-active zen-ops-worker.service; echo === REPO ===; git -C /opt/zen/ZEN-MA2-Agent status --short --branch; git -C /opt/zen/ZEN-MA2-Agent rev-parse HEAD; git -C /opt/zen/ZEN-MA2-Agent log -1 --format=%h:%s; echo === CODEX ===; command -v codex || true; codex --version 2>&1 || true; echo === CLAUDE ===; command -v claude || true; claude --version 2>&1 || true; echo === SPATIAL ===; rg --files /opt/zen/ZEN-MA2-Agent/zen_ma2_agent /opt/zen/ZEN-MA2-Agent/tests | rg 'spatial|position|group_order' | head -80"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Read-only verify Living TUI resource footprint and confirm legacy web visualizer is retired",
-    "tools": [
-      "ZEN Ops",
-      "ps",
-      "wmctrl",
-      "systemd"
-    ]
+    "summary": "Read-only Mini preflight for Spatial vNext workspace and coding CLI availability",
+    "tools": ["ZEN Ops", "git", "codex CLI", "claude CLI", "rg"]
   }
 }
