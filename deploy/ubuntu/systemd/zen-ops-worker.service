@@ -8,6 +8,7 @@ Type=simple
 ExecStart=/usr/bin/python3 /opt/zen/zen-ops-runtime/deploy/ubuntu/zen-ops-worker.py
 Restart=always
 RestartSec=3
+Environment=GH_CONFIG_DIR=/var/lib/zen-ops/gh
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectHome=true
