@@ -1,15 +1,15 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "visualizer-phase1-syntax2-20260930-2255",
+  "job_id": "visualizer-phase1-syntax3-20260930-2302",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen/zen-ops-runtime",
     "timeout": 60,
-    "command": "set -e; python3 -m py_compile deploy/ubuntu/zen-living-visualizer.py; bash -n deploy/ubuntu/zen-control-room-layout; bash -n deploy/ubuntu/zen-chatgpt-session.sh; echo SYNTAX=PASS"
+    "command": "set -e; python3 -c 'from pathlib import Path; p=Path(\"deploy/ubuntu/zen-living-visualizer.py\"); compile(p.read_text(encoding=\"utf-8\"), str(p), \"exec\")'; bash -n deploy/ubuntu/zen-control-room-layout; bash -n deploy/ubuntu/zen-chatgpt-session.sh; echo SYNTAX=PASS"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Fail-fast syntax gate for Living Visualizer Phase 1",
+    "summary": "Read-only fail-fast syntax gate for Living Visualizer Phase 1",
     "tools": [
       "ZEN Ops",
       "Python",
