@@ -399,6 +399,58 @@ same-member-set and exact-reference preservation; future Spatial orchestration
 should call that bounded path rather than synthesizing ad-hoc Group overwrite
 commands.
 
+### Spatial distribution beyond Position — Reference Case 002
+
+A reviewed professional-practice grandMA3 busking case reinforces a useful
+architecture distinction for Spatial vNext:
+
+```text
+ATTRIBUTE / BEHAVIOR
+!=
+FIXTURE DISTRIBUTION
+!=
+CONSOLE IMPLEMENTATION
+```
+
+Trusted spatial relationships should eventually be reusable by more than
+Position. Once ZEN has authoritative geometry and stage-frame semantics, the
+same spatial model may derive artistic orders such as:
+
+- left-to-right / right-to-left;
+- center-out / outside-in;
+- upstage-to-downstage / depth order;
+- X-axis / Y-axis / diagonal grid order where a real grid exists;
+- radial or other case-specific relationships justified by the rig.
+
+These derived orders may inform Dimmer, Color, Strobe, Zoom, Movement or other
+modulation intent as well as Position. This is a design allowance, not a demand
+that every attribute use spatial distribution.
+
+A derived artistic order is not automatically a persistent MA Group mutation.
+The normal geometry-derived Group order remains one stable native handover
+resource. Additional artistic orders may be virtual resolver inputs, MAtricks /
+Effect inputs, or dedicated native resources only when the implementation is
+verified and the lifecycle justifies storing them.
+
+```text
+SPATIAL ORDER != STORED GROUP
+AVAILABLE DISTRIBUTION != REQUIRED EFFECT
+```
+
+The same reference case also demonstrates the artistic usefulness of
+axis-scoped Position intent, for example changing Pan while preserving Tilt.
+ZEN may retain concepts such as `PAN_ONLY`, `TILT_ONLY` or
+`PRESERVE_OTHER_AXIS` in future artistic reasoning, but the current grandMA2
+production path must remain fail-closed until a typed deterministic execution
+grammar and native readback evidence exist for the exact operation.
+
+Reference:
+`docs/reference_cases/LIGHTING_REFERENCE_CASE_002.md`.
+
+This section changes no Operator Workflow, creates no new MA write authority,
+and does not promote the source's personal grandMA3 Layout into a ZEN UI
+requirement.
+
 ## Pre-named empty Position Presets as Spatial Anchor Slots
 
 A normal operator template may intentionally contain Position Preset pool objects

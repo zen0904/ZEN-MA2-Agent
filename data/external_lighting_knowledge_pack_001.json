@@ -6887,6 +6887,204 @@
       ],
       "source_provenance": "ZEN_USER_LIGHTING_REFERENCE_CLIP_001: visual observation of late-section restraint followed by a strong final release.",
       "summary": "Adds a bounded finale strategy example where contraction preserves impact; it is not a required ending pattern."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk011_busking_content_distribution_separation",
+      "source_id": "YOUTUBE_SNOWMAN003_GRANDMA3_SHOWFILE_2026",
+      "topic": "MODULATION_DISTRIBUTION",
+      "normalized_claim": "In this busking showfile, the operator repeatedly separates attribute content from distribution controls such as phase, direction, wings, blocks, shuffle and speed, allowing similar spatial/timing transformations to be reused across dimmer, color, position and other attributes.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA3_BUSKING_SHOWFILE_CASE",
+      "exclusions": [
+        "Does not require ZEN to reproduce the author's layouts or button structure.",
+        "Does not prove one shared execution grammar across grandMA2 and grandMA3.",
+        "Does not make every available distribution mechanism artistically necessary."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "A fixed native preset/effect can remain the cleaner implementation when the desired behavior is stable and already verified."
+      ],
+      "related_design_concepts": [
+        "modulation",
+        "distribution",
+        "spatial_order",
+        "timing",
+        "mechanism_selection"
+      ],
+      "related_console_capabilities": [
+        "matricks",
+        "effect",
+        "phaser",
+        "selection_grid"
+      ],
+      "source_provenance": "YOUTUBE_SNOWMAN003_GRANDMA3_SHOWFILE_2026: self-documented personal showfile walkthrough; derived from repeated use of common matrix/distribution controls across attribute pages.",
+      "summary": "Supports treating behavior and fixture distribution as separable artistic concepts while leaving console-specific realization to the resolver."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk011_busking_prep_fire_boundary",
+      "source_id": "YOUTUBE_SNOWMAN003_GRANDMA3_SHOWFILE_2026",
+      "topic": "LIVE_CONTROL_SAFETY",
+      "normalized_claim": "The showfile uses a prepare-then-fire workflow with an explicit blind/live distinction, separating look construction from committing the prepared state to live output.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA3_BUSKING_SHOWFILE_CASE",
+      "exclusions": [
+        "Does not authorize a new ZEN Fire UI or bypass ZEN Preview and explicit Approval.",
+        "The author's blind/live control is a personal live-operation mechanism, not evidence that ZEN should copy the same operator interaction."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Different operators may prefer direct live busking, staged programmer workflows, or cue-based preparation."
+      ],
+      "related_design_concepts": [
+        "prepare_commit_separation",
+        "live_safety",
+        "preview"
+      ],
+      "related_console_capabilities": [
+        "blind",
+        "playback"
+      ],
+      "source_provenance": "YOUTUBE_SNOWMAN003_GRANDMA3_SHOWFILE_2026: the author describes a firing system in which a look is prepared and then applied with Fire, with a visible blind/live state.",
+      "summary": "Reinforces separation between prepared intent and live output without changing ZEN's existing Preview/Approval contract."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk011_busking_spatial_axes_distribution",
+      "source_id": "YOUTUBE_SNOWMAN003_GRANDMA3_SHOWFILE_2026",
+      "topic": "SPATIAL_DISTRIBUTION",
+      "normalized_claim": "The operator uses X/Y grid organization to drive directional and diagonal distributions, illustrating that trusted spatial ordering can be useful beyond Position and can shape dimmer, color, zoom or other modulated attributes.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA3_GRID_BASED_BUSKING_CASE",
+      "exclusions": [
+        "Does not prove the current ZEN Show has a trustworthy X/Y grid.",
+        "Does not authorize guessing stage-axis semantics from fixture IDs or unverified coordinates.",
+        "Does not require persistent MA Group rewrites for every artistic order."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Some rigs are better represented by one-dimensional selection order, radial relationships, depth layers, or explicit custom orders rather than a rectangular grid."
+      ],
+      "related_design_concepts": [
+        "spatial_order",
+        "grid",
+        "diagonal",
+        "direction",
+        "distribution"
+      ],
+      "related_console_capabilities": [
+        "selection_grid",
+        "matricks",
+        "effect",
+        "phaser"
+      ],
+      "source_provenance": "YOUTUBE_SNOWMAN003_GRANDMA3_SHOWFILE_2026: the author explicitly describes frequent X/Y grid use for diagonal and directional effects.",
+      "summary": "Supports Spatial vNext exposing derived artistic orders as reusable inputs to multiple lighting dimensions after geometry is trusted."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk011_busking_axis_preserving_position",
+      "source_id": "YOUTUBE_SNOWMAN003_GRANDMA3_SHOWFILE_2026",
+      "topic": "POSITION_COMPOSITION",
+      "normalized_claim": "The showfile separates pan-oriented and tilt-oriented Position controls so one axis can be changed while the other is preserved, demonstrating a useful artistic distinction between full Position replacement and axis-scoped Position development.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA3_BUSKING_POSITION_CASE",
+      "exclusions": [
+        "Does not authorize generic pan-only or tilt-only writes in ZEN's current grandMA2 production path.",
+        "Does not establish physical target semantics or safe reachability for the current rig."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Many production looks are better represented by complete verified Position Presets whose pan and tilt are intentionally linked."
+      ],
+      "related_design_concepts": [
+        "position",
+        "axis_scope",
+        "preserve_axis",
+        "fan"
+      ],
+      "related_console_capabilities": [
+        "pan",
+        "tilt",
+        "position_preset"
+      ],
+      "source_provenance": "YOUTUBE_SNOWMAN003_GRANDMA3_SHOWFILE_2026: the author explains separating pan and tilt positions because he often wants to transition one axis without affecting the other.",
+      "summary": "Adds axis-preserving Position as future artistic vocabulary while keeping current MA2 execution fail-closed until separately verified."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk011_busking_event_bump_layer",
+      "source_id": "YOUTUBE_SNOWMAN003_GRANDMA3_SHOWFILE_2026",
+      "topic": "EVENT_LAYERING",
+      "normalized_claim": "The operator's bump system treats transient events as a separate layer with selectable target groups, effect behavior, attribute scope and release behavior rather than embedding every live accent into the base look.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA3_BUSKING_EVENT_CASE",
+      "exclusions": [
+        "Does not require ZEN Free Cues to use the author's exact bump types or page layout.",
+        "Does not imply every song needs a bump layer or manual live accents."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Timecoded or tightly rehearsed shows may encode equivalent transient events in ordinary cue structure instead of operator bumps."
+      ],
+      "related_design_concepts": [
+        "event_layer",
+        "free_cue",
+        "attribute_scope",
+        "attack",
+        "release"
+      ],
+      "related_console_capabilities": [
+        "executor",
+        "temp",
+        "flash",
+        "effect"
+      ],
+      "source_provenance": "YOUTUBE_SNOWMAN003_GRANDMA3_SHOWFILE_2026: the author demonstrates multiple bump behaviors and selectable affected attributes such as dimmer, color and zoom.",
+      "summary": "Supports modeling Free/Event intent independently from the sustained Scene layer, without prescribing a live-control surface."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk011_busking_family_masters",
+      "source_id": "YOUTUBE_SNOWMAN003_GRANDMA3_SHOWFILE_2026",
+      "topic": "LIVE_CONTROL_SCALING",
+      "normalized_claim": "The showfile exposes family-level masters for effect output and speed so an operator can scale the strength or rate of an existing behavior without rebuilding its underlying structure.",
+      "evidence_classification": "PROFESSIONAL_PRACTICE",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "GRANDMA3_BUSKING_PLAYBACK_CASE",
+      "exclusions": [
+        "Does not authorize ZEN to create new masters or alter the operator's executor layout without explicit workflow approval.",
+        "Does not imply master-based scaling is preferable to cue editing in every production."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "A show with fixed timecode or tightly specified cue values may intentionally avoid live family-level scaling."
+      ],
+      "related_design_concepts": [
+        "live_scaling",
+        "intensity_ceiling",
+        "speed_control",
+        "operator_intervention"
+      ],
+      "related_console_capabilities": [
+        "speed_master",
+        "playback_master",
+        "executor"
+      ],
+      "source_provenance": "YOUTUBE_SNOWMAN003_GRANDMA3_SHOWFILE_2026: the author demonstrates separate dimmer-effect, bump and speed master controls on playbacks.",
+      "summary": "Retains family-level live scaling as a workflow option requiring separate operator approval, not as a default ZEN layout rule."
     }
   ]
 }
