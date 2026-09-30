@@ -1,15 +1,15 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "diag-rdc-runtime-20260930-2048",
+  "job_id": "repair-rdc-runtime-20260930-2055",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 60,
-    "command": "echo '=== CURRENT NODE TREE ==='; ls -l /opt/node/bin/node /opt/node/bin/npm 2>/dev/null || true; test -f /opt/node/lib/node_modules/@wonderwhy-er/desktop-commander/dist/index.js && echo CURRENT_DC_INDEX=YES || echo CURRENT_DC_INDEX=NO; test -f /opt/node/lib/node_modules/@wonderwhy-er/desktop-commander/package.json && node -p \"require('/opt/node/lib/node_modules/@wonderwhy-er/desktop-commander/package.json').version\" 2>/dev/null || true; echo '=== BACKUP TREE ==='; test -f /opt/node-v22-backup-20260928-213623/lib/node_modules/@wonderwhy-er/desktop-commander/dist/index.js && echo BACKUP_DC_INDEX=YES || echo BACKUP_DC_INDEX=NO; /opt/node-v22-backup-20260928-213623/bin/node -p \"require('/opt/node-v22-backup-20260928-213623/lib/node_modules/@wonderwhy-er/desktop-commander/package.json').version\" 2>/dev/null || true; echo '=== SERVICE CREDENTIAL FILE PATHS ONLY ==='; systemctl show desktop-commander-remote.service -p EnvironmentFiles --no-pager; find /root/.config /root/.local/share -maxdepth 3 -type f \\( -iname '*desktop*commander*' -o -iname '*commander*remote*' \\) -printf '%p\\n' 2>/dev/null | head -50"
+    "timeout": 120,
+    "command": "set -e; SRC=/opt/node-v22-backup-20260928-213623/lib/node_modules/@wonderwhy-er/desktop-commander; DSTROOT=/opt/node/lib/node_modules/@wonderwhy-er; test -f \"$SRC/dist/index.js\"; mkdir -p \"$DSTROOT\"; rm -rf \"$DSTROOT/desktop-commander.restore-tmp\"; cp -a \"$SRC\" \"$DSTROOT/desktop-commander.restore-tmp\"; rm -rf \"$DSTROOT/desktop-commander\"; mv \"$DSTROOT/desktop-commander.restore-tmp\" \"$DSTROOT/desktop-commander\"; ln -sfn ../lib/node_modules/@wonderwhy-er/desktop-commander/dist/index.js /opt/node/bin/desktop-commander; systemctl reset-failed desktop-commander-remote.service || true; systemctl restart desktop-commander-remote.service; sleep 3; echo '=== RESULT ==='; systemctl show desktop-commander-remote.service -p ActiveState -p SubState -p Result -p ExecMainStatus -p NRestarts --no-pager; test -f /opt/node/lib/node_modules/@wonderwhy-er/desktop-commander/dist/index.js && echo CURRENT_DC_INDEX=YES; /opt/node/bin/node -p \"require('/opt/node/lib/node_modules/@wonderwhy-er/desktop-commander/package.json').version\""
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Read-only verify current and backup Desktop Commander runtime before repair",
+    "summary": "Restore Desktop Commander 0.2.51 runtime package from known local backup and restart existing service",
     "tools": [
       "ZEN Ops",
       "systemd",
