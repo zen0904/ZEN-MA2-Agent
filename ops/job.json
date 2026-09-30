@@ -1,18 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "control-room-sync-diag-20260930-2340",
+  "job_id": "control-room-gui-diag-20260930-2346",
   "kind": "repo_task",
   "args": {
-    "task": "repair_zen_ops_updater_self_install",
-    "timeout": 180
+    "task": "diag_control_room_gui",
+    "timeout": 120
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Sync Mini runtime for Control Room GUI diagnostic",
+    "summary": "Read-only inspect Mini X11 windows before Control Room tiling",
     "tools": [
       "ZEN Ops",
-      "GitHub",
-      "Openbox"
+      "Openbox",
+      "wmctrl",
+      "Living Visualizer"
     ]
   }
 }
