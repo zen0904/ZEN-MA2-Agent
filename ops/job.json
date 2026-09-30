@@ -1,15 +1,15 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "diag-rdc-mini-20260930-2035",
+  "job_id": "diag-rdc-failure-20260930-2042",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
     "timeout": 90,
-    "command": "echo '=== SYSTEM SERVICES ==='; systemctl list-unit-files --type=service --no-pager | grep -Ei 'desktop|commander|remote|mcp' || true; echo '=== ACTIVE/INACTIVE UNITS ==='; systemctl list-units --type=service --all --no-pager | grep -Ei 'desktop|commander|remote|mcp' || true; echo '=== USER UNITS zenui ==='; sudo -u zenui XDG_RUNTIME_DIR=/run/user/$(id -u zenui) systemctl --user list-unit-files --type=service --no-pager 2>&1 | grep -Ei 'desktop|commander|remote|mcp' || true; echo '=== PROCESSES ==='; ps -eo pid,user,etime,args | grep -Ei 'desktop.?commander|mcp\\.desktopcommander|remote.?commander' | grep -v grep || true; echo '=== UNIT FILE CANDIDATES ==='; find /etc/systemd/system /usr/lib/systemd/system /home/zenui/.config/systemd/user /root/.config/systemd/user -maxdepth 2 -type f \\( -iname '*desktop*' -o -iname '*commander*' -o -iname '*remote*' \\) -print 2>/dev/null | head -100; echo '=== NPM/GLOBAL CANDIDATES ==='; find /opt /usr/local /home/zenui -maxdepth 4 \\( -iname '*desktop*commander*' -o -iname '*remote*commander*' \\) -print 2>/dev/null | head -100"
+    "command": "echo '=== SERVICE STATE ==='; systemctl show desktop-commander-remote.service -p Id -p LoadState -p ActiveState -p SubState -p Result -p ExecMainCode -p ExecMainStatus -p NRestarts -p User -p Group -p WorkingDirectory -p FragmentPath -p ExecStart --no-pager; echo '=== EXECUTABLES ==='; command -v desktop-commander || true; ls -l /opt/node-v22-backup-20260928-213623/bin/desktop-commander 2>/dev/null || true; readlink -f /opt/node-v22-backup-20260928-213623/bin/desktop-commander 2>/dev/null || true; node --version 2>/dev/null || true; /opt/node-v22-backup-20260928-213623/bin/node --version 2>/dev/null || true; echo '=== SAFE ERROR SUMMARY ==='; journalctl -u desktop-commander-remote.service -n 80 --no-pager -o cat 2>/dev/null | grep -Ei 'error|failed|failure|not found|no such|ENOENT|module|permission|denied|version|connect|disconnect|exit|status' | sed -E 's/((token|secret|password|key)[=:])[[:graph:]]+/\\1REDACTED/Ig' | tail -40 || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Read-only locate Desktop Commander service/process on Mini before restart",
+    "summary": "Read-only diagnose Mini Desktop Commander restart loop without exposing credentials",
     "tools": [
       "ZEN Ops",
       "systemd",
