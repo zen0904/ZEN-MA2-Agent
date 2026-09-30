@@ -1,18 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wait-updater-repair-fix-20260930-1622",
-  "kind": "shell",
+  "job_id": "repair-live-updater-20260930-1624",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 120,
-    "command": "git -c safe.directory=/opt/zen/zen-ops-runtime -C /opt/zen/zen-ops-runtime rev-parse HEAD 2>&1 || true; grep -n 'test -f .*zen-ops-update' /opt/zen/zen-ops-runtime/deploy/ops_tasks/repair_zen_ops_updater_self_install.sh 2>&1 || true"
+    "task": "repair_zen_ops_updater_self_install",
+    "timeout": 300
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Verify fixed updater self-install repair task reached Mini",
+    "summary": "Install corrected live updater from current runtime and verify heartbeat",
     "tools": [
       "ZEN Ops",
-      "git"
+      "systemd",
+      "tmux",
+      "Tailscale"
     ]
   }
 }
