@@ -17,7 +17,8 @@ install -m 0755 "$R/deploy/ubuntu/zen-living-visualizer.py" "$APP"
 install -m 0644 "$R/deploy/ubuntu/systemd/zen-living-visualizer.service" "$UNIT"
 
 systemctl daemon-reload
-systemctl enable --now zen-living-visualizer.service
+systemctl enable zen-living-visualizer.service >/dev/null
+systemctl restart zen-living-visualizer.service
 sleep 1
 
 echo "SERVICE=$(systemctl is-active zen-living-visualizer.service)"
