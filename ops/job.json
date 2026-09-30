@@ -1,15 +1,15 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "diag-rdc-failure-20260930-2042",
+  "job_id": "diag-rdc-runtime-20260930-2048",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 90,
-    "command": "echo '=== SERVICE STATE ==='; systemctl show desktop-commander-remote.service -p Id -p LoadState -p ActiveState -p SubState -p Result -p ExecMainCode -p ExecMainStatus -p NRestarts -p User -p Group -p WorkingDirectory -p FragmentPath -p ExecStart --no-pager; echo '=== EXECUTABLES ==='; command -v desktop-commander || true; ls -l /opt/node-v22-backup-20260928-213623/bin/desktop-commander 2>/dev/null || true; readlink -f /opt/node-v22-backup-20260928-213623/bin/desktop-commander 2>/dev/null || true; node --version 2>/dev/null || true; /opt/node-v22-backup-20260928-213623/bin/node --version 2>/dev/null || true; echo '=== SAFE ERROR SUMMARY ==='; journalctl -u desktop-commander-remote.service -n 80 --no-pager -o cat 2>/dev/null | grep -Ei 'error|failed|failure|not found|no such|ENOENT|module|permission|denied|version|connect|disconnect|exit|status' | sed -E 's/((token|secret|password|key)[=:])[[:graph:]]+/\\1REDACTED/Ig' | tail -40 || true"
+    "timeout": 60,
+    "command": "echo '=== CURRENT NODE TREE ==='; ls -l /opt/node/bin/node /opt/node/bin/npm 2>/dev/null || true; test -f /opt/node/lib/node_modules/@wonderwhy-er/desktop-commander/dist/index.js && echo CURRENT_DC_INDEX=YES || echo CURRENT_DC_INDEX=NO; test -f /opt/node/lib/node_modules/@wonderwhy-er/desktop-commander/package.json && node -p \"require('/opt/node/lib/node_modules/@wonderwhy-er/desktop-commander/package.json').version\" 2>/dev/null || true; echo '=== BACKUP TREE ==='; test -f /opt/node-v22-backup-20260928-213623/lib/node_modules/@wonderwhy-er/desktop-commander/dist/index.js && echo BACKUP_DC_INDEX=YES || echo BACKUP_DC_INDEX=NO; /opt/node-v22-backup-20260928-213623/bin/node -p \"require('/opt/node-v22-backup-20260928-213623/lib/node_modules/@wonderwhy-er/desktop-commander/package.json').version\" 2>/dev/null || true; echo '=== SERVICE CREDENTIAL FILE PATHS ONLY ==='; systemctl show desktop-commander-remote.service -p EnvironmentFiles --no-pager; find /root/.config /root/.local/share -maxdepth 3 -type f \\( -iname '*desktop*commander*' -o -iname '*commander*remote*' \\) -printf '%p\\n' 2>/dev/null | head -50"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Read-only diagnose Mini Desktop Commander restart loop without exposing credentials",
+    "summary": "Read-only verify current and backup Desktop Commander runtime before repair",
     "tools": [
       "ZEN Ops",
       "systemd",
