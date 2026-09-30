@@ -327,6 +327,22 @@
         "OPERATOR_WORKFLOW_REMAINS_UNCHANGED"
       ],
       "limitations": "This clarifies who may fill the Primary Brain role. It does not authorize raw MA2 writes, bypass Preview/Approval, change Operator Workflow, or make ChatGPT/API model output authoritative over verified Show state or native readback."
+    },
+    {
+      "id": "INTERACTIVE_LEAD_DESIGNER_AUX_API_001",
+      "source": "Owner clarification 2026-09-30",
+      "status": "APPROVED_PRODUCT_RULE",
+      "outcomes": [
+        "CHATGPT_IS_LEAD_PRIMARY_LIGHTING_DESIGNER_DURING_INTERACTIVE_OWNER_SESSIONS",
+        "API_DESIGNER_IS_OPTIONAL_AUXILIARY_CO_DESIGNER_NOT_CO_EQUAL_PRIMARY",
+        "API_DESIGNER_MAY_PROPOSE_ALTERNATIVES_CRITIQUE_RESEARCH_INTERPRETATION_AND_DRAFT_INTENT",
+        "CHATGPT_LEAD_PERFORMS_FINAL_ARTISTIC_INTEGRATION_INTO_ONE_UNIFIED_PLAN",
+        "API_QUOTA_EXHAUSTION_RATE_LIMIT_PROVIDER_FAILURE_OR_DISABLE_DOES_NOT_BLOCK_INTERACTIVE_DESIGN",
+        "INTERACTIVE_DESIGN_CONTINUES_WITH_CHATGPT_ONLY_WHEN_API_AUXILIARY_IS_UNAVAILABLE",
+        "API_AUXILIARY_NEVER_GAINS_RAW_MA_EXECUTION_AUTHORITY",
+        "ALL_FINAL_ARTISTIC_INTENT_STILL_CROSSES_ZEN_COMPILER_PREVIEW_APPROVAL_BUILDER_AND_NATIVE_READBACK"
+      ],
+      "limitations": "This hierarchy applies to interactive owner sessions. Unattended runtime may still let one approved provider temporarily occupy the Primary Brain role under the existing bounded contract. No provider failure may weaken deterministic MA execution or approval boundaries."
     }
   ],
   "evidence_results": [
