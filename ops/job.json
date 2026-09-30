@@ -1,18 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wait-obsidian-mind-fix-20260930-1800",
-  "kind": "shell",
+  "job_id": "install-obsidian-mind2-20260930-1802",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 120,
-    "command": "git -c safe.directory=/opt/zen/zen-ops-runtime -C /opt/zen/zen-ops-runtime rev-parse HEAD 2>&1 || true; grep -n 'NODE=.*command -v node' /opt/zen/zen-ops-runtime/deploy/ops_tasks/install_obsidian_mind.sh 2>&1 || true"
+    "task": "install_obsidian_mind",
+    "timeout": 300
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Verify Obsidian Mind node-path fix reached Mini runtime",
+    "summary": "Install Obsidian Mind vault and register OM MCP for zenui Codex after node-path fix",
     "tools": [
       "ZEN Ops",
-      "git"
+      "Codex",
+      "MCP",
+      "Git"
     ]
   }
 }
