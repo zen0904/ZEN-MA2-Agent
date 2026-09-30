@@ -1,20 +1,21 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "install-gui-taskbar-open-google-20260930-1721",
-  "kind": "repo_task",
+  "job_id": "inspect-gui-disappear-20260930-1657",
+  "kind": "shell",
   "args": {
-    "task": "install_gui_taskbar_and_open_google",
-    "timeout": 600
+    "cwd": "/opt/zen",
+    "timeout": 60,
+    "command": "export DISPLAY=:0; echo '=== windows ==='; wmctrl -l -x 2>&1 || true; echo '=== tint2 ==='; pgrep -a -u zenui -x tint2 || true; echo '=== chrome ==='; pgrep -a -u zenui -f '/opt/google/chrome/chrome|google-chrome' || true; echo '=== chatgpt ==='; pgrep -a -u zenui -f '/usr/lib/chatgpt/ChatGPT' | head -20 || true; echo '=== xorg ==='; pgrep -a -f '/usr/lib/xorg/Xorg :0' || true; echo '=== tint2 log ==='; tail -n 100 /var/lib/zenui/tint2.log 2>/dev/null || true; echo '=== chrome log ==='; tail -n 100 /var/lib/zenui/chrome.log 2>/dev/null || true; echo '=== openbox log ==='; tail -n 80 /var/lib/zenui/openbox.log 2>/dev/null || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Install clickable taskbar and open Google beside ChatGPT on Mini",
+    "summary": "Inspect why Chrome or taskbar disappeared from Mini GUI",
     "tools": [
       "ZEN Ops",
-      "apt",
-      "tint2",
+      "wmctrl",
+      "Openbox",
       "Chrome",
-      "ChatGPT"
+      "tint2"
     ]
   }
 }
