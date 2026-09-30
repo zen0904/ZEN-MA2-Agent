@@ -4,6 +4,13 @@ set -euo pipefail
 PORT=18991
 HTTPS_PORT=10000
 TARGET="http://127.0.0.1:${PORT}"
+RUNTIME_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
+echo "=== install bounded recovery units ==="
+install -m 0644 "${RUNTIME_ROOT}/deploy/ubuntu/systemd/zen-ops-results.service" /etc/systemd/system/zen-ops-results.service
+install -m 0644 "${RUNTIME_ROOT}/deploy/ubuntu/systemd/zen-ops-funnel.service" /etc/systemd/system/zen-ops-funnel.service
+systemctl daemon-reload
+systemctl enable zen-ops-results.service zen-ops-funnel.service >/dev/null
 
 echo "=== zen ops result service ==="
 systemctl enable --now zen-ops-results.service
