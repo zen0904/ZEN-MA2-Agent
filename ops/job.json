@@ -1,18 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "control-room-sync-repairtask-20260930-2400",
+  "job_id": "control-room-gui-repair-20260930-2408",
   "kind": "repo_task",
   "args": {
-    "task": "repair_zen_ops_updater_self_install",
-    "timeout": 180
+    "task": "repair_control_room_gui",
+    "timeout": 120
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Sync Mini runtime for Control Room GUI repair task",
+    "summary": "Launch missing Visualizer Chrome window and apply Mini Control Room layout",
     "tools": [
       "ZEN Ops",
-      "GitHub",
-      "Control Room"
+      "X11",
+      "Openbox",
+      "Living Visualizer"
     ]
   }
 }
