@@ -33,12 +33,12 @@ install -m 0755 "$R/deploy/ubuntu/zen-ops-update" /usr/local/sbin/zen-ops-update
 install -m 0755 "$R/deploy/ubuntu/zen-control-room" /usr/local/bin/zen-control-room
 install -m 0755 "$R/deploy/ubuntu/zenmon" /usr/local/bin/zenmon
 install -m 0755 "$R/deploy/ubuntu/zen-console-mode" /usr/local/bin/zen-console-mode
-install -m 0755 "$R/deploy/ubuntu/zen-ma-dashboard" /usr/local/bin/zen-ma-dashboard
+install -m 0755 "$R/deploy/ubuntu/zen-ma-dashboard" /usr/local/bin/zen-ma-dashboard\ninstall -m 0755 "$R/deploy/ubuntu/zen-living-visualizer.py" /usr/local/bin/zen-living-visualizer\ninstall -m 0644 "$R/deploy/ubuntu/systemd/zen-living-visualizer.service" /etc/systemd/system/zen-living-visualizer.service
 
 systemctl daemon-reload
 systemctl enable --now zen-ops-updater.timer
 systemctl enable --now zen-ops-results.service
-systemctl enable --now zen-ops-funnel.service
+systemctl enable --now zen-ops-funnel.service\nsystemctl enable --now zen-living-visualizer.service
 systemctl enable zen-ops-worker.service >/dev/null 2>&1 || true
 if ! systemctl is-active --quiet zen-ops-worker.service; then
   systemctl start zen-ops-worker.service
