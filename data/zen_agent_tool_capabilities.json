@@ -1,0 +1,358 @@
+{
+  "schema": "zen.agent_tool_capabilities.v0.1",
+  "generated_at": "2026-09-30",
+  "policy": {
+    "purpose": "Give interactive and API-hosted ZEN brains a shared capability vocabulary without granting raw execution authority.",
+    "default_visibility": "DISCOVERABLE",
+    "default_execution": "BROKERED_OR_CONTEXT_ONLY",
+    "rules": [
+      "A listed capability is available for reasoning; availability does not require use.",
+      "REFERENCE_ONLY entries may inform implementation/review but are not runtime tools.",
+      "LOCAL_LIBRARY and MCP capabilities require a ZEN runtime adapter or broker before an API Designer can invoke them.",
+      "No tool capability grants raw MA2/MA3 command, Telnet, Lua, shell, Patch, Address, Fixture identity/type, or foreign-object mutation authority.",
+      "MA writes remain Compiler -> Preview -> Human Approval -> deterministic Builder -> native readback.",
+      "Tool outputs are evidence/context, not artistic requirements."
+    ]
+  },
+  "capabilities": [
+    {
+      "id": "ops.execute_bounded",
+      "title": "ZEN OPS bounded Mini execution",
+      "status": "LIVE_RECOVERY_VERIFIED",
+      "class": "EXECUTION_INFRASTRUCTURE",
+      "invoke_via": "ZEN_OPS",
+      "interactive_chatgpt": true,
+      "lean_api_designer_direct": false,
+      "uses": [
+        "run allowlisted shell/service/repo tasks on Mini",
+        "inspect Mini runtime",
+        "install/update verified tooling"
+      ],
+      "limits": [
+        "not an artistic brain",
+        "root actions require bounded repo tasks",
+        "not MA programming authority"
+      ]
+    },
+    {
+      "id": "documents.parse",
+      "title": "Document parsing and conversion",
+      "status": "READY",
+      "class": "ANALYSIS",
+      "invoke_via": "MCP_OR_LOCAL",
+      "implementations": [
+        "markitdown",
+        "docling"
+      ],
+      "interactive_chatgpt": true,
+      "lean_api_designer_direct": false,
+      "uses": [
+        "extract structured text from production documents",
+        "normalize cue sheets/riders/briefs"
+      ],
+      "limits": [
+        "runtime adapter required for API Designer"
+      ]
+    },
+    {
+      "id": "web.extract",
+      "title": "Structured web extraction",
+      "status": "READY_ON_DEMAND",
+      "class": "RESEARCH",
+      "invoke_via": "MCP_OR_LOCAL",
+      "implementations": [
+        "crawl4ai"
+      ],
+      "interactive_chatgpt": true,
+      "lean_api_designer_direct": false,
+      "uses": [
+        "research public documentation",
+        "extract structured web references"
+      ],
+      "limits": [
+        "external information remains provenance-bearing and non-authoritative until reviewed"
+      ]
+    },
+    {
+      "id": "code.structure",
+      "title": "Structural code intelligence",
+      "status": "READY",
+      "class": "DEVELOPMENT",
+      "invoke_via": "MCP",
+      "implementations": [
+        "codebase-memory-mcp"
+      ],
+      "interactive_chatgpt": true,
+      "lean_api_designer_direct": false,
+      "uses": [
+        "AST/dependency/call graph",
+        "impact analysis",
+        "index coverage"
+      ],
+      "limits": [
+        "advisory only",
+        "never overrides committed repo/tests/native evidence"
+      ]
+    },
+    {
+      "id": "audio.analyze",
+      "title": "Audio/music feature analysis",
+      "status": "READY",
+      "class": "DESIGN_INPUT",
+      "invoke_via": "LOCAL_LIBRARY",
+      "implementations": [
+        "essentia"
+      ],
+      "interactive_chatgpt": true,
+      "lean_api_designer_direct": false,
+      "uses": [
+        "rhythm/tempo/onset/music-feature evidence",
+        "support song analysis and Musical Clock"
+      ],
+      "limits": [
+        "analysis evidence may be uncertain",
+        "must not invent exact timeline when source is absent"
+      ]
+    },
+    {
+      "id": "video.scene_detect",
+      "title": "Video scene segmentation",
+      "status": "READY",
+      "class": "DESIGN_INPUT",
+      "invoke_via": "LOCAL_LIBRARY",
+      "implementations": [
+        "PySceneDetect"
+      ],
+      "interactive_chatgpt": true,
+      "lean_api_designer_direct": false,
+      "uses": [
+        "reference-performance segmentation",
+        "support cross-modal lighting analysis"
+      ],
+      "limits": [
+        "scene cuts are evidence, not lighting-design rules"
+      ]
+    },
+    {
+      "id": "gdtf.parse",
+      "title": "GDTF fixture capability and geometry parsing",
+      "status": "READY_VERIFIED_IMPORT",
+      "class": "SHOW_INPUT",
+      "invoke_via": "LOCAL_LIBRARY",
+      "implementations": [
+        "pygdtf 1.4.5",
+        "open-stage/python-gdtf"
+      ],
+      "interactive_chatgpt": true,
+      "lean_api_designer_direct": false,
+      "uses": [
+        "DMX modes/channels",
+        "fixture functions",
+        "physical ranges",
+        "geometry tree",
+        "capability normalization"
+      ],
+      "limits": [
+        "GDTF data quality varies",
+        "current Show/native evidence wins on conflicts"
+      ]
+    },
+    {
+      "id": "mvr.parse",
+      "title": "MVR rig and placement parsing",
+      "status": "READY_VERIFIED_IMPORT",
+      "class": "SHOW_INPUT",
+      "invoke_via": "LOCAL_LIBRARY",
+      "implementations": [
+        "pymvr 1.0.7",
+        "open-stage/python-mvr"
+      ],
+      "interactive_chatgpt": true,
+      "lean_api_designer_direct": false,
+      "uses": [
+        "rig manifest",
+        "fixture placement",
+        "patch metadata",
+        "layers/classes",
+        "embedded GDTF references"
+      ],
+      "limits": [
+        "CAD positions are previsualization evidence, not guaranteed final focus"
+      ]
+    },
+    {
+      "id": "ma2.implementation_reference",
+      "title": "MA2 parser/introspection/profile-resolution reference",
+      "status": "INSTALLED_REFERENCE_PENDING_CORE_REVERIFY",
+      "class": "REFERENCE",
+      "invoke_via": "REFERENCE_ONLY",
+      "implementations": [
+        "chienchuanw/gma2-mcp",
+        "MA2 reference corpus"
+      ],
+      "interactive_chatgpt": true,
+      "lean_api_designer_direct": false,
+      "uses": [
+        "compare response parsing",
+        "show-aware attribute resolution",
+        "fixture-profile function resolution",
+        "deterministic command builder tests"
+      ],
+      "limits": [
+        "raw MCP/Telnet path is not ZEN authority"
+      ]
+    },
+    {
+      "id": "ma3.knowledge_reference",
+      "title": "MA3 verified knowledge and safety reference",
+      "status": "INSTALLED_REFERENCE",
+      "class": "REFERENCE",
+      "invoke_via": "REFERENCE_ONLY",
+      "implementations": [
+        "DD-cLD/The3-MCP"
+      ],
+      "interactive_chatgpt": true,
+      "lean_api_designer_direct": false,
+      "uses": [
+        "version-stamped MA3 knowledge",
+        "MAtricks/Phaser evidence",
+        "readback discipline",
+        "GDTF/MVR pipeline patterns"
+      ],
+      "limits": [
+        "external role vocabulary is not universal artistic truth",
+        "no independent MA authority"
+      ]
+    },
+    {
+      "id": "movement.grammar_reference",
+      "title": "Cross-MA movement/effect grammar references",
+      "status": "INSTALLED_REFERENCE",
+      "class": "ARTISTIC_IMPLEMENTATION_REFERENCE",
+      "invoke_via": "REFERENCE_ONLY",
+      "implementations": [
+        "smartoo MA3 Phaser family",
+        "smartoo grandMA2 preset/effect banks"
+      ],
+      "interactive_chatgpt": true,
+      "lean_api_designer_direct": false,
+      "uses": [
+        "derive semantic shape/amplitude/rate/phase/transition vocabulary",
+        "compare MA2 Effects vs MA3 Phasers"
+      ],
+      "limits": [
+        "canned effects are examples, not mandatory repertoire or design checklist"
+      ]
+    },
+    {
+      "id": "spatial.tracking_reference",
+      "title": "MA2 XYZ/Stage Marker/PSN/AutoZoom reference",
+      "status": "INSTALLED_REFERENCE",
+      "class": "SPATIAL_REFERENCE",
+      "invoke_via": "REFERENCE_ONLY",
+      "implementations": [
+        "Naostage/grandma2-autozoom-plugin"
+      ],
+      "interactive_chatgpt": true,
+      "lean_api_designer_direct": false,
+      "uses": [
+        "future tracking",
+        "distance-aware beam sizing",
+        "semantic target following"
+      ],
+      "limits": [
+        "future research only",
+        "no direct runtime authority"
+      ]
+    },
+    {
+      "id": "operator.protocol_reference",
+      "title": "MA2/MA3 operator protocol references",
+      "status": "INSTALLED_REFERENCE",
+      "class": "OPERATOR_REFERENCE",
+      "invoke_via": "REFERENCE_ONLY",
+      "implementations": [
+        "MA2 Chataigne",
+        "MA3 Chataigne",
+        "Bitfocus Companion MA2/MA3"
+      ],
+      "interactive_chatgpt": true,
+      "lean_api_designer_direct": false,
+      "uses": [
+        "Web Remote/OSC behavior",
+        "executor feedback",
+        "rate limiting",
+        "connection lifecycle"
+      ],
+      "limits": [
+        "operator integration only",
+        "not programming authority"
+      ]
+    },
+    {
+      "id": "timeline.adapter_reference",
+      "title": "Timecode and marker adapter references",
+      "status": "INSTALLED_REFERENCE",
+      "class": "TIMELINE_REFERENCE",
+      "invoke_via": "REFERENCE_ONLY",
+      "implementations": [
+        "ma3-marker-import",
+        "reapma3",
+        "TimecodeBPMConvertMA3",
+        "GrandMA2-ExportTimecode",
+        "ma2-tc-cut"
+      ],
+      "interactive_chatgpt": true,
+      "lean_api_designer_direct": false,
+      "uses": [
+        "marker/timecode import concepts",
+        "frame-rate ambiguity handling",
+        "future Canonical Timeline adapters"
+      ],
+      "limits": [
+        "adapter is not canonical timeline",
+        "unknown SMPTE frame rate must fail closed"
+      ]
+    },
+    {
+      "id": "reaper.inspect",
+      "title": "REAPER project/session inspection",
+      "status": "HOST_DEPENDENT",
+      "class": "DESIGN_INPUT",
+      "invoke_via": "MCP_ON_REAPER_HOST",
+      "implementations": [
+        "REAPER MCP readonly/live"
+      ],
+      "interactive_chatgpt": true,
+      "lean_api_designer_direct": false,
+      "uses": [
+        "markers/regions/project context",
+        "future timeline integration"
+      ],
+      "limits": [
+        "Mini is not the REAPER workstation",
+        "live control stays disabled on Mini"
+      ]
+    },
+    {
+      "id": "model.antseed_free",
+      "title": "Antseed free model provider",
+      "status": "LIVE_MINI_VERIFIED",
+      "class": "MODEL_RUNTIME",
+      "invoke_via": "OPENCLAW_PROVIDER",
+      "implementations": [
+        "antseed/deepseek-v4-flash"
+      ],
+      "interactive_chatgpt": false,
+      "lean_api_designer_direct": false,
+      "uses": [
+        "unattended API-model fallback when selected by provider policy"
+      ],
+      "limits": [
+        "price hard cap 0",
+        "no free peer means fail",
+        "does not change artistic authority"
+      ]
+    }
+  ]
+}
