@@ -57,3 +57,15 @@ The GitHub Actions self-hosted `zen-mini` runner path is a separate backup/diagn
 That runner state does **not** invalidate this OPS recovery acceptance and does not block the canonical `zen-ops-worker` control path.
 
 If the self-hosted runner is repaired later, treat that as a separate acceptance item. Do not reopen this recovery gate unless the canonical worker/updater/results/Funnel chain regresses.
+
+## Post-acceptance regression check
+
+After the recovery path was accepted, the canonical Mini OPS plane was used to run the full repository suite through job `full-tests-post-ops-recovery-20260930-0820`.
+
+```text
+status=completed
+returncode=0
+1004 passed, 2 warnings, 128 subtests passed in 22.61s
+```
+
+This confirms the recovered OPS path can execute the normal repository test workload successfully. The two pytest collection warnings are pre-existing collection warnings, not test failures.
