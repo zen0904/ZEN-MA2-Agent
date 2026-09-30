@@ -1,10 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wait-chatgpt-chrome-codex-task-20260930-1604",
+  "job_id": "inspect-chatgpt-linux-cx-20260930-1601",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 190,
-    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/install_chatgpt_chrome_codex.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
+    "timeout": 120,
+    "command": "echo '=== CHATGPT APP ==='; command -v chatgpt || true; dpkg-query -W -f='${Package} ${Version} ${Architecture}\\n' chatgpt 2>/dev/null || true; chatgpt --version 2>/dev/null || true; pgrep -a -f '(^|/)chatgpt( |$)' || true; echo '=== CODEX CLI ==='; command -v codex || true; codex --version 2>/dev/null || true; echo '=== DISPLAY ==='; printf 'DISPLAY=%s\\nWAYLAND_DISPLAY=%s\\nXDG_SESSION_TYPE=%s\\n' \"${DISPLAY:-}\" \"${WAYLAND_DISPLAY:-}\" \"${XDG_SESSION_TYPE:-}\""
+  },
+  "meta": {
+    "actor": "CHATGPT_LEAD",
+    "summary": "Inspect official ChatGPT Linux app and CX Codex CLI separately on Mini",
+    "tools": [
+      "ZEN Ops",
+      "ChatGPT Linux",
+      "Codex CLI"
+    ]
   }
 }
