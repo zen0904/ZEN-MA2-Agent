@@ -128,6 +128,25 @@ The Visualizer must not:
 MA2_WRITES=0
 MA3_WRITES=0
 
+## Live Control Room verification
+
+Verified on 2026-09-30 through ZEN Ops without Remote Desktop Commander:
+
+- Control Room layout: PASS
+- ChatGPT geometry: `0,0,1200,1038`
+- Living Visualizer geometry: `1200,0,720,1038`
+- effective split: 62.5% ChatGPT / 37.5% Visualizer
+- Visualizer Chrome window present
+- Visualizer health: OK
+- display remains on the persistent 180-degree rotation path
+- MA2_WRITES=0
+- MA3_WRITES=0
+
+The attached-display default is therefore live, not merely specified:
+`ChatGPT left + Living Visualizer right`.
+
+The Visualizer right-side UI contains live system telemetry and runtime/event activity, so a separate always-visible terminal window is not required for the default idle/control-room view. Terminal/diagnostic surfaces remain available as on-demand maintenance modes.
+
 ## Next phase
 
 1. Integrate the visualizer into the Mini Control Room display as a visible local window.
