@@ -1229,6 +1229,20 @@
       "why_it_matters": "Shared production facts should not be encoded as lighting-exclusive data if future Audio/Video/Stage consumers may need them.",
       "blocks_current_milestone": false,
       "next_review_condition": "Keep as data-architecture guidance only until an actual cross-department use case exists."
+    },
+    {
+      "id": "CANONICAL_SHOW_TIMELINE_MUSICAL_CLOCK",
+      "classification": "HIGH_LEVERAGE_FUTURE",
+      "milestone": "M1_DESIGNER_FOUNDATION",
+      "status": "ARCHITECTURE_REVIEWED_NON_BLOCKING",
+      "why_it_matters": "A canonical semantic event timeline plus a tempo-aware Musical Clock can let Lighting, future Video/Laser adapters and Manual/Trigger/Timecode execution share one event meaning without duplicating timing guesses.",
+      "blocks_current_milestone": false,
+      "dependencies": [
+        "docs/THE_ARC_ARCHITECTURE_ADOPTION_REVIEW_001.md",
+        "existing song_analysis section/event model",
+        "preserve current MA2 deterministic Builder/Preview/Approval boundary"
+      ],
+      "next_review_condition": "After the current Spatial vNext live operator acceptance is unblocked, define only a small Musical Clock and canonical semantic Event Timeline artifact before any broader Scene/Event resolver refactor."
     }
   ],
   "recent_foundation": {
