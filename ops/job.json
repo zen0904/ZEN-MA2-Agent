@@ -1,19 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "inspect-codex-mcp-home-20260930-1750",
+  "job_id": "wait-obsidian-mind-task-20260930-1755",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
     "timeout": 120,
-    "command": "echo '=== USERS ==='; id zenui 2>&1 || true; id zenops 2>&1 || true; echo '=== NODE ==='; node --version 2>&1 || /opt/node/bin/node --version 2>&1 || true; echo '=== CODEX ==='; command -v codex || true; codex --version 2>&1 || true; echo '=== ZENUI HOME ==='; getent passwd zenui || true; ls -la /var/lib/zenui/.codex 2>&1 || true; find /var/lib/zenui -maxdepth 3 -type f \\( -name 'config.toml' -o -name 'hooks.json' -o -name '.mcp.json' \\) -print 2>/dev/null | head -50; echo '=== CODEX MCP HELP ==='; runuser -u zenui -- env HOME=/var/lib/zenui codex mcp --help 2>&1 | head -120 || true; echo '=== CODEX MCP LIST ==='; runuser -u zenui -- env HOME=/var/lib/zenui codex mcp list 2>&1 || true"
+    "command": "git -c safe.directory=/opt/zen/zen-ops-runtime -C /opt/zen/zen-ops-runtime rev-parse HEAD 2>&1 || true; test -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/install_obsidian_mind.sh && echo OBSIDIAN_MIND_TASK=READY || echo OBSIDIAN_MIND_TASK=ABSENT"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Inspect Mini Codex MCP config home before Obsidian Mind integration",
+    "summary": "Verify Obsidian Mind integration task reached Mini runtime",
     "tools": [
       "ZEN Ops",
-      "Codex",
-      "MCP"
+      "git"
     ]
   }
 }
