@@ -1,18 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "install-chatgpt-chrome-codex-20260930-1606",
-  "kind": "repo_task",
+  "job_id": "updater-rootcause-20260930-1608",
+  "kind": "shell",
   "args": {
-    "task": "install_chatgpt_chrome_codex",
-    "timeout": 1800
+    "cwd": "/opt/zen",
+    "timeout": 120,
+    "command": "echo '=== SERVICE ==='; systemctl status zen-ops-updater.service --no-pager --full 2>&1 || true; echo '=== TIMER ==='; systemctl status zen-ops-updater.timer --no-pager --full 2>&1 || true; echo '=== JOURNAL ==='; journalctl -u zen-ops-updater.service -n 80 --no-pager 2>&1 || true; echo '=== RUNTIME ==='; ls -ld /opt/zen/zen-ops-runtime /opt/zen/zen-ops-runtime/.git 2>&1 || true; git -c safe.directory=/opt/zen/zen-ops-runtime -C /opt/zen/zen-ops-runtime rev-parse --short HEAD 2>&1 || true; git -c safe.directory=/opt/zen/zen-ops-runtime -C /opt/zen/zen-ops-runtime remote -v 2>&1 || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Install official ChatGPT Linux desktop app, Google Chrome, and Codex CLI on Mini",
+    "summary": "Diagnose only the stuck Mini updater root cause",
     "tools": [
       "ZEN Ops",
-      "apt",
-      "npm"
+      "systemd",
+      "git"
     ]
   }
 }
