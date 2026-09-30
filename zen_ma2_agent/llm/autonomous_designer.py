@@ -168,7 +168,9 @@ def design_with_provider(router: ProviderRouter, *, request: str, repo_root: Pat
         "Required top-level fields: schema, design_intent, visual_strategy, virtual_rig, position_vocabulary, "
         "main_sequence, free_cue_layer, evidence_trace, codex_artistic_intervention. "
         "Use descriptive structured fields for geometry, preset vocabulary, cue/event intent, selected and unused resources, "
-        "and rationale. Never emit executable MA2/Telnet/Lua/shell commands or raw console text. "
+        "and rationale. The tool_capabilities section is a catalog of what the ZEN runtime can supply or broker, not a direct "
+        "tool handle: do not claim a tool was executed unless its result is already present in context, and never emit tool-call "
+        "syntax. Never emit executable MA2/Telnet/Lua/shell commands or raw console text. "
         "Retain uncertainty rather than inventing facts. Set codex_artistic_intervention to NONE."
     )
     user = json.dumps({"user_request": request, "designer_context": context}, ensure_ascii=False)
