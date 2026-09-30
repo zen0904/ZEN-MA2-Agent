@@ -1,18 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "visualizer-sync-errorjson-20260930-2204",
+  "job_id": "visualizer-reinstall-errorjson-20260930-2209",
   "kind": "repo_task",
   "args": {
-    "task": "repair_zen_ops_updater_self_install",
+    "task": "install_living_visualizer",
     "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Sync Mini runtime for Living Visualizer telemetry and bounded error JSON",
+    "summary": "Reinstall and restart Living Visualizer with telemetry and bounded error JSON",
     "tools": [
       "ZEN Ops",
-      "GitHub",
-      "Living Visualizer"
+      "Living Visualizer",
+      "systemd"
     ]
   }
 }
