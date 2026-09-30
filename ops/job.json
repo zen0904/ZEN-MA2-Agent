@@ -1,19 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "updater-rootcause-20260930-1608",
+  "job_id": "wait-codex-cli-task-20260930-1610",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 120,
-    "command": "echo '=== SERVICE ==='; systemctl status zen-ops-updater.service --no-pager --full 2>&1 || true; echo '=== TIMER ==='; systemctl status zen-ops-updater.timer --no-pager --full 2>&1 || true; echo '=== JOURNAL ==='; journalctl -u zen-ops-updater.service -n 80 --no-pager 2>&1 || true; echo '=== RUNTIME ==='; ls -ld /opt/zen/zen-ops-runtime /opt/zen/zen-ops-runtime/.git 2>&1 || true; git -c safe.directory=/opt/zen/zen-ops-runtime -C /opt/zen/zen-ops-runtime rev-parse --short HEAD 2>&1 || true; git -c safe.directory=/opt/zen/zen-ops-runtime -C /opt/zen/zen-ops-runtime remote -v 2>&1 || true"
+    "timeout": 190,
+    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/install_codex_cli.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Diagnose only the stuck Mini updater root cause",
+    "summary": "Wait for Codex CLI installer deployment",
     "tools": [
-      "ZEN Ops",
-      "systemd",
-      "git"
+      "ZEN Ops"
     ]
   }
 }
