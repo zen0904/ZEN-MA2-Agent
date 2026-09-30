@@ -1,19 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wifi-profile-audit-20260930-2053",
-  "kind": "shell",
+  "job_id": "visualizer-sync-20260930-2105",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 60,
-    "command": "echo '=== SAVED WIFI CONNECTIONS ==='; nmcli -t -f NAME,TYPE,AUTOCONNECT connection show | grep ':802-11-wireless:' || true; echo '=== ACTIVE CONNECTIONS ==='; nmcli -t -f NAME,TYPE,DEVICE connection show --active || true; echo '=== WIFI RADIOS ==='; nmcli radio wifi || true; echo '=== NETWORKMANAGER ==='; systemctl is-enabled NetworkManager.service 2>/dev/null || true; systemctl is-active NetworkManager.service 2>/dev/null || true; echo '=== TAILSCALE ==='; systemctl is-enabled tailscaled.service 2>/dev/null || true; systemctl is-active tailscaled.service 2>/dev/null || true"
+    "task": "repair_zen_ops_updater_self_install",
+    "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Read-only audit of saved Wi-Fi profiles and autoconnect state without exposing credentials",
+    "summary": "Sync Mini zen-ops runtime to latest main before Living Visualizer install",
     "tools": [
       "ZEN Ops",
-      "NetworkManager",
-      "Tailscale"
+      "GitHub",
+      "Visualizer"
     ]
   }
 }
