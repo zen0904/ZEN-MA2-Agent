@@ -1,17 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wait-codex-device-auth-task-20260930-1614",
-  "kind": "shell",
+  "job_id": "start-codex-device-auth-20260930-1615",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 190,
-    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/start_codex_device_auth_tmux.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
+    "task": "start_codex_device_auth_tmux",
+    "timeout": 120
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Wait for local-console Codex device-auth launcher",
+    "summary": "Start Codex CLI device authentication on Mini local console without exposing the one-time code",
     "tools": [
-      "ZEN Ops"
+      "ZEN Ops",
+      "tmux",
+      "Codex CLI"
     ]
   }
 }
