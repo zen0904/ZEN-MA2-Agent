@@ -1,8 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "full-tests-post-ops-recovery-20260930-0820",
-  "kind": "tests",
+  "job_id": "inspect-openchatx-openclaw-20260930-0825",
+  "kind": "shell",
   "args": {
-    "timeout": 1800
+    "cwd": "/opt/zen",
+    "timeout": 120,
+    "command": "set -o pipefail; echo '=== SERVICES ==='; for u in zen-openchatx zen-ops-worker zen-ops-results zen-ops-funnel; do printf '%s active=' \"$u\"; systemctl is-active \"$u\" 2>/dev/null || true; printf '%s enabled=' \"$u\"; systemctl is-enabled \"$u\" 2>/dev/null || true; done; echo '=== PORTS ==='; ss -ltnp 2>/dev/null | grep -E ':(18001|18080|18789|18991|8876|8877)\\\\b' || true; echo '=== PROCESSES ==='; ps -eo pid,etime,user,args | grep -Ei 'openchatx|openclaw' | grep -v grep || true; echo '=== OPENCHATX PATHS ==='; for p in /opt/zen/tools/openchatx-linux-sandbox /var/lib/zen-openchatx /var/lib/zen-ops/work/openchatx-linux-probe; do if [ -e \"$p\" ]; then echo PRESENT:$p; else echo MISSING:$p; fi; done"
   }
 }
