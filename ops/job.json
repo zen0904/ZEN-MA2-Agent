@@ -1,18 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "force-ops-sync-20260930-2102",
+  "job_id": "repair-rdc-root-20260930-2110",
   "kind": "repo_task",
   "args": {
-    "task": "repair_zen_ops_updater_self_install",
+    "task": "repair_desktop_commander_remote",
     "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Force zen-ops runtime sync to latest main before Desktop Commander repair",
+    "summary": "Restore Mini Desktop Commander runtime package through bounded privileged repo task",
     "tools": [
       "ZEN Ops",
-      "GitHub",
-      "systemd"
+      "systemd",
+      "Desktop Commander"
     ]
   }
 }
