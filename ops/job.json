@@ -1,15 +1,15 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wifi-priority-audit-20260930-2114",
+  "job_id": "wifi-priority-audit2-20260930-2122",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
     "timeout": 60,
-    "command": "echo '=== WIFI PROFILE ORDER ==='; for c in zen-home-wifi zen-home-2f zen-iphone-hotspot; do;   echo PROFILE=$c;   nmcli -g connection.autoconnect,connection.autoconnect-priority,802-11-wireless.ssid connection show \"$c\" 2>/dev/null | sed -n '1,3p' || true; done"
+    "command": "echo '=== zen-home-wifi ==='; nmcli -g connection.autoconnect,connection.autoconnect-priority,802-11-wireless.ssid connection show zen-home-wifi 2>/dev/null || true; echo '=== zen-home-2f ==='; nmcli -g connection.autoconnect,connection.autoconnect-priority,802-11-wireless.ssid connection show zen-home-2f 2>/dev/null || true; echo '=== zen-iphone-hotspot ==='; nmcli -g connection.autoconnect,connection.autoconnect-priority,802-11-wireless.ssid connection show zen-iphone-hotspot 2>/dev/null || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Read-only inspect Wi-Fi autoconnect priorities for home and iPhone hotspot profiles",
+    "summary": "Read-only inspect Wi-Fi autoconnect priorities for saved home and iPhone hotspot profiles",
     "tools": [
       "ZEN Ops",
       "NetworkManager"
