@@ -1,19 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "show-mini-desktop-final-20260930-1715",
+  "job_id": "inspect-mini-gui-windows-20260930-1718",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
     "timeout": 45,
-    "command": "export DISPLAY=:0; echo '=== windows before ==='; wmctrl -l || true; wmctrl -k on; sleep 1; chvt 3 2>/dev/null || true; echo 'DESKTOP_SHOWN=YES'; echo 'VT=3'"
+    "command": "export DISPLAY=:0; echo '=== windows ==='; wmctrl -l -x 2>&1 || true; echo '=== chrome ==='; pgrep -a -f '/opt/google/chrome/chrome|google-chrome' || true; echo '=== chatgpt ==='; pgrep -a -f '/usr/lib/chatgpt/ChatGPT' || true; echo '=== tint2 ==='; command -v tint2 || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Minimize all Mini GUI windows and show desktop",
+    "summary": "Inspect Mini GUI windows before adding app switching",
     "tools": [
       "ZEN Ops",
-      "wmctrl",
-      "Openbox"
+      "wmctrl"
     ]
   }
 }
