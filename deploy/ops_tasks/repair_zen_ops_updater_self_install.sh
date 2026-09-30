@@ -8,7 +8,7 @@ echo "REPAIR=ZEN_OPS_UPDATER_SELF_INSTALL"
 echo "MA2_WRITES=0"
 echo "MA3_WRITES=0"
 
-test -x "$R/deploy/ubuntu/zen-ops-update"
+test -f "$R/deploy/ubuntu/zen-ops-update"
 install -m 0755 "$R/deploy/ubuntu/zen-ops-update" "$LIVE"
 
 echo "LIVE_UPDATER_SHA256=$(sha256sum "$LIVE" | awk '{print $1}')"
