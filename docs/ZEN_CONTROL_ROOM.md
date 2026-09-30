@@ -157,3 +157,25 @@ It does not:
 
 Only observable task summaries, process/service state, tool use evidence,
 repository activity and deterministic MA pipeline state are shown.
+
+## Worker movement animation
+
+Room Mode deliberately tells a small visual story for a real brokered job:
+
+```text
+REST LOUNGE
+   -> worker leaves lounge
+   -> walks toward TOOL RACK
+   -> picks up the primary tool
+   -> carries it to the assigned WORK SEAT
+   -> remains visibly working until the observable job finishes
+   -> returns to lounge when idle
+```
+
+The animation is driven by observable activity metadata and job state, not by
+fabricated chain-of-thought. ZEN OPS publishes sanitized WORK_START / WORK_END
+events to the Room activity feed. The first declared tool becomes the visual
+"tool in hand"; additional declared tools are shown as supporting tools.
+
+The current implementation uses a one-second dashboard refresh and tiny ANSI /
+Unicode position changes. It is intentionally not a graphical game engine.
