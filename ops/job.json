@@ -1,20 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "install-persistent-gui-services-20260930-1700",
-  "kind": "repo_task",
+  "job_id": "verify-persistent-gui-services-20260930-1701",
+  "kind": "shell",
   "args": {
-    "task": "install_persistent_gui_services",
-    "timeout": 600
+    "cwd": "/opt/zen",
+    "timeout": 45,
+    "command": "echo '=== services ==='; systemctl is-active zen-mini-taskbar.service 2>/dev/null || true; systemctl is-active zen-mini-chrome.service 2>/dev/null || true; echo '=== windows ==='; DISPLAY=:0 wmctrl -l -x 2>&1 || true; echo '=== processes ==='; pgrep -a -u zenui -x tint2 || true; pgrep -a -u zenui -f '/opt/google/chrome/chrome|google-chrome' | head -20 || true; echo '=== enabled ==='; systemctl is-enabled zen-mini-taskbar.service 2>/dev/null || true; systemctl is-enabled zen-mini-chrome.service 2>/dev/null || true; chvt 3 2>/dev/null || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Make Mini Chrome and taskbar persistent so they do not disappear",
+    "summary": "Verify persistent Mini Chrome and taskbar services",
     "tools": [
       "ZEN Ops",
       "systemd",
-      "Chrome",
-      "tint2",
-      "Openbox"
+      "wmctrl"
     ]
   }
 }
