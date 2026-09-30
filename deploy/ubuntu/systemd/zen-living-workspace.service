@@ -1,0 +1,23 @@
+[Unit]
+Description=ZEN Mini persistent Living Workspace
+After=zen-chatgpt-desktop.service
+Requires=zen-chatgpt-desktop.service
+
+[Service]
+Type=simple
+User=zenui
+Group=zenui
+Environment=HOME=/var/lib/zenui
+Environment=USER=zenui
+Environment=LOGNAME=zenui
+Environment=DISPLAY=:0
+Environment=XDG_CONFIG_HOME=/var/lib/zenui/.config
+ExecStartPre=/bin/bash -lc 'for _ in $(seq 1 40); do /usr/bin/xset q >/dev/null 2>&1 && exit 0; sleep 0.5; done; exit 1'
+ExecStart=/usr/bin/xterm -T "ZEN Living Workspace" -name zen-living-tui -fa "DejaVu Sans Mono" -fs 10 -bg "#1b1a18" -fg "#e9e1d8" -bd "#1b1a18" -cr "#c7b8a3" +sb -b 0 -e /usr/local/bin/zen-living-tui
+ExecStartPost=/bin/bash -lc 'for _ in $(seq 1 20); do /usr/local/bin/zen-control-room-layout living >/var/lib/zenui/control-room-layout.log 2>&1 && exit 0; sleep 0.5; done; exit 0'
+Restart=always
+RestartSec=2
+KillMode=control-group
+
+[Install]
+WantedBy=multi-user.target
