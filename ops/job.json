@@ -1,19 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "install-chatgpt-persist-20260930-1732",
-  "kind": "repo_task",
+  "job_id": "diagnose-chatgpt-persist-20260930-1735",
+  "kind": "shell",
   "args": {
-    "task": "install_persistent_chatgpt_gui_service",
-    "timeout": 300
+    "cwd": "/opt/zen",
+    "timeout": 90,
+    "command": "echo '=== CHATGPT BIN ==='; command -v chatgpt || true; ls -l /usr/bin/chatgpt /usr/local/bin/chatgpt /opt/chatgpt/chatgpt 2>/dev/null || true; echo '=== SESSION ==='; ls -l /usr/local/libexec/zen-chatgpt-session.sh 2>/dev/null || true; sed -n '1,160p' /usr/local/libexec/zen-chatgpt-session.sh 2>/dev/null || true; echo '=== PROCESSES ==='; pgrep -a -u zenui -f 'chatgpt|chrome|openbox' || true; pgrep -a -f '/usr/lib/xorg/Xorg :0|/usr/bin/Xorg :0' || true; echo '=== UNITS ==='; systemctl list-units 'zen-chatgpt*.service' --all --no-legend 2>/dev/null || true; systemctl is-active zen-mini-taskbar.service 2>/dev/null || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Install cleaned persistent ChatGPT GUI service on Mini boot",
+    "summary": "Diagnose exact ChatGPT binary/session paths for persistent service",
     "tools": [
       "ZEN Ops",
       "systemd",
-      "Xorg",
-      "ChatGPT"
+      "procfs"
     ]
   }
 }
