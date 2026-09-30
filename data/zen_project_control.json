@@ -1808,48 +1808,37 @@
     },
     {
       "id": "MINI_CONTROL_ROOM_LAYOUT_001",
-      "status": "PHASE1_SENTIENT_LOGIC_BOARD_LIVE",
+      "status": "TUI_LIVE_VERIFIED",
       "owner_clarification_date": "2026-09-30",
       "source": "docs/MINI_CONTROL_ROOM_LAYOUT_001.md",
-      "implementation_source": "docs/LIVING_SYSTEM_VISUALIZER_MVP_001.md",
-      "rule": "Mini Control Room remains the intended attached-display experience. The Living System Visualizer now has a running observation-only MVP on loopback port 18992. It may visualize real runtime state but must never become execution authority.",
+      "current_frontend_spec": "docs/LIVING_TUI_FINAL_SPEC_001.md",
+      "superseded_frontend_spec": "docs/LIVING_SYSTEM_VISUALIZER_FINAL_SPEC_001.md",
+      "rule": "Attached-display default is fixed 30% real ChatGPT GUI plus 70% terminal-native ZEN Living TUI. The right-side observation workspace must not depend on Chrome/Web GUI. Internal Living/Control/Diagnostic modes only change TUI information hierarchy, not OS window ratio.",
       "default_layout": {
-        "chatgpt_geometry": "0,0,1200,1038",
-        "visualizer_geometry": "1200,0,720,1038",
-        "split": "62.5_37.5",
-        "terminal_default": "ON_DEMAND_NOT_ALWAYS_VISIBLE"
+        "chatgpt_geometry": "0,0,576,1038",
+        "tui_geometry": "576,0,1344,1038",
+        "split": "30_70_FIXED",
+        "terminal_host": "xterm",
+        "tui": "/usr/local/bin/zen-living-tui"
       },
-      "living_system_visualizer": {
-        "status": "PHASE1_LIVE",
+      "living_tui": {
+        "status": "LIVE_VERIFIED",
+        "implementation": "PYTHON_STDLIB_CURSES",
+        "registry": "data/ZEN_RUNTIME_ENTITY_REGISTRY.json",
+        "state_map": "data/ZEN_TUI_STATE_MAP.json",
         "authority": "OBSERVATION_ONLY",
-        "service": "zen-living-visualizer.service",
-        "listen": "127.0.0.1:18992",
-        "health": "PASS",
-        "state": "/api/state",
-        "event_driven": true,
-        "verified_telemetry": [
-          "CPU_USAGE",
-          "CPU_TEMPERATURE",
-          "FAN_RPM",
-          "MEMORY",
-          "ROOT_DISK",
-          "NETWORK_INTERFACE",
-          "NETWORK_RX_TX",
-          "UPTIME",
-          "LOAD",
-          "SERVICE_STATES"
-        ],
-        "gpu_usage": "N_A_NO_TRUSTWORTHY_SOURCE",
-        "gpu_temperature": "N_A_NO_TRUSTWORTHY_SOURCE",
-        "gui_window": "GOOGLE_CHROME_APP_MODE",
-        "live_layout_verified": true,
-        "art_direction": "SENTIENT_LOGIC_BOARD",
-        "renderer": "DOM_CSS_PLUS_SVG",
-        "state_schema": "zen.living_visualizer.state.v0.2",
-        "providers_rendered_as": "API_STATION_SOCKETS",
-        "idle_animation_policy": "NO_FAKE_WORK_NO_IDLE_WANDERING",
-        "visualizer_health": "PASS",
-        "layout_result": "PASS"
+        "dynamic_entity_kinds": true,
+        "unknown_entities_visible": true,
+        "browser_dependency": false,
+        "legacy_web_visualizer_service": "INACTIVE_RETIRED_FRONTEND",
+        "measured_footprint": {
+          "tui_rss_mb": 23,
+          "xterm_rss_mb": 16,
+          "combined_rss_mb": 39,
+          "tui_cpu_percent": 0.7,
+          "xterm_cpu_percent": 0.1,
+          "combined_cpu_percent": 0.8
+        }
       },
       "verified_display_baseline": {
         "output": "HDMI-3",
@@ -1857,29 +1846,9 @@
         "rotation": "INVERTED_180",
         "rotation_persistent_across_gui_restart": true
       },
-      "operator_workflow_change": "ATTACHED_DISPLAY_DEFAULT_IS_LIVING_MODE",
+      "operator_workflow_change": "NONE",
       "ma2_writes": 0,
-      "ma3_writes": 0,
-      "final_spec": "docs/LIVING_SYSTEM_VISUALIZER_FINAL_SPEC_001.md",
-      "default_mode": "LIVING",
-      "mode_layouts": {
-        "LIVING": {
-          "chatgpt": "30%",
-          "visualizer": "70%",
-          "geometry": {
-            "chatgpt": "0,0,576,1038",
-            "visualizer": "576,0,1344,1038"
-          }
-        },
-        "CONTROL": {
-          "chatgpt": "55%",
-          "visualizer": "45%"
-        },
-        "DIAGNOSTIC": {
-          "chatgpt": "35%",
-          "visualizer": "65%"
-        }
-      }
+      "ma3_writes": 0
     }
   ],
   "allocation_policy": {
