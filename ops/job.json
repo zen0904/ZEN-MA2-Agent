@@ -1,18 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "visualizer-sync-final-20260930-2222",
+  "job_id": "visualizer-install-final-20260930-2228",
   "kind": "repo_task",
   "args": {
-    "task": "repair_zen_ops_updater_self_install",
+    "task": "install_living_visualizer",
     "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Sync Mini runtime to final Living Visualizer telemetry fix",
+    "summary": "Install final Living Visualizer telemetry build on Mini",
     "tools": [
       "ZEN Ops",
-      "GitHub",
-      "Living Visualizer"
+      "Living Visualizer",
+      "systemd"
     ]
   }
 }
