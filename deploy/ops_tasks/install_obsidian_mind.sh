@@ -16,16 +16,16 @@ test -n "$NODE"
 test -x "$NODE"
 
 if [[ -d "$VAULT/.git" ]]; then
-  git -C "$VAULT" fetch --depth=1 origin main
-  git -C "$VAULT" reset --hard origin/main
+  runuser -u zenui -- env HOME=/var/lib/zenui git -C "$VAULT" fetch --depth=1 origin main
+  runuser -u zenui -- env HOME=/var/lib/zenui git -C "$VAULT" reset --hard origin/main
 else
   rm -rf "$VAULT"
-  git clone --depth=1 "$REPO" "$VAULT"
+  runuser -u zenui -- env HOME=/var/lib/zenui git clone --depth=1 "$REPO" "$VAULT"
 fi
 
 chown -R zenui:zenui "$VAULT"
 
-echo "VAULT_HEAD=$(git -C "$VAULT" rev-parse --short HEAD)"
+echo "VAULT_HEAD=$(runuser -u zenui -- env HOME=/var/lib/zenui git -C "$VAULT" rev-parse --short HEAD)"
 echo "VAULT_VERSION=$(python3 - <<'PY'
 import json
 from pathlib import Path
