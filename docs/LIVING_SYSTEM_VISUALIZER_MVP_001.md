@@ -155,3 +155,41 @@ The Visualizer right-side UI contains live system telemetry and runtime/event ac
 4. Add click-to-inspect task/tool details.
 5. Add provider latency/token metadata where a trustworthy telemetry source exists.
 6. Preserve current observation-only authority.
+
+
+## Phase 1 Visual Redesign Live Verification
+
+Verified live on 2026-09-30 after merging Claude product/UX direction, Gemini visual design direction, and GPT engineering implementation.
+
+Current visual system:
+- Sentient Logic Board art direction;
+- DOM/CSS + SVG overlay;
+- provider services rendered as fixed API sockets rather than moving Avatars;
+- idle Avatars remain stationary;
+- telemetry integrated into Compute / Network / Storage Stations;
+- current task represented as a moving capsule;
+- Approval / Waiting / Error / Stuck receive separate visual states;
+- Event Stream moved behind progressive disclosure.
+
+Current state API:
+- schema: `zen.living_visualizer.state.v0.2`
+- authority: `OBSERVATION_ONLY`
+
+Control Room modes:
+- LIVING: 30% ChatGPT / 70% Visualizer
+- CONTROL: 55% ChatGPT / 45% Visualizer
+- DIAGNOSTIC: 35% ChatGPT / 65% Visualizer
+
+Live LIVING geometry verified:
+- ChatGPT: `0,0,576,1038`
+- Visualizer: `576,0,1344,1038`
+- layout result: PASS
+- Visualizer health: PASS
+- MA2_WRITES=0
+- MA3_WRITES=0
+
+Phase 1 rendering stack deliberately remains lightweight:
+- semantic DOM/CSS;
+- SVG for connection and handoff traces;
+- no React/PixiJS/Phaser/WebGL dependency.
+
