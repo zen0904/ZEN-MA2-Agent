@@ -1,6 +1,6 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "visualizer-sync-20260930-2105",
+  "job_id": "visualizer-sync-install-20260930-2058",
   "kind": "repo_task",
   "args": {
     "task": "repair_zen_ops_updater_self_install",
@@ -8,11 +8,11 @@
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Sync Mini zen-ops runtime to latest main before Living Visualizer install",
+    "summary": "Sync Mini zen-ops runtime to latest main before installing Living System Visualizer",
     "tools": [
       "ZEN Ops",
       "GitHub",
-      "Visualizer"
+      "Living Visualizer"
     ]
   }
 }
