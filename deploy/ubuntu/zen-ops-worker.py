@@ -17,7 +17,8 @@ PUBLIC_DIR = STATE_DIR / "public"
 JOBS_DIR = STATE_DIR / "jobs"
 ACTIVITY_FILE = PUBLIC_DIR / "activity.json"
 STATE_FILE = STATE_DIR / "worker-state.json"
-REMOTE = "https://github.com/zen0904/ZEN-MA2-Agent.git"
+REMOTE = os.environ.get("ZEN_OPS_GIT_REMOTE", "https://github.com/zen0904/ZEN-MA2-Agent.git")
+GH_CONFIG_DIR = os.environ.get("GH_CONFIG_DIR", "/var/lib/zen-ops/gh")
 CONTROL_REF = "refs/remotes/origin/zen-ops-control"
 JOB_PATH = "ops/job.json"
 POLL_SECONDS = 10
@@ -70,6 +71,8 @@ def run(
         env={
             "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/node/bin",
             "LANG": "C.UTF-8",
+            "GH_CONFIG_DIR": GH_CONFIG_DIR,
+            "GIT_TERMINAL_PROMPT": "0",
         },
     )
 
@@ -160,6 +163,15 @@ def ensure_control_repo() -> None:
     if not CONTROL_REPO.exists():
         run(["git", "init", "--bare", str(CONTROL_REPO)], timeout=30)
         run(["git", "-C", str(CONTROL_REPO), "remote", "add", "origin", REMOTE], timeout=30)
+    else:
+        current = run(["git", "-C", str(CONTROL_REPO), "remote", "get-url", "origin"], timeout=30)
+        if current.returncode != 0:
+            run(["git", "-C", str(CONTROL_REPO), "remote", "add", "origin", REMOTE], timeout=30)
+    if Path("/usr/bin/gh").is_file() and (Path(GH_CONFIG_DIR) / "hosts.yml").is_file():
+        run(
+            ["git", "-C", str(CONTROL_REPO), "config", "credential.helper", "!/usr/bin/gh auth git-credential"],
+            timeout=30,
+        )
 
 
 def fetch_control_ref() -> bool:
