@@ -1,10 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "probe-openchatx-direct-init-20260930-0831",
-  "kind": "shell",
+  "job_id": "install-ma-github-research-pack-20260930-0901",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 120,
-    "command": "python3 - <<'PY'\nimport json, urllib.request\nurl='http://127.0.0.1:18001'\npayload={\n  'jsonrpc':'2.0',\n  'id':1,\n  'method':'initialize',\n  'params':{\n    'protocolVersion':'2025-06-18',\n    'capabilities':{},\n    'clientInfo':{'name':'zen-ops-direct-probe','version':'1.0'}\n  }\n}\nreq=urllib.request.Request(url, data=json.dumps(payload).encode(), headers={'Content-Type':'application/json','Accept':'application/json, text/event-stream'}, method='POST')\ntry:\n    with urllib.request.urlopen(req, timeout=10) as r:\n        body=r.read(12000).decode('utf-8','replace')\n        print('HTTP='+str(r.status))\n        print('CONTENT_TYPE='+str(r.headers.get('content-type')))\n        print(body)\nexcept Exception as e:\n    print(type(e).__name__+': '+str(e))\n    raise\nPY"
+    "task": "install_ma_github_research_pack",
+    "timeout": 1800
   }
 }
