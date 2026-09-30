@@ -1,17 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wait-chrome-chatgpt-login-task-20260930-1708",
-  "kind": "shell",
+  "job_id": "start-chrome-chatgpt-login-20260930-1709",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 190,
-    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/start_chrome_chatgpt_login.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
+    "task": "start_chrome_chatgpt_login",
+    "timeout": 120
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Wait for Chrome ChatGPT login launcher deployment",
+    "summary": "Launch Chrome on Mini VT3 for ChatGPT desktop sign-in",
     "tools": [
-      "ZEN Ops"
+      "ZEN Ops",
+      "Chrome",
+      "ChatGPT"
     ]
   }
 }
