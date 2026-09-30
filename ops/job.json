@@ -1,18 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "visualizer-install-telemetry2-20260930-2250",
-  "kind": "repo_task",
+  "job_id": "visualizer-errorjson2-20260930-2256",
+  "kind": "shell",
   "args": {
-    "task": "install_living_visualizer",
-    "timeout": 180
+    "cwd": "/opt/zen",
+    "timeout": 60,
+    "command": "curl -sS --max-time 5 -i http://127.0.0.1:18992/api/state || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Restart Living Visualizer with hardened fan disk and network telemetry",
+    "summary": "Read second bounded Living Visualizer telemetry error JSON",
     "tools": [
       "ZEN Ops",
-      "Living Visualizer",
-      "systemd"
+      "Living Visualizer"
     ]
   }
 }
