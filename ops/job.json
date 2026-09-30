@@ -1,17 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wait-wmctrl-task-20260930-1713",
-  "kind": "shell",
+  "job_id": "install-wmctrl-20260930-1714",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 190,
-    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/install_wmctrl.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
+    "task": "install_wmctrl",
+    "timeout": 300
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Wait for wmctrl installer deployment",
+    "summary": "Install wmctrl for Mini GUI desktop control",
     "tools": [
-      "ZEN Ops"
+      "ZEN Ops",
+      "apt"
     ]
   }
 }
