@@ -183,7 +183,7 @@
     {
       "id": "ma2.implementation_reference",
       "title": "MA2 parser/introspection/profile-resolution reference",
-      "status": "INSTALLED_REFERENCE_PENDING_CORE_REVERIFY",
+      "status": "INSTALLED_CORE_IMPORT_VERIFIED",
       "class": "REFERENCE",
       "invoke_via": "REFERENCE_ONLY",
       "implementations": [
@@ -354,5 +354,21 @@
         "does not change artistic authority"
       ]
     }
-  ]
+  ],
+  "installation_evidence": {
+    "job_id": "install-ma-github-research-pack-20260930-0915",
+    "status": "PASS",
+    "verified_at": "2026-09-30",
+    "details": [
+      "28 MA2/MA3 research repositories present on Mini",
+      "pygdtf 1.4.5 import PASS",
+      "pymvr 1.0.7 import PASS",
+      "gma2-mcp response_parser/execution/profile_resolver/introspection imports PASS",
+      "The3-MCP manifest verify PASS (434 files)",
+      "SERVICES_STARTED=0",
+      "MA2_WRITES=0",
+      "MA3_WRITES=0",
+      "RAW_MCP_AUTHORITY_GRANTED=0"
+    ]
+  }
 }
