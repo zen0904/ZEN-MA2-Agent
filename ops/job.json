@@ -1,17 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "verify-codex-chatgpt-auth-20260930-1629",
+  "job_id": "verify-codex-device-auth-service-20260930-1630",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 45,
-    "command": "echo '=== codex ==='; /usr/local/bin/codex login status 2>&1 || true; echo '=== chatgpt process ==='; pgrep -a -f '(^|/)chatgpt( |$)' || true; echo '=== chatgpt state dirs ==='; find /root/.config /root/.local/share -maxdepth 2 -type d \\( -iname '*chatgpt*' -o -iname '*openai*' \\) -print 2>/dev/null | head -40 || true; echo '=== package ==='; dpkg-query -W -f='${Status} ${Version}\\n' chatgpt 2>/dev/null || true"
+    "timeout": 30,
+    "command": "systemctl show zen-codex-device-auth.service -p ActiveState -p SubState -p Result -p ExecMainStatus -p ExecMainCode --no-pager 2>/dev/null || true; echo '=== chatgpt ==='; pgrep -a -x chatgpt || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Verify Codex CLI login and whether ChatGPT Linux app has its own active session",
+    "summary": "Check whether Codex device-auth flow completed and whether ChatGPT desktop is running",
     "tools": [
-      "ZEN Ops"
+      "ZEN Ops",
+      "systemd"
     ]
   }
 }
