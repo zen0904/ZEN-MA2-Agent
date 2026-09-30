@@ -163,7 +163,8 @@ def build_entities(state_map: dict[str, str], activity: dict[str, Any], state_cl
     for item in rows:
         kind = str(item.get("kind") or "unknown").lower()
         ident = str(item.get("id") or "")
-        name = str((item.get("display") or {}).get("label") if isinstance(item.get("display"), dict) else "" or item.get("name") or ident)
+        display_label = (item.get("display") or {}).get("label") if isinstance(item.get("display"), dict) else None
+        name = str(display_label or item.get("name") or ident)
         group = item.get("group")
         parent = item.get("parent")
         meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
@@ -198,6 +199,13 @@ def build_entities(state_map: dict[str, str], activity: dict[str, Any], state_cl
             err = f"unknown state: {raw}"
         elif not group:
             err = "missing group"
+
+        if err:
+            state = "unknown"
+            current = state_clock.get(key)
+            if current is None or current[0] != state:
+                state_clock[key] = (state, time.time())
+            since = state_clock[key][1]
 
         entities.append(Entity(kind, ident, name, state, raw, str(group) if group else None,
                                str(parent) if parent else None, meta, display, since, err))
@@ -459,6 +467,17 @@ class App:
             self.put(row,4,f"▸ + {idle} idle providers   [Enter] expand",self.attr("muted")); row+=1
         return row+1
 
+    def other(self,data:dict[str,Any],row:int) -> int:
+        items=[e for e in data["entities"] if e.parse_error or e.kind not in KNOWN_KINDS or not e.group]
+        if not items:
+            return row
+        self.put(row,2,"Other / Unassigned",self.attr("title")); row+=1
+        for e in items[:5]:
+            mark,at=self.state_mark(e)
+            reason=e.parse_error or "unassigned"
+            self.put(row,4,f"{mark} {e.name:<18} {reason}",at); row+=1
+        return row+1
+
     def approval(self,data:dict[str,Any],row:int) -> int:
         a=data["activity"]; waiting=normalize_state(a["status"],self.state_map)=="waiting"
         self.divider(row,"approval boundary"); row+=1
@@ -495,7 +514,8 @@ class App:
             row=self.current(data,row,compact)
             if not compact: row=self.attention(data,row)
             row=self.activity(data,row,5 if compact else 8)
-            if row<h-10: row=self.providers(data,row)
+            if row<h-12: row=self.providers(data,row)
+            if row<h-9: row=self.other(data,row)
             if row<h-7: row=self.approval(data,row)
             if row<h-3: row=self.system(data,row,w>=105)
         elif self.mode=="control":
