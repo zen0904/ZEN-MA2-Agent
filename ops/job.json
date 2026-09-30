@@ -1,17 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wait-chatgpt-gui-runtime-fix-20260930-1638",
-  "kind": "shell",
+  "job_id": "install-chatgpt-gui-runtime-fix-20260930-1639",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 190,
-    "command": "for i in $(seq 1 90); do grep -q 'GUI_HOME=/var/lib/zenui' /opt/zen/zen-ops-runtime/deploy/ops_tasks/install_chatgpt_gui_runtime.sh 2>/dev/null && { echo TASK_UPDATED=YES; exit 0; }; sleep 2; done; echo TASK_UPDATED=NO; exit 1"
+    "task": "install_chatgpt_gui_runtime",
+    "timeout": 900
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Wait for ChatGPT GUI runtime home-path fix",
+    "summary": "Finish minimal ChatGPT GUI runtime install using var-lib home",
     "tools": [
-      "ZEN Ops"
+      "ZEN Ops",
+      "apt"
     ]
   }
 }
