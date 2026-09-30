@@ -1,20 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "diag-display-chatgpt-monitor-20261001-0628",
-  "kind": "shell",
+  "job_id": "restore-chatgpt-vt3-20261001-0631",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 120,
-    "command": "echo '=== CHATGPT ==='; systemctl is-active zen-chatgpt-desktop.service 2>&1 || true; systemctl is-enabled zen-chatgpt-desktop.service 2>&1 || true; pgrep -a -u zenui -f '/usr/lib/chatgpt/ChatGPT|/usr/bin/chatgpt' || true; echo '=== TASKBAR/MONITOR ==='; systemctl is-active zen-mini-taskbar.service 2>&1 || true; systemctl is-enabled zen-mini-taskbar.service 2>&1 || true; systemctl list-units --type=service --all --no-pager | grep -Ei 'zen.*(mon|room|dash|display|chatgpt|taskbar)' || true; echo '=== XORG/VT ==='; pgrep -a -f '/usr/lib/xorg/Xorg :0|/usr/bin/Xorg :0' || true; fgconsole 2>&1 || true; echo '=== DRM ==='; for s in /sys/class/drm/card*-*/status; do [ -f \"$s\" ] && printf '%s=' \"$s\" && cat \"$s\"; done; echo '=== DPMS/XRANDR ==='; runuser -u zenui -- env HOME=/var/lib/zenui DISPLAY=:0 XAUTHORITY=/var/lib/zenui/.Xauthority xset q 2>&1 | grep -A4 -Ei 'DPMS|Monitor' || true; runuser -u zenui -- env HOME=/var/lib/zenui DISPLAY=:0 XAUTHORITY=/var/lib/zenui/.Xauthority xrandr --query 2>&1 || true"
+    "task": "activate_chatgpt_vt3",
+    "timeout": 60
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Diagnose GPT and monitor/dashboard visibility after display power cycle",
+    "summary": "Restore physical display to existing ChatGPT/Living Workspace VT3 session after monitor power cycle",
     "tools": [
       "ZEN Ops",
-      "systemd",
-      "Xorg",
-      "xrandr"
+      "VT3",
+      "ChatGPT"
     ]
   }
 }
