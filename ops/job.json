@@ -1,15 +1,15 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "finalize-chatgpt-persist-20260930-1740",
+  "job_id": "cleanup-chatgpt-transient-20260930-1743",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 120,
-    "command": "systemctl reset-failed 'zen-chatgpt-gui*.service' 2>/dev/null || true; systemctl is-active zen-chatgpt-desktop.service 2>/dev/null || true; systemctl is-enabled zen-chatgpt-desktop.service 2>/dev/null || true; systemctl is-active zen-mini-taskbar.service 2>/dev/null || true; systemctl is-enabled zen-mini-taskbar.service 2>/dev/null || true; systemctl is-enabled zen-mini-chrome.service 2>/dev/null || true; pgrep -a -u zenui -f '/usr/lib/chatgpt/ChatGPT' | head -5 || true; systemctl list-units 'zen-chatgpt-gui*.service' --all --no-legend 2>/dev/null || true"
+    "timeout": 60,
+    "command": "systemctl reset-failed zen-chatgpt-gui.service zen-chatgpt-gui-1790757955.service 2>/dev/null || true; systemctl list-units 'zen-chatgpt*.service' --all --no-legend 2>/dev/null || true; systemctl is-active zen-chatgpt-desktop.service; systemctl is-enabled zen-chatgpt-desktop.service"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Finalize persistent ChatGPT boot service and clear stale transient failures",
+    "summary": "Clear stale transient ChatGPT failed units after persistent service acceptance",
     "tools": [
       "ZEN Ops",
       "systemd",
