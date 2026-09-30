@@ -56,4 +56,4 @@ if [ -r "$STATE" ]; then
   jq -r '"mode             " + (.mode // "unknown"), "last_update      " + (.updated_at // "unknown"), "ma_ports_ok      " + ((.ma_ports_ok // false)|tostring)' "$STATE" 2>/dev/null || true
 fi
 
-printf '\nF12 = MONITOR <-> MA_AGENT\n'
+printf '\nF10 ROOM   F11 MONITOR   F12 MA_AGENT\n'
