@@ -1,19 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "start-chatgpt-gui-vt3-20260930-1642",
-  "kind": "repo_task",
+  "job_id": "inspect-xorg-chatgpt-crash-20260930-1644",
+  "kind": "shell",
   "args": {
-    "task": "start_chatgpt_gui_vt3",
-    "timeout": 180
+    "cwd": "/opt/zen",
+    "timeout": 45,
+    "command": "echo '=== gpu ==='; lspci -nnk 2>/dev/null | grep -A4 -Ei 'VGA|Display|3D controller' || true; echo '=== xorg log ==='; tail -n 140 /var/log/Xorg.0.log 2>/dev/null || true; echo '=== drm ==='; for f in /sys/class/drm/card*/device/driver/module/drivers/* 2>/dev/null; do echo \"$f\"; done || true; echo '=== modules ==='; lsmod | grep -E 'i915|amdgpu|nouveau|xe' || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Launch ChatGPT Linux app on Mini VT3 and switch console automatically",
+    "summary": "Diagnose Xorg crash while launching ChatGPT GUI on Mini",
     "tools": [
-      "ZEN Ops",
-      "Xorg",
-      "Openbox",
-      "ChatGPT"
+      "ZEN Ops"
     ]
   }
 }
