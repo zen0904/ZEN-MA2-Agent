@@ -12,7 +12,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-REPO = Path("/opt/zen/ZEN-MA2-Agent")
+REPO = Path("/opt/zen/zen-ops-runtime") if Path("/opt/zen/zen-ops-runtime/data").is_dir() else Path("/opt/zen/ZEN-MA2-Agent")
 OPS_PUBLIC = Path("/var/lib/zen-ops/public")
 OPS_CONTROL = Path("/var/lib/zen-ops/control.git")
 CAP_REGISTRY = REPO / "data" / "zen_agent_tool_capabilities.json"
