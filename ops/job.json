@@ -1,17 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wait-chatgpt-vt3-launcher-20260930-1641",
-  "kind": "shell",
+  "job_id": "start-chatgpt-gui-vt3-20260930-1642",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 190,
-    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/start_chatgpt_gui_vt3.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
+    "task": "start_chatgpt_gui_vt3",
+    "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Wait for ChatGPT VT3 launcher deployment",
+    "summary": "Launch ChatGPT Linux app on Mini VT3 and switch console automatically",
     "tools": [
-      "ZEN Ops"
+      "ZEN Ops",
+      "Xorg",
+      "Openbox",
+      "ChatGPT"
     ]
   }
 }
