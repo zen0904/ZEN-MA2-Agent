@@ -1,19 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "inspect-live-updater-20260930-1614",
+  "job_id": "wait-codex-device-auth-task-20260930-1614",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 120,
-    "command": "echo '=== HEAD ==='; git -c safe.directory=/opt/zen/zen-ops-runtime -C /opt/zen/zen-ops-runtime rev-parse HEAD 2>&1 || true; echo '=== UPDATER MTIME ==='; stat -c '%y %U:%G %a %n' /usr/local/sbin/zen-ops-update 2>&1 || true; echo '=== HEARTBEAT CODE ==='; grep -n 'updater-heartbeat\\|UPDATER_HEAD\\|ROOM_STATE' /usr/local/sbin/zen-ops-update 2>&1 || true; echo '=== SERVICE LAST ==='; systemctl show zen-ops-updater.service -p ExecMainCode -p ExecMainStatus -p Result -p InactiveExitTimestamp --no-pager 2>&1 || true; echo '=== HEARTBEAT FILE ==='; ls -l /var/lib/zen-ops/public/updater-heartbeat.json 2>&1 || true"
+    "timeout": 190,
+    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/start_codex_device_auth_tmux.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Inspect live updater deployment and heartbeat code only",
+    "summary": "Wait for local-console Codex device-auth launcher",
     "tools": [
-      "ZEN Ops",
-      "systemd",
-      "git"
+      "ZEN Ops"
     ]
   }
 }
