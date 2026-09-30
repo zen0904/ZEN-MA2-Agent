@@ -1,19 +1,20 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "visualizer-telemetry-final-20260930-2320",
+  "job_id": "control-room-gui-probe-20260930-2340",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
     "timeout": 60,
-    "command": "curl -sS --max-time 5 http://127.0.0.1:18992/api/state >/tmp/zen-vis-warm.json || true; sleep 1.5; curl -sS --max-time 5 http://127.0.0.1:18992/api/state | python3 -c 'import json,sys; d=json.load(sys.stdin); print(json.dumps({\"authority\":d.get(\"authority\"),\"system\":d.get(\"system\"),\"agents\":[(a.get(\"name\"),a.get(\"status\"),a.get(\"station\")) for a in d.get(\"agents\",[])]},ensure_ascii=False))'"
+    "command": "echo '=== GUI TOOLS ==='; for x in chromium chromium-browser google-chrome google-chrome-stable firefox wmctrl xdotool xterm xfce4-terminal gnome-terminal alacritty kitty foot; do p=$(command -v \"$x\" 2>/dev/null || true); [ -n \"$p\" ] && echo \"$x=$p\"; done; echo '=== OPENBOX ==='; command -v openbox || true; command -v openbox-session || true; echo '=== DISPLAY SESSION SCRIPT ==='; sed -n '1,220p' /usr/local/libexec/zen-chatgpt-session.sh 2>/dev/null || true; echo '=== CHATGPT UNIT ==='; systemctl show zen-chatgpt-desktop.service -p ExecStart -p User -p ActiveState -p SubState --no-pager 2>/dev/null || true; echo '=== DISPLAY SIZE ==='; runuser -u zenui -- env DISPLAY=:0 xrandr --query 2>/dev/null | head -40 || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Final warmed-up verification of Living Visualizer system telemetry",
+    "summary": "Read-only probe available X11 browser/window tools for Mini Control Room layout",
     "tools": [
       "ZEN Ops",
-      "Living Visualizer",
-      "Linux telemetry"
+      "X11",
+      "Openbox",
+      "Living Visualizer"
     ]
   }
 }
