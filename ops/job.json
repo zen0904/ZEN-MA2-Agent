@@ -1,19 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "visualizer-telemetry-verify-20260930-2235",
-  "kind": "shell",
+  "job_id": "visualizer-sync-telemetry2-20260930-2243",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 60,
-    "command": "curl -sS --max-time 5 http://127.0.0.1:18992/api/state >/tmp/zen-vis-state-1.json || true; sleep 1.3; curl -sS --max-time 5 http://127.0.0.1:18992/api/state | python3 -c 'import json,sys; d=json.load(sys.stdin); print(json.dumps({\"authority\":d.get(\"authority\"),\"system\":d.get(\"system\"),\"agents\":[(a.get(\"name\"),a.get(\"status\"),a.get(\"station\")) for a in d.get(\"agents\",[])]},ensure_ascii=False))'"
+    "task": "repair_zen_ops_updater_self_install",
+    "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Verify live Living Visualizer system telemetry after warm-up",
+    "summary": "Sync Mini runtime for hardened Living Visualizer telemetry",
     "tools": [
       "ZEN Ops",
-      "Living Visualizer",
-      "Linux telemetry"
+      "GitHub",
+      "Living Visualizer"
     ]
   }
 }
