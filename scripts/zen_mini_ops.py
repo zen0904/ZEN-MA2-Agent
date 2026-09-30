@@ -142,6 +142,12 @@ def main() -> int:
             timeout=300,
         )
 
+    if action == "control-room-activate":
+        return run(
+            ["python3", "scripts/activate_zen_control_room.py"],
+            timeout=120,
+        )
+
     raise SystemExit(f"Unsupported action: {action}")
 
 
