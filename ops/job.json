@@ -1,19 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "verify-persistent-gui-services-20260930-1701",
+  "job_id": "wait-persistent-gui-script-fix-20260930-1702",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 45,
-    "command": "echo '=== services ==='; systemctl is-active zen-mini-taskbar.service 2>/dev/null || true; systemctl is-active zen-mini-chrome.service 2>/dev/null || true; echo '=== windows ==='; DISPLAY=:0 wmctrl -l -x 2>&1 || true; echo '=== processes ==='; pgrep -a -u zenui -x tint2 || true; pgrep -a -u zenui -f '/opt/google/chrome/chrome|google-chrome' | head -20 || true; echo '=== enabled ==='; systemctl is-enabled zen-mini-taskbar.service 2>/dev/null || true; systemctl is-enabled zen-mini-chrome.service 2>/dev/null || true; chvt 3 2>/dev/null || true"
+    "timeout": 190,
+    "command": "for i in $(seq 1 90); do if grep -q '^systemctl daemon-reload$' /opt/zen/zen-ops-runtime/deploy/ops_tasks/install_persistent_gui_services.sh 2>/dev/null; then echo SCRIPT_FIXED=YES; exit 0; fi; sleep 2; done; echo SCRIPT_FIXED=NO; exit 1"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Verify persistent Mini Chrome and taskbar services",
+    "summary": "Wait for fixed persistent GUI service script deployment",
     "tools": [
-      "ZEN Ops",
-      "systemd",
-      "wmctrl"
+      "ZEN Ops"
     ]
   }
 }
