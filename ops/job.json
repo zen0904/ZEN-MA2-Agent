@@ -5,11 +5,11 @@
   "args": {
     "cwd": "/opt/zen",
     "timeout": 120,
-    "command": "git -c safe.directory=/opt/zen/zen-ops-runtime -C /opt/zen/zen-ops-runtime rev-parse HEAD 2>&1 || true; grep -n 'rm -f /run/systemd/transient/zen-chatgpt-gui.service' /opt/zen/zen-ops-runtime/deploy/ops_tasks/install_persistent_chatgpt_gui_service.sh 2>&1 || true"
+    "command": "git -c safe.directory=/opt/zen/zen-ops-runtime -C /opt/zen/zen-ops-runtime rev-parse HEAD 2>&1 || true; grep -n 'zen-chatgpt-desktop.service' /opt/zen/zen-ops-runtime/deploy/ops_tasks/install_persistent_chatgpt_gui_service.sh 2>&1 || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Verify transient-unit persistence fix reached Mini runtime",
+    "summary": "Verify persistent ChatGPT service name fix reached Mini",
     "tools": [
       "ZEN Ops",
       "git"
