@@ -1,20 +1,20 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "install-persistent-gui-services-fixed-20260930-1703",
-  "kind": "repo_task",
+  "job_id": "inspect-chatgpt-browser-login-handoff-20260930-1706",
+  "kind": "shell",
   "args": {
-    "task": "install_persistent_gui_services",
-    "timeout": 600
+    "cwd": "/opt/zen",
+    "timeout": 60,
+    "command": "echo '=== xdg tools ==='; command -v xdg-open || true; command -v xdg-settings || true; echo '=== zenui default browser ==='; runuser -u zenui -- env HOME=/var/lib/zenui XDG_CONFIG_HOME=/var/lib/zenui/.config xdg-settings get default-web-browser 2>&1 || true; echo '=== mime handlers ==='; runuser -u zenui -- env HOME=/var/lib/zenui XDG_CONFIG_HOME=/var/lib/zenui/.config xdg-mime query default x-scheme-handler/http 2>&1 || true; runuser -u zenui -- env HOME=/var/lib/zenui XDG_CONFIG_HOME=/var/lib/zenui/.config xdg-mime query default x-scheme-handler/https 2>&1 || true; echo '=== desktop file ==='; ls -l /usr/share/applications/google-chrome.desktop 2>/dev/null || true; echo '=== recent login handoff logs ==='; journalctl --no-pager --since '10 minutes ago' | grep -Ei 'account/login/start|Opening in existing browser session|xdg-open|openExternal|external|oauth|authorize|browser' | tail -n 180 || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Install persistent Mini Chrome and taskbar services after script fix",
+    "summary": "Inspect why ChatGPT sign-in does not hand off to Chrome on Mini",
     "tools": [
       "ZEN Ops",
-      "systemd",
+      "xdg-utils",
       "Chrome",
-      "tint2",
-      "Openbox"
+      "ChatGPT"
     ]
   }
 }
