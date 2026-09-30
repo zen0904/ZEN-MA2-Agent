@@ -1,8 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "full-tests-agent-tool-capabilities-20260930-0922",
-  "kind": "tests",
+  "job_id": "install-openai-codex-cli-20260930-0935",
+  "kind": "repo_task",
   "args": {
-    "timeout": 1800
+    "task": "install_openai_codex_cli",
+    "timeout": 900
   }
 }
