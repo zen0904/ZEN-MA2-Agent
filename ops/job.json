@@ -1,19 +1,8 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "install-zen-control-room-20260930-1006",
-  "kind": "repo_task",
-  "meta": {
-    "actor": "CHATGPT_LEAD",
-    "summary": "Deploy Room Mode with worker walking and tool pickup animation",
-    "tools": [
-      "OPS",
-      "GitHub",
-      "tmux",
-      "zen-control-room"
-    ]
-  },
+  "job_id": "rescue-worker-probe-20260930-1430",
+  "kind": "process_list",
   "args": {
-    "task": "install_zen_control_room",
-    "timeout": 300
+    "pattern": "zen-ops|tmux"
   }
 }
