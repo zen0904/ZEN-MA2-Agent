@@ -51,3 +51,31 @@ if command -v tmux >/dev/null 2>&1; then
     fi
   done
 fi
+
+# Publish a tiny externally readable updater heartbeat. This remains read-only
+# evidence and carries no secret material; it is specifically useful when the
+# Git-polled worker path itself is what needs diagnosis.
+install -d -m 0755 /var/lib/zen-ops/public
+UPDATER_HEAD="$(git -C "$R" rev-parse --short HEAD 2>/dev/null || true)"
+WORKER_STATE="$(systemctl is-active zen-ops-worker.service 2>/dev/null || true)"
+ROOM_STATE="absent"
+if command -v tmux >/dev/null 2>&1; then
+  for sock in /tmp/tmux-*/default; do
+    [[ -S "$sock" ]] || continue
+    if tmux -S "$sock" list-windows -t zenmon -F '#{window_name}' 2>/dev/null | grep -qx ROOM; then
+      ROOM_STATE="present"
+      break
+    fi
+  done
+fi
+cat > /var/lib/zen-ops/public/updater-heartbeat.json <<EOF
+{
+  "schema": "zen.ops.updater_heartbeat.v0.1",
+  "updated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "head": "${UPDATER_HEAD}",
+  "worker": "${WORKER_STATE}",
+  "room": "${ROOM_STATE}",
+  "ma2_writes": 0,
+  "ma3_writes": 0
+}
+EOF
