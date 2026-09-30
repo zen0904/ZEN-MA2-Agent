@@ -4,25 +4,10 @@ set -euo pipefail
 export DISPLAY="${DISPLAY:-:0}"
 MODE="${1:-living}"
 case "$MODE" in
-  living|LIVING)
-    MODE="living"
-    CHAT_NUM=3
-    CHAT_DEN=10
-    ;;
-  control|CONTROL)
-    MODE="control"
-    CHAT_NUM=11
-    CHAT_DEN=20
-    ;;
-  diagnostic|DIAGNOSTIC)
-    MODE="diagnostic"
-    CHAT_NUM=7
-    CHAT_DEN=20
-    ;;
-  *)
-    echo "usage: zen-control-room-layout {living|control|diagnostic}" >&2
-    exit 64
-    ;;
+  living|LIVING) MODE="living" ;;
+  control|CONTROL) MODE="control" ;;
+  diagnostic|DIAGNOSTIC) MODE="diagnostic" ;;
+  *) echo "usage: zen-control-room-layout {living|control|diagnostic}" >&2; exit 64 ;;
 esac
 
 line="$(/usr/bin/wmctrl -d 2>/dev/null | awk '$2=="*" {print; exit}')"
@@ -38,29 +23,26 @@ if [[ "$line" =~ $wa_re ]]; then
   WA_H="${BASH_REMATCH[4]}"
 fi
 
-CHAT_W=$((WA_W * CHAT_NUM / CHAT_DEN))
-VIS_W=$((WA_W - CHAT_W))
-VIS_X=$((WA_X + CHAT_W))
+CHAT_W=$((WA_W * 3 / 10))
+TUI_W=$((WA_W - CHAT_W))
+TUI_X=$((WA_X + CHAT_W))
 
 windows="$(/usr/bin/wmctrl -lx 2>/dev/null || true)"
-chat_id="$(printf '%s\n' "$windows" | awk 'tolower($0) ~ /chatgpt/ && tolower($0) !~ /google-chrome/ {print $1; exit}')"
-vis_id="$(printf '%s\n' "$windows" | awk 'tolower($0) ~ /google-chrome/ && tolower($0) ~ /zen living system/ {print $1; exit}')"
-if [[ -z "$vis_id" ]]; then
-  vis_id="$(printf '%s\n' "$windows" | awk 'tolower($0) ~ /google-chrome/ {print $1; exit}')"
-fi
+chat_id="$(printf '%s\n' "$windows" | awk 'tolower($0) ~ /chatgpt/ && tolower($0) !~ /xterm/ {print $1; exit}')"
+tui_id="$(printf '%s\n' "$windows" | awk 'tolower($0) ~ /zen-living-tui|zen living workspace/ {print $1; exit}')"
 
-[[ -n "$chat_id" && -n "$vis_id" ]] || exit 2
+[[ -n "$chat_id" && -n "$tui_id" ]] || exit 2
 
-for id in "$chat_id" "$vis_id"; do
+for id in "$chat_id" "$tui_id"; do
   /usr/bin/wmctrl -i -r "$id" -b remove,maximized_vert,maximized_horz,fullscreen >/dev/null 2>&1 || true
 done
 
 /usr/bin/wmctrl -i -r "$chat_id" -e "0,${WA_X},${WA_Y},${CHAT_W},${WA_H}"
-/usr/bin/wmctrl -i -r "$vis_id" -e "0,${VIS_X},${WA_Y},${VIS_W},${WA_H}"
+/usr/bin/wmctrl -i -r "$tui_id" -e "0,${TUI_X},${WA_Y},${TUI_W},${WA_H}"
 
 printf '%s\n' "$MODE" > /var/lib/zenui/control-room-mode 2>/dev/null || true
 
 echo "CONTROL_ROOM_LAYOUT=PASS"
 echo "MODE=${MODE}"
 echo "CHATGPT=${WA_X},${WA_Y},${CHAT_W},${WA_H}"
-echo "VISUALIZER=${VIS_X},${WA_Y},${VIS_W},${WA_H}"
+echo "TUI=${TUI_X},${WA_Y},${TUI_W},${WA_H}"
