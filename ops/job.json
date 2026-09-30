@@ -1,15 +1,15 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "inspect-xorg-chatgpt-crash2-20260930-1645",
+  "job_id": "wait-xorg-software-accel-task-20260930-1647",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 45,
-    "command": "echo '=== gpu ==='; lspci -nnk 2>/dev/null | grep -A4 -Ei 'VGA|Display|3D controller' || true; echo '=== xorg log ==='; tail -n 160 /var/log/Xorg.0.log 2>/dev/null || true; echo '=== dri ==='; ls -l /dev/dri 2>/dev/null || true; echo '=== modules ==='; lsmod | grep -E 'i915|amdgpu|nouveau|xe' || true"
+    "timeout": 190,
+    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/configure_xorg_software_accel.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Diagnose Xorg crash while launching ChatGPT GUI on Mini, retry",
+    "summary": "Wait for Xorg software-accel config task",
     "tools": [
       "ZEN Ops"
     ]
