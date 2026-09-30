@@ -1,18 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "run-codex-vt2-systemd-20260930-1626",
-  "kind": "repo_task",
+  "job_id": "verify-codex-chatgpt-auth-20260930-1629",
+  "kind": "shell",
   "args": {
-    "task": "start_codex_device_auth_vt2_systemd",
-    "timeout": 120
+    "cwd": "/opt/zen",
+    "timeout": 45,
+    "command": "echo '=== codex ==='; /usr/local/bin/codex login status 2>&1 || true; echo '=== chatgpt process ==='; pgrep -a -f '(^|/)chatgpt( |$)' || true; echo '=== chatgpt state dirs ==='; find /root/.config /root/.local/share -maxdepth 2 -type d \\( -iname '*chatgpt*' -o -iname '*openai*' \\) -print 2>/dev/null | head -40 || true; echo '=== package ==='; dpkg-query -W -f='${Status} ${Version}\\n' chatgpt 2>/dev/null || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Run Codex device auth persistently on Mini VT2 and switch console automatically",
+    "summary": "Verify Codex CLI login and whether ChatGPT Linux app has its own active session",
     "tools": [
-      "ZEN Ops",
-      "systemd",
-      "Codex CLI"
+      "ZEN Ops"
     ]
   }
 }
