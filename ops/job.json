@@ -1,18 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "start-codex-device-auth-20260930-1615",
-  "kind": "repo_task",
+  "job_id": "wait-updater-repair-task-20260930-1616",
+  "kind": "shell",
   "args": {
-    "task": "start_codex_device_auth_tmux",
-    "timeout": 120
+    "cwd": "/opt/zen",
+    "timeout": 120,
+    "command": "git -c safe.directory=/opt/zen/zen-ops-runtime -C /opt/zen/zen-ops-runtime rev-parse HEAD 2>&1 || true; test -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/repair_zen_ops_updater_self_install.sh && echo REPAIR_TASK=READY || echo REPAIR_TASK=ABSENT"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Start Codex CLI device authentication on Mini local console without exposing the one-time code",
+    "summary": "Wait for legacy updater to fetch bounded self-install repair task",
     "tools": [
       "ZEN Ops",
-      "tmux",
-      "Codex CLI"
+      "git"
     ]
   }
 }
