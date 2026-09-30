@@ -1,9 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "probe-openchatx-mcp-20260930-0827",
-  "kind": "mcp_probe",
+  "job_id": "inspect-openchatx-local-mcp-20260930-0829",
+  "kind": "shell",
   "args": {
-    "server": "openchatx",
-    "timeout": 120
+    "cwd": "/opt/zen",
+    "timeout": 120,
+    "command": "set -o pipefail; echo '=== UNIT ==='; systemctl cat zen-openchatx 2>/dev/null || true; echo '=== PORTS ==='; ss -ltn 2>/dev/null | grep -E ':(18001|18080|18789|18991|8876|8877)[[:space:]]' || true; echo '=== HTTP 18001 ==='; curl -sS -o /tmp/ocx18001.out -w 'HTTP=%{http_code}\\\\n' --max-time 5 http://127.0.0.1:18001/ || true; head -c 500 /tmp/ocx18001.out 2>/dev/null || true; echo; echo '=== HTTP 18080 ==='; curl -sS -o /tmp/ocx18080.out -w 'HTTP=%{http_code}\\\\n' --max-time 5 http://127.0.0.1:18080/ || true; head -c 500 /tmp/ocx18080.out 2>/dev/null || true; echo"
   }
 }
