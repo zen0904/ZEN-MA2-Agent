@@ -1,18 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "inspect-mini-mouse-xorg-20260930-1657",
+  "job_id": "wait-chatgpt-input-runtime-20260930-1700",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 45,
-    "command": "echo '=== input devices ==='; ls -l /dev/input 2>/dev/null || true; echo '=== by-id ==='; ls -l /dev/input/by-id 2>/dev/null || true; echo '=== libinput pkg ==='; dpkg -l | grep -E 'xserver-xorg-input-libinput|libinput' || true; echo '=== xinput ==='; DISPLAY=:0 xinput list 2>&1 || true; echo '=== xorg input log ==='; grep -Ei 'input|mouse|pointer|libinput|evdev' /var/log/Xorg.0.log 2>/dev/null | tail -n 120 || true"
+    "timeout": 190,
+    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/install_chatgpt_input_runtime.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Inspect Mini mouse and Xorg input stack",
+    "summary": "Wait for Mini ChatGPT input runtime installer",
     "tools": [
-      "ZEN Ops",
-      "Xorg"
+      "ZEN Ops"
     ]
   }
 }
