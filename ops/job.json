@@ -1,18 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "verify-codex-device-auth-service-20260930-1630",
+  "job_id": "inspect-chatgpt-gui-runtime-20260930-1633",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 30,
-    "command": "systemctl show zen-codex-device-auth.service -p ActiveState -p SubState -p Result -p ExecMainStatus -p ExecMainCode --no-pager 2>/dev/null || true; echo '=== chatgpt ==='; pgrep -a -x chatgpt || true"
+    "timeout": 45,
+    "command": "echo '=== display stack ==='; command -v Xorg || true; command -v startx || true; command -v weston || true; command -v cage || true; command -v gnome-shell || true; command -v openbox || true; command -v dbus-run-session || true; echo '=== display managers ==='; systemctl status display-manager --no-pager -n 5 2>/dev/null || true; echo '=== seats/sessions ==='; loginctl list-sessions --no-legend 2>/dev/null || true; echo '=== chatgpt binary/desktop ==='; command -v chatgpt || true; dpkg -L chatgpt 2>/dev/null | grep -E '/(bin|applications)/' | head -40 || true; echo '=== gpu/display devices ==='; ls -l /dev/dri 2>/dev/null || true; ls -l /dev/tty0 /dev/tty3 2>/dev/null || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Check whether Codex device-auth flow completed and whether ChatGPT desktop is running",
+    "summary": "Inspect whether Mini can launch ChatGPT Linux GUI locally without keyboard input",
     "tools": [
-      "ZEN Ops",
-      "systemd"
+      "ZEN Ops"
     ]
   }
 }
