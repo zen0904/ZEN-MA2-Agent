@@ -1,19 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "visualizer-runtime-audit-20260930-2130",
+  "job_id": "visualizer-telemetry-probe-20260930-2138",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
     "timeout": 60,
-    "command": "echo '=== VISUALIZER SERVICE ==='; systemctl is-active zen-living-visualizer.service 2>/dev/null || true; echo '=== RUNTIME HEAD ==='; git -C /opt/zen/zen-ops-runtime rev-parse --short HEAD 2>/dev/null || true; echo '=== PROVIDER DETECTION SOURCE ==='; grep -n 'provider_text =' /opt/zen/zen-ops-runtime/deploy/ubuntu/zen-living-visualizer.py 2>/dev/null || true; echo '=== LIVE UPDATER BAD NEWLINE COUNT ==='; grep -F -c '\\\\ninstall' /usr/local/sbin/zen-ops-update 2>/dev/null || true; echo '=== API STATE SUMMARY ==='; curl -fsS --max-time 5 http://127.0.0.1:18992/api/state | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get(\"authority\")); print([(a.get(\"name\"),a.get(\"status\"),a.get(\"station\")) for a in d.get(\"agents\",[])])' 2>/dev/null || true"
+    "command": "echo '=== THERMAL ZONES ==='; for z in /sys/class/thermal/thermal_zone*; do [ -r \"$z/type\" ] || continue; printf '%s=' \"$(cat \"$z/type\" 2>/dev/null)\"; cat \"$z/temp\" 2>/dev/null || true; done; echo '=== HWMON ==='; for h in /sys/class/hwmon/hwmon*; do [ -d \"$h\" ] || continue; printf 'HWMON %s ' \"$h\"; cat \"$h/name\" 2>/dev/null || true; find \"$h\" -maxdepth 1 -type f \\( -name 'temp*_input' -o -name 'fan*_input' \\) -printf '%f=' -exec cat {} \\; 2>/dev/null | head -20; done; echo '=== SENSORS CMD ==='; command -v sensors || true; sensors 2>/dev/null | head -80 || true; echo '=== DRM ==='; ls -1 /sys/class/drm 2>/dev/null | head -40; for c in /sys/class/drm/card*/device; do [ -d \"$c\" ] || continue; echo DEVICE=$c; find \"$c\" -maxdepth 3 -type f \\( -name 'gpu_busy_percent' -o -name 'gt_cur_freq_mhz' -o -name 'gt_max_freq_mhz' \\) -print -exec cat {} \\; 2>/dev/null | head -30; done; echo '=== GPU TOOLS ==='; command -v intel_gpu_top || true; command -v nvidia-smi || true; echo '=== NETWORK ==='; ip -br link 2>/dev/null || true; cat /proc/net/dev 2>/dev/null || true; echo '=== UPTIME ==='; cat /proc/uptime 2>/dev/null || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Read-only audit Living Visualizer runtime version, provider-state accuracy, and updater repair",
+    "summary": "Read-only discover Mini telemetry sources for Living Visualizer system panel",
     "tools": [
       "ZEN Ops",
-      "Living Visualizer",
-      "systemd"
+      "Linux sysfs",
+      "NetworkManager"
     ]
   }
 }
