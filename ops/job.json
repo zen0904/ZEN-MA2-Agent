@@ -1,18 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "visualizer-phase1-install-20260930-2310",
+  "job_id": "visualizer-phase1-layout-20260930-2320",
   "kind": "repo_task",
   "args": {
-    "task": "install_living_visualizer",
-    "timeout": 180
+    "task": "repair_control_room_gui",
+    "timeout": 120
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Install and restart Living Visualizer Phase 1 redesign",
+    "summary": "Apply Living mode 30/70 Control Room layout for Visualizer Phase 1",
     "tools": [
       "ZEN Ops",
-      "Living Visualizer",
-      "systemd"
+      "X11",
+      "Openbox",
+      "Living Visualizer"
     ]
   }
 }
