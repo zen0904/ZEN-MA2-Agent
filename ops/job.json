@@ -1,21 +1,20 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "mini-spatial-preflight-export-20261001-0020",
+  "job_id": "diag-display-chatgpt-monitor-20261001-0628",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
     "timeout": 120,
-    "command": "set +e\n{\n  echo \"=== HOST ===\"; hostname\n  echo \"=== ZEN OPS WORKER ===\"; systemctl is-active zen-ops-worker.service\n  echo \"=== REPO ===\"; git -C /opt/zen/ZEN-MA2-Agent status --short --branch\n  git -C /opt/zen/ZEN-MA2-Agent rev-parse HEAD\n  git -C /opt/zen/ZEN-MA2-Agent log -1 --format=%h:%s\n  echo \"=== CODEX ===\"; command -v codex || true; codex --version 2>&1 || true\n  echo \"=== CLAUDE ===\"; command -v claude || true; claude --version 2>&1 || true\n  echo \"=== SPATIAL FILES ===\"; rg --files /opt/zen/ZEN-MA2-Agent/zen_ma2_agent /opt/zen/ZEN-MA2-Agent/tests 2>&1 | rg 'spatial|position|group_order' | head -80\n} > /tmp/mini-spatial-preflight.txt 2>&1\npython3 -c 'import json,sys,datetime; print(json.dumps({\"schema\":\"zen.mini.preflight.v1\",\"captured_at\":datetime.datetime.now(datetime.timezone.utc).isoformat(),\"output\":sys.stdin.read()},ensure_ascii=False,indent=2))' < /tmp/mini-spatial-preflight.txt > /tmp/mini-spatial-preflight.json\nblob=\"$(base64 -w0 /tmp/mini-spatial-preflight.json)\"\ngh api --method PUT repos/zen0904/ZEN-MA2-Agent/contents/ops/evidence/mini-spatial-preflight-20261001.json -f message=\"ops: preserve Mini spatial preflight evidence\" -f content=\"$blob\" -f branch=zen-ops-control > /tmp/mini-spatial-preflight-push.json\npython3 -c 'import json; d=json.load(open(\"/tmp/mini-spatial-preflight-push.json\")); print(\"COMMIT=\"+d[\"commit\"][\"sha\"]); print(\"FILE=\"+d[\"content\"][\"path\"])'\ncat /tmp/mini-spatial-preflight.txt"
+    "command": "echo '=== CHATGPT ==='; systemctl is-active zen-chatgpt-desktop.service 2>&1 || true; systemctl is-enabled zen-chatgpt-desktop.service 2>&1 || true; pgrep -a -u zenui -f '/usr/lib/chatgpt/ChatGPT|/usr/bin/chatgpt' || true; echo '=== TASKBAR/MONITOR ==='; systemctl is-active zen-mini-taskbar.service 2>&1 || true; systemctl is-enabled zen-mini-taskbar.service 2>&1 || true; systemctl list-units --type=service --all --no-pager | grep -Ei 'zen.*(mon|room|dash|display|chatgpt|taskbar)' || true; echo '=== XORG/VT ==='; pgrep -a -f '/usr/lib/xorg/Xorg :0|/usr/bin/Xorg :0' || true; fgconsole 2>&1 || true; echo '=== DRM ==='; for s in /sys/class/drm/card*-*/status; do [ -f \"$s\" ] && printf '%s=' \"$s\" && cat \"$s\"; done; echo '=== DPMS/XRANDR ==='; runuser -u zenui -- env HOME=/var/lib/zenui DISPLAY=:0 XAUTHORITY=/var/lib/zenui/.Xauthority xset q 2>&1 | grep -A4 -Ei 'DPMS|Monitor' || true; runuser -u zenui -- env HOME=/var/lib/zenui DISPLAY=:0 XAUTHORITY=/var/lib/zenui/.Xauthority xrandr --query 2>&1 || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Read-only Mini Spatial vNext preflight, retain nonsecret evidence on the ops branch",
+    "summary": "Diagnose GPT and monitor/dashboard visibility after display power cycle",
     "tools": [
       "ZEN Ops",
-      "git",
-      "codex CLI",
-      "claude CLI",
-      "GitHub CLI"
+      "systemd",
+      "Xorg",
+      "xrandr"
     ]
   }
 }
