@@ -1,19 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "visualizer-phase1-syntax-20260930-2235",
-  "kind": "shell",
+  "job_id": "visualizer-phase1-resync-20260930-2248",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen/zen-ops-runtime",
-    "timeout": 60,
-    "command": "python3 -m py_compile deploy/ubuntu/zen-living-visualizer.py; bash -n deploy/ubuntu/zen-control-room-layout; bash -n deploy/ubuntu/zen-chatgpt-session.sh; echo SYNTAX=PASS"
+    "task": "repair_zen_ops_updater_self_install",
+    "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Syntax-check Living Visualizer Phase 1 before live restart",
+    "summary": "Resync Mini runtime after Visualizer HTML newline fix",
     "tools": [
       "ZEN Ops",
-      "Python",
-      "Bash"
+      "GitHub",
+      "Living Visualizer"
     ]
   }
 }
