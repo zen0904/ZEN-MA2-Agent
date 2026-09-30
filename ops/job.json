@@ -1,20 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "living-tui-syntax-20260930-2348",
-  "kind": "shell",
+  "job_id": "living-tui-install-20260930-2352",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen/zen-ops-runtime",
-    "timeout": 60,
-    "command": "set -e; python3 -c 'from pathlib import Path; p=Path(\"deploy/ubuntu/zen-living-tui.py\"); compile(p.read_text(encoding=\"utf-8\"), str(p), \"exec\")'; python3 -c 'import json; json.load(open(\"data/ZEN_RUNTIME_ENTITY_REGISTRY.json\")); json.load(open(\"data/ZEN_TUI_STATE_MAP.json\"))'; bash -n deploy/ubuntu/zen-control-room-layout; bash -n deploy/ubuntu/zen-chatgpt-session.sh; bash -n deploy/ubuntu/zen-ops-update; bash -n deploy/ops_tasks/install_living_tui.sh; bash -n deploy/ops_tasks/repair_control_room_tui.sh; bash -n deploy/ops_tasks/verify_control_room_tui.sh; echo SYNTAX=PASS"
+    "task": "install_living_tui",
+    "timeout": 300
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Fail-fast syntax and data gate for CLI-first Living TUI",
+    "summary": "Install xterm and CLI-first ZEN Living TUI, retire web visualizer service",
     "tools": [
       "ZEN Ops",
-      "Python",
-      "Bash",
-      "JSON"
+      "xterm",
+      "curses TUI",
+      "systemd"
     ]
   }
 }
