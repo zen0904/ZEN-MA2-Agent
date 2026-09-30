@@ -1,18 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "install-living-visualizer-v2-20260930-2152",
-  "kind": "repo_task",
+  "job_id": "visualizer-state-error-20260930-2158",
+  "kind": "shell",
   "args": {
-    "task": "install_living_visualizer",
-    "timeout": 180
+    "cwd": "/opt/zen",
+    "timeout": 60,
+    "command": "echo '=== CURL STATE ==='; curl -v --max-time 5 http://127.0.0.1:18992/api/state 2>&1 | tail -60 || true; echo '=== JOURNAL ==='; journalctl -u zen-living-visualizer.service -n 80 --no-pager -o cat 2>&1 | tail -80 || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Install and restart Living Visualizer with real system telemetry",
+    "summary": "Read-only diagnose Living Visualizer api/state exception",
     "tools": [
       "ZEN Ops",
       "Living Visualizer",
-      "systemd"
+      "journalctl"
     ]
   }
 }
