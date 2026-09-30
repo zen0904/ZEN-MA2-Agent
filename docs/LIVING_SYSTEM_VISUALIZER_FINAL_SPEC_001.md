@@ -1,4 +1,4 @@
-# ZEN / Mini Living System Visualizer Final Engineering Spec 001
+> **SUPERSEDED FRONTEND NOTICE — 2026-09-30**\n> The browser/Chrome Living Visualizer is no longer the default attached-display frontend.\n> The current canonical frontend is the terminal-native ZEN Living TUI in `docs/LIVING_TUI_FINAL_SPEC_001.md`.\n> This file is retained as design/prototype evidence only.\n\n# ZEN / Mini Living System Visualizer Final Engineering Spec 001
 
 Date: 2026-09-30
 Status: APPROVED FOR PHASE-1 IMPLEMENTATION
