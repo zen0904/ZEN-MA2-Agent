@@ -1,19 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "repair-live-updater-20260930-1624",
-  "kind": "repo_task",
+  "job_id": "wait-codex-console-auth-task-20260930-1618",
+  "kind": "shell",
   "args": {
-    "task": "repair_zen_ops_updater_self_install",
-    "timeout": 300
+    "cwd": "/opt/zen",
+    "timeout": 190,
+    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/show_codex_device_auth_on_console.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Install corrected live updater from current runtime and verify heartbeat",
+    "summary": "Wait for Codex console-auth launcher deployment",
     "tools": [
-      "ZEN Ops",
-      "systemd",
-      "tmux",
-      "Tailscale"
+      "ZEN Ops"
     ]
   }
 }
