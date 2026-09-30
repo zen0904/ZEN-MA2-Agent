@@ -1,20 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "inspect-chatgpt-browser-login-handoff-20260930-1706",
+  "job_id": "wait-chatgpt-browser-handoff-task-20260930-1708",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 60,
-    "command": "echo '=== xdg tools ==='; command -v xdg-open || true; command -v xdg-settings || true; echo '=== zenui default browser ==='; runuser -u zenui -- env HOME=/var/lib/zenui XDG_CONFIG_HOME=/var/lib/zenui/.config xdg-settings get default-web-browser 2>&1 || true; echo '=== mime handlers ==='; runuser -u zenui -- env HOME=/var/lib/zenui XDG_CONFIG_HOME=/var/lib/zenui/.config xdg-mime query default x-scheme-handler/http 2>&1 || true; runuser -u zenui -- env HOME=/var/lib/zenui XDG_CONFIG_HOME=/var/lib/zenui/.config xdg-mime query default x-scheme-handler/https 2>&1 || true; echo '=== desktop file ==='; ls -l /usr/share/applications/google-chrome.desktop 2>/dev/null || true; echo '=== recent login handoff logs ==='; journalctl --no-pager --since '10 minutes ago' | grep -Ei 'account/login/start|Opening in existing browser session|xdg-open|openExternal|external|oauth|authorize|browser' | tail -n 180 || true"
+    "timeout": 190,
+    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/configure_chatgpt_browser_handoff.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Inspect why ChatGPT sign-in does not hand off to Chrome on Mini",
+    "summary": "Wait for ChatGPT browser handoff config task",
     "tools": [
-      "ZEN Ops",
-      "xdg-utils",
-      "Chrome",
-      "ChatGPT"
+      "ZEN Ops"
     ]
   }
 }
