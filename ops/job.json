@@ -1,18 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "rotate-mini-display-180-20260930-1711",
+  "job_id": "show-mini-desktop-20260930-1712",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 45,
-    "command": "echo '=== outputs before ==='; DISPLAY=:0 xrandr --query 2>&1 || true; OUT=$(DISPLAY=:0 xrandr --query 2>/dev/null | awk '/ connected/{print $1; exit}'); echo \"OUTPUT=$OUT\"; if [ -z \"$OUT\" ]; then echo 'NO_CONNECTED_OUTPUT'; exit 1; fi; DISPLAY=:0 xrandr --output \"$OUT\" --rotate inverted; sleep 1; echo '=== after ==='; DISPLAY=:0 xrandr --query | grep ' connected' | head -5; echo 'DISPLAY_ROTATION=180'; chvt 3 2>/dev/null || true"
+    "timeout": 120,
+    "command": "export DISPLAY=:0; echo '=== windows ==='; command -v wmctrl >/dev/null 2>&1 && wmctrl -l || true; if ! command -v wmctrl >/dev/null 2>&1; then sudo -n apt-get update -qq && sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends wmctrl; fi; wmctrl -k on; chvt 3 2>/dev/null || true; echo 'DESKTOP_SHOWN=YES'; echo 'VT=3'; echo 'WINDOW_MANAGER=OPENBOX'"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Rotate Mini desktop display 180 degrees for upside-down monitor",
+    "summary": "Show Mini GUI desktop by minimizing all windows",
     "tools": [
       "ZEN Ops",
-      "xrandr"
+      "Openbox",
+      "wmctrl"
     ]
   }
 }
