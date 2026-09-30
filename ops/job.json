@@ -1,10 +1,9 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "inspect-updater-bootstrap-20260930-0808",
-  "kind": "shell",
+  "job_id": "repair-zen-ops-recovery-20260930-0810",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 120,
-    "command": "echo 'HEADS'; git -C /opt/zen/zen-ops-runtime rev-parse HEAD; git -C /opt/zen/zen-ops-runtime rev-parse origin/main 2>/dev/null || true; echo 'INSTALLED'; sha256sum /usr/local/sbin/zen-ops-update 2>/dev/null || true; grep -n 'zen-ops-funnel\|Reconcile the OPS' /usr/local/sbin/zen-ops-update 2>/dev/null || true; echo 'RUNTIME'; sha256sum /opt/zen/zen-ops-runtime/deploy/ubuntu/zen-ops-update 2>/dev/null || true; grep -n 'zen-ops-funnel\|Reconcile the OPS' /opt/zen/zen-ops-runtime/deploy/ubuntu/zen-ops-update 2>/dev/null || true; echo 'TIMER'; systemctl show zen-ops-updater.timer -p ActiveState -p SubState -p LastTriggerUSec --no-pager; echo 'SERVICE'; systemctl show zen-ops-updater.service -p ActiveState -p SubState -p Result -p ExecMainStatus --no-pager; echo 'UNIT'; test -f /etc/systemd/system/zen-ops-funnel.service && echo FUNNEL_UNIT=PRESENT || echo FUNNEL_UNIT=ABSENT"
+    "task": "repair_zen_ops_funnel",
+    "timeout": 300
   }
 }
