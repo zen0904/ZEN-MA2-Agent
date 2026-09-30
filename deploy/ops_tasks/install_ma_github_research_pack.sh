@@ -78,14 +78,12 @@ print("PYMVR_IMPORT=PASS")
 print("PYMVR_VERSION=" + md.version("pymvr"))
 PY
 
-echo "=== GMA2 MCP OFFLINE INSTALL ==="
+echo "=== GMA2 MCP OFFLINE CORE VERIFY ==="
 GMA2_VENV=/opt/zen/venvs/gma2-mcp-reference
 if [[ ! -x "$GMA2_VENV/bin/python" ]]; then
   python3 -m venv "$GMA2_VENV"
 fi
-"$GMA2_VENV/bin/python" -m pip install -q --upgrade pip setuptools wheel
-"$GMA2_VENV/bin/python" -m pip install -q -e "$ROOT/gma2-mcp"
-"$GMA2_VENV/bin/python" - <<'PY'
+PYTHONPATH="$ROOT/gma2-mcp" "$GMA2_VENV/bin/python" - <<'PY'
 import src.response_parser
 import src.execution
 import src.profile_resolver
