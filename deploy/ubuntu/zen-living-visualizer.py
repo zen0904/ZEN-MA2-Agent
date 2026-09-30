@@ -245,7 +245,9 @@ async function tick(){try{const r=await fetch('/api/state?ts='+Date.now(),{cache
 window.addEventListener('resize',()=>lastState&&drawFlow());tick();setInterval(tick,1000);
 </script>
 </body>
-</html>"""\n\ndef sh(argv: list[str], timeout: float = 1.5) -> str:
+</html>"""
+
+def sh(argv: list[str], timeout: float = 1.5) -> str:
     try:
         p = subprocess.run(argv, text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=timeout, check=False)
         return p.stdout.strip()
