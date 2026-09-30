@@ -1,18 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "visualizer-install-timefix-20260930-2310",
-  "kind": "repo_task",
+  "job_id": "visualizer-telemetry-final-20260930-2318",
+  "kind": "shell",
   "args": {
-    "task": "install_living_visualizer",
-    "timeout": 180
+    "cwd": "/opt/zen",
+    "timeout": 60,
+    "command": "curl -sS --max-time 5 http://127.0.0.1:18992/api/state >/tmp/zen-vis-state-a.json || true; sleep 1.4; curl -sS --max-time 5 http://127.0.0.1:18992/api/state | python3 -c 'import json,sys; d=json.load(sys.stdin); print(json.dumps(d.get(\"system\",{}),ensure_ascii=False))'"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Restart Living Visualizer with time-import and hardened telemetry fixes",
+    "summary": "Final warmed-up Living Visualizer system telemetry verification",
     "tools": [
       "ZEN Ops",
       "Living Visualizer",
-      "systemd"
+      "Linux telemetry"
     ]
   }
 }
