@@ -11,6 +11,7 @@ from uuid import uuid4
 
 from ..knowledge_store import build_evidence_ledger, load_canonical_store, project_records, retrieve_records
 from ..portable import portable_state_path
+from ..tool_capabilities import build_agent_tool_context
 from .router import ProviderRouter, ProviderSlot
 
 
@@ -104,6 +105,7 @@ def build_designer_context(repo_root: Path) -> dict[str, object]:
         ],
         "evidence_ledger": evidence_ledger,
         "canonical_knowledge_records": canonical_knowledge_records,
+        "tool_capabilities": build_agent_tool_context(repo_root),
         "categories": {
             "fixture_technical_capability": {
                 "fixture_type_binding": data.get("show_bound_fixture_capability", {}),
