@@ -1,17 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "install-chatgpt-gui-runtime-fix-20260930-1639",
-  "kind": "repo_task",
+  "job_id": "wait-chatgpt-vt3-launcher-20260930-1641",
+  "kind": "shell",
   "args": {
-    "task": "install_chatgpt_gui_runtime",
-    "timeout": 900
+    "cwd": "/opt/zen",
+    "timeout": 190,
+    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/start_chatgpt_gui_vt3.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Finish minimal ChatGPT GUI runtime install using var-lib home",
+    "summary": "Wait for ChatGPT VT3 launcher deployment",
     "tools": [
-      "ZEN Ops",
-      "apt"
+      "ZEN Ops"
     ]
   }
 }
