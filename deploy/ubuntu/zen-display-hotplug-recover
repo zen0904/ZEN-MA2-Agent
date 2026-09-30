@@ -61,8 +61,30 @@ as_zenui /usr/bin/xset -dpms >>"$LOG" 2>&1 || true
 
 /usr/bin/chvt 3 >>"$LOG" 2>&1 || log "CHVT=warn"
 
+# The Living Workspace is an xterm process launched inside the X session.
+# If it vanished during/after a display power cycle, recreate only that pane.
+windows="$(as_zenui /usr/bin/wmctrl -lx 2>/dev/null || true)"
+if ! printf '%s\n' "$windows" | grep -Eqi 'zen-living-tui|zen living workspace'; then
+  log "LIVING_WORKSPACE=relaunch"
+  runuser -u zenui -- env \
+    HOME=/var/lib/zenui \
+    USER=zenui \
+    LOGNAME=zenui \
+    DISPLAY="$DISPLAY_NUM" \
+    XDG_CONFIG_HOME=/var/lib/zenui/.config \
+    /usr/bin/xterm \
+      -T 'ZEN Living Workspace' \
+      -geometry 145x50+580+0 \
+      -fa 'DejaVu Sans Mono' \
+      -fs 10 \
+      -bg black \
+      -fg white \
+      -e /usr/local/bin/zen-living-tui \
+      >>/var/lib/zenui/zen-living-tui.log 2>&1 &
+fi
+
 # Openbox may need a few seconds to republish both windows after mode/VT
-# restoration. Retry rather than declaring the layout missing immediately.
+# restoration or after the TUI pane is relaunched.
 layout_ok=0
 for _ in $(seq 1 20); do
   if as_zenui /usr/local/bin/zen-control-room-layout living >>"$LOG" 2>&1; then
