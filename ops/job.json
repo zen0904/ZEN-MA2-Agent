@@ -1,6 +1,6 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wait-updater-repair-task-20260930-1616",
+  "job_id": "wait-updater-repair-task-20260930-1618",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
@@ -9,7 +9,7 @@
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Wait for legacy updater to fetch bounded self-install repair task",
+    "summary": "Verify latest updater repair task reached Mini runtime",
     "tools": [
       "ZEN Ops",
       "git"
