@@ -1,17 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "wait-chatgpt-browser-handoff-task-20260930-1708",
-  "kind": "shell",
+  "job_id": "configure-chatgpt-browser-handoff-20260930-1709",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 190,
-    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/configure_chatgpt_browser_handoff.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
+    "task": "configure_chatgpt_browser_handoff",
+    "timeout": 300
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Wait for ChatGPT browser handoff config task",
+    "summary": "Make ChatGPT sign-in links open and focus the persistent Mini Chrome session",
     "tools": [
-      "ZEN Ops"
+      "ZEN Ops",
+      "xdg-utils",
+      "Chrome",
+      "Openbox"
     ]
   }
 }
