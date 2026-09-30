@@ -258,6 +258,14 @@
       "authority": "GUI_EMERGENCY_AND_DIAGNOSTIC_FALLBACK",
       "runtime": "on_demand",
       "notes": "No longer the primary Mini execution path; preserve remaining quota for GUI/visual/emergency use."
+    },
+    {
+      "id": "openchatx",
+      "state": "READY_LINUX_COMPAT_SERVICE_PARTIAL_INTEGRATION",
+      "interface": "MCP_HTTP_LOCAL_18001",
+      "authority": "AGENT_WORKSPACE_NO_MA_PROGRAM_AUTHORITY",
+      "runtime": "always",
+      "notes": "Mini live inspection 2026-09-30: zen-openchatx.service active+enabled as dedicated zenopenchatx user, local listener 127.0.0.1:18001, source/state paths present. Root OpenClaw gateway is also live on 18789. The zen-ops-worker OpenClaw MCP probe is not accepted as integration evidence because that worker runs under a protected home/config context; OpenChatX->OpenClaw MCP registration remains a separate low-priority verification item. Planned tunnel-health port 18080 is not listening."
     }
   ]
 }
