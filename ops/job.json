@@ -1,18 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "activate-chatgpt-vt3-20260930-1655",
-  "kind": "repo_task",
+  "job_id": "inspect-mini-mouse-xorg-20260930-1657",
+  "kind": "shell",
   "args": {
-    "task": "activate_chatgpt_vt3",
-    "timeout": 120
+    "cwd": "/opt/zen",
+    "timeout": 45,
+    "command": "echo '=== input devices ==='; ls -l /dev/input 2>/dev/null || true; echo '=== by-id ==='; ls -l /dev/input/by-id 2>/dev/null || true; echo '=== libinput pkg ==='; dpkg -l | grep -E 'xserver-xorg-input-libinput|libinput' || true; echo '=== xinput ==='; DISPLAY=:0 xinput list 2>&1 || true; echo '=== xorg input log ==='; grep -Ei 'input|mouse|pointer|libinput|evdev' /var/log/Xorg.0.log 2>/dev/null | tail -n 120 || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Switch Mini console to the already-running ChatGPT Linux app on VT3",
+    "summary": "Inspect Mini mouse and Xorg input stack",
     "tools": [
       "ZEN Ops",
-      "chvt",
-      "ChatGPT"
+      "Xorg"
     ]
   }
 }
