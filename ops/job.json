@@ -1,19 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "verify-chatgpt-persist-20260930-1738",
+  "job_id": "finalize-chatgpt-persist-20260930-1740",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 45,
-    "command": "echo CHATGPT_ACTIVE=$(systemctl is-active zen-chatgpt-desktop.service 2>/dev/null || true); echo CHATGPT_ENABLED=$(systemctl is-enabled zen-chatgpt-desktop.service 2>/dev/null || true); echo TASKBAR_ACTIVE=$(systemctl is-active zen-mini-taskbar.service 2>/dev/null || true); echo TASKBAR_ENABLED=$(systemctl is-enabled zen-mini-taskbar.service 2>/dev/null || true); echo CHROME_ACTIVE=$(systemctl is-active zen-mini-chrome.service 2>/dev/null || true); echo CHROME_ENABLED=$(systemctl is-enabled zen-mini-chrome.service 2>/dev/null || true); echo CHATGPT_PID=$(pgrep -u zenui -f '/usr/lib/chatgpt/ChatGPT' | head -1 || true); echo XORG_PID=$(pgrep -f '/usr/lib/xorg/Xorg :0|/usr/bin/Xorg :0' | head -1 || true)"
+    "timeout": 120,
+    "command": "systemctl reset-failed 'zen-chatgpt-gui*.service' 2>/dev/null || true; systemctl is-active zen-chatgpt-desktop.service 2>/dev/null || true; systemctl is-enabled zen-chatgpt-desktop.service 2>/dev/null || true; systemctl is-active zen-mini-taskbar.service 2>/dev/null || true; systemctl is-enabled zen-mini-taskbar.service 2>/dev/null || true; systemctl is-enabled zen-mini-chrome.service 2>/dev/null || true; pgrep -a -u zenui -f '/usr/lib/chatgpt/ChatGPT' | head -5 || true; systemctl list-units 'zen-chatgpt-gui*.service' --all --no-legend 2>/dev/null || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Verify persistent ChatGPT desktop boot service",
+    "summary": "Finalize persistent ChatGPT boot service and clear stale transient failures",
     "tools": [
       "ZEN Ops",
       "systemd",
-      "procfs"
+      "ChatGPT"
     ]
   }
 }
