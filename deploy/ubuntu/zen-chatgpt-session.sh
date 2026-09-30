@@ -42,7 +42,7 @@ exec runuser -u zenui -- env \
       >/var/lib/zenui/visualizer-chrome.log 2>&1 &
 
     for _ in $(seq 1 12); do
-      if /usr/local/bin/zen-control-room-layout >/var/lib/zenui/control-room-layout.log 2>&1; then
+      if /usr/local/bin/zen-control-room-layout living >/var/lib/zenui/control-room-layout.log 2>&1; then
         break
       fi
       sleep 1
