@@ -1,19 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "diag-chatgpt-local-mcp-20260930-2012",
-  "kind": "repo_task",
+  "job_id": "probe-gh-auth-20260930-2021",
+  "kind": "shell",
   "args": {
-    "task": "diag_chatgpt_local_mcp",
-    "timeout": 180
+    "cwd": "/opt/zen",
+    "timeout": 60,
+    "command": "echo '=== GH AUTH ==='; gh auth status 2>&1; echo '=== GIT REMOTE ==='; git -C /var/lib/zen-ops/control.git remote -v 2>&1; echo '=== CRED HELPER ==='; git -C /var/lib/zen-ops/control.git config --get credential.helper 2>&1 || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Read-only verify local zen-mini MCP registration inside Mini ChatGPT/Codex runtime",
+    "summary": "Read-only verify Mini zen-ops GitHub credential availability before result writeback design",
     "tools": [
       "ZEN Ops",
-      "ChatGPT",
-      "Codex",
-      "MCP"
+      "GitHub",
+      "git"
     ]
   }
 }
