@@ -2,6 +2,7 @@
 Description=ZEN Mini persistent Living Workspace
 After=zen-chatgpt-desktop.service
 Requires=zen-chatgpt-desktop.service
+PartOf=zen-chatgpt-desktop.service
 
 [Service]
 Type=simple
