@@ -1,17 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "install-chatgpt-input-runtime-20260930-1701",
-  "kind": "repo_task",
+  "job_id": "refresh-mini-xorg-input-20260930-1702",
+  "kind": "shell",
   "args": {
-    "task": "install_chatgpt_input_runtime",
-    "timeout": 600
+    "cwd": "/opt/zen",
+    "timeout": 45,
+    "command": "udevadm trigger --subsystem-match=input --action=change 2>/dev/null || true; sleep 2; echo '=== xinput ==='; DISPLAY=:0 xinput list 2>&1 || true; echo '=== log ==='; grep -Ei 'libinput|Logitech|pointer' /var/log/Xorg.0.log 2>/dev/null | tail -n 80 || true; chvt 3 2>/dev/null || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Install Xorg libinput and xinput for Mini mouse support",
+    "summary": "Refresh Xorg input devices and verify Mini mouse",
     "tools": [
       "ZEN Ops",
-      "apt",
+      "udev",
       "Xorg"
     ]
   }
