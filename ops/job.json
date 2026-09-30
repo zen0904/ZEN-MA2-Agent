@@ -1,18 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "visualizer-reinstall-errorjson-20260930-2209",
-  "kind": "repo_task",
+  "job_id": "visualizer-state-errorjson-20260930-2215",
+  "kind": "shell",
   "args": {
-    "task": "install_living_visualizer",
-    "timeout": 180
+    "cwd": "/opt/zen",
+    "timeout": 60,
+    "command": "curl -sS --max-time 5 -i http://127.0.0.1:18992/api/state || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Reinstall and restart Living Visualizer with telemetry and bounded error JSON",
+    "summary": "Read bounded Living Visualizer api/state error JSON",
     "tools": [
       "ZEN Ops",
-      "Living Visualizer",
-      "systemd"
+      "Living Visualizer"
     ]
   }
 }
