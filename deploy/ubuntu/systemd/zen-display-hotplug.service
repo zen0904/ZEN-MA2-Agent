@@ -1,0 +1,9 @@
+[Unit]
+Description=ZEN display hotplug recovery
+After=zen-chatgpt-desktop.service
+Wants=zen-chatgpt-desktop.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/zen-display-hotplug-recover
+TimeoutStartSec=20
