@@ -39,7 +39,10 @@ systemctl daemon-reload
 systemctl enable --now zen-ops-updater.timer
 systemctl enable --now zen-ops-results.service
 systemctl enable --now zen-ops-funnel.service
-systemctl restart zen-ops-worker.service
+systemctl enable zen-ops-worker.service >/dev/null 2>&1 || true
+if ! systemctl is-active --quiet zen-ops-worker.service; then
+  systemctl start zen-ops-worker.service
+fi
 
 # Reconcile the human-facing tmux console without depending on the stale
 # /opt/zen/ZEN-MA2-Agent worktree. The updater itself follows canonical main.
