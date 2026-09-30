@@ -1,9 +1,8 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "install-ma-github-research-pack-20260930-0915",
-  "kind": "repo_task",
+  "job_id": "full-tests-agent-tool-capabilities-20260930-0922",
+  "kind": "tests",
   "args": {
-    "task": "install_ma_github_research_pack",
     "timeout": 1800
   }
 }
