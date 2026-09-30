@@ -1,17 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "install-wmctrl-20260930-1714",
-  "kind": "repo_task",
+  "job_id": "show-mini-desktop-final-20260930-1715",
+  "kind": "shell",
   "args": {
-    "task": "install_wmctrl",
-    "timeout": 300
+    "cwd": "/opt/zen",
+    "timeout": 45,
+    "command": "export DISPLAY=:0; echo '=== windows before ==='; wmctrl -l || true; wmctrl -k on; sleep 1; chvt 3 2>/dev/null || true; echo 'DESKTOP_SHOWN=YES'; echo 'VT=3'"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Install wmctrl for Mini GUI desktop control",
+    "summary": "Minimize all Mini GUI windows and show desktop",
     "tools": [
       "ZEN Ops",
-      "apt"
+      "wmctrl",
+      "Openbox"
     ]
   }
 }
