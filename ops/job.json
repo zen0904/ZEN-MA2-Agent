@@ -1,15 +1,14 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "disable-always-on-chrome-20260930-1713",
-  "kind": "shell",
+  "job_id": "apply-chrome-close-policy-20260930-1716",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 60,
-    "command": "systemctl disable --now zen-mini-chrome.service 2>/dev/null || true; pkill -u zenui -f '/opt/google/chrome/chrome|google-chrome' 2>/dev/null || true; sleep 1; echo '=== chrome service ==='; systemctl is-enabled zen-mini-chrome.service 2>/dev/null || true; systemctl is-active zen-mini-chrome.service 2>/dev/null || true; echo '=== chrome process ==='; pgrep -a -u zenui -f '/opt/google/chrome/chrome|google-chrome' || true; echo '=== taskbar ==='; systemctl is-active zen-mini-taskbar.service 2>/dev/null || true; chvt 3 2>/dev/null || true"
+    "task": "install_persistent_gui_services",
+    "timeout": 600
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Disable always-on Chrome so user can close it normally while keeping browser handoff on demand",
+    "summary": "Apply updated Mini Chrome close behavior",
     "tools": [
       "ZEN Ops",
       "systemd",
