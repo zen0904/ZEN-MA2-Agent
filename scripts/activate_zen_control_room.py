@@ -1,21 +1,41 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import json
+import os
 import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 
 REPO = Path("/opt/zen/ZEN-MA2-Agent")
 ROOM = REPO / "deploy" / "ubuntu" / "zen-control-room"
 SESSION = "zenmon"
+PUBLIC_RESULT = Path("/var/lib/zen-ops/public/control-room-activate.json")
 
 
 def run(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(args, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
 
 
+def publish(status: str, **extra: object) -> None:
+    payload = {
+        "schema": "zen.control_room.activate.v0.1",
+        "status": status,
+        "time": datetime.now(timezone.utc).isoformat(),
+        "euid": os.geteuid(),
+        **extra,
+    }
+    try:
+        PUBLIC_RESULT.write_text(json.dumps(payload, indent=2) + "\n")
+    except Exception:
+        pass
+
+
 def main() -> int:
+    publish("starting")
     if not ROOM.is_file():
         print(f"ROOM_SOURCE_MISSING={ROOM}")
+        publish("failed", error="ROOM_SOURCE_MISSING")
         return 2
 
     check = run("python3", "-m", "py_compile", str(ROOM))
@@ -25,6 +45,7 @@ def main() -> int:
 
     if run("tmux", "has-session", "-t", SESSION).returncode != 0:
         print("TMUX_SESSION_MISSING=zenmon")
+        publish("failed", error="TMUX_SESSION_MISSING")
         return 3
 
     names = run("tmux", "list-windows", "-t", SESSION, "-F", "#{window_name}").stdout.splitlines()
@@ -49,6 +70,7 @@ def main() -> int:
             print(proc.stdout)
             return proc.returncode
 
+    publish("completed", room_source=str(ROOM), room_window="LIVE", room_selected=True, ma2_writes=0, ma3_writes=0)
     print("ROOM_SOURCE=" + str(ROOM))
     print("ROOM_WINDOW=LIVE")
     print("ROOM_SELECTED=YES")
