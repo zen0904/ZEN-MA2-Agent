@@ -1,6 +1,6 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "install-zen-mini-mcp-20260930-1814",
+  "job_id": "install-zen-mini-local-mcp-20260930-1820",
   "kind": "repo_task",
   "args": {
     "task": "install_zen_mini_mcp",
@@ -8,11 +8,12 @@
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Install bounded read-only ZEN Mini MCP gateway and run official MCP client smoke test",
+    "summary": "Install local stdio ZEN Mini MCP into the Mini ChatGPT/Codex identity",
     "tools": [
       "ZEN Ops",
+      "Codex",
+      "ChatGPT",
       "MCP",
-      "systemd",
       "Node"
     ]
   }
