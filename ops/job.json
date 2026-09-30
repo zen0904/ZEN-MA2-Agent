@@ -1,21 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "verify-chatgpt-obsidian-postreboot-20260930-1818",
+  "job_id": "install-zen-mini-mcp-20260930-1814",
   "kind": "repo_task",
   "args": {
-    "task": "verify_chatgpt_obsidian_postreboot",
-    "timeout": 180
+    "task": "install_zen_mini_mcp",
+    "timeout": 600
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Verify ChatGPT boot persistence and Obsidian Mind MCP after controlled reboot",
+    "summary": "Install bounded read-only ZEN Mini MCP gateway and run official MCP client smoke test",
     "tools": [
       "ZEN Ops",
-      "systemd",
-      "ChatGPT",
-      "Codex",
       "MCP",
-      "Git"
+      "systemd",
+      "Node"
     ]
   }
 }
