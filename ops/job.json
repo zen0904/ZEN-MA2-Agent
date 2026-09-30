@@ -1,15 +1,15 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "diagnose-updater-auth-20260930-1600",
+  "job_id": "verify-runtime-head-20260930-1601",
   "kind": "shell",
   "args": {
-    "command": "echo '=== updater service ==='; systemctl status zen-ops-updater.service --no-pager --full 2>&1 || true; echo '=== updater journal ==='; journalctl -u zen-ops-updater.service -n 80 --no-pager 2>&1 || true; echo '=== control remote ==='; git -C /var/lib/zen-ops/control.git remote -v 2>&1 || true; git -C /var/lib/zen-ops/control.git config --show-origin --get-all credential.helper 2>&1 || true; echo '=== runtime remote ==='; git -C /opt/zen/zen-ops-runtime remote -v 2>&1 || true; git -C /opt/zen/zen-ops-runtime config --show-origin --get-all credential.helper 2>&1 || true; echo '=== dedicated gh store ==='; test -f /var/lib/zen-ops/gh/hosts.yml && echo DEDICATED_GH_STORE=YES || echo DEDICATED_GH_STORE=NO; echo 'MA2_WRITES=0'; echo 'MA3_WRITES=0'",
+    "command": "git -c safe.directory=/opt/zen/zen-ops-runtime -C /opt/zen/zen-ops-runtime rev-parse HEAD; git -c safe.directory=/var/lib/zen-ops/control.git -C /var/lib/zen-ops/control.git rev-parse refs/remotes/origin/zen-ops-control; systemctl is-active zen-ops-worker.service; systemctl is-active zen-ops-updater.timer; test -f /var/lib/zen-ops/public/updater-heartbeat.json && cat /var/lib/zen-ops/public/updater-heartbeat.json || echo UPDATER_HEARTBEAT=ABSENT; echo MA2_WRITES=0; echo MA3_WRITES=0",
     "cwd": "/var/lib/zen-ops",
     "timeout": 120
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Diagnose recovered worker versus stalled updater private-repo auth",
+    "summary": "Verify recovered Mini runtime head and updater heartbeat",
     "tools": [
       "ZEN Ops",
       "git",
