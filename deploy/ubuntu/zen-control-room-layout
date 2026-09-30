@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export DISPLAY="${DISPLAY:-:0}"
+
+line="$(/usr/bin/wmctrl -d 2>/dev/null | awk '$2=="*" {print; exit}')"
+WA_X=0
+WA_Y=0
+WA_W=1920
+WA_H=1080
+if [[ "$line" =~ WA: ([0-9]+),([0-9]+) ([0-9]+)x([0-9]+) ]]; then
+  WA_X="${BASH_REMATCH[1]}"
+  WA_Y="${BASH_REMATCH[2]}"
+  WA_W="${BASH_REMATCH[3]}"
+  WA_H="${BASH_REMATCH[4]}"
+fi
+
+CHAT_W=$((WA_W * 5 / 8))
+VIS_W=$((WA_W - CHAT_W))
+VIS_X=$((WA_X + CHAT_W))
+
+windows="$(/usr/bin/wmctrl -lx 2>/dev/null || true)"
+chat_id="$(printf '%s\n' "$windows" | awk 'tolower($0) ~ /chatgpt/ && tolower($0) !~ /google-chrome/ {print $1; exit}')"
+vis_id="$(printf '%s\n' "$windows" | awk 'tolower($0) ~ /google-chrome/ && tolower($0) ~ /zen living system visualizer/ {print $1; exit}')"
+if [[ -z "$vis_id" ]]; then
+  vis_id="$(printf '%s\n' "$windows" | awk 'tolower($0) ~ /google-chrome/ {print $1; exit}')"
+fi
+
+[[ -n "$chat_id" && -n "$vis_id" ]] || exit 2
+
+for id in "$chat_id" "$vis_id"; do
+  /usr/bin/wmctrl -i -r "$id" -b remove,maximized_vert,maximized_horz,fullscreen >/dev/null 2>&1 || true
+done
+
+/usr/bin/wmctrl -i -r "$chat_id" -e "0,${WA_X},${WA_Y},${CHAT_W},${WA_H}"
+/usr/bin/wmctrl -i -r "$vis_id" -e "0,${VIS_X},${WA_Y},${VIS_W},${WA_H}"
+
+echo "CONTROL_ROOM_LAYOUT=PASS"
+echo "CHATGPT=${WA_X},${WA_Y},${CHAT_W},${WA_H}"
+echo "VISUALIZER=${VIS_X},${WA_Y},${VIS_W},${WA_H}"
