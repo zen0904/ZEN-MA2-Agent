@@ -1,17 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "room-activate-20260930-1437",
-  "kind": "console",
+  "job_id": "inspect-mini-browser-runtime-20260930-1555",
+  "kind": "shell",
   "args": {
-    "mode": "room"
-  },
-  "meta": {
-    "actor": "CHATGPT_LEAD",
-    "summary": "Activate Mini Control Room mode through bounded ZEN Ops Plane",
-    "tools": [
-      "ZEN Ops",
-      "tmux",
-      "Control Room"
-    ]
+    "cwd": "/opt/zen",
+    "timeout": 45,
+    "command": "echo '=== browser binaries ==='; for x in chromium chromium-browser google-chrome google-chrome-stable brave-browser; do p=$(command -v \"$x\" 2>/dev/null || true); [ -n \"$p\" ] && echo \"$x=$p\"; done; echo '=== playwright ==='; /opt/node/bin/node -e \"try{const p=require.resolve('playwright'); console.log('PLAYWRIGHT=YES '+p)}catch(e){console.log('PLAYWRIGHT=NO')}\" 2>/dev/null || true; echo '=== openclaw browser help ==='; /opt/node/bin/openclaw browser --help 2>&1 | head -60; echo '=== openclaw browser status ==='; /opt/node/bin/openclaw browser status 2>&1 | head -80 || true"
   }
 }
