@@ -6,6 +6,7 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 ExecStart=/usr/local/sbin/zen-ops-update
+Environment=GH_CONFIG_DIR=/var/lib/zen-ops/gh
 NoNewPrivileges=true
 # Host /tmp access is required here so the trusted updater can reconcile the
 # interactive zenmon tmux socket. Keep PrivateTmp enabled on zen-ops-worker.
