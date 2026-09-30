@@ -1,18 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "visualizer-sync-telemetry2-20260930-2243",
+  "job_id": "visualizer-install-telemetry2-20260930-2250",
   "kind": "repo_task",
   "args": {
-    "task": "repair_zen_ops_updater_self_install",
+    "task": "install_living_visualizer",
     "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Sync Mini runtime for hardened Living Visualizer telemetry",
+    "summary": "Restart Living Visualizer with hardened fan disk and network telemetry",
     "tools": [
       "ZEN Ops",
-      "GitHub",
-      "Living Visualizer"
+      "Living Visualizer",
+      "systemd"
     ]
   }
 }
