@@ -1,20 +1,21 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "controlled-reboot-chatgpt-om-20260930-1812",
+  "job_id": "verify-chatgpt-obsidian-postreboot-20260930-1818",
   "kind": "repo_task",
   "args": {
-    "task": "schedule_controlled_reboot",
-    "timeout": 60
+    "task": "verify_chatgpt_obsidian_postreboot",
+    "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Controlled reboot acceptance for persistent ChatGPT GUI and Obsidian Mind MCP",
+    "summary": "Verify ChatGPT boot persistence and Obsidian Mind MCP after controlled reboot",
     "tools": [
       "ZEN Ops",
       "systemd",
       "ChatGPT",
       "Codex",
-      "MCP"
+      "MCP",
+      "Git"
     ]
   }
 }
