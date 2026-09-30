@@ -1,2 +1,3 @@
-# Restore the Mini's persistent ChatGPT/Living Workspace display after monitor hotplug.
-ACTION=="change", SUBSYSTEM=="drm", TAG+="systemd", ENV{SYSTEMD_WANTS}+="zen-display-hotplug.service"
+# Restore the Mini GUI only for a real HDMI DRM hotplug event.
+# Do not trigger on software-only DRM mode/property changes caused by xrandr.
+ACTION=="change", SUBSYSTEM=="drm", KERNEL=="card*-HDMI-A-*", ENV{HOTPLUG}=="1", TAG+="systemd", ENV{SYSTEMD_WANTS}+="zen-display-hotplug.service"
