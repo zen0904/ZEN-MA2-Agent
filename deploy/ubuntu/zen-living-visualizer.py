@@ -291,7 +291,7 @@ def build_state() -> dict[str, Any]:
     vision_active = running and any(x in text.lower() for x in ("vision","image","video","gdtf","mvr"))
     agents.append({"id":"vision","name":"Vision Agent","status":"WORKING" if vision_active else "IDLE","station":"vision" if vision_active else "lounge","task":summary if vision_active else ""})
 
-    provider_text = (text + " " + proc).lower()
+    # Provider avatars require explicit task/runtime metadata. Do not infer\n    # provider activity from the resident ChatGPT GUI process name.\n    provider_text = text.lower()
     for aid, name, keys in (
         ("gpt","GPT Provider",("openai","gpt")),
         ("qwen","Qwen Provider",("qwen",)),
