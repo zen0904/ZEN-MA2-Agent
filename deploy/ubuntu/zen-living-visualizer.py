@@ -530,8 +530,20 @@ class Handler(BaseHTTPRequestHandler):
             self.send_bytes(200, "application/json", body)
             return
         if path == "/api/state":
-            body = json.dumps(build_state(), ensure_ascii=False).encode("utf-8")
-            self.send_bytes(200, "application/json; charset=utf-8", body)
+            try:
+                payload = build_state()
+                code = 200
+            except Exception as exc:
+                payload = {
+                    "schema": "zen.living_visualizer.error.v0.1",
+                    "status": "error",
+                    "error": type(exc).__name__,
+                    "message": str(exc)[:240],
+                    "authority": "OBSERVATION_ONLY",
+                }
+                code = 500
+            body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+            self.send_bytes(code, "application/json; charset=utf-8", body)
             return
         self.send_bytes(404, "application/json", b'{"error":"not_found"}')
 
