@@ -16,22 +16,22 @@ from typing import Any
 OPS_PUBLIC = Path("/var/lib/zen-ops/public")
 
 STATIONS = {
-    "lounge": {"name": "Rest Lounge", "x": 10, "y": 80},
-    "research": {"name": "Browser / Research", "x": 12, "y": 18},
-    "logs": {"name": "Logs / Monitoring", "x": 30, "y": 16},
-    "terminal": {"name": "Terminal", "x": 45, "y": 16},
-    "files": {"name": "File Storage", "x": 60, "y": 16},
-    "coding": {"name": "Coding", "x": 76, "y": 18},
-    "github": {"name": "Git / GitHub", "x": 88, "y": 32},
-    "api": {"name": "AI Model / API", "x": 88, "y": 56},
-    "compute": {"name": "GPU / Compute", "x": 86, "y": 80},
-    "vision": {"name": "Vision", "x": 68, "y": 80},
-    "ma": {"name": "MA Bridge / ZEN Operator", "x": 46, "y": 82},
-    "sandbox": {"name": "Sandbox / OpenShell", "x": 28, "y": 80},
-    "openclaw": {"name": "OpenClaw", "x": 12, "y": 54},
-    "network": {"name": "Network / SSH", "x": 12, "y": 36},
-    "approval": {"name": "Approval Gate", "x": 55, "y": 52},
-    "zen": {"name": "ZEN Core", "x": 35, "y": 52},
+    "lounge": {"name": "Rest Lounge", "x": 10, "y": 84},
+    "research": {"name": "Browser / Research", "x": 19, "y": 30},
+    "vision": {"name": "Vision", "x": 18, "y": 48},
+    "api": {"name": "AI Model / API", "x": 8, "y": 60},
+    "network": {"name": "Network / SSH", "x": 23, "y": 11},
+    "compute": {"name": "Compute", "x": 46, "y": 11},
+    "zen": {"name": "ZEN Core", "x": 36, "y": 49},
+    "openclaw": {"name": "OpenClaw", "x": 50, "y": 34},
+    "coding": {"name": "Coding", "x": 54, "y": 50},
+    "sandbox": {"name": "Sandbox / OpenShell", "x": 53, "y": 69},
+    "github": {"name": "Git / GitHub", "x": 66, "y": 49},
+    "terminal": {"name": "Terminal", "x": 48, "y": 88},
+    "approval": {"name": "Approval Gate", "x": 77, "y": 50},
+    "ma": {"name": "MA Bridge", "x": 91, "y": 50},
+    "files": {"name": "Storage", "x": 82, "y": 84},
+    "logs": {"name": "Logs / Monitoring", "x": 93, "y": 82},
 }
 
 HTML = r"""<!doctype html>
@@ -39,133 +39,213 @@ HTML = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ZEN Living System Visualizer</title>
+<title>ZEN Living System</title>
 <style>
-:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#eef3f8;background:#091018}
-*{box-sizing:border-box}
-body{margin:0;overflow:hidden;background:radial-gradient(circle at 30% 20%,#142231 0,#091018 52%,#060a0f 100%)}
-#app{height:100vh;display:grid;grid-template-rows:52px 1fr}
-.top{display:flex;align-items:center;gap:18px;padding:0 18px;border-bottom:1px solid #243442;background:rgba(7,12,18,.92);backdrop-filter:blur(8px)}
-.brand{font-weight:800;letter-spacing:.08em}
-.pill{font-size:12px;padding:5px 9px;border:1px solid #334a5d;border-radius:999px;color:#bcd0df}
-.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:#667}
-.dot.on{background:#58d68d;box-shadow:0 0 12px #58d68d}
-.main{display:grid;grid-template-columns:minmax(0,1fr) 390px;min-height:0}
-.workspace{position:relative;overflow:hidden;background-image:linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);background-size:32px 32px}
-.workspace:after{content:"";position:absolute;inset:2.5%;border:1px solid #243746;border-radius:26px;pointer-events:none}
-.station{position:absolute;transform:translate(-50%,-50%);min-width:115px;padding:11px 12px;border-radius:14px;border:1px solid #345066;background:linear-gradient(180deg,rgba(24,39,52,.96),rgba(15,26,36,.96));box-shadow:0 8px 24px rgba(0,0,0,.28);text-align:center;font-size:12px;color:#bdd0de;transition:.3s}
-.station.busy{border-color:#64d99b;box-shadow:0 0 0 1px rgba(100,217,155,.24),0 0 24px rgba(60,205,139,.18)}
-.station .name{font-weight:700;color:#edf5fb}
-.station .busy-label{margin-top:3px;font-size:10px;color:#61d99c;min-height:13px}
-.avatar{position:absolute;transform:translate(-50%,-50%);transition:left .9s cubic-bezier(.2,.8,.2,1),top .9s cubic-bezier(.2,.8,.2,1);z-index:5;cursor:pointer}
-.avatar .body{width:44px;height:44px;border-radius:14px;background:linear-gradient(145deg,#d8e3ec,#8297a8);border:2px solid #f1f6fa;box-shadow:0 8px 18px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;color:#0b141d;font-size:12px;font-weight:900}
-.avatar.working .body{box-shadow:0 0 0 3px rgba(100,217,155,.3),0 0 22px rgba(100,217,155,.42);animation:pulse 1.1s ease-in-out infinite alternate}
-.avatar.error .body{box-shadow:0 0 0 3px rgba(255,100,100,.32),0 0 24px rgba(255,80,80,.35)}
-.avatar.idle .body{animation:idle 2.8s ease-in-out infinite}
-.avatar .label{position:absolute;left:50%;top:49px;transform:translateX(-50%);white-space:nowrap;background:rgba(4,8,12,.78);border:1px solid #2a3c4b;border-radius:8px;padding:3px 7px;font-size:10px;color:#dbe7ef}
-.avatar .bubble{position:absolute;left:50%;bottom:51px;transform:translateX(-50%);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#f3f8fb;color:#12202c;border-radius:10px;padding:4px 7px;font-size:9px;opacity:0;transition:.2s}
-.avatar.working .bubble,.avatar.error .bubble{opacity:1}
-@keyframes idle{from{transform:translate(-50%,-50%) translateY(0)}50%{transform:translate(-50%,-50%) translateY(-3px)}to{transform:translate(-50%,-50%) translateY(0)}}
-@keyframes pulse{from{transform:scale(.98)}to{transform:scale(1.03)}}
-.side{border-left:1px solid #243442;background:rgba(8,14,20,.94);display:grid;grid-template-rows:auto auto 1fr;min-height:0}
-.section{padding:14px 15px;border-bottom:1px solid #1f303d}
-.section h3{margin:0 0 10px;font-size:12px;letter-spacing:.07em;color:#96acbc;text-transform:uppercase}
-.task{font-size:13px;line-height:1.45;color:#edf4f8}
-.task .muted{color:#8199aa;font-size:11px}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.stat{padding:9px;border:1px solid #273c4c;border-radius:10px;background:#0e1821}
-.stat b{display:block;font-size:11px;color:#88a1b2}.stat span{font-size:14px}
-.events{overflow:auto;padding:12px 14px}
-.event{padding:9px 2px;border-bottom:1px solid #1a2934;font-size:11px;line-height:1.35}
-.event .time{color:#718797}.event .type{color:#66d69a;font-weight:700;margin:0 6px}.event.error .type{color:#ff7b7b}
-.legend{position:absolute;left:20px;bottom:16px;font-size:10px;color:#6e8798;background:rgba(4,8,12,.62);border:1px solid #263947;border-radius:10px;padding:7px 9px;z-index:4}
-@media(max-width:900px){
-.main{grid-template-columns:minmax(0,1fr) 280px}
-.station{min-width:88px;padding:8px 9px;font-size:10px}
-.avatar .body{width:38px;height:38px}
-.avatar .label{top:43px;font-size:9px}
-.stats{gap:5px}
-.stat{padding:6px}
-.stat span{font-size:12px}
+:root{
+ --floor:#0a0a0c;--surface:#141417;--station:#1c1c21;--text:#ececf0;--muted:#777982;
+ --line:rgba(255,255,255,.045);--line2:rgba(255,255,255,.085);--active:#00e5ff;
+ --wait:#ffab00;--error:#ff3366;--stuck:#78909c;--ok:#d9dee3;
+ --ease:cubic-bezier(.16,1,.3,1);--mono:"JetBrains Mono","Fira Code",ui-monospace,SFMono-Regular,Consolas,monospace;
+ --sans:Inter,Geist,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif
 }
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--floor);color:var(--text);font-family:var(--sans)}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background:
+ radial-gradient(circle at 35% 42%,rgba(255,255,255,.018),transparent 30%),
+ linear-gradient(rgba(255,255,255,.012) 1px,transparent 1px),
+ linear-gradient(90deg,rgba(255,255,255,.012) 1px,transparent 1px);
+ background-size:auto,32px 32px,32px 32px}
+#app{height:100%;display:grid;grid-template-rows:42px minmax(0,1fr)}
+.topbar{z-index:20;display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid var(--line);background:rgba(10,10,12,.94)}
+.brand{font-size:12px;font-weight:600;letter-spacing:.16em}.brand span{color:var(--muted);font-weight:400}
+.top-spacer{flex:1}
+.chip{height:22px;display:inline-flex;align-items:center;gap:6px;padding:0 8px;border:1px solid var(--line2);font:500 9px var(--mono);letter-spacing:.06em;color:#9da0a8;background:rgba(255,255,255,.018)}
+.dot{width:5px;height:5px;border-radius:50%;background:#555}.dot.live{background:var(--active);box-shadow:0 0 8px rgba(0,229,255,.55)}
+.dot.warn{background:var(--wait)}.dot.bad{background:var(--error)}
+#stage{position:relative;min-height:0;overflow:hidden}
+#world{position:absolute;inset:0;overflow:hidden}
+#world.health-ok{box-shadow:inset 0 0 70px rgba(255,255,255,.012)}
+#world.health-bad{box-shadow:inset 0 0 100px rgba(255,51,102,.07)}
+.zone-label{position:absolute;font:500 9px var(--mono);letter-spacing:.18em;color:rgba(255,255,255,.13);text-transform:uppercase;pointer-events:none}
+#flow{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.flow-line{stroke:rgba(255,255,255,.045);stroke-width:1;fill:none;vector-effect:non-scaling-stroke}
+.flow-line.gate{stroke:rgba(255,171,0,.15)}
+.handoff-line{stroke:rgba(0,229,255,.45);stroke-width:1.4;stroke-dasharray:4 7;fill:none;opacity:0;vector-effect:non-scaling-stroke}
+.handoff-line.show{animation:trace 1s linear forwards}
+@keyframes trace{0%{opacity:0;stroke-dashoffset:36}20%{opacity:1}100%{opacity:0;stroke-dashoffset:0}}
+.station{position:absolute;transform:translate(-50%,-50%);width:112px;min-height:66px;padding:9px 10px 8px;border:1px solid rgba(255,255,255,.035);border-radius:4px;background:linear-gradient(180deg,rgba(29,29,34,.92),rgba(20,20,23,.94));box-shadow:0 2px 8px rgba(0,0,0,.42);transition:border-color .24s var(--ease),box-shadow .24s var(--ease),opacity .24s var(--ease);cursor:default}
+.station.structural{width:126px;min-height:76px}
+.station.infra{opacity:.68}
+.station .edge{position:absolute;left:-1px;top:-1px;bottom:-1px;width:2px;background:transparent;transition:.25s var(--ease)}
+.station .label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(236,236,240,.34);transition:.2s}
+.station .sub{margin-top:6px;font:400 9px var(--mono);color:rgba(255,255,255,.25);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.station.active{border-color:rgba(0,229,255,.13);box-shadow:0 8px 18px rgba(0,0,0,.48),0 0 24px rgba(0,229,255,.035)}
+.station.active .edge{background:var(--active)}.station.active .label{color:#f2f5f7}
+.station.waiting{border-color:rgba(255,171,0,.22)}.station.waiting .edge{background:var(--wait);animation:breathe 2s ease-in-out infinite}
+.station.error{border-color:rgba(255,51,102,.24);filter:saturate(.72)}.station.error .edge{background:var(--error)}
+.station.stuck{border-color:rgba(120,144,156,.24);filter:saturate(.45)}.station.stuck .edge{background:var(--stuck)}
+@keyframes breathe{0%,100%{opacity:.28}50%{opacity:1}}
+.station:hover{border-color:rgba(255,255,255,.18);opacity:1}
+.station:hover:after{content:"";position:absolute;inset:-5px;border:1px dashed rgba(255,255,255,.14);pointer-events:none}
+#approval.station{width:34px;min-height:210px;padding:0;background:linear-gradient(180deg,rgba(255,255,255,.018),rgba(255,255,255,.008));display:flex;align-items:center;justify-content:center}
+#approval .label{writing-mode:vertical-rl;transform:rotate(180deg);font:500 8px var(--mono);letter-spacing:.14em}
+#approval.waiting{box-shadow:0 0 34px rgba(255,171,0,.08)}
+.avatar{position:absolute;z-index:8;transform:translate(-50%,-50%);transition:left var(--move,.8s) cubic-bezier(.65,0,.35,1),top var(--move,.8s) cubic-bezier(.65,0,.35,1);pointer-events:auto}
+.avatar .core{width:9px;height:9px;border-radius:50%;background:#dfe4e8;border:1px solid rgba(255,255,255,.85);box-shadow:0 0 8px rgba(255,255,255,.12)}
+.avatar.command .core{width:16px;height:16px;background:transparent;border:2px solid rgba(0,229,255,.9);box-shadow:0 0 10px rgba(0,229,255,.16)}
+.avatar .name{position:absolute;left:50%;top:14px;transform:translateX(-50%);white-space:nowrap;font:500 9px var(--mono);color:rgba(255,255,255,.36);opacity:0;transition:.18s}
+.avatar.command .name,.avatar.working .name,.avatar.waiting .name,.avatar.error .name,.avatar:hover .name{opacity:1;color:#dadddf}
+.avatar.working .core{box-shadow:0 0 14px rgba(0,229,255,.5);background:#f8fbfc}
+.avatar.waiting .core{border-color:var(--wait);box-shadow:0 0 12px rgba(255,171,0,.35)}
+.avatar.error .core{background:var(--error);border-color:var(--error);box-shadow:0 0 12px rgba(255,51,102,.38)}
+.avatar.stuck .core{background:var(--stuck);border-color:var(--stuck)}
+.task-token{position:absolute;z-index:9;transform:translate(-50%,-50%);max-width:190px;height:18px;padding:2px 8px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.075);font:500 9px var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 8px 16px rgba(0,0,0,.45);opacity:0;transition:left .8s cubic-bezier(.65,0,.35,1),top .8s cubic-bezier(.65,0,.35,1),opacity .2s}
+.task-token.show{opacity:1}.task-token.waiting{border-color:rgba(255,171,0,.34)}.task-token.error{border-color:rgba(255,51,102,.35)}
+.provider-rack{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:8px}
+.provider{height:22px;border:1px solid rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;font:500 8px var(--mono);color:rgba(255,255,255,.24);position:relative;overflow:hidden}
+.provider:after{content:"";position:absolute;inset:auto 0 0;height:1px;background:transparent}
+.provider.active{color:#e9eef0}.provider.gpt.active:after{background:#10a37f;box-shadow:0 0 8px #10a37f}.provider.claude.active:after{background:#d97757;box-shadow:0 0 8px #d97757}.provider.qwen.active:after{background:#7b61ff;box-shadow:0 0 8px #7b61ff}
+.compute-grid{display:grid;grid-template-columns:repeat(8,4px);gap:3px;margin-top:8px}.compute-grid i{width:4px;height:4px;background:rgba(255,255,255,.055)}.compute-grid i.on{background:#e9edf0;box-shadow:0 0 4px rgba(255,255,255,.18)}
+.telemetry-row{display:flex;align-items:center;justify-content:space-between;margin-top:5px;font:400 8px var(--mono);color:rgba(255,255,255,.28)}
+.fan-ring{width:10px;height:10px;border:1px dashed rgba(255,255,255,.28);border-radius:50%;animation:fan 1.4s linear infinite;animation-play-state:paused}
+@keyframes fan{to{transform:rotate(360deg)}}
+.gpu-slot{margin-top:6px;padding:3px 4px;border:1px dashed rgba(255,255,255,.08);font:400 7px var(--mono);color:rgba(255,255,255,.18);text-align:center}
+.net-tracks{margin-top:8px;display:grid;gap:5px}.track{height:2px;background:rgba(255,255,255,.04);overflow:hidden;position:relative}.particle{position:absolute;width:10px;height:2px;background:var(--active);opacity:0;animation:net 1.6s linear infinite}.particle.tx{right:0;animation-name:netrev}
+@keyframes net{0%{left:-12px;opacity:0}15%{opacity:.6}100%{left:100%;opacity:0}}@keyframes netrev{0%{right:-12px;opacity:0}15%{opacity:.45}100%{right:100%;opacity:0}}
+.storage-bar{position:absolute;left:0;right:0;bottom:0;height:0;background:rgba(255,255,255,.035);transition:height .5s var(--ease);pointer-events:none}
+.health-mark{position:absolute;right:18px;bottom:14px;display:flex;align-items:center;gap:7px;font:500 8px var(--mono);letter-spacing:.08em;color:rgba(255,255,255,.24)}
+.health-mark b{width:5px;height:5px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px rgba(255,255,255,.12)}
+.health-mark.bad b{background:var(--error);box-shadow:0 0 10px rgba(255,51,102,.35)}
+.zone-divider{position:absolute;top:11%;bottom:12%;left:76%;border-left:1px solid rgba(255,171,0,.07);pointer-events:none}
+#inspect{position:absolute;right:14px;top:14px;width:260px;max-height:calc(100% - 28px);z-index:30;padding:12px;border:1px solid var(--line2);background:rgba(10,10,12,.94);box-shadow:0 16px 40px rgba(0,0,0,.5);transform:translateX(calc(100% + 30px));transition:transform .28s var(--ease);overflow:auto}
+#inspect.open{transform:translateX(0)}#inspect h3{margin:0 0 8px;font-size:10px;letter-spacing:.12em;text-transform:uppercase}#inspect .close{position:absolute;right:8px;top:7px;color:#777;background:none;border:0;font-size:16px}
+.inspect-line{display:flex;justify-content:space-between;gap:14px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.035);font:400 9px var(--mono);color:#7e8188}.inspect-line b{font-weight:500;color:#d7d9dd;text-align:right}
+.event{padding:6px 0;border-bottom:1px solid rgba(255,255,255,.03);font:400 8px var(--mono);color:#676a70}.event strong{color:#a9adb3;font-weight:500;margin-right:6px}.event.err strong{color:var(--error)}
+#event-toggle{position:absolute;right:18px;top:14px;z-index:12;height:22px;padding:0 8px;border:1px solid var(--line);background:rgba(10,10,12,.7);color:#65686e;font:500 8px var(--mono);letter-spacing:.08em}
+body.mode-control .station.infra{opacity:.28}
+body.mode-diagnostic #event-toggle{border-color:rgba(255,51,102,.18);color:#b4a1a6}
+@media(max-width:760px){.station{transform:translate(-50%,-50%) scale(.86)}.station.structural{transform:translate(-50%,-50%) scale(.82)}}
 </style>
 </head>
-<body>
+<body class="mode-living">
 <div id="app">
-  <div class="top">
-    <div class="brand">ZEN LIVING SYSTEM</div>
-    <div class="pill"><span id="liveDot" class="dot"></span><span id="liveText">CONNECTING</span></div>
-    <div class="pill" id="host">zen-agent-server</div>
-    <div class="pill">OBSERVATION ONLY</div>
+ <div class="topbar">
+  <div class="brand">ZEN <span>/ LIVING SYSTEM</span></div>
+  <div class="chip"><span id="liveDot" class="dot"></span><span id="liveText">CONNECTING</span></div>
+  <div class="chip"><span id="healthDot" class="dot"></span><span id="healthText">HEALTH</span></div>
+  <div class="top-spacer"></div>
+  <div class="chip" id="modeChip">LIVING</div>
+  <div class="chip" id="host">zen-agent-server</div>
+  <div class="chip">OBSERVATION ONLY</div>
+ </div>
+ <div id="stage">
+  <div id="world">
+   <svg id="flow"></svg>
+   <div class="zone-label" style="left:9%;top:6%">INPUT / THINK</div>
+   <div class="zone-label" style="left:47%;top:6%">WORK / EXECUTE</div>
+   <div class="zone-label" style="left:82%;top:6%">DEPLOY</div>
+   <div class="zone-divider"></div>
+   <div id="taskToken" class="task-token"></div>
+   <div id="healthMark" class="health-mark"><b></b><span>SYSTEM NOMINAL</span></div>
   </div>
-  <div class="main">
-    <div id="workspace" class="workspace"><div class="legend">real runtime state → station occupancy → avatar movement</div></div>
-    <div class="side">
-      <div class="section"><h3>Current Task</h3><div id="task" class="task">No active task</div></div>
-      <div class="section"><h3>System</h3><div id="stats" class="stats"></div></div>
-      <div class="events" id="events"></div>
-    </div>
-  </div>
+  <button id="event-toggle">EVENTS</button>
+  <aside id="inspect"><button class="close">×</button><div id="inspectBody"></div></aside>
+ </div>
 </div>
 <script>
-const workspace=document.getElementById('workspace');
-let stations={}, avatars={};
+const world=document.getElementById('world'),flow=document.getElementById('flow');
+const inspect=document.getElementById('inspect'),inspectBody=document.getElementById('inspectBody');
+const providerIds=new Set(['gpt','claude','qwen']);
+const tier={zen:'structural',approval:'structural',ma:'structural',compute:'infra',network:'infra',files:'infra',logs:'infra',lounge:'infra'};
+const edges=[['research','zen'],['vision','zen'],['api','zen'],['network','zen'],['compute','zen'],['zen','openclaw'],['zen','coding'],['coding','github'],['coding','sandbox'],['github','approval'],['sandbox','approval'],['approval','ma'],['ma','files'],['ma','logs']];
+let stations={},avatars={},lastState=null,lastHolder=null;
 function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function pct(v){const m=String(v||'').match(/([0-9.]+)/);return m?Number(m[1]):0}
+function ratio(v){const m=String(v||'').match(/([0-9.]+)\s*\/\s*([0-9.]+)/);return m&&Number(m[2])?Number(m[1])/Number(m[2]):0}
+function rate(v){const m=String(v||'').match(/([0-9.]+)\s*(B|KB|MB|GB)\/s/i);if(!m)return 0;return Number(m[1])*({B:1,KB:1024,MB:1048576,GB:1073741824}[m[2].toUpperCase()]||1)}
+function stationClass(id){return 'station '+(tier[id]||'')}
+function stationInner(id,s){
+ let extra='';
+ if(id==='api')extra='<div class="provider-rack"><div class="provider gpt" data-p="gpt">GPT</div><div class="provider claude" data-p="claude">CLAUDE</div><div class="provider qwen" data-p="qwen">QWEN</div></div>';
+ if(id==='compute')extra='<div class="compute-grid">'+Array.from({length:24},()=>'<i></i>').join('')+'</div><div class="telemetry-row"><span>CPU</span><span data-k="CPU">--</span></div><div class="telemetry-row"><span>TEMP</span><span data-k="CPU Temp">--</span><span class="fan-ring"></span></div><div class="gpu-slot">GPU: N/A / NO SENSOR</div>';
+ if(id==='network')extra='<div class="net-tracks"><div class="track"><i class="particle rx"></i></div><div class="track"><i class="particle tx"></i></div></div><div class="telemetry-row"><span data-k="Net IF">--</span><span data-k="Tailscale">--</span></div>';
+ if(id==='files')extra='<div class="storage-bar"></div><div class="telemetry-row"><span>DISK</span><span data-k="Disk /">--</span></div>';
+ return '<span class="edge"></span><div class="label">'+esc(s.name)+'</div><div class="sub"></div>'+extra
+}
 function ensureStation(id,s){
- if(stations[id]) return stations[id];
- const el=document.createElement('div'); el.className='station'; el.dataset.id=id;
- el.style.left=s.x+'%'; el.style.top=s.y+'%';
- el.innerHTML='<div class="name">'+esc(s.name)+'</div><div class="busy-label"></div>';
- workspace.appendChild(el); stations[id]=el; return el;
+ if(stations[id])return stations[id];
+ const el=document.createElement('div');el.id=id;el.className=stationClass(id);el.dataset.id=id;el.style.left=s.x+'%';el.style.top=s.y+'%';el.innerHTML=stationInner(id,s);
+ el.onclick=()=>showStation(id);world.appendChild(el);stations[id]=el;return el
 }
-function initials(name){return name.split(/\s+/).map(x=>x[0]).join('').slice(0,3).toUpperCase()}
-function ensureAvatar(a){
- if(avatars[a.id]) return avatars[a.id];
- const el=document.createElement('div'); el.className='avatar idle'; el.dataset.id=a.id;
- el.innerHTML='<div class="bubble"></div><div class="body">'+esc(initials(a.name))+'</div><div class="label">'+esc(a.name)+'</div>';
- el.onclick=()=>showAgent(a.id);
- workspace.appendChild(el); avatars[a.id]=el; return el;
+function ensureAvatar(a,index){
+ if(avatars[a.id])return avatars[a.id];
+ const el=document.createElement('div');el.className='avatar';el.dataset.id=a.id;if(a.id==='zen'||a.id==='ops')el.classList.add('command');
+ el.innerHTML='<span class="core"></span><span class="name">'+esc(a.name)+'</span>';el.onclick=()=>showAgent(a.id);world.appendChild(el);avatars[a.id]=el;return el
 }
-let lastState=null, selected=null;
-function showAgent(id){selected=id; if(lastState) renderTask(lastState)}
-function renderTask(s){
- const a=selected ? s.agents.find(x=>x.id===selected) : s.agents.find(x=>x.status==='WORKING'||x.status==='ERROR');
- const t=document.getElementById('task');
- if(!a){t.innerHTML='No active task<div class="muted">Agents are idle / monitoring.</div>';return}
- t.innerHTML='<b>'+esc(a.name)+'</b> · '+esc(a.status)+'<br>'+esc(a.task||'No active task')+'<div class="muted">station: '+esc(s.stations[a.station]?.name||a.station)+'</div>';
+function point(id){const s=lastState?.stations?.[id];if(!s)return null;return [s.x,s.y]}
+function drawFlow(){
+ const w=world.clientWidth,h=world.clientHeight;flow.setAttribute('viewBox','0 0 '+w+' '+h);flow.innerHTML='';
+ edges.forEach(([a,b])=>{const p=point(a),q=point(b);if(!p||!q)return;const line=document.createElementNS('http://www.w3.org/2000/svg','line');line.setAttribute('x1',p[0]*w/100);line.setAttribute('y1',p[1]*h/100);line.setAttribute('x2',q[0]*w/100);line.setAttribute('y2',q[1]*h/100);line.setAttribute('class','flow-line '+(a==='approval'||b==='approval'?'gate':''));flow.appendChild(line)})
+ const hline=document.createElementNS('http://www.w3.org/2000/svg','line');hline.id='handoffLine';hline.setAttribute('class','handoff-line');flow.appendChild(hline)
 }
+function stateClass(a){const s=String(a.status||'').toUpperCase();if(s==='ERROR'||s==='FAILED')return'error';if(s==='WAITING')return'waiting';if(s==='STUCK')return'stuck';if(s==='WORKING')return'working';return'idle'}
+function setStationState(id,cls){const el=stations[id];if(!el)return;el.classList.remove('active','waiting','error','stuck');if(cls==='working')el.classList.add('active');if(cls==='waiting')el.classList.add('waiting');if(cls==='error')el.classList.add('error');if(cls==='stuck')el.classList.add('stuck')}
+function holderFrom(s){
+ const priority=['zen','ops','research','coding','git','vision','openclaw'];
+ const active=priority.map(id=>s.agents.find(a=>a.id===id)).find(a=>a&&['WORKING','WAITING','ERROR','STUCK'].includes(String(a.status).toUpperCase()));
+ return active||null
+}
+function moveAvatar(a,index){
+ if(providerIds.has(a.id))return;
+ const el=ensureAvatar(a,index),st=lastState.stations[a.station]||lastState.stations.lounge;
+ let x=st.x,y=st.y;
+ if(String(a.status).toUpperCase()==='IDLE'&&a.station==='lounge'){x+=((index%4)-1.5)*1.7;y+=Math.floor(index/4)*2.1}
+ el.style.left=x+'%';el.style.top=y+'%';el.className='avatar '+(a.id==='zen'||a.id==='ops'?'command ':'')+stateClass(a);
+ const label=el.querySelector('.name');label.textContent=a.name+(String(a.status).toUpperCase()!=='IDLE'?' · '+a.status:'')
+}
+function updateTask(s){
+ const token=document.getElementById('taskToken'),holder=holderFrom(s);if(!holder){token.className='task-token';lastHolder=null;return}
+ const st=s.stations[holder.station]||s.stations.zen;token.textContent=(holder.task||s.task?.summary||'Active task').slice(0,42);token.style.left=(st.x+3.5)+'%';token.style.top=(st.y-4)+'%';token.className='task-token show '+stateClass(holder);
+ if(lastHolder&&lastHolder!==holder.station){const p=s.stations[lastHolder],q=st,l=document.getElementById('handoffLine');if(p&&q&&l){const w=world.clientWidth,h=world.clientHeight;l.setAttribute('x1',p.x*w/100);l.setAttribute('y1',p.y*h/100);l.setAttribute('x2',q.x*w/100);l.setAttribute('y2',q.y*h/100);l.classList.remove('show');void l.getBoundingClientRect();l.classList.add('show')}}
+ lastHolder=holder.station
+}
+function updateProviders(s){
+ ['gpt','claude','qwen'].forEach(id=>{const a=s.agents.find(x=>x.id===id),el=stations.api?.querySelector('[data-p="'+id+'"]');if(el)el.classList.toggle('active',!!a&&String(a.status).toUpperCase()==='WORKING')})
+}
+function updateTelemetry(s){
+ const sys=s.system||{},cpu=pct(sys.CPU),temp=pct(sys['CPU Temp']),mem=ratio(sys.Memory),disk=ratio(sys['Disk /']),rx=rate(sys['Net RX']),tx=rate(sys['Net TX']);
+ const comp=stations.compute;if(comp){comp.querySelectorAll('.compute-grid i').forEach((n,i)=>n.classList.toggle('on',i<Math.round(cpu/100*24)));comp.querySelectorAll('[data-k]').forEach(n=>{const k=n.dataset.k;n.textContent=sys[k]??'N/A'});const fan=comp.querySelector('.fan-ring'),rpm=pct(sys.Fan);fan.style.animationPlayState=rpm>0?'running':'paused';fan.style.animationDuration=Math.max(.35,2.4-rpm/3000)+'s';if(temp>78)comp.classList.add('error')}
+ const net=stations.network;if(net){net.querySelectorAll('[data-k]').forEach(n=>{n.textContent=sys[n.dataset.k]??'N/A'});const r=net.querySelector('.rx'),t=net.querySelector('.tx'),rs=Math.min(1,Math.log10(rx+1)/7),ts=Math.min(1,Math.log10(tx+1)/7);r.style.opacity=rs>0?.2+rs*.8:0;t.style.opacity=ts>0?.2+ts*.8:0;r.style.animationDuration=(2.2-rs*1.5)+'s';t.style.animationDuration=(2.2-ts*1.5)+'s'}
+ const store=stations.files;if(store){store.querySelector('[data-k]').textContent=sys['Disk /']??'N/A';store.querySelector('.storage-bar').style.height=(Math.max(0,Math.min(1,disk))*100)+'%'}
+}
+function globalHealth(s){
+ const sys=s.system||{},critical=['ZEN Ops','OpenClaw','Tailscale'];const bad=critical.some(k=>!['active','ready','up'].includes(String(sys[k]||'').toLowerCase()));
+ const dot=document.getElementById('healthDot'),txt=document.getElementById('healthText'),mark=document.getElementById('healthMark');dot.className='dot '+(bad?'bad':'live');txt.textContent=bad?'DEGRADED':'NOMINAL';world.classList.toggle('health-bad',bad);world.classList.toggle('health-ok',!bad);mark.classList.toggle('bad',bad);mark.querySelector('span').textContent=bad?'SYSTEM DEGRADED':'SYSTEM NOMINAL'
+}
+function showStation(id){
+ const s=lastState,sys=s.system||{},st=s.stations[id];let rows=[];
+ if(id==='compute')rows=[['CPU',sys.CPU],['CPU TEMP',sys['CPU Temp']],['FAN',sys.Fan],['MEMORY',sys.Memory],['LOAD',sys.Load],['UPTIME',sys.Uptime],['GPU',sys.GPU],['GPU USE',sys['GPU Use']],['GPU TEMP',sys['GPU Temp']]];
+ else if(id==='network')rows=[['INTERFACE',sys['Net IF']],['RX',sys['Net RX']],['TX',sys['Net TX']],['TAILSCALE',sys.Tailscale],['OPENCLAW',sys.OpenClaw],['RDC',sys.RDC]];
+ else if(id==='files')rows=[['DISK',sys['Disk /']]];
+ else{const here=s.agents.filter(a=>a.station===id&&!providerIds.has(a.id));rows=[['STATE',here.some(a=>a.status==='ERROR')?'ERROR':here.some(a=>a.status==='WORKING')?'ACTIVE':'IDLE'],['AGENTS',here.map(a=>a.name).join(', ')||'—']]}
+ inspectBody.innerHTML='<h3>'+esc(st?.name||id)+'</h3>'+rows.map(r=>'<div class="inspect-line"><span>'+esc(r[0])+'</span><b>'+esc(r[1]??'N/A')+'</b></div>').join('');inspect.classList.add('open')
+}
+function showAgent(id){const a=lastState.agents.find(x=>x.id===id);if(!a)return;inspectBody.innerHTML='<h3>'+esc(a.name)+'</h3><div class="inspect-line"><span>STATE</span><b>'+esc(a.status)+'</b></div><div class="inspect-line"><span>STATION</span><b>'+esc(lastState.stations[a.station]?.name||a.station)+'</b></div><div class="inspect-line"><span>TASK</span><b>'+esc(a.task||'—')+'</b></div>';inspect.classList.add('open')}
+function showEvents(){const ev=(lastState?.events||[]).slice().reverse();inspectBody.innerHTML='<h3>Event Stream</h3>'+ev.map(e=>'<div class="event '+((e.status==='failed'||e.type==='ERROR')?'err':'')+'"><strong>'+esc(e.time||'')+' '+esc(e.type||'')+'</strong>'+esc(e.summary||'')+'</div>').join('');inspect.classList.add('open')}
+document.querySelector('#inspect .close').onclick=()=>inspect.classList.remove('open');document.getElementById('event-toggle').onclick=showEvents;
+function applyMode(s){const mode=String(s.mode||'living').toLowerCase();document.body.className='mode-'+mode;document.getElementById('modeChip').textContent=mode.toUpperCase()}
 function render(s){
- lastState=s;
- document.getElementById('liveDot').className='dot on';
- document.getElementById('liveText').textContent='LIVE';
- document.getElementById('host').textContent=s.host||'zen-agent-server';
- Object.entries(s.stations).forEach(([id,st])=>ensureStation(id,st));
- Object.values(stations).forEach(el=>{el.classList.remove('busy');el.querySelector('.busy-label').textContent=''});
- const occupied={};
- s.agents.forEach(a=>{ if(a.status==='WORKING'||a.status==='ERROR'||a.status==='WAITING'){occupied[a.station]=(occupied[a.station]||[]).concat(a.name)} });
- Object.entries(occupied).forEach(([id,names])=>{if(stations[id]){stations[id].classList.add('busy');stations[id].querySelector('.busy-label').textContent=names.join(', ')}});
- s.agents.forEach(a=>{
-   const el=ensureAvatar(a), st=s.stations[a.station]||s.stations.lounge;
-   el.style.left=st.x+'%'; el.style.top=st.y+'%';
-   el.className='avatar '+(a.status==='WORKING'?'working':a.status==='ERROR'?'error':'idle');
-   el.querySelector('.bubble').textContent=a.task||a.status;
-   el.querySelector('.label').textContent=a.name+' · '+a.status;
- });
- const stats=document.getElementById('stats'); stats.innerHTML='';
- Object.entries(s.system||{}).forEach(([k,v])=>{const d=document.createElement('div');d.className='stat';d.innerHTML='<b>'+esc(k)+'</b><span>'+esc(v)+'</span>';stats.appendChild(d)});
- const ev=document.getElementById('events'); ev.innerHTML='<h3 style="margin:0 0 8px;font-size:12px;color:#96acbc">EVENT STREAM</h3>';
- (s.events||[]).slice().reverse().forEach(e=>{const d=document.createElement('div');d.className='event '+(e.status==='failed'||e.type==='ERROR'?'error':'');d.innerHTML='<span class="time">'+esc(e.time||'')+'</span><span class="type">'+esc(e.type)+'</span>'+esc(e.summary||'');ev.appendChild(d)});
- renderTask(s);
+ lastState=s;document.getElementById('liveDot').className='dot live';document.getElementById('liveText').textContent='LIVE';document.getElementById('host').textContent=s.host||'zen-agent-server';applyMode(s);
+ Object.entries(s.stations||{}).forEach(([id,st])=>ensureStation(id,st));drawFlow();
+ Object.keys(stations).forEach(id=>setStationState(id,'idle'));
+ (s.agents||[]).forEach((a,i)=>{if(providerIds.has(a.id))return;moveAvatar(a,i);setStationState(a.station,stateClass(a))});
+ updateProviders(s);updateTelemetry(s);updateTask(s);globalHealth(s)
 }
-async function tick(){
- try{const r=await fetch('/api/state?ts='+Date.now(),{cache:'no-store'}); if(!r.ok)throw new Error('HTTP '+r.status); render(await r.json())}
- catch(e){document.getElementById('liveDot').className='dot';document.getElementById('liveText').textContent='DISCONNECTED'}
-}
-tick(); setInterval(tick,1000);
+async function tick(){try{const r=await fetch('/api/state?ts='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);render(await r.json())}catch(e){document.getElementById('liveDot').className='dot bad';document.getElementById('liveText').textContent='DISCONNECTED'}}
+window.addEventListener('resize',()=>lastState&&drawFlow());tick();setInterval(tick,1000);
 </script>
-</body></html>"""
-
-def sh(argv: list[str], timeout: float = 1.5) -> str:
+</body>
+</html>"""\n\ndef sh(argv: list[str], timeout: float = 1.5) -> str:
     try:
         p = subprocess.run(argv, text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=timeout, check=False)
         return p.stdout.strip()
@@ -476,11 +556,15 @@ def build_state() -> dict[str, Any]:
     tools = [str(x) for x in meta.get("tools", [])] if isinstance(meta.get("tools"), list) else []
     text = " ".join([summary, " ".join(tools), str(latest.get("kind") or "")])
     running = status == "running"
+    waiting = status in {"waiting", "waiting_for_approval", "needs_approval", "needs-approval"}
+    failed = status in {"failed", "error", "timeout", "rejected"}
+    zen_status = "WAITING" if waiting else ("WORKING" if running else ("ERROR" if failed else "IDLE"))
 
     agents: list[dict[str, str]] = []
-    zen_station = station_for(text, status) if running else "lounge"
-    agents.append({"id":"zen","name":"ZEN Agent","status":"WORKING" if running else ("ERROR" if status in {"failed","timeout","rejected"} else "IDLE"),"station":zen_station,"task":summary if running or status in {"failed","timeout","rejected"} else ""})
-    agents.append({"id":"ops","name":"ZEN Ops","status":"WORKING" if running else "IDLE","station":station_for(text,status) if running else "zen","task":summary if running else ""})
+    zen_station = "approval" if waiting else (station_for(text, status) if running or failed else "lounge")
+    agents.append({"id":"zen","name":"ZEN Agent","status":zen_status,"station":zen_station,"task":summary if running or waiting or failed else ""})
+    ops_status = "WAITING" if waiting else ("WORKING" if running else ("ERROR" if failed else "IDLE"))
+    agents.append({"id":"ops","name":"ZEN Ops","status":ops_status,"station":"approval" if waiting else (station_for(text,status) if running or failed else "zen"),"task":summary if running or waiting or failed else ""})
     agents.append({"id":"openclaw","name":"OpenClaw","status":"IDLE" if port_open(18789) else "ERROR","station":"openclaw" if port_open(18789) else "logs","task":"Gateway active" if port_open(18789) else "Gateway unavailable"})
 
     codex = any(x in proc for x in (" codex ", "codex exec", "@openai/codex", "codex-linux"))
@@ -527,10 +611,27 @@ def build_state() -> dict[str, Any]:
         "RDC": service("desktop-commander-remote"),
         "ChatGPT GUI": service("zen-chatgpt-desktop"),
     }
+    mode_path = Path("/var/lib/zenui/control-room-mode")
+    try:
+        mode = mode_path.read_text(encoding="utf-8").strip().lower()
+    except Exception:
+        mode = "living"
+    if mode not in {"living", "control", "diagnostic"}:
+        mode = "living"
+
+    task = {
+        "id": str(latest.get("job_id") or ""),
+        "summary": summary if running or waiting or failed else "",
+        "status": status,
+        "station": zen_station,
+        "tools": tools,
+    }
     return {
-        "schema":"zen.living_visualizer.state.v0.1",
+        "schema":"zen.living_visualizer.state.v0.2",
         "host": socket.gethostname(),
         "updated_at": datetime.now(timezone.utc).isoformat(),
+        "mode": mode,
+        "task": task,
         "stations": STATIONS,
         "agents": agents,
         "events": normalized_events(),
