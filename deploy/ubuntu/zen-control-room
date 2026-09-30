@@ -310,6 +310,19 @@ def tool_active(tool_id: str, activity: dict, proc: str) -> bool:
     return any(n.lower() in hay for n in needles)
 
 
+
+def auxiliary_motion_lines(data: dict, width: int) -> list[str]:
+    lines: list[str] = []
+    spin = data["spin"]
+    agents = data["agents"]
+    if agents.get("API AUX") == "ACTIVE":
+        lines.append(plain_clip(f"  API AUX  ···▶ [MODEL/CONTEXT] ···▶ [CO-DESIGN SEAT {spin}]", width))
+    if agents.get("CODEX") == "ACTIVE":
+        lines.append(plain_clip(f"  CODEX    ···▶ [REPO/CODE]     ···▶ [DEV BENCH {spin}]", width))
+    if agents.get("OPENCHATX") == "WORKING":
+        lines.append(plain_clip(f"  OPENCHATX····▶ [LOCAL TOOLBOX]  ···▶ [STUDIO {spin}]", width))
+    return lines
+
 def collect() -> dict:
     latest = read_json(OPS_PUBLIC / "latest.json")
     ctl = control_job()
@@ -393,6 +406,8 @@ def render(data: dict) -> str:
     lines.append(BOLD + "WORKER MOVEMENT" + RESET + DIM + "  real task start -> fetch tool -> occupy seat" + RESET)
     for trip_line in worker_trip_line(a, max(60, width - 4)):
         lines.append(trip_line)
+    for motion_line in auxiliary_motion_lines(data, max(60, width - 4)):
+        lines.append(motion_line)
 
     lines.append("")
     lines.append(BOLD + "ACTIVE WORK AREA / ROUND TABLE" + RESET)
@@ -493,7 +508,7 @@ def render(data: dict) -> str:
         lines.append("  " + DIM + "No recent events." + RESET)
 
     lines.append("")
-    lines.append(DIM + " F10 ROOM   F11 SYSTEM MONITOR   F12 MA AGENT   | refresh 1s | local text UI, no GPU renderer " + RESET)
+    lines.append(DIM + " F10 ROOM   F11 SYSTEM MONITOR   F12 MA AGENT   | probes 1Hz / animation 5FPS | local text UI, no GPU renderer " + RESET)
     return "\n".join(lines)
 
 
@@ -511,16 +526,25 @@ def main() -> int:
     signal.signal(signal.SIGINT, stop)
     sys.stdout.write("\033[?25l\033[2J")
     sys.stdout.flush()
+    data: dict = {}
+    last_collect = 0.0
     try:
         while _RUNNING:
             started = time.monotonic()
             try:
-                body = render(collect())
+                if not data or started - last_collect >= 1.0:
+                    data = collect()
+                    last_collect = started
+                # Animation redraw is 5 FPS, but system/process probes stay at
+                # 1 Hz. That gives visible walking without turning the Mini
+                # into a terminal benchmark.
+                data["spin"] = SPIN[int(time.monotonic() * 5) % len(SPIN)]
+                body = render(data)
             except Exception as exc:
                 body = f"ZEN CONTROL ROOM\n\nrender error: {type(exc).__name__}: {exc}"
             sys.stdout.write("\033[H" + body + "\033[J")
             sys.stdout.flush()
-            remaining = 1.0 - (time.monotonic() - started)
+            remaining = 0.2 - (time.monotonic() - started)
             if remaining > 0:
                 time.sleep(remaining)
     finally:
