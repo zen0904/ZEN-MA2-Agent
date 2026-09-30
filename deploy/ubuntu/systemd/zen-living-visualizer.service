@@ -1,0 +1,23 @@
+[Unit]
+Description=ZEN Living System Visualizer (observation only)
+After=network-online.target zen-ops-worker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=zenui
+Group=zenui
+ExecStart=/usr/bin/python3 /usr/local/bin/zen-living-visualizer --host 127.0.0.1 --port 18992
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target
