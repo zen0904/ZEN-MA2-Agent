@@ -1,19 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "show-mini-desktop-20260930-1712",
+  "job_id": "wait-wmctrl-task-20260930-1713",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 120,
-    "command": "export DISPLAY=:0; echo '=== windows ==='; command -v wmctrl >/dev/null 2>&1 && wmctrl -l || true; if ! command -v wmctrl >/dev/null 2>&1; then sudo -n apt-get update -qq && sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends wmctrl; fi; wmctrl -k on; chvt 3 2>/dev/null || true; echo 'DESKTOP_SHOWN=YES'; echo 'VT=3'; echo 'WINDOW_MANAGER=OPENBOX'"
+    "timeout": 190,
+    "command": "for i in $(seq 1 90); do if [ -f /opt/zen/zen-ops-runtime/deploy/ops_tasks/install_wmctrl.sh ]; then echo TASK_PRESENT=YES; exit 0; fi; sleep 2; done; echo TASK_PRESENT=NO; exit 1"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Show Mini GUI desktop by minimizing all windows",
+    "summary": "Wait for wmctrl installer deployment",
     "tools": [
-      "ZEN Ops",
-      "Openbox",
-      "wmctrl"
+      "ZEN Ops"
     ]
   }
 }
