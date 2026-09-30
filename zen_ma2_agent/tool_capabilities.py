@@ -35,7 +35,12 @@ def build_agent_tool_context(
     *,
     classes: Iterable[str] | None = None,
 ) -> dict[str, Any]:
-    registry = load_agent_tool_registry(repo_root)
+    try:
+        registry = load_agent_tool_registry(repo_root)
+        registry_status = "READY"
+    except (OSError, ValueError, json.JSONDecodeError):
+        registry = {"capabilities": []}
+        registry_status = "UNAVAILABLE"
     wanted = None if classes is None else {str(item).strip().upper() for item in classes}
     capabilities: list[dict[str, Any]] = []
     for item in registry["capabilities"]:
@@ -64,6 +69,7 @@ def build_agent_tool_context(
     capabilities.sort(key=lambda item: str(item.get("id") or ""))
     return {
         "schema": CONTEXT_SCHEMA,
+        "registry_status": registry_status,
         "execution_note": (
             "Capability visibility is not execution authority. The ordinary Lean API Designer "
             "currently receives no direct tools; runtime adapters/brokers must acquire evidence "
