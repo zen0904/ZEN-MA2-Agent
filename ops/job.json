@@ -1,19 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "install-chatgpt-persist-20260930-1724",
-  "kind": "repo_task",
+  "job_id": "wait-chatgpt-persist-fix-20260930-1727",
+  "kind": "shell",
   "args": {
-    "task": "install_persistent_chatgpt_gui_service",
-    "timeout": 300
+    "cwd": "/opt/zen",
+    "timeout": 120,
+    "command": "git -c safe.directory=/opt/zen/zen-ops-runtime -C /opt/zen/zen-ops-runtime rev-parse HEAD 2>&1 || true; grep -n 'rm -f /run/systemd/transient/zen-chatgpt-gui.service' /opt/zen/zen-ops-runtime/deploy/ops_tasks/install_persistent_chatgpt_gui_service.sh 2>&1 || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Persist ChatGPT GUI as boot service on Mini and disable Chrome autostart",
+    "summary": "Verify transient-unit persistence fix reached Mini runtime",
     "tools": [
       "ZEN Ops",
-      "systemd",
-      "Xorg",
-      "ChatGPT"
+      "git"
     ]
   }
 }
