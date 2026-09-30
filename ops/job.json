@@ -1,19 +1,18 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "control-room-tools-audit-20260930-2330",
-  "kind": "shell",
+  "job_id": "control-room-sync-diag-20260930-2340",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 60,
-    "command": "echo '=== GUI TOOLS ==='; for c in chromium chromium-browser google-chrome google-chrome-stable firefox xterm uxterm xfce4-terminal gnome-terminal alacritty kitty wmctrl xdotool openbox chatgpt; do printf '%s=' \"$c\"; command -v \"$c\" 2>/dev/null || true; done; echo '=== SESSION SCRIPT ==='; sed -n '1,120p' /usr/local/libexec/zen-chatgpt-session.sh 2>/dev/null || true; echo '=== OPENBOX CONFIG ==='; find /var/lib/zenui/.config/openbox -maxdepth 2 -type f -printf '%p\\n' 2>/dev/null | head -20 || true"
+    "task": "repair_zen_ops_updater_self_install",
+    "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Read-only audit Mini GUI tools and current session before Control Room layout install",
+    "summary": "Sync Mini runtime for Control Room GUI diagnostic",
     "tools": [
       "ZEN Ops",
-      "Openbox",
-      "Living Visualizer"
+      "GitHub",
+      "Openbox"
     ]
   }
 }
