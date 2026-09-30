@@ -1,18 +1,17 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "control-room-gui-repair3-20260930-2436",
+  "job_id": "visualizer-phase1-sync-20260930-2225",
   "kind": "repo_task",
   "args": {
-    "task": "repair_control_room_gui",
-    "timeout": 120
+    "task": "repair_zen_ops_updater_self_install",
+    "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Apply Mini Control Room layout after final newline fix",
+    "summary": "Sync Mini runtime for Living Visualizer Phase 1 redesign",
     "tools": [
       "ZEN Ops",
-      "X11",
-      "Openbox",
+      "GitHub",
       "Living Visualizer"
     ]
   }
