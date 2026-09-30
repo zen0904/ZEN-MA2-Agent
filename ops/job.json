@@ -1,21 +1,19 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "mini-status-read-20260930-2001",
-  "kind": "shell",
+  "job_id": "diag-chatgpt-local-mcp-20260930-2012",
+  "kind": "repo_task",
   "args": {
-    "cwd": "/opt/zen",
-    "timeout": 120,
-    "command": "echo '=== HOST ==='; hostname; uptime; echo '=== MEMORY ==='; free -h; echo '=== DISK ==='; df -h /; echo '=== FAILED UNITS ==='; systemctl --failed --no-pager --plain || true; echo '=== SERVICES ==='; for s in zen-ops-worker zen-ops-results zen-show-controller zen-controller-readonly-facade zen-lighting-operator-proxy tailscaled; do printf '%s=' \"$s\"; systemctl is-active \"$s\" 2>/dev/null || true; done; echo '=== PROCESSES ==='; ps -eo pid,etime,user,args | grep -E 'zen-ops-worker.py|openclaw|/usr/lib/chatgpt/ChatGPT|zen-show-controller' | grep -v grep || true"
+    "task": "diag_chatgpt_local_mcp",
+    "timeout": 180
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Read-only Mini host and ZEN control-plane health probe",
+    "summary": "Read-only verify local zen-mini MCP registration inside Mini ChatGPT/Codex runtime",
     "tools": [
       "ZEN Ops",
-      "systemd",
-      "Tailscale",
       "ChatGPT",
-      "OpenClaw"
+      "Codex",
+      "MCP"
     ]
   }
 }
