@@ -49,7 +49,7 @@ body{margin:0;overflow:hidden;background:radial-gradient(circle at 30% 20%,#1422
 .pill{font-size:12px;padding:5px 9px;border:1px solid #334a5d;border-radius:999px;color:#bcd0df}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:#667}
 .dot.on{background:#58d68d;box-shadow:0 0 12px #58d68d}
-.main{display:grid;grid-template-columns:minmax(0,1fr) 330px;min-height:0}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 390px;min-height:0}
 .workspace{position:relative;overflow:hidden;background-image:linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);background-size:32px 32px}
 .workspace:after{content:"";position:absolute;inset:2.5%;border:1px solid #243746;border-radius:26px;pointer-events:none}
 .station{position:absolute;transform:translate(-50%,-50%);min-width:115px;padding:11px 12px;border-radius:14px;border:1px solid #345066;background:linear-gradient(180deg,rgba(24,39,52,.96),rgba(15,26,36,.96));box-shadow:0 8px 24px rgba(0,0,0,.28);text-align:center;font-size:12px;color:#bdd0de;transition:.3s}
@@ -263,6 +263,179 @@ def load_summary() -> str:
     except Exception:
         return "unknown"
 
+
+_CPU_SAMPLE: tuple[int, int] | None = None
+_NET_SAMPLE: dict[str, tuple[float, int, int]] = {}
+_GPU_MODEL: str | None = None
+
+
+def cpu_usage_summary() -> str:
+    global _CPU_SAMPLE
+    try:
+        fields = [int(x) for x in Path("/proc/stat").read_text().splitlines()[0].split()[1:]]
+        idle = fields[3] + (fields[4] if len(fields) > 4 else 0)
+        total = sum(fields)
+        previous = _CPU_SAMPLE
+        _CPU_SAMPLE = (total, idle)
+        if previous is None:
+            return "warming"
+        total_delta = total - previous[0]
+        idle_delta = idle - previous[1]
+        if total_delta <= 0:
+            return "0%"
+        busy = max(0.0, min(100.0, 100.0 * (1.0 - idle_delta / total_delta)))
+        return f"{busy:.0f}%"
+    except Exception:
+        return "unknown"
+
+
+def cpu_temp_summary() -> str:
+    try:
+        preferred: list[float] = []
+        fallback: list[float] = []
+        for zone in Path("/sys/class/thermal").glob("thermal_zone*"):
+            try:
+                name = (zone / "type").read_text().strip().lower()
+                raw = float((zone / "temp").read_text().strip())
+                value = raw / 1000.0 if abs(raw) > 1000 else raw
+                if -20 <= value <= 130:
+                    fallback.append(value)
+                    if any(key in name for key in ("x86_pkg_temp", "coretemp", "package")):
+                        preferred.append(value)
+            except Exception:
+                continue
+        values = preferred or fallback
+        return f"{max(values):.0f}°C" if values else "N/A"
+    except Exception:
+        return "N/A"
+
+
+def fan_summary() -> str:
+    try:
+        for hwmon in Path("/sys/class/hwmon").glob("hwmon*"):
+            try:
+                name = (hwmon / "name").read_text().strip().lower()
+            except Exception:
+                continue
+            if "applesmc" not in name:
+                continue
+            values: list[int] = []
+            for path in hwmon.glob("fan*_input"):
+                try:
+                    values.append(int(float(path.read_text().strip())))
+                except Exception:
+                    pass
+            if values:
+                return f"{max(values)} RPM"
+    except Exception:
+        pass
+    return "N/A"
+
+
+def gpu_model_summary() -> str:
+    global _GPU_MODEL
+    if _GPU_MODEL is not None:
+        return _GPU_MODEL
+    output = sh(["lspci"], timeout=1.0)
+    for line in output.splitlines():
+        low = line.lower()
+        if "vga compatible controller" in low or "3d controller" in low or "display controller" in low:
+            value = line.split(":", 2)[-1].strip() if ":" in line else line.strip()
+            _GPU_MODEL = value[:42] or "unknown"
+            return _GPU_MODEL
+    _GPU_MODEL = "unknown"
+    return _GPU_MODEL
+
+
+def gpu_usage_summary() -> str:
+    for path in Path("/sys/class/drm").glob("card*/device/gpu_busy_percent"):
+        try:
+            return f"{float(path.read_text().strip()):.0f}%"
+        except Exception:
+            continue
+    return "N/A"
+
+
+def gpu_temp_summary() -> str:
+    for path in Path("/sys/class/drm").glob("card*/device/hwmon/hwmon*/temp*_input"):
+        try:
+            raw = float(path.read_text().strip())
+            value = raw / 1000.0 if abs(raw) > 1000 else raw
+            if -20 <= value <= 130:
+                return f"{value:.0f}°C"
+        except Exception:
+            continue
+    return "N/A"
+
+
+def disk_summary() -> str:
+    try:
+        usage = shutil.disk_usage("/")
+        used = usage.total - usage.free
+        return f"{used / (1024**3):.0f}/{usage.total / (1024**3):.0f} GiB"
+    except Exception:
+        return "unknown"
+
+
+def uptime_summary() -> str:
+    try:
+        seconds = float(Path("/proc/uptime").read_text().split()[0])
+        days, rem = divmod(int(seconds), 86400)
+        hours, rem = divmod(rem, 3600)
+        minutes = rem // 60
+        if days:
+            return f"{days}d {hours}h"
+        return f"{hours}h {minutes}m"
+    except Exception:
+        return "unknown"
+
+
+def default_interface() -> str:
+    output = sh(["ip", "route", "show", "default"], timeout=0.8)
+    match = re.search(r"\\bdev\\s+(\\S+)", output)
+    return match.group(1) if match else "unknown"
+
+
+def _network_bytes(interface: str) -> tuple[int, int] | None:
+    try:
+        for line in Path("/proc/net/dev").read_text().splitlines():
+            if ":" not in line:
+                continue
+            name, data = line.split(":", 1)
+            if name.strip() != interface:
+                continue
+            fields = data.split()
+            return int(fields[0]), int(fields[8])
+    except Exception:
+        pass
+    return None
+
+
+def rate_summary(value: float) -> str:
+    units = ("B/s", "KB/s", "MB/s", "GB/s")
+    index = 0
+    value = max(0.0, value)
+    while value >= 1024 and index < len(units) - 1:
+        value /= 1024.0
+        index += 1
+    return f"{value:.1f} {units[index]}"
+
+
+def network_summary() -> tuple[str, str, str]:
+    interface = default_interface()
+    values = _network_bytes(interface)
+    if interface == "unknown" or values is None:
+        return interface, "N/A", "N/A"
+    now = time.monotonic()
+    previous = _NET_SAMPLE.get(interface)
+    _NET_SAMPLE[interface] = (now, values[0], values[1])
+    if previous is None or now <= previous[0]:
+        return interface, "warming", "warming"
+    elapsed = now - previous[0]
+    rx = (values[0] - previous[1]) / elapsed
+    tx = (values[1] - previous[2]) / elapsed
+    return interface, rate_summary(rx), rate_summary(tx)
+
 def build_state() -> dict[str, Any]:
     latest = read_json(OPS_PUBLIC / "latest.json")
     proc = process_snapshot()
@@ -300,14 +473,26 @@ def build_state() -> dict[str, Any]:
         active = running and any(k in provider_text for k in keys)
         agents.append({"id":aid,"name":name,"status":"WORKING" if active else "IDLE","station":"api" if active else "lounge","task":summary if active else ""})
 
+    net_if, net_rx, net_tx = network_summary()
     system = {
+        "CPU": cpu_usage_summary(),
+        "CPU Temp": cpu_temp_summary(),
+        "Fan": fan_summary(),
+        "GPU": gpu_model_summary(),
+        "GPU Use": gpu_usage_summary(),
+        "GPU Temp": gpu_temp_summary(),
+        "Memory": mem_summary(),
+        "Disk /": disk_summary(),
+        "Net IF": net_if,
+        "Net RX": net_rx,
+        "Net TX": net_tx,
+        "Uptime": uptime_summary(),
+        "Load": load_summary(),
         "ZEN Ops": service("zen-ops-worker"),
         "OpenClaw": "active" if port_open(18789) else "down",
         "Tailscale": service("tailscaled"),
         "RDC": service("desktop-commander-remote"),
         "ChatGPT GUI": service("zen-chatgpt-desktop"),
-        "Load": load_summary(),
-        "Memory": mem_summary(),
     }
     return {
         "schema":"zen.living_visualizer.state.v0.1",
