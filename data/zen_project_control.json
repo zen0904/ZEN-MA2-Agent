@@ -1808,22 +1808,23 @@
     },
     {
       "id": "MINI_CONTROL_ROOM_LAYOUT_001",
-      "status": "VISUALIZER_MVP_RUNNING",
+      "status": "CONTROL_ROOM_LIVE_VERIFIED",
       "owner_clarification_date": "2026-09-30",
       "source": "docs/MINI_CONTROL_ROOM_LAYOUT_001.md",
       "implementation_source": "docs/LIVING_SYSTEM_VISUALIZER_MVP_001.md",
       "rule": "Mini Control Room remains the intended attached-display experience. The Living System Visualizer now has a running observation-only MVP on loopback port 18992. It may visualize real runtime state but must never become execution authority.",
       "default_layout": {
-        "left": "CHATGPT_PRIMARY_APPROX_65_PERCENT",
-        "right_top": "SYSTEM_AND_AGENT_STATUS",
-        "right_bottom": "TERMINAL_AND_RECENT_ACTIVITY"
+        "chatgpt_geometry": "0,0,1200,1038",
+        "visualizer_geometry": "1200,0,720,1038",
+        "split": "62.5_37.5",
+        "terminal_default": "ON_DEMAND_NOT_ALWAYS_VISIBLE"
       },
       "living_system_visualizer": {
-        "status": "MVP_RUNNING",
+        "status": "MVP_RUNNING_AND_VISIBLE",
         "authority": "OBSERVATION_ONLY",
         "service": "zen-living-visualizer.service",
         "listen": "127.0.0.1:18992",
-        "health": "/health",
+        "health": "PASS",
         "state": "/api/state",
         "event_driven": true,
         "verified_telemetry": [
@@ -1839,7 +1840,9 @@
           "SERVICE_STATES"
         ],
         "gpu_usage": "N_A_NO_TRUSTWORTHY_SOURCE",
-        "gpu_temperature": "N_A_NO_TRUSTWORTHY_SOURCE"
+        "gpu_temperature": "N_A_NO_TRUSTWORTHY_SOURCE",
+        "gui_window": "GOOGLE_CHROME_APP_MODE",
+        "live_layout_verified": true
       },
       "verified_display_baseline": {
         "output": "HDMI-3",
