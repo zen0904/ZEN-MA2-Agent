@@ -39,6 +39,18 @@ fi
 
 log "DISPLAY_OUTPUT=$output"
 
+# Suppress any immediate follow-up event caused by our own mode/property changes.
+LAST=/run/zen-display-hotplug.last
+now="$(date +%s)"
+if [[ -f "$LAST" ]]; then
+  last="$(cat "$LAST" 2>/dev/null || echo 0)"
+  if [[ "$last" =~ ^[0-9]+$ ]] && (( now - last < 5 )); then
+    log "EVENT=throttled"
+    exit 0
+  fi
+fi
+printf '%s\n' "$now" > "$LAST"
+
 as_zenui /usr/bin/xrandr   --output "$output"   --auto   --rotate inverted   >>"$LOG" 2>&1 || log "XRANDR=warn"
 
 # The physical monitor may be switched off manually; X itself should not add
