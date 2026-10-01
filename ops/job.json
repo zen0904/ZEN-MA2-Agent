@@ -1,10 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "inspect-live-tmux-for-codex-pane-20261001-1325",
+  "job_id": "inspect-host-tmux-via-proc-20261001-1327",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
     "timeout": 120,
-    "command": "set -o pipefail; echo '=== SESSIONS ==='; tmux list-sessions; echo '=== WINDOWS ==='; tmux list-windows -t zenmon -F '#I:#W active=#{window_active} panes=#{window_panes} layout=#{window_layout}'; echo '=== PANES ==='; tmux list-panes -t zenmon -a -F '#S:#I.#P active=#{pane_active} cmd=#{pane_current_command} left=#{pane_left} top=#{pane_top} width=#{pane_width} height=#{pane_height} title=#{pane_title}'; echo '=== CLIENTS ==='; tmux list-clients -F 'tty=#{client_tty} session=#{session_name} w=#{client_width} h=#{client_height}'"
+    "command": "set -o pipefail; sock=/proc/1256/root/tmp/tmux-0/default; echo SOCKET=$sock; ls -l \"$sock\"; echo '=== WINDOWS ==='; tmux -S \"$sock\" list-windows -t zenmon -F '#I:#W active=#{window_active} panes=#{window_panes} layout=#{window_layout}'; echo '=== PANES ==='; tmux -S \"$sock\" list-panes -t zenmon -a -F '#S:#I.#P active=#{pane_active} cmd=#{pane_current_command} left=#{pane_left} top=#{pane_top} width=#{pane_width} height=#{pane_height} title=#{pane_title}'; echo '=== CLIENTS ==='; tmux -S \"$sock\" list-clients -F 'tty=#{client_tty} session=#{session_name} w=#{client_width} h=#{client_height}'"
   }
 }
