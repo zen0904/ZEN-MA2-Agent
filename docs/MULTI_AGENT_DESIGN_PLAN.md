@@ -51,6 +51,17 @@ different allocation useful.
 
 See `ZEN_MULTI_PROVIDER_PARALLEL_POOL_001.md` for the current implementation.
 
+## Production Structural/Rigging naming boundary
+
+The historical `RIG_DESIGNER` in this document is a lighting/spatial bootstrap role. It is
+not a structural engineer and does not own truss capacity, Layher/scaffold engineering,
+venue support capacity, hoist WLL, structural analysis or engineering sign-off.
+
+The future production-design role `STRUCTURAL_RIGGING_ENGINEER` and the separate
+`STAGE_SCENIC_DESIGNER_ENGINEER` are specified in
+`docs/ZEN_PRODUCTION_DESIGN_SYSTEM.md`. They are not inserted into this historical
+multi-agent runtime by documentation alone.
+
 ## Conditional live-Show spatial route (read-only)
 
 When a caller explicitly supplies a validated current-Show snapshot, the

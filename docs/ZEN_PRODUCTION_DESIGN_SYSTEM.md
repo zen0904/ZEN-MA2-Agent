@@ -1,162 +1,214 @@
 # ZEN Production Design System
 
-Status: OWNER_APPROVED_ARCHITECTURE_CAPTURE_ONLY  
-Owner decision date: 2026-10-02  
-Current implementation authority: NONE
+Status: OWNER_APPROVED_ARCHITECTURE_V0_1_COMPLETE
+Owner decision date: 2026-10-02
+Implementation authority: NOT_GRANTED
+Current M4 / Spatial acceptance gate: UNCHANGED
 
-## Purpose
+## 1. Purpose
 
-ZEN Production Design System is the future shared production-design layer that coordinates
-stage/scenic design, lighting design, physical rigging/structural feasibility, and spatial
-truth before department-specific execution.
+ZEN Production Design System is the future production-planning layer that coordinates:
 
-This is not a replacement for the current Lighting Designer, Spatial System, grandMA2
-Builder, venue engineer, qualified rigger, or licensed/authorized structural engineering
-sign-off. It records how those responsibilities should cooperate when ZEN later supports
-real production design rather than only console programming.
+- STAGE_SCENIC_DESIGNER_ENGINEER
+- LIGHTING_DESIGNER
+- STRUCTURAL_RIGGING_ENGINEER
+- the shared SPATIAL_SYSTEM
 
-The core principle is:
+Its job is to make one coherent production proposal from real venue geometry, real stage
+dimensions, real inventory, artistic requirements and physical constraints before any
+department-specific execution is treated as buildable.
 
-```text
-A visually desirable design
+The governing distinction is:
+
+~~~text
+ARTISTICALLY DESIRABLE
 !=
-a physically buildable design
+PHYSICALLY CONSTRUCTABLE
 !=
-an engineered/approved structure
-```
+ENGINEERED / APPROVED
+~~~
 
-ZEN must preserve all three distinctions.
+A production plan is mature only when those states are explicit instead of being collapsed
+into one vague "looks possible" answer.
 
-## Roles
+## 2. Product boundary
 
-### STAGE_SCENIC_DESIGNER
+This system extends ZEN's long-term Show Agent Controller. It does not replace:
 
-Owns the visual and functional stage world.
+- the existing grandMA2 Lighting execution path;
+- the existing Spatial System vNext;
+- professional stage/scenic fabrication practice;
+- qualified riggers;
+- venue engineering;
+- structural-analysis software;
+- legally required engineering/competent-person review;
+- human production management.
 
-Typical responsibilities:
+The AI layer may propose, compare, negotiate and prepare reviewable drawings/data. It may not
+invent structural truth or convert an unverified visual proposal into a safety approval.
 
-- overall stage proportion and visual composition;
-- MAIN_STAGE / RUNWAY / B_STAGE / RISER / PLATFORM relationships;
-- scenic forms, scenic masking and visible architecture;
-- LED/video-surface placement as part of the stage composition;
-- stairs, performer routes, entrances, exits and usable performance areas;
-- whether truss, Layher/scaffold or towers are intentionally visible scenic language;
-- conceptual modularity and build intent;
-- sightline and audience-view concerns;
-- coordination with Lighting Designer on where useful lighting positions should exist.
+## 3. Core roles
 
-This role may request structure but does not declare that a structure is safe or approved.
+### 3.1 STAGE_SCENIC_DESIGNER_ENGINEER
 
-### LIGHTING_DESIGNER
+This is deliberately a combined creative + scenic-technical role.
 
-Owns lighting visual intent and the lighting requirements imposed on the physical design.
+It owns:
 
-Typical responsibilities:
+- stage visual concept and proportion;
+- MAIN_STAGE / RUNWAY / B_STAGE / RISER / PLATFORM topology;
+- scenic forms, skins, masks, frames and visible architecture;
+- LED/video surfaces as stage-form elements;
+- performer circulation, entrances, exits, stairs and usable performance areas;
+- sightlines and audience-facing composition;
+- modularization of scenic pieces for fabrication, transport, assembly and strike;
+- scenic interface dimensions and attachment requirements;
+- non-structural fabrication intent, material concept and finish intent;
+- coordination of locations where lighting, video, PA or automation need physical interfaces;
+- revision of the scenic design when lighting or structural constraints make the first proposal impractical.
 
-- visual hierarchy, direction, density and negative space;
-- useful fixture families and visual capabilities;
-- desired lighting-position regions and mounting heights;
-- target coverage and useful incidence angles;
-- front / side / back / cross / floor / overhead relationships;
-- beam-path and aerial requirements;
-- serviceable fixture spacing and useful Pan/Tilt operating range;
-- requests for lighting positions that support the song/show design.
+It may design a scenic tower, frame, portal, fascia or platform concept and describe how it is
+intended to be fabricated. It does not self-certify the primary load path, support capacity,
+suspension safety, temporary-structure stability or legal structural adequacy.
 
-A Lighting Designer may say that a side position, tower, low boom or truss is artistically
-valuable. It may not invent a load rating, rigging point or structural capacity to make that
-request possible.
+Detailed role I/O is defined in docs/ZEN_PRODUCTION_ROLE_CONTRACTS.md.
 
-### STRUCTURAL_RIGGING_ENGINEER
+### 3.2 LIGHTING_DESIGNER
 
-Owns physical constructability and structural/rigging feasibility for the proposed production
-model.
+Lighting Designer owns the lighting picture and the physical requirements needed to realize it.
 
-Typical responsibilities:
+It owns:
 
-- verified truss family/model, segment and connection compatibility;
-- verified Layher/scaffold/module inventory and permitted assembly configurations;
-- supports, towers, bases, bracing and support geometry;
-- hoists, motors, pick points and support reactions where verified data exists;
-- fixture, LED, scenic, audio and other attached-load inventory;
-- span, point-load, distributed-load and deflection constraints;
-- collision, clearance, rotation envelope and access/maintenance constraints;
-- assembly/disassembly feasibility and relevant site constraints;
-- inventory reconciliation: requested resources versus physically available resources;
-- producing explicit unresolved engineering questions instead of filling missing facts.
+- visual hierarchy, direction, contrast, density and restraint;
+- useful lighting-position regions and preferred mounting heights;
+- front / side / back / cross / overhead / floor relationships;
+- target and focus requirements;
+- aerial/beam-path requirements;
+- fixture-family/capability requirements without inventing unavailable inventory;
+- useful Pan/Tilt working range and desired target coverage;
+- placement requests that preserve serviceability and realistic spacing;
+- revision of lighting intent when a requested position is physically poor or impossible.
 
-This role is an engineering planning/review role inside ZEN. It must not represent an
-AI-generated proposal as a legally sufficient engineering calculation, stamped drawing,
-venue approval, competent-person approval, or structural sign-off.
+Lighting Designer does not create a fake truss, rigging point or WLL merely because an angle is
+artistically valuable.
 
-### SPATIAL_SYSTEM
+### 3.3 STRUCTURAL_RIGGING_ENGINEER
 
-Spatial System is the shared physical data plane, not an artistic authority.
+Structural/Rigging Engineer owns physical constructability and engineering constraint review.
 
-It carries the common world model used by all three roles, including where available:
+It owns, only where supported by verified data:
 
-- venue geometry and coordinate frames;
-- stage surfaces and performer zones;
-- scenic objects and video surfaces;
-- truss, pipes, towers, scaffold/Layher and support objects;
-- rigging/support points and known constraints;
-- fixtures and their physical/kinematic geometry;
-- PA/video/scenic objects that can obstruct placement or beam paths;
-- target volumes, focus regions and audience direction;
-- object transforms, dimensions, parent/child mounting relationships and provenance.
+- exact truss family/model, segment, corner and connection compatibility;
+- Layher/scaffold/system component compatibility and assembly constraints;
+- towers, bases, outriggers, bracing and support geometry;
+- motors/hoists, pick points and support reactions;
+- attached loads from lighting, scenic, LED, audio, video and other departments;
+- span/load/deflection checks within verified manufacturer/engineering data;
+- clearance, collision, movement envelope and maintenance access;
+- support/floor/venue interface questions;
+- assembly/strike feasibility;
+- actual inventory reconciliation;
+- identification of cases requiring external structural analysis or sign-off.
 
-No role may silently overwrite verified physical facts in order to make its design easier.
+It may return UNKNOWN or ENGINEERING_SIGNOFF_REQUIRED. Those are successful safe outcomes
+when the evidence is insufficient for a stronger claim.
 
-## Collaboration model: negotiation loop, not one-way pipeline
+### 3.4 SPATIAL_SYSTEM
 
-Stage/scenic, lighting and structural design are tightly coupled. The product must support
-iterative negotiation rather than a single handoff.
+Spatial System is the shared physical-world data plane.
 
-```text
-Production Brief / Venue / Real Inventory
-                  |
-                  v
-        STAGE_SCENIC_DESIGNER
-             <-------->
-         LIGHTING_DESIGNER
-                  |
-                  v
-      STRUCTURAL_RIGGING_ENGINEER
-                  |
-       feasible / adjustment /
-       conflict / unknown
-                  |
-                  +-------------------+
-                  |                   |
-                  v                   v
-        STAGE_SCENIC revision   LIGHTING revision
-                  \                   /
-                   \                 /
-                    +---- Spatial ----+
-                           |
-                           v
-                  physical re-check
-```
+It owns no artistic decision and no structural certification. It stores the current,
+provenance-bearing geometry and relationships needed by the other roles:
 
-Examples of valid negotiation:
+- venue envelope and coordinate frames;
+- stage surfaces, performer zones and audience direction;
+- scenic objects;
+- truss, pipe, tower, scaffold/Layher and supports;
+- fixtures and device geometry;
+- LED/video and PA objects;
+- target/focus regions;
+- parent-child mounting relationships;
+- dimensions, transforms and confidence/provenance;
+- collision/clearance geometry when available.
 
-- Scenic asks for two tall side towers. Lighting asks to move them outward to gain useful
-  cross-light geometry. Structural/Rigging may accept one side, reject the other because of
-  verified support/venue constraints, and return a buildable alternative.
-- Lighting asks for a steep side/back fixture position. Structural/Rigging checks whether a
-  real support location exists, whether the luminaire/clamp/rotation envelope clears the
-  structure, and whether the resulting load belongs on that structure.
-- Structural/Rigging may require an extra support or changed span. Scenic then decides how
-  that change should be visually integrated instead of allowing the engineering layer to
-  redesign the artistic composition by itself.
+Verified physical facts may be revised only through an explicit evidence update, not because
+a Designer would prefer different numbers.
 
-A constraint response should preserve the original design intent where possible. It should
-not reduce every conflict to a generic safe layout.
+## 4. Collaboration model
 
-## Physical-feasibility contract
+These roles are peers around one production problem, not a one-way generation chain.
 
-Future production-design artifacts should be able to report at least:
+~~~text
+                 PRODUCTION BRIEF
+                       |
+        +--------------+--------------+
+        |                             |
+        v                             v
+STAGE_SCENIC_DESIGNER_ENGINEER <--> LIGHTING_DESIGNER
+        |                             |
+        +--------------+--------------+
+                       |
+                       v
+            STRUCTURAL_RIGGING_ENGINEER
+                       |
+         +-------------+--------------+
+         |             |              |
+       PASS       ADJUSTMENT       BLOCK / UNKNOWN
+         |             |              |
+         |       +-----+-----+        |
+         |       v           v        |
+         |    Scenic      Lighting    |
+         |    revision    revision    |
+         |       +-----+-----+        |
+         |             |              |
+         +-------------+--------------+
+                       |
+                       v
+                 SPATIAL UPDATE
+                       |
+                       v
+                 PHYSICAL RE-CHECK
+~~~
 
-```text
+A role may request a revision; it does not silently perform another role's creative work.
+
+Examples:
+
+- Lighting asks for side towers farther out to improve cross-light geometry.
+- Scenic checks sightline/composition impact and revises the tower form.
+- Structural/Rigging checks actual bay/module/truss/support feasibility.
+- If only one side can move, Lighting may redesign asymmetrically rather than forcing symmetry.
+- The accepted geometry is written back to the shared Spatial proposal with provenance.
+
+## 5. Negotiation rules
+
+Every cross-role conflict must preserve four things:
+
+1. the original intent;
+2. the verified physical constraint;
+3. the proposed adaptation;
+4. the unresolved remainder, if any.
+
+The system must not flatten every conflict into a generic conservative layout.
+
+A negotiation cycle ends when one of these is true:
+
+- ACCEPTED_AS_PROPOSED
+- ACCEPTED_WITH_ADAPTATION
+- RESOURCE_CONFLICT
+- STRUCTURAL_ANALYSIS_REQUIRED
+- ENGINEERING_SIGNOFF_REQUIRED
+- IMPOSSIBLE
+- UNKNOWN
+
+Repeated model disagreement is not a reason to keep generating forever. When new evidence is
+required, the cycle stops and asks for that evidence.
+
+## 6. Physical-feasibility states
+
+Canonical architecture-level status vocabulary:
+
+~~~text
 PASS
 PASS_WITH_ADJUSTMENT
 RESOURCE_CONFLICT
@@ -164,199 +216,288 @@ STRUCTURAL_ANALYSIS_REQUIRED
 ENGINEERING_SIGNOFF_REQUIRED
 IMPOSSIBLE
 UNKNOWN
-```
+~~~
 
-`PASS` means the bounded checks ZEN is actually authorized and equipped to perform have
-passed. It never means universal legal or structural certification.
+PASS means all checks within the current bounded verified tooling/data passed. It never means
+a legal certificate.
 
-`UNKNOWN` is a first-class result. Missing manufacturer data, venue support data, outdoor
-wind assumptions, floor loading, connection details or inventory identity must not be
-replaced with plausible model guesses.
+## 7. Physical truth authority
 
-## Data authority
+Use this precedence:
 
-For physical truth, use this authority order:
+1. current venue/engineering documents and measured/operator-confirmed facts;
+2. exact manufacturer model data, manuals, load tables and approved system documentation;
+3. current real inventory with exact product identity;
+4. validated CAD/MVR/GDTF/imported scene data with provenance;
+5. explicitly labelled project assumptions;
+6. visual/model inference as advisory evidence only.
 
-1. current venue/engineering documents and operator-confirmed measured facts;
-2. exact manufacturer model data, manuals, load tables and verified structural data;
-3. current real inventory and exact equipment identity;
-4. validated CAD/MVR/GDTF/imported production data with provenance;
-5. explicit human-entered assumptions labelled as assumptions;
-6. visual/model inference, advisory only.
+A model looking at a photograph can infer "this appears to be a truss" or "a beam may obstruct
+this light path." It cannot infer the exact truss series, allowable load, floor capacity,
+approved scaffold configuration or WLL unless those are separately verified.
 
-A photo, render, vision-model observation or LLM inference can identify a question or propose
-a hypothesis. It does not establish truss capacity, WLL, support capacity, Layher assembly
-approval, floor loading, wind design, or a legally meaningful structural fact.
+## 8. Deterministic engineering boundary
 
-## Deterministic engineering boundary
+Use language models for:
 
-Language models may reason about requirements, conflicts and alternatives. Numerical
-engineering checks must use verified data and deterministic calculation/engineering tooling
-where the task requires them.
+- requirements reasoning;
+- alternatives;
+- constraint negotiation;
+- drawing/document interpretation;
+- missing-information detection;
+- intent-preserving redesign.
 
-Candidate future integrations include dedicated structural analysis, manufacturer load
-tables, CAD/rigging calculation systems and scaffold planning systems. A solver result still
-does not automatically grant engineering sign-off.
+Use deterministic/engineering tools and verified data for:
 
-Required separation:
+- load-table lookup;
+- span/load comparison;
+- reaction/force analysis;
+- deflection analysis;
+- FEA or equivalent structural analysis;
+- scaffold/system configuration checking;
+- collision and geometric intersection checks;
+- material counting;
+- dimension and clearance calculations.
 
-```text
-AI DESIGN / CONSTRAINT REASONING
+Then use human/venue/engineering review where required.
+
+~~~text
+AI DESIGN / NEGOTIATION
         |
         v
 VERIFIED PRODUCT + VENUE DATA
         |
         v
-DETERMINISTIC CALCULATION / ANALYSIS
+DETERMINISTIC CHECK / ANALYSIS
         |
         v
-HUMAN / VENUE / ENGINEERING REVIEW where required
-```
+HUMAN / VENUE / ENGINEERING REVIEW
+~~~
 
-The same Preview/Approval philosophy used by ZEN's MA execution path applies conceptually:
-high-consequence physical output must remain reviewable and attributable.
+## 9. Lighting-position constructability
 
-## Lighting-position constructability
+A light position is not proven useful merely because fixture XYZ exists.
 
-The collaboration must evaluate more than whether a structure can carry static weight.
-Lighting positions also need to be useful.
+When data permits, check:
 
-Future checks may include, when reliable geometry/data exists:
+- mounting/clamp interface;
+- structure/chord/accessory compatibility;
+- fixture body/yoke/head envelope;
+- Pan/Tilt physical reach;
+- useful operating margin from movement limits;
+- obstruction of the beam path;
+- fixture-to-fixture collision;
+- scenic/LED/PA obstruction;
+- cable/service access;
+- safety attachment path;
+- throw distance and zoom/beam consequence;
+- maintenance/replacement access;
+- whether installation orientation creates programming or servicing problems.
 
-- clamp/hanging-point compatibility;
-- luminaire body, yoke and head rotation clearance;
-- required safety attachment and cable/service access;
-- usable Pan/Tilt target reach;
-- whether desired targets are too close to a physical movement limit;
-- beam-path obstruction by structure, scenic, LED, PA or other fixtures;
-- throw-distance and beam/zoom implications;
-- fixture-to-fixture collision and practical spacing;
-- whether a nominally reachable position is awkward enough that Lighting should revise it.
+The result may cause either a structural revision or a lighting revision.
 
-This is where Lighting Designer, Spatial System and Structural/Rigging Engineer must exchange
-constraints repeatedly rather than treating fixture XYZ as sufficient proof.
+## 10. Stage/scenic constructability
 
-## Real-inventory model
+The scenic role should progressively move from concept to fabrication-aware design:
 
-Production design must reconcile proposals against actual available material.
+~~~text
+VISUAL CONCEPT
+-> DIMENSIONED STAGE/SCENIC LAYOUT
+-> MODULE / INTERFACE DEFINITION
+-> STRUCTURAL/RIGGING REVIEW
+-> FABRICATION-AWARE REVISION
+-> REVIEW DRAWING PACKAGE
+~~~
 
-Examples include:
+Examples of scenic technical data:
 
-- truss make/family/model and segment lengths;
-- corners, junctions, base plates and connection hardware;
-- Layher/scaffold standards, ledgers, diagonals, decks, bases, stairs and guardrails;
-- motors/hoists and verified WLL;
-- clamps, rigging hardware and approved accessories;
-- stage decks, risers and stairs;
-- lighting fixtures and their verified weights/geometry;
-- LED/scenic/audio/video loads when they participate in the structure.
+- overall envelope;
+- module boundaries;
+- deck/riser elevations;
+- stair dimensions;
+- LED opening/enclosure dimensions;
+- removable panels;
+- assembly direction;
+- access hatches;
+- cable/service paths;
+- interfaces requiring a structural support;
+- scenic-piece mass when known;
+- center of mass when required and verified;
+- finish/material intent.
 
-```text
-DESIGN REQUIREMENT
-        !=
-AVAILABLE STOCK
-```
+The scenic role must label unverified material strength, fastening or primary structural
+assumptions instead of treating fabrication intuition as engineering proof.
 
-A shortage is a `RESOURCE_CONFLICT` or a reason to redesign/source equipment. It is not
-permission to invent inventory.
+## 11. Real inventory
 
-## Scene interchange and physical model
+Production planning must compare requirement against stock.
 
-MVR/GDTF are preferred candidates for interoperable entertainment-scene/device data when the
-source data is available and trustworthy. MVR is explicitly intended to exchange scene
-geometry and objects such as fixtures, trusses and video screens while maintaining hierarchy
-and device relationships. This makes it relevant to the future shared Production Spatial
-Model, but importing MVR/GDTF does not by itself prove structural safety.
+Relevant inventory classes include:
 
-Blender/glTF may remain useful for visualization and richer scenic geometry. It is not the
-structural authority merely because it contains a mesh.
+- truss sections, corners, junctions and accessories;
+- Layher/scaffold standards, ledgers, braces, decks, bases, stairs and guardrails;
+- towers, base plates, outriggers and ballast systems;
+- motors/hoists and rigging hardware;
+- clamps and adapters;
+- stage decks/risers/stairs;
+- lighting fixtures;
+- LED cabinets/processors/support frames where structurally relevant;
+- scenic modules;
+- PA/video equipment where it creates load or spatial obstruction.
 
-## Model/provider responsibilities
+DESIGN REQUIREMENT != AVAILABLE STOCK.
 
-Provider choice is replaceable and must not become architecture.
+A shortage creates an explicit sourcing/redesign decision.
 
-Current candidate division:
+## 12. Scene interchange
 
-- a strong multimodal model such as Gemini may act as a Visual Production Interpreter for
-  venue plans, reference images, renders, PDFs and scenic context;
-- the ZEN reasoning layer may coordinate Stage/Scenic, Lighting and Structural/Rigging
-  requirements and negotiate constraint-preserving revisions;
-- deterministic engineering/calculation tools remain authority for numerical engineering
-  checks that they are actually configured to perform.
+MVR/GDTF are preferred entertainment-industry candidates where available.
 
-A vision model observation remains visual evidence, not verified structural fact.
+MVR 1.6 is defined for exchanging complete entertainment scenes and parametric objects
+including fixtures, trusses, supports and video screens. GDTF describes device geometry and
+physical/logical dependencies such as base/yoke/head/beam geometry.
 
-## Expected future outputs
+Those formats can provide strong scene/device evidence, but import does not prove structural
+safety.
 
-A mature Production Design run may eventually produce:
+Blender/glTF can support scenic visualization and geometry exchange. A mesh remains geometry,
+not load capacity.
 
-- Stage/Scenic design artifact;
-- Lighting requirements / light-plot intent;
-- Production Spatial Model;
-- Rigging/structural proposal;
-- fixture and structural placement map;
-- rigging/load list with provenance;
-- material/BOM requirement list;
-- actual-inventory reconciliation;
+## 13. Provider/model division
+
+Provider identity is replaceable.
+
+Recommended architecture:
+
+- multimodal model: visual production interpretation of plans, venue photos, PDFs, renders,
+  reference stages and marked-up drawings;
+- ZEN primary reasoning: coordinate the three professional roles and preserve intent across
+  constraint revisions;
+- deterministic geometry/engineering layer: calculations and machine-verifiable checks;
+- human review: approve artistic tradeoffs and engineering/legal outputs where required.
+
+Gemini is currently a plausible multimodal candidate, not a permanent architectural
+dependency. GPT/ChatGPT can perform the coordinating reasoning role when operating
+interactively. Neither provider becomes structural authority.
+
+## 14. Production artifacts
+
+The intended review package is defined in docs/ZEN_PRODUCTION_DELIVERABLES.md.
+
+At maturity it may include:
+
+- Production Physical Context;
+- Stage/Scenic Plan;
+- Stage elevations/sections;
+- Lighting Plot;
+- Lighting Position Schedule;
+- Rigging Plot;
+- Truss/support schedule;
+- motor/pick schedule;
+- preliminary load schedule;
+- inventory/BOM requirement;
+- actual-stock reconciliation;
 - collision/clearance report;
-- unresolved-constraint report;
-- drawing/export package for human review.
+- unresolved engineering questions;
+- revision/negotiation log;
+- export/interchange package.
 
-Output formats are not yet authorized or fixed by this architecture capture.
+## 15. Companion architecture documents
 
-## Relationship to current ZEN mainline
+Read together:
 
-This direction extends the existing long-term Show Agent Controller and cross-department
-production model. It does not change the current M4 acceptance gate.
+- docs/ZEN_PRODUCTION_ROLE_CONTRACTS.md
+- docs/ZEN_PRODUCTION_PHYSICAL_CONTEXT.md
+- docs/ZEN_PRODUCTION_ENGINEERING_EVIDENCE_POLICY.md
+- docs/ZEN_PRODUCTION_DELIVERABLES.md
 
-It also does not replace the existing historical `RIG_DESIGNER` role by name automatically.
-That role currently concerns lighting/spatial bootstrap. A future implementation must decide
-whether to rename/split/migrate it without breaking established artifacts or operator
-workflow.
+These are architecture contracts, not implemented schemas.
 
-No current authorization is granted for:
+## 16. Relationship to existing RIG_DESIGNER
 
-- production code for these new roles;
-- new permanent provider stages;
-- automatic structural calculations;
-- automatic Truss/Layher selection;
-- venue/engineering approval;
-- MA2 writes, Stage geometry writes, Patch/Address/Fixture identity changes;
-- changing the active Spatial vNext acceptance gate.
+The historical RIG_DESIGNER in docs/MULTI_AGENT_DESIGN_PLAN.md is a lighting/spatial
+bootstrap role. It is not the new Structural/Rigging Engineer and must never be described as
+structural authority.
 
-## Research anchors
+Future migration may rename the historical role to a less ambiguous name, but no runtime
+rename is authorized by this documentation task.
 
-These sources establish useful industry boundaries and interoperability concepts. They are
-research anchors, not a substitute for current project-specific engineering data.
+## 17. Research basis
 
-- Vectorworks Braceworks: integrated entertainment rigging modeling and structural/FEM
-  analysis, with calculation reports intended to be reviewed/validated in engineering
-  workflows:
+Official/currently available anchors reviewed for this architecture include:
+
+- Vectorworks Braceworks:
   https://www.vectorworks.net/en-US/braceworks
-- Vectorworks Braceworks structural-analysis concept:
-  https://app-help.vectorworks.net/2027/eng/VW2027_Guide/Braceworks/Concept_Braceworks_structural_analysis.htm
-- GDTF/MVR developer documentation and MVR 1.6 specification:
+- GDTF/MVR developer documentation and MVR 1.6:
   https://gdtf-share.com/help/developers/
   https://gdtf-share.com/help/developers/mvr_1_6/index.html
-- Prolyte current manuals and load-table guidance:
+- GDTF geometry documentation:
+  https://gdtf-share.com/help/users/gdtf_builder/geometry/index.html
+- Prolyte manuals/load-table guidance:
   https://www.prolyte.com/support/manuals
-- Layher technical documentation / verified structural calculations / assembly instructions
-  and Layher SIM digital planning:
+- Layher technical downloads:
   https://www.layher.com/en/services/downloads
+- Layher SIM:
   https://www.layher.com/en/knowledge/layher-sim
+- Taiwan OSHA scaffold guidance:
+  https://www.osha.gov.tw/media/rojjkges/%E6%96%BD%E5%B7%A5%E6%9E%B6%E4%BD%9C%E6%A5%AD%E5%AE%89%E5%85%A8%E6%AA%A2%E6%9F%A5%E9%87%8D%E9%BB%9E%E5%8F%8A%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A0%85.pdf
 
-## First future bounded slice
+The Taiwan item is a safety/regulatory research anchor, not a complete legal-compliance
+checklist. Applicable law/venue rules must be re-verified for the actual project.
 
-Do not start by building a full structural solver.
+## 18. Implementation sequence
 
-The first implementation slice, when separately authorized, should only define a read-only
-`Production Physical Context` and a negotiation artifact that can express:
+No full solver first.
 
-1. verified stage/scenic geometry;
-2. verified real inventory identities;
-3. Lighting position requirements;
-4. structural/rigging constraints and unknowns;
-5. conflict-preserving revision requests;
-6. explicit feasibility status and provenance.
+### PDS-001 — read-only Production Physical Context
+- schema/validator;
+- provenance;
+- venue/stage/scenic/structure/device identities;
+- actual inventory;
+- zero physical writes.
 
-No physical mutation or safety claim is needed to prove that collaboration model.
+### PDS-002 — negotiation artifact
+- Scenic request;
+- Lighting request;
+- structural constraint;
+- adaptation;
+- unresolved evidence;
+- feasibility state.
+
+### PDS-003 — deterministic geometry checks
+- collision;
+- clearances;
+- device movement envelope;
+- beam obstruction;
+- material counting.
+
+### PDS-004 — bounded manufacturer-data checks
+- exact-product load-table lookup only where semantics are unambiguous;
+- no generalized FEA inference;
+- explicit escalation.
+
+### PDS-005 — deliverable generation
+- drawing/data package;
+- schedules;
+- BOM;
+- unresolved report;
+- human review.
+
+A structural solver/FEA integration is a later explicit decision, not implied by these slices.
+
+## 19. Current authorization
+
+This architecture specification is complete enough to guide future implementation.
+
+It does not authorize:
+
+- production code;
+- a new default multi-agent pipeline;
+- automatic Truss/Layher selection;
+- structural sign-off;
+- venue approval;
+- physical-world mutation;
+- MA2 writes or Stage geometry writes;
+- changing the active M4 / Spatial acceptance gate.
+
+The active mainline resumes from data/zen_project_control.json.

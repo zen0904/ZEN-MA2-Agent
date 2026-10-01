@@ -32,7 +32,7 @@
     {
       "id": "ZEN_PRODUCTION_DESIGN_SYSTEM_DIRECTION_001",
       "source": "docs/ZEN_PRODUCTION_DESIGN_SYSTEM.md",
-      "status": "OWNER_APPROVED_ARCHITECTURE_CAPTURE_ONLY",
+      "status": "OWNER_APPROVED_ARCHITECTURE_V0_1_COMPLETE",
       "owner_clarification_date": "2026-10-02",
       "outcomes": [
         "CREATE_DISTINCT_STAGE_SCENIC_DESIGNER_ROLE",
@@ -47,9 +47,21 @@
         "MULTIMODAL_MODEL_MAY_INTERPRET_VISUAL_PRODUCTION_CONTEXT_BUT_VISUAL_INFERENCE_IS_NOT_STRUCTURAL_TRUTH",
         "MVR_GDTF_AND_FUTURE_CAD_SCENE_INTERCHANGE_ARE_CANDIDATE_INPUTS_NOT_AUTOMATIC_SAFETY_AUTHORITY",
         "FIRST_FUTURE_SLICE_IS_READ_ONLY_PRODUCTION_PHYSICAL_CONTEXT_PLUS_NEGOTIATION_ARTIFACT",
-        "CURRENT_M4_AND_SPATIAL_ACCEPTANCE_GATE_REMAINS_UNCHANGED"
+        "CURRENT_M4_AND_SPATIAL_ACCEPTANCE_GATE_REMAINS_UNCHANGED",
+        "STAGE_SCENIC_ROLE_IS_STAGE_SCENIC_DESIGNER_ENGINEER_WITH_CREATIVE_AND_SCENIC_TECHNICAL_RESPONSIBILITY",
+        "HISTORICAL_RIG_DESIGNER_IS_NOT_STRUCTURAL_RIGGING_ENGINEER",
+        "PRODUCTION_ROLE_CONTRACTS_V0_1_CAPTURED",
+        "PRODUCTION_PHYSICAL_CONTEXT_V0_1_DRAFT_CONTRACT_CAPTURED",
+        "PRODUCTION_ENGINEERING_EVIDENCE_POLICY_V0_1_CAPTURED",
+        "PRODUCTION_DELIVERABLE_PACKAGE_V0_1_CAPTURED",
+        "LIGHTING_PLOT_RIGGING_PLOT_STAGE_PLAN_SECTIONS_SCHEDULES_BOM_AND_CONFLICT_REPORT_ARE_FUTURE_COORDINATED_OUTPUTS",
+        "PHYSICAL_CONTEXT_FIELDS_REQUIRE_PER_FIELD_PROVENANCE_AND_REVISION_BINDING",
+        "EXACT_PRODUCT_IDENTITY_REQUIRED_BEFORE_MANUFACTURER_CAPACITY_DATA_CAN_SUPPORT_ENGINEERING_CLAIMS",
+        "VISION_INFERENCE_MAY_DISCOVER_QUESTIONS_BUT_CANNOT_ESTABLISH_STRUCTURAL_CAPACITY",
+        "NEGOTIATION_IS_DELTA_FIRST_AND_STOPS_WHEN_NEW_EVIDENCE_OR_HUMAN_DECISION_IS_REQUIRED",
+        "IMPLEMENTATION_SEQUENCE_PDS_001_THROUGH_PDS_005_DEFINED_WITH_READ_ONLY_CONTEXT_FIRST"
       ],
-      "limitations": "Architecture/design capture only. No production implementation, new permanent provider stage, Truss/Layher auto-selection, structural certification, venue approval, MA2 write, geometry write or current acceptance-gate change is authorized."
+      "limitations": "Architecture v0.1 is complete enough to guide future implementation. No production code, new default provider pipeline, automatic Truss/Layher selection, structural analysis authority, engineering certification, venue approval, MA2/Stage geometry write, physical mutation or current M4/Spatial acceptance-gate change is authorized."
     },
     {
       "id": "VISUAL_DIRECTOR_ARTISTIC_BRIEF_DIRECTION_001",
@@ -1322,17 +1334,21 @@
       "id": "PRODUCTION_DESIGN_SYSTEM_STAGE_SCENIC_STRUCTURAL_001",
       "classification": "HIGH_LEVERAGE_FUTURE",
       "milestone": "FUTURE",
-      "status": "ARCHITECTURE_CAPTURED",
+      "status": "ARCHITECTURE_V0_1_COMPLETE_IMPLEMENTATION_DEFERRED",
       "why_it_matters": "Turns future stage/scenic and lighting concepts into a shared production model where structural/rigging constraints can force explicit, intent-preserving revisions before drawings or execution are treated as physically buildable.",
       "blocks_current_milestone": false,
       "dependencies": [
         "docs/ZEN_PRODUCTION_DESIGN_SYSTEM.md",
+        "docs/ZEN_PRODUCTION_ROLE_CONTRACTS.md",
+        "docs/ZEN_PRODUCTION_PHYSICAL_CONTEXT.md",
+        "docs/ZEN_PRODUCTION_ENGINEERING_EVIDENCE_POLICY.md",
+        "docs/ZEN_PRODUCTION_DELIVERABLES.md",
         "SPATIAL_SYSTEM_VNEXT",
         "verified venue/stage dimensions and coordinate context",
         "verified real structural/rigging/fixture inventory",
         "manufacturer and venue engineering data where required"
       ],
-      "next_review_condition": "Do not start a full structural solver. After the active M4/Spatial gate is unblocked and a real production-planning case exists, define only the read-only Production Physical Context and cross-role negotiation artifact; keep physical writes and engineering sign-off out of scope."
+      "next_review_condition": "After the active M4/Spatial gate is unblocked and a real production-planning case exists, start only PDS-001: read-only Production Physical Context schema/validator/import boundary. Do not start a structural solver, physical writes or engineering sign-off workflow first."
     }
   ],
   "recent_foundation": {
