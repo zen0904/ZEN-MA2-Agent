@@ -30,6 +30,28 @@
   },
   "human_review_decisions": [
     {
+      "id": "ZEN_PRODUCTION_DESIGN_SYSTEM_DIRECTION_001",
+      "source": "docs/ZEN_PRODUCTION_DESIGN_SYSTEM.md",
+      "status": "OWNER_APPROVED_ARCHITECTURE_CAPTURE_ONLY",
+      "owner_clarification_date": "2026-10-02",
+      "outcomes": [
+        "CREATE_DISTINCT_STAGE_SCENIC_DESIGNER_ROLE",
+        "CREATE_DISTINCT_STRUCTURAL_RIGGING_ENGINEER_ROLE",
+        "LIGHTING_DESIGNER_REMAINS_ARTISTIC_LIGHTING_AUTHORITY",
+        "STAGE_SCENIC_LIGHTING_AND_STRUCTURAL_RIGGING_MUST_NEGOTIATE_ITERATIVELY_NOT_ONE_WAY_HANDOFF",
+        "SPATIAL_SYSTEM_IS_SHARED_PHYSICAL_DATA_PLANE_NOT_ARTISTIC_AUTHORITY",
+        "REAL_VENUE_DIMENSIONS_REAL_INVENTORY_AND_EXACT_PRODUCT_IDENTITY_CONSTRAIN_PRODUCTION_DESIGN",
+        "LIGHTING_POSITION_FEASIBILITY_INCLUDES_PHYSICAL_MOUNTING_CLEARANCE_TARGET_REACH_BEAM_PATH_AND_USABLE_ANGLE_NOT_ONLY_STATIC_WEIGHT",
+        "STRUCTURAL_RIGGING_MAY_PROPOSE_AND_CHECK_WITH_VERIFIED_DATA_BUT_MUST_NOT_SELF_DECLARE_LEGAL_ENGINEERING_SIGNOFF",
+        "NUMERICAL_STRUCTURAL_CHECKS_REQUIRE_VERIFIED_DATA_AND_DETERMINISTIC_ENGINEERING_TOOLS_WHERE_APPLICABLE",
+        "MULTIMODAL_MODEL_MAY_INTERPRET_VISUAL_PRODUCTION_CONTEXT_BUT_VISUAL_INFERENCE_IS_NOT_STRUCTURAL_TRUTH",
+        "MVR_GDTF_AND_FUTURE_CAD_SCENE_INTERCHANGE_ARE_CANDIDATE_INPUTS_NOT_AUTOMATIC_SAFETY_AUTHORITY",
+        "FIRST_FUTURE_SLICE_IS_READ_ONLY_PRODUCTION_PHYSICAL_CONTEXT_PLUS_NEGOTIATION_ARTIFACT",
+        "CURRENT_M4_AND_SPATIAL_ACCEPTANCE_GATE_REMAINS_UNCHANGED"
+      ],
+      "limitations": "Architecture/design capture only. No production implementation, new permanent provider stage, Truss/Layher auto-selection, structural certification, venue approval, MA2 write, geometry write or current acceptance-gate change is authorized."
+    },
+    {
       "id": "VISUAL_DIRECTOR_ARTISTIC_BRIEF_DIRECTION_001",
       "source": "docs/VISUAL_DIRECTOR_ARTISTIC_BRIEF_001.md",
       "status": "OWNER_APPROVED_DESIGN_DIRECTION_CAPTURE_ONLY",
@@ -1295,6 +1317,22 @@
         "preserve Compiler/Preview/Human Approval/Builder/native readback as the only MA mutation path"
       ],
       "next_review_condition": "After Spatial vNext's current acceptance gate or when a design task first materially needs provider-initiated GDTF/MVR/audio/video/document analysis, implement only the smallest typed read/analysis broker adapters required by that case."
+    },
+    {
+      "id": "PRODUCTION_DESIGN_SYSTEM_STAGE_SCENIC_STRUCTURAL_001",
+      "classification": "HIGH_LEVERAGE_FUTURE",
+      "milestone": "FUTURE",
+      "status": "ARCHITECTURE_CAPTURED",
+      "why_it_matters": "Turns future stage/scenic and lighting concepts into a shared production model where structural/rigging constraints can force explicit, intent-preserving revisions before drawings or execution are treated as physically buildable.",
+      "blocks_current_milestone": false,
+      "dependencies": [
+        "docs/ZEN_PRODUCTION_DESIGN_SYSTEM.md",
+        "SPATIAL_SYSTEM_VNEXT",
+        "verified venue/stage dimensions and coordinate context",
+        "verified real structural/rigging/fixture inventory",
+        "manufacturer and venue engineering data where required"
+      ],
+      "next_review_condition": "Do not start a full structural solver. After the active M4/Spatial gate is unblocked and a real production-planning case exists, define only the read-only Production Physical Context and cross-role negotiation artifact; keep physical writes and engineering sign-off out of scope."
     }
   ],
   "recent_foundation": {

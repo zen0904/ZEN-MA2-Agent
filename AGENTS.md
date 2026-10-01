@@ -31,6 +31,9 @@ For substantial work, read these in order:
    - If the task touches face/key light, performer visibility, shared fixtures,
      or which resources ZEN may treat as effects, also read
      `docs/LIGHTING_RESOURCE_OWNERSHIP.md`.
+   - If the task touches stage/scenic design, stage structure, Truss/Layher/scaffold,
+     rigging, physical constructability, or negotiation between lighting positions and
+     structural constraints, also read `docs/ZEN_PRODUCTION_DESIGN_SYSTEM.md`.
 4. `ZEN_MULTI_PROVIDER_PARALLEL_POOL_001.md` -- provider-pool, FREE_FIRST,
    and lightweight-local-fallback state. Parallel Designer/Critic fan-out is an
    explicit deep/research mode, not the ordinary default.

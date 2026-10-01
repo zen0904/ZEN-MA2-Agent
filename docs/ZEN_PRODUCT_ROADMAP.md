@@ -163,6 +163,7 @@ default product path.
 | Future MA3 Architecture | Preserve separable capability/resolution boundaries. | No MA3 Builder implementation is currently authorized. |
 | OpenCode ZEN Quota HUD | Side-track: expose one normalized remaining-capacity indicator inside OpenCode, e.g. `ZEN 73%`, without requiring the operator to inspect individual providers. | PARKED / non-blocking. Display-only first; no paid-provider enablement and no routing-policy changes until explicitly resumed. |
 | MA3D Scene Read / Full Stage Context | Future read-only scene ingestion from grandMA2 Stage View / MA 3D for stage, truss, LED/scenic objects, object transforms, dimensions, hierarchy, and visual context. | PARKED / non-blocking. Do not interrupt the current MA2 programming mainline; fixtures remain the only fully proven structured scan path today. |
+| Production Design System | Coordinate Stage/Scenic Designer, Lighting Designer and Structural/Rigging Engineer around one provenance-bearing Spatial/physical model, with iterative constructability negotiation and deterministic engineering boundaries. | OWNER-APPROVED architecture capture only. See `docs/ZEN_PRODUCTION_DESIGN_SYSTEM.md`. No implementation, structural sign-off, provider-stage change or current M4/Spatial gate change is authorized. |
 
 ## Fixture knowledge boundary
 
