@@ -1,10 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "inspect-tmux-via-nsenter-20261001-1329",
+  "job_id": "deploy-visible-codex-workspace-20261001-1332",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 120,
-    "command": "set -o pipefail; command -v nsenter; echo '=== SESSIONS ==='; nsenter -t 1256 -m -- tmux list-sessions; echo '=== WINDOWS ==='; nsenter -t 1256 -m -- tmux list-windows -t zenmon -F '#I:#W active=#{window_active} panes=#{window_panes} layout=#{window_layout}'; echo '=== PANES ==='; nsenter -t 1256 -m -- tmux list-panes -t zenmon -a -F '#S:#I.#P active=#{pane_active} cmd=#{pane_current_command} left=#{pane_left} top=#{pane_top} width=#{pane_width} height=#{pane_height} title=#{pane_title}'; echo '=== CLIENTS ==='; nsenter -t 1256 -m -- tmux list-clients -F 'tty=#{client_tty} session=#{session_name} w=#{client_width} h=#{client_height}'"
+    "timeout": 180,
+    "command": "set -o pipefail; systemctl start zen-ops-updater.service; systemctl is-active zen-ops-updater.service || true; systemctl is-active zen-codex-workspace.service || true"
   }
 }
