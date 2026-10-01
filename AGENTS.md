@@ -34,6 +34,9 @@ For substantial work, read these in order:
 4. `ZEN_MULTI_PROVIDER_PARALLEL_POOL_001.md` -- provider-pool, FREE_FIRST,
    and lightweight-local-fallback state. Parallel Designer/Critic fan-out is an
    explicit deep/research mode, not the ordinary default.
+   - If the task assigns work to Gemini, changes Gemini/provider collaboration,
+     or runs Gemini in parallel with ChatGPT/Codex/Claude, also read
+     `docs/GEMINI_COLLABORATION_ROLE.md`.
 5. `docs/ZEN_PRODUCT_CONSTITUTION.md`
 6. `docs/ZEN_WORKFLOW_CONTRACT.md`
 7. The relevant console document, normally `docs/MA2_PROGRAMMING_INTELLIGENCE.md`
