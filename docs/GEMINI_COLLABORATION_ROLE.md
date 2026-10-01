@@ -115,6 +115,26 @@ This policy formally adds Gemini to the collaboration topology while preserving
 the existing provider router, Strong Primary Brain invariant, deterministic
 execution authority, and operator workflow.
 
+## 6. Worker runtime surfaces
+
+Gemini-family capability may enter ZEN through more than one runtime surface.
+Keep the runtime separate from the architectural role:
+
+- **Antigravity CLI (`agy`)** is the preferred interactive/local coding-agent
+  runtime for the Gemini specialized-worker role on the Mini. It may be used
+  for large-context repository work, bounded implementation, review, MCP and
+  agent/subagent workflows under the collaboration rules above.
+- **Jules CLI (`jules`)** is an optional remote/cloud coding-worker surface.
+  Its output is still a candidate change requiring normal Git review and
+  acceptance.
+- **Gemini CLI (`gemini`)** remains an available terminal/provider surface,
+  especially for API-key or compatible enterprise usage. Its presence does not
+  make it the default ZEN worker runtime.
+
+Runtime installation or authentication does not grant repository write scope,
+artistic authority, or MA execution authority. Task-level scope still comes
+from ZEN/owner assignment.
+
 ## 6. Model/version policy
 
 Do not encode a specific Gemini model as permanent architectural truth.
