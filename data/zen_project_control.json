@@ -30,6 +30,28 @@
   },
   "human_review_decisions": [
     {
+      "id": "VISUAL_DIRECTOR_ARTISTIC_BRIEF_DIRECTION_001",
+      "source": "docs/VISUAL_DIRECTOR_ARTISTIC_BRIEF_001.md",
+      "status": "OWNER_APPROVED_DESIGN_DIRECTION_CAPTURE_ONLY",
+      "owner_clarification_date": "2026-10-01",
+      "outcomes": [
+        "OPTIONAL_VISUAL_DIRECTOR_ROLE_APPROVED",
+        "GEMINI_CURRENT_PREFERRED_VISUAL_DIRECTOR_CANDIDATE_PROVIDER_INDEPENDENT_ARCHITECTURE",
+        "VISUAL_DIRECTOR_OWNS_WHOLE_SONG_VISUAL_THESIS_SCENE_ARC_AND_MEANINGFUL_VISUAL_EVENTS",
+        "VISUAL_DIRECTOR_MAY_SUGGEST_ARTISTIC_LIGHTING_MECHANISMS_WITHOUT_IMPLEMENTATION_IDENTITIES",
+        "VISUAL_DIRECTOR_DOES_NOT_RECEIVE_RESOURCE_MAP_BY_DEFAULT",
+        "PRIMARY_LIGHTING_DESIGNER_REMAINS_SOLE_RESOURCE_AWARE_ARTISTIC_REALIZATION_AUTHORITY",
+        "VISUAL_EVENT_IS_NOT_AUTOMATICALLY_A_CUE",
+        "SEMANTIC_EVENT_TIMING_MUST_BE_BOUND_TO_EXTERNAL_AUDIO_TIMELINE_OR_OPERATOR_EVIDENCE",
+        "NO_UNIVERSAL_ARTISTIC_INTENT_TO_PRESET_OR_EFFECT_MAPPING",
+        "ARTISTIC_MEANING_MAY_USE_DIFFERENT_IMPLEMENTATION_WHEN_SEMANTICS_ARE_PRESERVED",
+        "UNPRESERVABLE_INTENT_MUST_REMAIN_PARTIAL_OR_UNSUPPORTED",
+        "VALIDATE_ON_ONE_OR_TWO_REPRESENTATIVE_SONGS_BEFORE_SCHEMA_PROMOTION",
+        "DEFAULT_LEAN_SINGLE_PRIMARY_DESIGNER_PATH_REMAINS_VALID"
+      ],
+      "limitations": "Architecture/design capture only. No production code, new provider schema, permanent model stage, Task 002 change, Timecode write, Spatial write, Builder change or MA2 write is authorized. Preview/Approval/deterministic Builder/native readback boundaries remain unchanged."
+    },
+    {
       "id": "POSITION_CALIBRATION_TRANSACTION_WORKFLOW_APPROVAL_001",
       "source": "Owner conversation 2026-09-26",
       "status": "APPROVED_FOR_PREVIEW_IMPLEMENTATION",
@@ -1424,6 +1446,29 @@
         "ubuntu": "PASS",
         "windows": "PASS"
       }
+    },
+    "visual_director_brief": {
+      "status": "OPTIONAL_OWNER_APPROVED_DESIGN_DIRECTION_CAPTURE_ONLY",
+      "current_preferred_candidate": "GEMINI",
+      "provider_locked": false,
+      "default_required": false,
+      "resource_map_visible_to_visual_director": false,
+      "whole_song_first": true,
+      "output_semantics": [
+        "VISUAL_THESIS",
+        "SCENE_WORLD_ARC",
+        "MEANINGFUL_VISUAL_EVENTS",
+        "EVENT_RELATIONSHIPS",
+        "DELIBERATE_WITHHOLDING"
+      ],
+      "may_suggest_artistic_mechanisms": true,
+      "may_emit_implementation_resource_ids": false,
+      "visual_event_is_cue": false,
+      "exact_seconds_authority": "EXTERNAL_VERIFIED_AUDIO_TIMELINE_OR_OPERATOR_EVIDENCE",
+      "primary_realization_authority": "PRIMARY_LIGHTING_DESIGNER",
+      "schema_promotion": "DEFERRED_PENDING_1_TO_2_REPRESENTATIVE_SONG_VALIDATION",
+      "task_002_change": "NONE",
+      "ma2_writes": 0
     }
   },
   "next_major": {

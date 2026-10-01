@@ -104,6 +104,36 @@ must still pass through the same verified-resource boundary, ZEN Compiler,
 strict typed ShowPlan, Preview, explicit Approval, deterministic Builder, and
 native MA2 readback. The Primary Brain never becomes a raw MA command channel.
 
+## Optional Visual Director artistic brief
+
+ZEN may optionally place a provider-independent **Visual Director** upstream of
+the Primary Lighting Designer. Gemini is the current preferred candidate because
+of its visual/art-direction strengths, but the architecture must not depend on a
+provider name.
+
+The Visual Director produces a whole-song artistic brief: visual thesis,
+scene/world arc, meaningful Visual Events, relationships between those events,
+and deliberate withholding. It may suggest lighting mechanisms artistically,
+but it must not receive or invent implementation-specific Group, Fixture,
+Preset, Effect, Sequence, Executor, Pan/Tilt or MA command truth.
+
+A Visual Event is not automatically a Cue. The Primary Lighting Designer remains
+the only role that sees both the artistic brief and verified Show/Spatial/Resource
+Map context and therefore owns resource-aware mechanism realization. Compiler,
+Resolver and Builder remain non-artistic deterministic authority.
+
+Exact timing is separate: the Visual Director may name a semantic landmark such
+as `SECOND_CHORUS_FIRST_HIT`, but authoritative `start_seconds` must come from
+audio/timeline/operator evidence. Unbound events remain unbound rather than
+receiving invented seconds.
+
+This optional pre-analysis does not change the default lean path, does not
+restore a permanent multi-agent committee, and does not authorize a new schema
+or production implementation by itself. Validate the brief on representative
+songs before promoting it into a maintained machine contract.
+
+See `docs/VISUAL_DIRECTOR_ARTISTIC_BRIEF_001.md`.
+
 ## Product shape
 
 ZEN has four core responsibilities:
