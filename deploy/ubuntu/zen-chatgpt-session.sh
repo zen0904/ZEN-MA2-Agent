@@ -4,6 +4,7 @@ set -euo pipefail
 export DISPLAY=:0
 xsetroot -solid '#1b1a18' || true
 xhost +SI:localuser:zenui >/dev/null 2>&1 || true
+xhost +SI:localuser:zengw >/dev/null 2>&1 || true
 
 output="$(runuser -u zenui -- env DISPLAY=:0 /usr/bin/xrandr --query | awk '/ connected/{print $1; exit}')"
 if [[ -n "$output" ]]; then
