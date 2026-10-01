@@ -1349,6 +1349,48 @@
         "manufacturer and venue engineering data where required"
       ],
       "next_review_condition": "After the active M4/Spatial gate is unblocked and a real production-planning case exists, start only PDS-001: read-only Production Physical Context schema/validator/import boundary. Do not start a structural solver, physical writes or engineering sign-off workflow first."
+    },
+    {
+      "id": "PRODUCTION_DESIGN_PDS_001",
+      "classification": "HIGH_LEVERAGE_FUTURE",
+      "milestone": "FUTURE_PRODUCTION_DESIGN",
+      "status": "SPECIFIED_NOT_STARTED",
+      "why_it_matters": "First bounded implementation proof for Production Design: build a read-only, provenance-bearing Production Physical Context so Stage/Scenic, Lighting and Structural/Rigging roles can negotiate against real venue geometry and real inventory without inventing structural capacity or mutating physical systems.",
+      "blocks_current_milestone": false,
+      "dependencies": [
+        "PRODUCTION_DESIGN_SYSTEM_STAGE_SCENIC_STRUCTURAL_001",
+        "docs/ZEN_PRODUCTION_DESIGN_SYSTEM.md",
+        "docs/ZEN_PRODUCTION_ROLE_CONTRACTS.md",
+        "docs/ZEN_PRODUCTION_PHYSICAL_CONTEXT.md",
+        "docs/ZEN_PRODUCTION_ENGINEERING_EVIDENCE_POLICY.md",
+        "docs/ZEN_PRODUCTION_DELIVERABLES.md",
+        "active M4/Spatial gate closed OR owner explicitly reprioritizes",
+        "one representative real production-planning case"
+      ],
+      "acceptance": [
+        "read-only Production Physical Context schema and validator",
+        "explicit coordinate frame and units",
+        "per-field provenance and revision binding",
+        "exact real inventory identities with shortage/incompatibility states",
+        "Stage/Scenic and Lighting requirements reference the same context revision",
+        "Structural/Rigging review cannot assert capacity without exact evidence",
+        "negotiation remains delta-first and preserves causal history",
+        "stale or contradictory engineering evidence fails closed",
+        "physical mutations = 0",
+        "MA2_WRITES = 0",
+        "MA3_WRITES = 0"
+      ],
+      "out_of_scope": [
+        "structural solver or FEA",
+        "automatic truss engineering",
+        "automatic Layher/scaffold engineering",
+        "CAD authoring",
+        "physical rigging execution",
+        "motor/stage automation control",
+        "engineering certification or venue approval",
+        "MA2/MA3 writes"
+      ],
+      "next_review_condition": "Start only after the owner explicitly resumes Production Design following the current M4/Spatial gate, unless the owner explicitly reprioritizes the project sooner."
     }
   ],
   "recent_foundation": {
