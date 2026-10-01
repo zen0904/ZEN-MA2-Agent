@@ -40,12 +40,17 @@ install -m 0755 "$R/deploy/ubuntu/zen-living-tui.py" /usr/local/bin/zen-living-t
 install -m 0755 "$R/deploy/ubuntu/zen-chatgpt-session.sh" /usr/local/libexec/zen-chatgpt-session.sh
 install -m 0755 "$R/deploy/ubuntu/zen-living-visualizer.py" /usr/local/bin/zen-living-visualizer
 install -m 0644 "$R/deploy/ubuntu/systemd/zen-living-visualizer.service" /etc/systemd/system/zen-living-visualizer.service
+install -m 0644 "$R/deploy/ubuntu/systemd/zen-codex-workspace.service" /etc/systemd/system/zen-codex-workspace.service
 
 systemctl daemon-reload
 systemctl enable --now zen-ops-updater.timer
 systemctl enable --now zen-ops-results.service
 systemctl enable --now zen-ops-funnel.service
 systemctl disable --now zen-living-visualizer.service >/dev/null 2>&1 || true
+runuser -u zenui -- env DISPLAY=:0 /usr/bin/xhost +SI:localuser:zengw >/dev/null 2>&1 || true
+systemctl enable --now zen-codex-workspace.service >/dev/null 2>&1 || true
+sleep 1
+runuser -u zenui -- env DISPLAY=:0 /usr/local/bin/zen-control-room-layout living >/var/lib/zenui/control-room-layout.log 2>&1 || true
 systemctl enable zen-ops-worker.service >/dev/null 2>&1 || true
 if ! systemctl is-active --quiet zen-ops-worker.service; then
   systemctl start zen-ops-worker.service
@@ -78,6 +83,7 @@ fi
 install -d -m 0755 /var/lib/zen-ops/public
 UPDATER_HEAD="$(git -C "$R" rev-parse --short HEAD 2>/dev/null || true)"
 WORKER_STATE="$(systemctl is-active zen-ops-worker.service 2>/dev/null || true)"
+CODEX_STATE="$(systemctl is-active zen-codex-workspace.service 2>/dev/null || true)"
 ROOM_STATE="absent"
 if command -v tmux >/dev/null 2>&1; then
   for sock in /tmp/tmux-*/default; do
@@ -94,6 +100,7 @@ cat > /var/lib/zen-ops/public/updater-heartbeat.json <<EOF
   "updated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "head": "${UPDATER_HEAD}",
   "worker": "${WORKER_STATE}",
+  "codex_workspace": "${CODEX_STATE}",
   "room": "${ROOM_STATE}",
   "ma2_writes": 0,
   "ma3_writes": 0
