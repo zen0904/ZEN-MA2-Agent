@@ -26,23 +26,40 @@ fi
 CHAT_W=$((WA_W * 3 / 10))
 TUI_W=$((WA_W - CHAT_W))
 TUI_X=$((WA_X + CHAT_W))
+CX_H=$((WA_H * 38 / 100))
+TUI_H=$((WA_H - CX_H))
+CX_Y=$((WA_Y + TUI_H))
 
 windows="$(/usr/bin/wmctrl -lx 2>/dev/null || true)"
 chat_id="$(printf '%s\n' "$windows" | awk 'tolower($0) ~ /chatgpt/ && tolower($0) !~ /xterm/ {print $1; exit}')"
 tui_id="$(printf '%s\n' "$windows" | awk 'tolower($0) ~ /zen-living-tui|zen living workspace/ {print $1; exit}')"
+cx_id="$(printf '%s\n' "$windows" | awk 'tolower($0) ~ /zen-codex-workspace|zen cx - gpt-5\.6 luna high/ {print $1; exit}')"
 
 [[ -n "$chat_id" && -n "$tui_id" ]] || exit 2
 
-for id in "$chat_id" "$tui_id"; do
+ids=("$chat_id" "$tui_id")
+[[ -n "$cx_id" ]] && ids+=("$cx_id")
+for id in "${ids[@]}"; do
   /usr/bin/wmctrl -i -r "$id" -b remove,maximized_vert,maximized_horz,fullscreen >/dev/null 2>&1 || true
 done
 
 /usr/bin/wmctrl -i -r "$chat_id" -e "0,${WA_X},${WA_Y},${CHAT_W},${WA_H}"
-/usr/bin/wmctrl -i -r "$tui_id" -e "0,${TUI_X},${WA_Y},${TUI_W},${WA_H}"
+if [[ -n "$cx_id" ]]; then
+  /usr/bin/wmctrl -i -r "$tui_id" -e "0,${TUI_X},${WA_Y},${TUI_W},${TUI_H}"
+  /usr/bin/wmctrl -i -r "$cx_id" -e "0,${TUI_X},${CX_Y},${TUI_W},${CX_H}"
+else
+  /usr/bin/wmctrl -i -r "$tui_id" -e "0,${TUI_X},${WA_Y},${TUI_W},${WA_H}"
+fi
 
 printf '%s\n' "$MODE" > /var/lib/zenui/control-room-mode 2>/dev/null || true
 
 echo "CONTROL_ROOM_LAYOUT=PASS"
 echo "MODE=${MODE}"
 echo "CHATGPT=${WA_X},${WA_Y},${CHAT_W},${WA_H}"
-echo "TUI=${TUI_X},${WA_Y},${TUI_W},${WA_H}"
+if [[ -n "$cx_id" ]]; then
+  echo "TUI=${TUI_X},${WA_Y},${TUI_W},${TUI_H}"
+  echo "CODEX=${TUI_X},${CX_Y},${TUI_W},${CX_H}"
+else
+  echo "TUI=${TUI_X},${WA_Y},${TUI_W},${WA_H}"
+  echo "CODEX=ABSENT"
+fi
