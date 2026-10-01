@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SESSION="zenmon"
+STATE_DIR="/run/zen-codex-pane"
+STATE_FILE="$STATE_DIR/panes.env"
+PUBLIC="/var/lib/zen-ops/public/codex-pane.json"
+WORKSPACE="/home/zengw/workspaces/zen-ma-ops-vnext-001"
+
+mkdir -p "$STATE_DIR"
+mkdir -p "$(dirname "$PUBLIC")"
+
+json_result() {
+  local status="$1"
+  local window="${2:-}"
+  local status_pane="${3:-}"
+  local codex_pane="${4:-}"
+  python3 - "$PUBLIC" "$status" "$window" "$status_pane" "$codex_pane" <<'PY'
+import json, sys
+from datetime import datetime, timezone
+path,status,window,status_pane,codex_pane=sys.argv[1:]
+payload={
+  "schema":"zen.codex.visible_pane.v0.1",
+  "status":status,
+  "updated_at":datetime.now(timezone.utc).isoformat(),
+  "session":"zenmon",
+  "window":window or None,
+  "status_pane":status_pane or None,
+  "codex_pane":codex_pane or None,
+  "model":"gpt-5.6-luna",
+  "reasoning_effort":"high",
+  "workspace":"/home/zengw/workspaces/zen-ma-ops-vnext-001",
+  "position":"bottom-right",
+  "ma2_writes":0,
+  "ma3_writes":0,
+}
+with open(path,"w",encoding="utf-8") as f:
+    json.dump(payload,f,indent=2)
+    f.write("\n")
+PY
+}
+
+if ! tmux has-session -t "$SESSION" 2>/dev/null; then
+  json_result "NO_TMUX_SESSION"
+  exit 0
+fi
+
+if [[ -f "$STATE_FILE" ]]; then
+  source "$STATE_FILE" || true
+  if [[ -n "${CODEX_PANE:-}" ]] && tmux display-message -p -t "$CODEX_PANE" '#{pane_id}' >/dev/null 2>&1; then
+    json_result "LIVE" "${WINDOW_INDEX:-}" "${STATUS_PANE:-}" "$CODEX_PANE"
+    exit 0
+  fi
+fi
+
+WINDOW_INDEX="$(tmux display-message -p -t "$SESSION" '#{window_index}')"
+ACTIVE_PANE="$(tmux display-message -p -t "$SESSION:$WINDOW_INDEX" '#{pane_id}')"
+
+STATUS_CMD='bash -lc '"'"'while true; do clear; printf "\033[1;36mCX STATUS\033[0m\n\n"; printf "Model      GPT-5.6 Luna\n"; printf "Reasoning  High\n"; printf "Role       Coding Agent\n"; printf "Workspace  zen-ma-ops-vnext-001\n\n"; printf "Codex      "; /usr/local/bin/codex --version 2>/dev/null || true; printf "\nProcesses\n"; ps -eo etime,args | grep -E "[c]odex( |$)" | tail -6; printf "\nLast repo change\n"; git -C /opt/zen/ZEN-MA2-Agent log -1 --pretty="%h %s" 2>/dev/null || true; sleep 2; done'"'"
+CODEX_CMD='exec su -s /bin/bash - zengw -c '"'"'cd /home/zengw/workspaces/zen-ma-ops-vnext-001 2>/dev/null || cd /opt/zen/ZEN-MA2-Agent; exec /usr/local/bin/codex --no-alt-screen -m gpt-5.6-luna -c model_reasoning_effort="high"'"'"
+
+STATUS_PANE="$(tmux split-window -h -p 40 -t "$ACTIVE_PANE" -P -F '#{pane_id}' "$STATUS_CMD")"
+CODEX_PANE="$(tmux split-window -v -p 55 -t "$STATUS_PANE" -P -F '#{pane_id}' "$CODEX_CMD")"
+
+tmux select-pane -t "$ACTIVE_PANE"
+
+cat >"$STATE_FILE" <<EOF
+WINDOW_INDEX=$WINDOW_INDEX
+STATUS_PANE=$STATUS_PANE
+CODEX_PANE=$CODEX_PANE
+EOF
+
+json_result "LIVE" "$WINDOW_INDEX" "$STATUS_PANE" "$CODEX_PANE"
