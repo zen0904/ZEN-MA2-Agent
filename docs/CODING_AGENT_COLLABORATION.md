@@ -1,20 +1,30 @@
-# Coding Agent Collaboration: Claude Code and Codex on This Repo
+# Coding Agent Collaboration: Claude Code, Codex, Gemini, and This Chat
 
-The project owner uses both Claude Code and Codex (and this chat surface) on
-this repository, sometimes in the same session with the project owner, and
-sometimes as a longer unattended run. Both tools read `AGENTS.md` on startup;
-this file adds the working agreement that `AGENTS.md` alone does not fully
-cover.
+The project owner uses Claude Code, Codex, Gemini, and this chat surface on
+this repository. They may participate in the same larger task, but they do not
+share unrestricted write authority. Coding agents must read `AGENTS.md` on
+startup; Gemini-specific role and parallel-work boundaries are additionally
+specified in `docs/GEMINI_COLLABORATION_ROLE.md`.
 
-## Rule 1: alternate, do not run concurrently
+## Rule 1: one writer per path; parallel reasoning is allowed
 
-Do not run Claude Code and Codex against this repository at the same time.
-Two agents editing the same working tree at once produces git conflicts, and
-on the project owner's current hardware (see
-`docs/MULTI_AGENT_DESIGN_PLAN.md`) it also means two agentic processes
-competing for the same 16GB of RAM and 4 CPU cores that local-model inference
-will also need. Whichever tool is not actively being used should not be left
-running against this repo.
+Do not run multiple agents as uncontrolled writers against the same working
+tree or the same source paths. That produces git conflicts and destroys
+attribution.
+
+Parallel read-only analysis, review, Vision/evidence extraction, and bounded
+worker activity are allowed when responsibilities are explicit.
+
+If two coding agents must work during the same larger task, use separate
+branches/worktrees, assign non-overlapping source paths, and require each agent
+to stop at a reviewable commit. The project owner's current Mini hardware is
+also resource-constrained, so parallel local inference/processes should be
+bounded rather than left running gratuitously.
+
+Gemini follows the additional contract in
+`docs/GEMINI_COLLABORATION_ROLE.md`: it may act as a large-context/Vision
+worker or bounded implementation worker, but it does not become the Primary
+Brain or an MA execution authority.
 
 ## Rule 2: git commit is the handoff, not a shared file or verbal summary
 
