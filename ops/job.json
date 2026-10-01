@@ -1,21 +1,10 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "install-display-hotplug-recovery5-20261001-0654",
-  "kind": "repo_task",
+  "job_id": "inspect-live-tmux-for-codex-pane-20261001-1325",
+  "kind": "shell",
   "args": {
-    "task": "install_display_hotplug_recovery",
-    "timeout": 180
-  },
-  "meta": {
-    "actor": "CHATGPT_LEAD",
-    "summary": "Install HDMI hotplug recovery that relaunches missing Living Workspace",
-    "tools": [
-      "ZEN Ops",
-      "udev",
-      "systemd",
-      "Xorg",
-      "xterm",
-      "wmctrl"
-    ]
+    "cwd": "/opt/zen",
+    "timeout": 120,
+    "command": "set -o pipefail; echo '=== SESSIONS ==='; tmux list-sessions; echo '=== WINDOWS ==='; tmux list-windows -t zenmon -F '#I:#W active=#{window_active} panes=#{window_panes} layout=#{window_layout}'; echo '=== PANES ==='; tmux list-panes -t zenmon -a -F '#S:#I.#P active=#{pane_active} cmd=#{pane_current_command} left=#{pane_left} top=#{pane_top} width=#{pane_width} height=#{pane_height} title=#{pane_title}'; echo '=== CLIENTS ==='; tmux list-clients -F 'tty=#{client_tty} session=#{session_name} w=#{client_width} h=#{client_height}'"
   }
 }
