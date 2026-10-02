@@ -1,15 +1,15 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "anywhere-smoke-20261002-2057",
+  "job_id": "gateway-pool-smoke-20261002-2148",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
     "timeout": 30,
-    "command": "printf 'HOST='; hostname; printf 'WIFI='; nmcli -t -f NAME,DEVICE connection show --active | head -1; printf 'TAILSCALE='; tailscale ip -4 2>/dev/null || true; printf 'PUBLIC='; curl -4 -s --max-time 5 https://api.ipify.org || true; echo"
+    "command": "printf 'HOST='; hostname; printf 'PUBLIC='; curl -4 -s --max-time 5 https://api.ipify.org || true; echo; printf 'TAILSCALE='; tailscale ip -4 2>/dev/null || true"
   },
   "meta": {
     "actor": "CHATGPT_LEAD",
-    "summary": "Read-only anywhere-access transport smoke test",
+    "summary": "Read-only Gateway pool rescue smoke test",
     "tools": ["ZEN Ops"]
   }
 }
