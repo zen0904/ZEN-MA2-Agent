@@ -7085,6 +7085,329 @@
       ],
       "source_provenance": "YOUTUBE_SNOWMAN003_GRANDMA3_SHOWFILE_2026: the author demonstrates separate dimmer-effect, bump and speed master controls on playbacks.",
       "summary": "Retains family-level live scaling as a workflow option requiring separate operator approval, not as a default ZEN layout rule."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk012_clip002_choreography_first",
+      "source_id": "ZEN_USER_LIGHTING_REFERENCE_CLIP_002",
+      "topic": "FOCUS_VISUAL_ATTENTION",
+      "normalized_claim": "In the selected performance reference, choreography and performer body level can change the balance of low, side, rear, overhead and silhouette layers, so spatial composition need not be driven by musical pulse alone.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "USER_SELECTED_PERFORMANCE_CLIP_002",
+      "exclusions": [
+        "Does not authorize Position or Focus targets without verified current-Show spatial evidence.",
+        "Does not require every choreography change to cause a lighting change."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Some productions intentionally keep a fixed scenic composition while choreography changes inside it."
+      ],
+      "related_design_concepts": [
+        "choreography",
+        "body_level",
+        "spatial_composition",
+        "silhouette",
+        "hierarchy"
+      ],
+      "related_console_capabilities": [
+        "position",
+        "focus",
+        "dimmer"
+      ],
+      "source_provenance": "ZEN_USER_LIGHTING_REFERENCE_CLIP_002: owner-reviewed observation of choreography-first spatial rebalancing.",
+      "summary": "Supports choreography-aware spatial review while keeping actual targeting fail-closed to current-Show evidence."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk012_clip002_negative_space",
+      "source_id": "ZEN_USER_LIGHTING_REFERENCE_CLIP_002",
+      "topic": "NEGATIVE_SPACE_RESTRAINT",
+      "normalized_claim": "The selected reference treats darkness, unlit regions and sparse fixture participation as complete compositional states that preserve hierarchy and later visual headroom.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "USER_SELECTED_PERFORMANCE_CLIP_002",
+      "exclusions": [
+        "Does not require darkness or sparse output in every song or section.",
+        "Performer visibility and production requirements can override this strategy."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Camera, safety or judged-performance contexts may require more continuous visibility."
+      ],
+      "related_design_concepts": [
+        "negative_space",
+        "restraint",
+        "hierarchy",
+        "headroom"
+      ],
+      "related_console_capabilities": [
+        "dimmer"
+      ],
+      "source_provenance": "ZEN_USER_LIGHTING_REFERENCE_CLIP_002: owner-reviewed observation of sustained sparse/negative-space states.",
+      "summary": "Use as a review lens against filling space merely because fixtures are available."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk012_clip002_white_resource",
+      "source_id": "ZEN_USER_LIGHTING_REFERENCE_CLIP_002",
+      "topic": "RESOURCE_HEADROOM",
+      "normalized_claim": "White and cool-white geometry in the selected reference is comparatively scarce and therefore can function as a high-value release, isolation or spatial event instead of permanent full-stage content.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "USER_SELECTED_PERFORMANCE_CLIP_002",
+      "exclusions": [
+        "Does not require white to be scarce in every production.",
+        "Does not prescribe color temperature, intensity or fixture family."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Some designs use a neutral/white base world continuously for valid artistic reasons."
+      ],
+      "related_design_concepts": [
+        "white_scarcity",
+        "resource_withholding",
+        "release",
+        "spatial_geometry"
+      ],
+      "related_console_capabilities": [
+        "color",
+        "dimmer",
+        "position",
+        "beam"
+      ],
+      "source_provenance": "ZEN_USER_LIGHTING_REFERENCE_CLIP_002: owner-reviewed observation of selective white/cool-white spatial events.",
+      "summary": "Supports reviewing whether scarce high-impact resources have been normalized too early."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk012_clip002_finale_hold",
+      "source_id": "ZEN_USER_LIGHTING_REFERENCE_CLIP_002",
+      "topic": "ENERGY_PROGRESSION",
+      "normalized_claim": "The selected reference supports a finale strategy in which visual output contracts before a final release and the resolved picture is then held long enough to read.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "USER_SELECTED_PERFORMANCE_CLIP_002",
+      "exclusions": [
+        "Does not require a contraction before every finale.",
+        "Does not require a white final state or a held ending."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Some endings are intentionally continuous, chaotic, blacked out or gradually fading."
+      ],
+      "related_design_concepts": [
+        "finale",
+        "contraction",
+        "release",
+        "hold",
+        "dynamic_range"
+      ],
+      "related_console_capabilities": [
+        "dimmer",
+        "color",
+        "position"
+      ],
+      "source_provenance": "ZEN_USER_LIGHTING_REFERENCE_CLIP_002: owner-reviewed observation of contraction-release-hold finale behavior.",
+      "summary": "Adds a bounded ending strategy that preserves climax through withholding and readability."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk013_clip003_phrase_geometry",
+      "source_id": "ZEN_USER_LIGHTING_REFERENCE_CLIP_003",
+      "topic": "RHYTHMIC_PUNCTUATION",
+      "normalized_claim": "In the approximately 108 BPM clip, lighting variation is organized primarily around phrase-scale spatial states and selected events rather than assigning an equally strong visual change to every beat.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "USER_SELECTED_PERFORMANCE_CLIP_003",
+      "exclusions": [
+        "Does not establish a four-beat cue rule.",
+        "Does not prohibit beat-level programming where the music and design justify it."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Dense electronic or tightly choreographed passages may legitimately expose more beat-level detail."
+      ],
+      "related_design_concepts": [
+        "phrase",
+        "musicality",
+        "cue_density",
+        "spatial_state"
+      ],
+      "related_console_capabilities": [
+        "timecode",
+        "effect",
+        "dimmer",
+        "position"
+      ],
+      "source_provenance": "ZEN_USER_LIGHTING_REFERENCE_CLIP_003: cross-modal review of the clip's approximately 108 BPM pulse and phrase-scale spatial changes.",
+      "summary": "Supports phrase-scale musical reasoning without turning BPM into an automatic cue generator."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk013_clip003_geometry_before_quantity",
+      "source_id": "ZEN_USER_LIGHTING_REFERENCE_CLIP_003",
+      "topic": "VISUAL_HIERARCHY",
+      "normalized_claim": "The selected minimal-rig reference creates strong visual variety by moving energy among floor, overhead, frame, center and outer spatial domains, showing that geometry can change perceived scale without increasing fixture count.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "USER_SELECTED_PERFORMANCE_CLIP_003",
+      "exclusions": [
+        "Does not prove exact fixture count or stage geometry.",
+        "Does not require the named spatial domains in every rig."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Some looks depend on fixture-specific optical behavior or additional physical resources."
+      ],
+      "related_design_concepts": [
+        "geometry_before_quantity",
+        "spatial_occupation",
+        "hierarchy",
+        "minimal_rig"
+      ],
+      "related_console_capabilities": [
+        "position",
+        "dimmer",
+        "grouping"
+      ],
+      "source_provenance": "ZEN_USER_LIGHTING_REFERENCE_CLIP_003: owner-reviewed observation of repeated spatial redistribution using a small visual vocabulary.",
+      "summary": "Supports asking whether a geometry change can create the required contrast before adding more resources or mechanisms."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk013_clip003_dark_reset",
+      "source_id": "ZEN_USER_LIGHTING_REFERENCE_CLIP_003",
+      "topic": "CONTRAST",
+      "normalized_claim": "Dark or low-density states in the selected clip separate bright geometries and reset visual persistence, so reduction itself can carry new information and increase the legibility of the next event.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "USER_SELECTED_PERFORMANCE_CLIP_003",
+      "exclusions": [
+        "Does not require blackout between looks.",
+        "Does not override performer-visibility or production constraints."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Continuous visual flow can be stronger when interruption would damage phrasing or visibility."
+      ],
+      "related_design_concepts": [
+        "dark_reset",
+        "contrast",
+        "negative_space",
+        "visual_persistence"
+      ],
+      "related_console_capabilities": [
+        "dimmer"
+      ],
+      "source_provenance": "ZEN_USER_LIGHTING_REFERENCE_CLIP_003: cross-modal observation of repeated bright-to-reduced-to-new-geometry phrasing.",
+      "summary": "Use as a review lens for whether a reduction can clarify the next spatial event instead of adding another layer."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk013_clip003_structural_event_layers",
+      "source_id": "ZEN_USER_LIGHTING_REFERENCE_CLIP_003",
+      "topic": "LAYERING_DEPTH",
+      "normalized_claim": "The selected clip can be interpreted as separating persistent structural framing from short-lived event/content geometry, allowing one spatial layer to remain while another provides transient musical punctuation.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "USER_SELECTED_PERFORMANCE_CLIP_003",
+      "exclusions": [
+        "Red is not universally structural and white is not universally event light.",
+        "The analysis does not prove the original programmer's layer model."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Other productions may intentionally replace the complete scene on each major event."
+      ],
+      "related_design_concepts": [
+        "structural_layer",
+        "event_layer",
+        "frame",
+        "depth",
+        "spatial_composition"
+      ],
+      "related_console_capabilities": [
+        "color",
+        "dimmer",
+        "position",
+        "beam"
+      ],
+      "source_provenance": "ZEN_USER_LIGHTING_REFERENCE_CLIP_003: visual interpretation of frame/outline continuity with temporary aerial/fan events.",
+      "summary": "Supports separating sustained spatial architecture from transient events without hard-coding colors or fixture roles."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk013_clip003_density_headroom",
+      "source_id": "ZEN_USER_LIGHTING_REFERENCE_CLIP_003",
+      "topic": "RESOURCE_HEADROOM",
+      "normalized_claim": "The selected minimal-rig clip withholds wide open-angle and high beam-density states until late, preserving enough spatial and density headroom for the finale to feel materially larger.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "USER_SELECTED_PERFORMANCE_CLIP_003",
+      "exclusions": [
+        "Does not require a low-density opening.",
+        "Does not establish any target fixture count, zoom or beam angle."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Some material validly begins or remains at maximum spatial coverage."
+      ],
+      "related_design_concepts": [
+        "density_headroom",
+        "resource_withholding",
+        "finale",
+        "open_angle",
+        "release"
+      ],
+      "related_console_capabilities": [
+        "dimmer",
+        "position",
+        "beam"
+      ],
+      "source_provenance": "ZEN_USER_LIGHTING_REFERENCE_CLIP_003: owner-reviewed observation of late beam-density/open-angle expansion after earlier restraint.",
+      "summary": "Supports treating coverage, density and open angle as visual resources whose early normalization can weaken later climax."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_record.v0.1",
+      "record_id": "elk012_clip002_counterpoint",
+      "source_id": "ZEN_USER_LIGHTING_REFERENCE_CLIP_002",
+      "topic": "RHYTHMIC_PUNCTUATION",
+      "normalized_claim": "Reference clip 002 includes passages where lighting expands or holds while the arrangement becomes sparser, illustrating that a valid music-light relationship can be synchronization, counterpoint or temporary independence rather than one-to-one amplitude following.",
+      "evidence_classification": "CASE_CONTEXT",
+      "knowledge_kind": "DESCRIPTIVE",
+      "applicability_scope": "USER_SELECTED_PERFORMANCE_CLIP_002",
+      "exclusions": [
+        "Does not establish a universal counterpoint rule.",
+        "Does not replace direct audio and performance analysis for the target song."
+      ],
+      "confidence": "MEDIUM",
+      "promotion_state": "SHADOW_ONLY",
+      "conflicts": [
+        "Some tightly timecoded passages benefit from strong direct synchronization."
+      ],
+      "related_design_concepts": [
+        "counterpoint",
+        "synchronization",
+        "independence",
+        "phrase"
+      ],
+      "related_console_capabilities": [
+        "timecode",
+        "dimmer",
+        "position"
+      ],
+      "source_provenance": "ZEN_USER_LIGHTING_REFERENCE_CLIP_002: cross-modal comparison including the approximately 58.6-73.5 s sparse-audio / expanded-space passage.",
+      "summary": "Broadens musical reasoning beyond beat chasing while preserving source-specific adaptation."
     }
   ]
 }
