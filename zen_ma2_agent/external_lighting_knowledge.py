@@ -37,6 +37,11 @@ TOPICS = {
     "FOCUS_VISUAL_ATTENTION", "RHYTHMIC_PUNCTUATION", "ENERGY_PROGRESSION",
     "REPEATED_SECTION_DEVELOPMENT", "RESOURCE_HEADROOM", "CONSOLE_MAINTAINABILITY",
     "FIXTURE_CAPABILITY_PROVENANCE",
+    # These descriptive topics are already used by the committed grandMA3
+    # busking reference case.  Accepting them here aligns validation with the
+    # canonical knowledge pack; it does not grant production or MA authority.
+    "MODULATION_DISTRIBUTION", "LIVE_CONTROL_SAFETY", "SPATIAL_DISTRIBUTION",
+    "POSITION_COMPOSITION", "EVENT_LAYERING", "LIVE_CONTROL_SCALING",
 }
 KNOWLEDGE_KINDS = {"DESCRIPTIVE", "PRESCRIPTIVE_REQUIREMENT"}
 PROMOTION_STATES = {

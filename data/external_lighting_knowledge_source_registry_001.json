@@ -901,6 +901,36 @@
       "copyright_policy": "METADATA_AND_DERIVED_EXTRACTS_ONLY",
       "source_bias": "One Germany-based lighting programmer/operator's personal grandMA3 busking showfile. Its UI, priorities, group count, presets, and effect choices are personal workflow evidence, not universal console or artistic rules.",
       "notes": "Video metadata and accessible captions were reviewed. Repository stores concise derived observations only; no full transcript or media is stored."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_source.v0.1",
+      "source_id": "ZEN_USER_LIGHTING_REFERENCE_CLIP_002",
+      "source_type": "USER_WORKFLOW_EVIDENCE",
+      "publisher": "ZEN MA2 Agent project owner",
+      "title": "User-selected lighting reference clip 002: choreography-first theatrical/cinematic restraint",
+      "url": "https://github.com/zen0904/ZEN-MA2-Agent/blob/main/docs/reference_cases/LIGHTING_REFERENCE_CASE_003.md",
+      "publication_date": null,
+      "version": "ScreenRecording_09-27-2026 09-30-17_1.mp4; 113571660 bytes; approximately 157.07 s; audio AAC 44.1 kHz stereo",
+      "retrieved_at": "2026-09-27",
+      "authority": "USER_SELECTED_CASE_REFERENCE",
+      "copyright_policy": "METADATA_AND_DERIVED_EXTRACTS_ONLY",
+      "source_bias": "Single user-selected performance reference; camera/edit, fixture identity, venue geometry and original programmer intent are not independently established.",
+      "notes": "Original media is not stored in the repository. Audio/visual derived observations are anchored in LIGHTING_REFERENCE_CASE_003.md."
+    },
+    {
+      "schema": "zen.external_lighting_knowledge_source.v0.1",
+      "source_id": "ZEN_USER_LIGHTING_REFERENCE_CLIP_003",
+      "source_type": "USER_WORKFLOW_EVIDENCE",
+      "publisher": "ZEN MA2 Agent project owner",
+      "title": "User-selected lighting reference clip 003: minimal rig with strong musical phrasing and spatial geometry",
+      "url": "https://github.com/zen0904/ZEN-MA2-Agent/blob/main/docs/reference_cases/LIGHTING_REFERENCE_CASE_004.md",
+      "publication_date": null,
+      "version": "SHA256 98cdac207628f7e638effdf38fefcc14a392b2592bd7fc1774f5c38d2cd270cf; 31.333333 s; H.264 512x1108 30 fps; AAC 44.1 kHz stereo; beat estimate 107.666 BPM",
+      "retrieved_at": "2026-10-02",
+      "authority": "USER_SELECTED_CASE_REFERENCE",
+      "copyright_policy": "METADATA_AND_DERIVED_EXTRACTS_ONLY",
+      "source_bias": "Short single user-selected lighting reference; exact rig, venue geometry, fixture identity and programmer intent are not independently established.",
+      "notes": "Original media is not stored in the repository. Cross-modal audio/lighting derived observations are anchored in LIGHTING_REFERENCE_CASE_004.md."
     }
   ]
 }
