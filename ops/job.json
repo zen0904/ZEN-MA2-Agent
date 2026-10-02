@@ -1,10 +1,15 @@
 {
   "schema": "zen.ops.job.v1",
-  "job_id": "show-visible-codex-workspace-20261001-1334",
+  "job_id": "anywhere-smoke-20261002-2057",
   "kind": "shell",
   "args": {
     "cwd": "/opt/zen",
-    "timeout": 60,
-    "command": "set -o pipefail; /usr/bin/chvt 3; sleep 1; fgconsole || true"
+    "timeout": 30,
+    "command": "printf 'HOST='; hostname; printf 'WIFI='; nmcli -t -f NAME,DEVICE connection show --active | head -1; printf 'TAILSCALE='; tailscale ip -4 2>/dev/null || true; printf 'PUBLIC='; curl -4 -s --max-time 5 https://api.ipify.org || true; echo"
+  },
+  "meta": {
+    "actor": "CHATGPT_LEAD",
+    "summary": "Read-only anywhere-access transport smoke test",
+    "tools": ["ZEN Ops"]
   }
 }
